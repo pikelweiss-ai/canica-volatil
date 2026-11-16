@@ -279,7 +279,9 @@ public class PlayerAttack : MonoBehaviour
         int layer = playerSprite != null ? playerSprite.sortingLayerID : 0;
         int order = playerSprite != null ? playerSprite.sortingOrder + 1 : 0;
 
-        Projectile.Spawn(spawnPos, aimDirection, weapon, transform, layer, order);
+        // Mateix final que la línia d'apuntat (veure UpdateAim): el projectil s'atura just allà
+        Vector2 aimEnd = (Vector2)transform.position + aimDirection * Mathf.Max(weapon.range, 0.5f);
+        Projectile.Spawn(spawnPos, aimDirection, weapon, transform, layer, order, aimEnd);
         WeaponSounds.Play(WeaponSounds.ShootClip(weapon), 0.5f);
         recoil = 0.08f; // L'arma recula un poc
     }

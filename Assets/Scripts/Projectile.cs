@@ -14,26 +14,49 @@ public class Projectile : MonoBehaviour
     private Vector2 startPosition;
     private WeaponData weapon;
 
-    public void Init(Vector2 dir, WeaponData weapon, Transform shooter)
+    // endPoint: on acaba la línia d'apuntat. El projectil s'atura quan la seua PUNTA hi arriba.
+    public void Init(Vector2 dir, WeaponData weapon, Transform shooter, Vector2? endPoint = null)
     {
         this.weapon = weapon;
         direction = dir.normalized;
         speed = weapon.projectileSpeed;
-        maxDistance = weapon.range;
         damage = weapon.damage;
         knockbackForce = weapon.knockbackForce;
         radius = weapon.projectileSize * 0.5f;
         owner = shooter;
         startPosition = transform.position;
 
-        // Gira el projectil cap a on va (per si el prefab té forma)
+        // Gira el projectil cap a on va (els sprites apunten cap a la dreta)
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0, 0, angle);
+
+        if (endPoint.HasValue)
+        {
+            // Distància del centre del projectil a la seua punta
+            float frontOffset = 0f;
+            SpriteRenderer sr = GetComponentInChildren<SpriteRenderer>();
+            if (sr != null && sr.sprite != null)
+                frontOffset = sr.sprite.bounds.extents.x * Mathf.Abs(transform.lossyScale.x);
+
+            maxDistance = Mathf.Max(0f, Vector2.Distance(startPosition, endPoint.Value) - frontOffset);
+        }
+        else
+        {
+            maxDistance = weapon.range;
+        }
     }
 
     void FixedUpdate()
     {
-        transform.position += (Vector3)(direction * speed * Time.fixedDeltaTime);
+        // Avança, però sense passar-se del final (l'últim pas es retalla just al final)
+        float travelled = Vector2.Distance(startPosition, transform.position);
+        float step = speed * Time.fixedDeltaTime;
+        bool reachesEnd = travelled + step >= maxDistance;
+
+        if (reachesEnd)
+            transform.position = startPosition + direction * maxDistance;
+        else
+            transform.position += (Vector3)(direction * step);
 
         foreach (Collider2D hit in Physics2D.OverlapCircleAll(transform.position, radius))
         {
@@ -57,11 +80,9 @@ public class Projectile : MonoBehaviour
             }
         }
 
-        // Arriba al final de l'abast (la pedra cau a terra)
-        if (Vector2.Distance(startPosition, transform.position) >= maxDistance)
-        {
+        // Arriba al final de l'aim (la pedra cau a terra)
+        if (reachesEnd)
             End();
-        }
     }
 
     // El projectil s'acaba: so d'impacte (si l'arma en té) i desapareix
@@ -101,7 +122,7 @@ public class Projectile : MonoBehaviour
         }
     }
 
-    public static Projectile Spawn(Vector2 position, Vector2 dir, WeaponData weapon, Transform shooter, int sortingLayerID, int sortingOrder)
+    public static Projectile Spawn(Vector2 position, Vector2 dir, WeaponData weapon, Transform shooter, int sortingLayerID, int sortingOrder, Vector2? endPoint = null)
     {
         GameObject go;
 
@@ -137,7 +158,7 @@ public class Projectile : MonoBehaviour
         if (p == null)
             p = go.AddComponent<Projectile>();
 
-        p.Init(dir, weapon, shooter);
+        p.Init(dir, weapon, shooter, endPoint);
         return p;
     }
 }
