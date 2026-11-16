@@ -25,14 +25,6 @@ public class PlayerHealth : MonoBehaviour
         UpdateHealthUI();
     }
 
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.H))
-        {
-            TakeDamage(1);
-        }
-    }
-
     public void TakeDamage(int damage)
     {
         currentHealth -= damage;
