@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Tilemaps;
 using TMPro;
 
 public enum ChestRarity { Comu, Rar, Epic, Llegendari }
@@ -79,6 +80,19 @@ public class Chest : MonoBehaviour
         if (openSound == null) openSound = ChestSounds.Open;
 
         CreatePrompt();
+        HideTilePreview();
+    }
+
+    // Si aquest cofre l'ha creat un ChestTile, amaguem el dibuix del tile
+    // (si no, es veurien dos cofres: el del tile i aquest)
+    void HideTilePreview()
+    {
+        Tilemap tilemap = GetComponentInParent<Tilemap>();
+        if (tilemap == null) return;
+
+        Vector3Int cell = tilemap.WorldToCell(transform.position);
+        if (tilemap.GetTile(cell) is ChestTile)
+            tilemap.SetColor(cell, Color.clear);
     }
 
     void Update()

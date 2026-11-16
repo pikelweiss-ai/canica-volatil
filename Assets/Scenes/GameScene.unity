@@ -3968,6 +3968,8 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 255fa4568be0f774dbb333f7fab679fd, type: 3}
   - {fileID: 8300000, guid: 42437720e9f95e84ab0c3b8efc96226d, type: 3}
   poofEffectPrefab: {fileID: 4777554392210215749, guid: 3a857fc53770baa4d93d6c2a02ecfbd2, type: 3}
+  hitColor: {r: 1, g: 0, b: 0, a: 1}
+  flashDuration: 0.1
 --- !u!1 &408904760
 GameObject:
   m_ObjectHideFlags: 0
@@ -17653,6 +17655,213 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 778691650}
   m_CullTransparentMesh: 1
+--- !u!1 &782269184
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 782269185}
+  - component: {fileID: 782269187}
+  - component: {fileID: 782269186}
+  m_Layer: 0
+  m_Name: Tilemap Cofres
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &782269185
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 782269184}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1432135332}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!483693784 &782269186
+TilemapRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 782269184}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 0
+  m_ReflectionProbeUsage: 0
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: -2003976953
+  m_SortingLayer: 5
+  m_SortingOrder: 1
+  m_ChunkSize: {x: 32, y: 32, z: 32}
+  m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
+  m_MaxChunkCount: 16
+  m_MaxFrameAge: 16
+  m_SortOrder: 0
+  m_Mode: 0
+  m_DetectChunkCullingBounds: 0
+  m_MaskInteraction: 0
+--- !u!1839735485 &782269187
+Tilemap:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 782269184}
+  m_Enabled: 1
+  m_Tiles:
+  - first: {x: -3, y: 0, z: 0}
+    second:
+      serializedVersion: 2
+      m_TileIndex: 1
+      m_TileSpriteIndex: 1
+      m_TileMatrixIndex: 0
+      m_TileColorIndex: 0
+      m_TileObjectToInstantiateIndex: 1
+      dummyAlignment: 0
+      m_AllTileFlags: 6
+  - first: {x: 3, y: 0, z: 0}
+    second:
+      serializedVersion: 2
+      m_TileIndex: 0
+      m_TileSpriteIndex: 0
+      m_TileMatrixIndex: 0
+      m_TileColorIndex: 0
+      m_TileObjectToInstantiateIndex: 0
+      dummyAlignment: 0
+      m_AllTileFlags: 6
+  - first: {x: 2, y: 3, z: 0}
+    second:
+      serializedVersion: 2
+      m_TileIndex: 2
+      m_TileSpriteIndex: 2
+      m_TileMatrixIndex: 0
+      m_TileColorIndex: 0
+      m_TileObjectToInstantiateIndex: 2
+      dummyAlignment: 0
+      m_AllTileFlags: 6
+  - first: {x: -1, y: 4, z: 0}
+    second:
+      serializedVersion: 2
+      m_TileIndex: 3
+      m_TileSpriteIndex: 3
+      m_TileMatrixIndex: 0
+      m_TileColorIndex: 0
+      m_TileObjectToInstantiateIndex: 3
+      dummyAlignment: 0
+      m_AllTileFlags: 6
+  m_AnimatedTiles: {}
+  m_TileAssetArray:
+  - m_RefCount: 1
+    m_Data: {fileID: 11400000, guid: 4dec356624f30cf46b73054e75aaf732, type: 2}
+  - m_RefCount: 1
+    m_Data: {fileID: 11400000, guid: c41961274cac58c48b8f5b037126fdb7, type: 2}
+  - m_RefCount: 1
+    m_Data: {fileID: 11400000, guid: 5bbd390920d6e0244b64d3e904121d98, type: 2}
+  - m_RefCount: 1
+    m_Data: {fileID: 11400000, guid: 089acec8ceca4264cb9d7e5b5f48c16a, type: 2}
+  m_TileSpriteArray:
+  - m_RefCount: 1
+    m_Data: {fileID: 21300000, guid: 9ab9bd2806a4d244daee86d15d38430b, type: 3}
+  - m_RefCount: 1
+    m_Data: {fileID: 21300000, guid: fc3aefb53a53eac4889f6ecbe73e3a98, type: 3}
+  - m_RefCount: 1
+    m_Data: {fileID: 21300000, guid: 63abc84fede968142bfc8d987589a28d, type: 3}
+  - m_RefCount: 1
+    m_Data: {fileID: 21300000, guid: 8395d4278fa4f7445a0ffe5f07a527bb, type: 3}
+  m_TileMatrixArray:
+  - m_RefCount: 4
+    m_Data:
+      e00: 1
+      e01: 0
+      e02: 0
+      e03: 0
+      e10: 0
+      e11: 1
+      e12: 0
+      e13: 0
+      e20: 0
+      e21: 0
+      e22: 1
+      e23: 0
+      e30: 0
+      e31: 0
+      e32: 0
+      e33: 1
+  m_TileColorArray:
+  - m_RefCount: 4
+    m_Data: {r: 1, g: 1, b: 1, a: 1}
+  m_TileObjectToInstantiateArray:
+  - m_RefCount: 1
+    m_Data: {fileID: 5361594920931117466, guid: a220a701b3e30164db5904fa9e235366, type: 3}
+  - m_RefCount: 1
+    m_Data: {fileID: 8823347188193179081, guid: c269fdbdd64535c4aaa58d0198fcdf44, type: 3}
+  - m_RefCount: 1
+    m_Data: {fileID: 4781880645178114049, guid: a7968ba7d3ca7c54fb06809d8db3c545, type: 3}
+  - m_RefCount: 1
+    m_Data: {fileID: 8588265568182562749, guid: 8fe47927dfddb004d95c974431b1f049, type: 3}
+  m_AnimationFrameRate: 1
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Origin: {x: -3, y: 0, z: 0}
+  m_Size: {x: 7, y: 5, z: 1}
+  m_TileAnchor: {x: 0.5, y: 0.5, z: 0}
+  m_TileOrientation: 0
+  m_TileOrientationMatrix:
+    e00: 1
+    e01: 0
+    e02: 0
+    e03: 0
+    e10: 0
+    e11: 1
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 1
+    e23: 0
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 1
 --- !u!1 &802473578 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8165462558941301460, guid: 68f39c256a050cf409b916bbdd943737, type: 3}
@@ -19054,6 +19263,7 @@ Transform:
   - {fileID: 1491014582}
   - {fileID: 325171717}
   - {fileID: 1473320390}
+  - {fileID: 782269185}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1440204222 stripped
@@ -24294,25 +24504,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1874617895
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1874617885}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9d4053fd2118408e8bafa2a94b053d51, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  damage: 1
-  attackRange: 0.8
-  attackRadius: 0.6
-  attackCooldown: 0.4
-  knockbackForce: 6
-  cameraFollow: {fileID: 1260936956}
-  slashEffectPrefab: {fileID: 0}
 --- !u!114 &1874617886
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24526,6 +24717,33 @@ MonoBehaviour:
   damageAudioSource: {fileID: 647616540}
   spawnPoint: {fileID: 2041675117}
   poofEffectPrefab: {fileID: 4777554392210215749, guid: 3a857fc53770baa4d93d6c2a02ecfbd2, type: 3}
+--- !u!114 &1874617895
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1874617885}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d4053fd2118408e8bafa2a94b053d51, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fistDamage: 1
+  fistRange: 0.7
+  fistRadius: 0.45
+  fistCooldown: 0.35
+  punchKnockback: 2.5
+  hotbarSlots:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  hotbarFont: {fileID: 0}
+  showAimLine: 1
+  aimColor: {r: 1, g: 1, b: 1, a: 0.45}
+  aimChargingOpacity: 0.35
+  cameraFollow: {fileID: 1260936956}
 --- !u!1 &1922221094
 GameObject:
   m_ObjectHideFlags: 0

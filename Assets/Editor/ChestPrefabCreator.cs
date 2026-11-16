@@ -1,21 +1,38 @@
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
-// Menú: Canica > Crear prefabs dels cofres
-// Crea Assets/Prefabs/Cofres/Cofre_<Raresa>.prefab per a cada raresa,
-// amb els sprites tancat/obert, collider i el script Chest ja configurats.
-// Després només cal arrossegar-los a l'escena (i clonar-los amb Ctrl+D).
+// Menú Canica > Cofres:
+//  - "Crear prefabs i tiles": per a cada raresa crea
+//      Assets/Prefabs/Cofres/Cofre_<Raresa>.prefab  (cofre real: sprite, hitbox, script)
+//      Assets/Tiles/Cofres/TileCofre_<Raresa>.asset (per a pintar-lo amb la Tile Palette)
+//  - "Posar-ne de prova al mapa de proves": crea 'Tilemap Cofres' a GameScene i hi pinta
+//      un cofre de cada raresa en cel·les lliures prop del SpawnPoint.
 public static class ChestPrefabCreator
 {
     const string SpriteFolder = "Assets/Sprites/Pixel/Cofres";
     const string PrefabFolder = "Assets/Prefabs/Cofres";
+    const string TileFolder = "Assets/Tiles/Cofres";
+    const string TestScene = "Assets/Scenes/GameScene.unity";
+    const string ChestTilemapName = "Tilemap Cofres";
 
-    [MenuItem("Canica/Crear prefabs dels cofres")]
-    public static void CreateAll()
+    [MenuItem("Canica/Cofres/Crear prefabs i tiles")]
+    public static void CreateAllMenu()
+    {
+        int n = CreateAll().Count;
+        EditorUtility.DisplayDialog("Cofres",
+            n + " cofres creats.\n\nPrefabs: " + PrefabFolder + "\nTiles: " + TileFolder +
+            "\n\nArrossega els tiles a la Tile Palette per a pintar-los al mapa.", "OK");
+    }
+
+    public static Dictionary<ChestRarity, ChestTile> CreateAll()
     {
         Directory.CreateDirectory(PrefabFolder);
-        int created = 0;
+        Directory.CreateDirectory(TileFolder);
+        var tiles = new Dictionary<ChestRarity, ChestTile>();
 
         foreach (ChestRarity rarity in System.Enum.GetValues(typeof(ChestRarity)))
         {
@@ -29,35 +46,168 @@ public static class ChestPrefabCreator
                 continue;
             }
 
-            // Arrel: script + collider (el cofre no es mou quan vibra)
-            GameObject root = new GameObject("Cofre_" + name);
-            BoxCollider2D col = root.AddComponent<BoxCollider2D>();
-            col.size = new Vector2(0.75f, 0.5f); // El dibuix fa 12x10 píxels (0.75 x 0.625)
-
-            AudioSource audio = root.AddComponent<AudioSource>();
-            audio.playOnAwake = false;
-
-            // Fill: l'sprite (és el que vibra i bota)
-            GameObject visual = new GameObject("Sprite");
-            visual.transform.SetParent(root.transform, false);
-            SpriteRenderer sr = visual.AddComponent<SpriteRenderer>();
-            sr.sprite = closed;
-            sr.sortingLayerName = "Player"; // Mateixa capa que el jugador...
-            sr.sortingOrder = 1;            // ...però per davall d'ell (ordre 2)
-
-            Chest chest = root.AddComponent<Chest>();
-            chest.rarity = rarity;
-            chest.spriteRenderer = sr;
-            chest.closedSprite = closed;
-            chest.openSprite = open;
-
-            string path = PrefabFolder + "/Cofre_" + name + ".prefab";
-            PrefabUtility.SaveAsPrefabAsset(root, path);
-            Object.DestroyImmediate(root);
-            created++;
+            GameObject prefab = CreatePrefab(rarity, closed, open);
+            tiles[rarity] = CreateTile(rarity, closed, prefab);
         }
 
+        AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        EditorUtility.DisplayDialog("Cofres", created + " prefabs creats a " + PrefabFolder, "OK");
+        return tiles;
+    }
+
+    static GameObject CreatePrefab(ChestRarity rarity, Sprite closed, Sprite open)
+    {
+        string name = rarity.ToString();
+
+        // Arrel: script + hitbox (no es mou quan el cofre vibra)
+        GameObject root = new GameObject("Cofre_" + name);
+        BoxCollider2D col = root.AddComponent<BoxCollider2D>();
+        col.size = new Vector2(0.75f, 0.5f); // El dibuix fa 12x10 píxels (0.75 x 0.625)
+
+        AudioSource audio = root.AddComponent<AudioSource>();
+        audio.playOnAwake = false;
+
+        // Fill: l'sprite (és el que vibra i bota)
+        GameObject visual = new GameObject("Sprite");
+        visual.transform.SetParent(root.transform, false);
+        SpriteRenderer sr = visual.AddComponent<SpriteRenderer>();
+        sr.sprite = closed;
+        sr.sortingLayerName = "Player"; // Mateixa capa que el jugador...
+        sr.sortingOrder = 1;            // ...però per davall d'ell (ordre 2)
+
+        Chest chest = root.AddComponent<Chest>();
+        chest.rarity = rarity;
+        chest.spriteRenderer = sr;
+        chest.closedSprite = closed;
+        chest.openSprite = open;
+
+        string path = PrefabFolder + "/Cofre_" + name + ".prefab";
+        GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
+        Object.DestroyImmediate(root);
+        return prefab;
+    }
+
+    static ChestTile CreateTile(ChestRarity rarity, Sprite preview, GameObject prefab)
+    {
+        string path = TileFolder + "/TileCofre_" + rarity + ".asset";
+        ChestTile tile = AssetDatabase.LoadAssetAtPath<ChestTile>(path);
+        if (tile == null)
+        {
+            tile = ScriptableObject.CreateInstance<ChestTile>();
+            AssetDatabase.CreateAsset(tile, path);
+        }
+        tile.previewSprite = preview;
+        tile.chestPrefab = prefab;
+        EditorUtility.SetDirty(tile);
+        return tile;
+    }
+
+    [MenuItem("Canica/Cofres/Posar-ne de prova al mapa de proves")]
+    public static void PlaceTestChests()
+    {
+        if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+            return;
+
+        Dictionary<ChestRarity, ChestTile> tiles = CreateAll();
+        if (tiles.Count == 0)
+        {
+            EditorUtility.DisplayDialog("Cofres", "No s'han trobat els sprites dels cofres.", "OK");
+            return;
+        }
+
+        string originalScene = EditorSceneManager.GetActiveScene().path;
+        var scene = EditorSceneManager.OpenScene(TestScene, OpenSceneMode.Single);
+
+        // En obrir una escena, Unity descarrega els assets que no s'usen: tornem a carregar els tiles
+        tiles.Clear();
+        foreach (ChestRarity rarity in System.Enum.GetValues(typeof(ChestRarity)))
+        {
+            ChestTile t = AssetDatabase.LoadAssetAtPath<ChestTile>(TileFolder + "/TileCofre_" + rarity + ".asset");
+            if (t != null) tiles[rarity] = t;
+        }
+
+        Tilemap ground = FindTilemap("Tilemap Ground");
+        GameObject grid = GameObject.Find("Grid");
+        GameObject spawn = GameObject.Find("SpawnPoint");
+        if (ground == null || grid == null || spawn == null)
+        {
+            EditorUtility.DisplayDialog("Cofres", "No trobe 'Grid', 'Tilemap Ground' o 'SpawnPoint' a GameScene.", "OK");
+            return;
+        }
+
+        Tilemap chests = FindTilemap(ChestTilemapName);
+        if (chests == null)
+        {
+            GameObject go = new GameObject(ChestTilemapName, typeof(Tilemap), typeof(TilemapRenderer));
+            go.transform.SetParent(grid.transform, false);
+            TilemapRenderer tr = go.GetComponent<TilemapRenderer>();
+            tr.sortingLayerName = "Player";
+            tr.sortingOrder = 1;
+            chests = go.GetComponent<Tilemap>();
+        }
+        chests.ClearAllTiles();
+
+        Tilemap[] obstacles =
+        {
+            FindTilemap("Tilemap Walls"), FindTilemap("Tilemap Liquid"), FindTilemap("Tilemap Trees")
+        };
+
+        // Cel·les lliures (amb terra, sense obstacles) a 3-7 cel·les del SpawnPoint,
+        // separades entre elles i ordenades per proximitat
+        Vector3Int center = ground.WorldToCell(spawn.transform.position);
+        var candidates = new List<Vector3Int>();
+        for (int x = -7; x <= 7; x++)
+        {
+            for (int y = -7; y <= 7; y++)
+            {
+                Vector3Int c = center + new Vector3Int(x, y, 0);
+                float d = Mathf.Sqrt(x * x + y * y);
+                if (d < 3f || d > 7f) continue;
+                if (!ground.HasTile(c)) continue;
+                if (IsBlocked(c, obstacles)) continue;
+                candidates.Add(c);
+            }
+        }
+        candidates.Sort((a, b) => (a - center).sqrMagnitude.CompareTo((b - center).sqrMagnitude));
+
+        var placed = new List<Vector3Int>();
+        foreach (ChestRarity rarity in System.Enum.GetValues(typeof(ChestRarity)))
+        {
+            if (!tiles.ContainsKey(rarity)) continue;
+            foreach (Vector3Int c in candidates)
+            {
+                bool farEnough = true;
+                foreach (Vector3Int p in placed)
+                    if ((p - c).sqrMagnitude < 9) { farEnough = false; break; } // 3 cel·les
+                if (!farEnough) continue;
+
+                chests.SetTile(c, tiles[rarity]);
+                placed.Add(c);
+                break;
+            }
+        }
+
+        EditorSceneManager.MarkSceneDirty(scene);
+        EditorSceneManager.SaveScene(scene);
+        Debug.Log("[Cofres] " + placed.Count + " cofres posats a GameScene: " + string.Join(", ", placed) +
+                  " (tiles al tilemap: " + chests.GetUsedTilesCount() + ")");
+
+        if (!string.IsNullOrEmpty(originalScene) && originalScene != TestScene)
+            EditorSceneManager.OpenScene(originalScene, OpenSceneMode.Single);
+
+        EditorUtility.DisplayDialog("Cofres", placed.Count + " cofres posats a GameScene (a '" + ChestTilemapName + "').", "OK");
+    }
+
+    static Tilemap FindTilemap(string name)
+    {
+        GameObject go = GameObject.Find(name);
+        return go != null ? go.GetComponent<Tilemap>() : null;
+    }
+
+    static bool IsBlocked(Vector3Int cell, Tilemap[] obstacles)
+    {
+        foreach (Tilemap t in obstacles)
+            if (t != null && t.HasTile(cell)) return true;
+        return false;
     }
 }
