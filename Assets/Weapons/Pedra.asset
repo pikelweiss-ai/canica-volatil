@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8b6c57b668240d6bb2883b297e8d7c7, type: 3}
+  m_Name: Pedra
+  m_EditorClassIdentifier: 
+  weaponName: Pedra
+  icon: {fileID: 0}
+  damage: 1
+  cooldown: 0.5
+  knockbackForce: 4
+  projectilePrefab: {fileID: 0}
+  projectileSpeed: 12
+  range: 6
+  projectileSize: 0.3
+  projectileColor: {r: 0.6, g: 0.6, b: 0.6, a: 1}

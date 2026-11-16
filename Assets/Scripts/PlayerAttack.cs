@@ -1,91 +1,257 @@
 using System.Collections;
 using UnityEngine;
 
+// Atac estil Brawl Stars:
+// - Apuntes amb el ratolí (es veu una línia cap on apuntes)
+// - Clic esquerre (o Espai) per a atacar
+// - Tecles 1-4 o la roda del ratolí per a triar casella de la hotbar
+// - Si la casella està buida, ataques amb el PUNY (curta distància)
 public class PlayerAttack : MonoBehaviour
 {
-    [Header("Atac")]
-    public int damage = 1;              // Mal que fa cada colp
-    public float attackRange = 0.8f;    // Distància del centre del jugador al centre del colp
-    public float attackRadius = 0.6f;   // Mida de la zona del colp
-    public float attackCooldown = 0.4f; // Temps mínim entre colps (segons)
-    public float knockbackForce = 6f;   // Com de lluny empenta l'enemic
+    [Header("Puny (quan la casella està buida)")]
+    public int fistDamage = 1;
+    public float fistRange = 0.7f;       // Distància del centre del jugador al colp
+    public float fistRadius = 0.45f;     // Mida de la zona del colp
+    public float fistCooldown = 0.35f;
+    public float fistKnockback = 6f;
 
-    [Header("Efectes (opcionals)")]
-    public CameraFollow cameraFollow;   // Per a fer un xicotet tremolor en encertar
-    public GameObject slashEffectPrefab; // Si poses un prefab, apareix on pegues
+    [Header("Hotbar (tecles 1-4)")]
+    public WeaponData[] hotbarSlots = new WeaponData[4];
 
-    private Vector2 facingDirection = Vector2.down; // Cap a on mira el jugador
+    [Header("Línia d'apuntat")]
+    public bool showAimLine = true;
+    public Color aimLineColor = new Color(0f, 0f, 0f, 0.3f);
+    public float aimLineWidth = 0.18f;
+
+    [Header("Efectes")]
+    public CameraFollow cameraFollow;
+
+    private int selectedSlot = 0;
     private float nextAttackTime = 0f;
+    private Vector2 aimDirection = Vector2.right;
     private Vector3 originalScale;
+
+    private Camera cam;
+    private LineRenderer aimLine;
+    private HotbarUI hotbarUI;
+    private SpriteRenderer playerSprite;
+
+    WeaponData CurrentWeapon
+    {
+        get
+        {
+            if (hotbarSlots == null || selectedSlot >= hotbarSlots.Length) return null;
+            return hotbarSlots[selectedSlot];
+        }
+    }
 
     void Start()
     {
         originalScale = transform.localScale;
+        cam = Camera.main;
+        playerSprite = GetComponent<SpriteRenderer>();
+
+        if (hotbarSlots == null || hotbarSlots.Length == 0)
+            hotbarSlots = new WeaponData[4];
+
+        CreateAimLine();
+
+        hotbarUI = HotbarUI.Create(hotbarSlots.Length);
+        hotbarUI.Refresh(hotbarSlots, selectedSlot);
     }
 
     void Update()
     {
-        // Guardem l'última direcció en què s'ha mogut el jugador
-        Vector2 input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
-        if (input != Vector2.zero)
-        {
-            facingDirection = input.normalized;
-        }
+        UpdateAim();
+        HandleSlotSelection();
 
-        bool attackPressed = Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0);
+        bool attackPressed = Input.GetMouseButton(0) || Input.GetKey(KeyCode.Space);
 
         if (attackPressed && Time.time >= nextAttackTime)
         {
-            Attack();
-            nextAttackTime = Time.time + attackCooldown;
+            WeaponData weapon = CurrentWeapon;
+
+            if (weapon == null)
+            {
+                Punch();
+                nextAttackTime = Time.time + fistCooldown;
+            }
+            else
+            {
+                Shoot(weapon);
+                nextAttackTime = Time.time + weapon.cooldown;
+            }
         }
     }
 
-    void Attack()
-    {
-        Vector2 attackPoint = (Vector2)transform.position + facingDirection * attackRange;
+    // ---------- Apuntar ----------
 
-        if (slashEffectPrefab != null)
+    void UpdateAim()
+    {
+        if (cam == null) cam = Camera.main;
+        if (cam == null) return;
+
+        Vector3 mouseWorld = cam.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 dir = (Vector2)mouseWorld - (Vector2)transform.position;
+
+        if (dir.sqrMagnitude > 0.001f)
+            aimDirection = dir.normalized;
+
+        if (aimLine != null)
         {
-            Instantiate(slashEffectPrefab, attackPoint, Quaternion.identity);
+            aimLine.enabled = showAimLine;
+
+            WeaponData weapon = CurrentWeapon;
+            float length = weapon != null ? weapon.range : fistRange + fistRadius;
+
+            Vector2 start = (Vector2)transform.position + aimDirection * 0.4f;
+            Vector2 end = (Vector2)transform.position + aimDirection * Mathf.Max(length, 0.5f);
+            aimLine.SetPosition(0, start);
+            aimLine.SetPosition(1, end);
+        }
+    }
+
+    void CreateAimLine()
+    {
+        GameObject lineGO = new GameObject("AimLine");
+        lineGO.transform.SetParent(transform, false);
+
+        aimLine = lineGO.AddComponent<LineRenderer>();
+        aimLine.useWorldSpace = true;
+        aimLine.positionCount = 2;
+        aimLine.startWidth = aimLineWidth;
+        aimLine.endWidth = aimLineWidth;
+        aimLine.numCapVertices = 4;
+        aimLine.startColor = aimLineColor;
+        aimLine.endColor = aimLineColor;
+
+        Shader shader = Shader.Find("Sprites/Default");
+        if (shader == null) shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
+        aimLine.material = new Material(shader);
+
+        // Que la línia es dibuixe just davall del jugador
+        if (playerSprite != null)
+        {
+            aimLine.sortingLayerID = playerSprite.sortingLayerID;
+            aimLine.sortingOrder = playerSprite.sortingOrder - 1;
+        }
+    }
+
+    // ---------- Hotbar ----------
+
+    void HandleSlotSelection()
+    {
+        int newSlot = selectedSlot;
+
+        for (int i = 0; i < hotbarSlots.Length && i < 9; i++)
+        {
+            if (Input.GetKeyDown(KeyCode.Alpha1 + i) || Input.GetKeyDown(KeyCode.Keypad1 + i))
+                newSlot = i;
         }
 
-        StartCoroutine(AttackSquash());
+        float scroll = Input.mouseScrollDelta.y;
+        if (scroll < 0f) newSlot = (selectedSlot + 1) % hotbarSlots.Length;
+        if (scroll > 0f) newSlot = (selectedSlot - 1 + hotbarSlots.Length) % hotbarSlots.Length;
 
-        // Busquem tots els colliders dins del cercle del colp
-        Collider2D[] hits = Physics2D.OverlapCircleAll(attackPoint, attackRadius);
+        if (newSlot != selectedSlot)
+        {
+            selectedSlot = newSlot;
+            hotbarUI.Refresh(hotbarSlots, selectedSlot);
+        }
+    }
+
+    // Per si en el futur vols recollir armes del terra
+    public bool AddWeapon(WeaponData weapon)
+    {
+        for (int i = 0; i < hotbarSlots.Length; i++)
+        {
+            if (hotbarSlots[i] == null)
+            {
+                hotbarSlots[i] = weapon;
+                hotbarUI.Refresh(hotbarSlots, selectedSlot);
+                return true;
+            }
+        }
+        return false; // Hotbar plena
+    }
+
+    // ---------- Atacs ----------
+
+    void Punch()
+    {
+        Vector2 hitPoint = (Vector2)transform.position + aimDirection * fistRange;
+
+        StartCoroutine(AttackSquash());
+        StartCoroutine(PunchFlash(hitPoint));
+
         bool hitSomething = false;
 
-        foreach (Collider2D hit in hits)
+        foreach (Collider2D hit in Physics2D.OverlapCircleAll(hitPoint, fistRadius))
         {
             EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
             if (enemy == null)
                 continue;
 
-            Vector2 knockDir = ((Vector2)enemy.transform.position - (Vector2)transform.position).normalized;
-            enemy.TakeHit(damage, knockDir * knockbackForce);
+            enemy.TakeHit(fistDamage, aimDirection * fistKnockback);
             hitSomething = true;
         }
 
         if (hitSomething && cameraFollow != null)
-        {
             cameraFollow.ShakeCamera(0.1f, 0.1f);
-        }
     }
 
-    // Xicoteta animació d'"empenta" del jugador en atacar
+    void Shoot(WeaponData weapon)
+    {
+        Vector2 spawnPos = (Vector2)transform.position + aimDirection * 0.5f;
+        int layer = playerSprite != null ? playerSprite.sortingLayerID : 0;
+        int order = playerSprite != null ? playerSprite.sortingOrder + 1 : 0;
+
+        Projectile.Spawn(spawnPos, aimDirection, weapon, transform, layer, order);
+        StartCoroutine(AttackSquash());
+    }
+
+    // ---------- Efectes visuals ----------
+
+    // Xicoteta "empenta" del jugador en atacar
     IEnumerator AttackSquash()
     {
-        transform.localScale = originalScale * 1.2f;
+        transform.localScale = originalScale * 1.15f;
         yield return new WaitForSeconds(0.08f);
         transform.localScale = originalScale;
     }
 
-    // Dibuixa la zona d'atac a la vista Scene (només a l'editor)
+    // Cercle blanc que apareix on pega el puny i s'esvaeix
+    IEnumerator PunchFlash(Vector2 position)
+    {
+        GameObject flash = new GameObject("PunchFlash");
+        flash.transform.position = position;
+
+        SpriteRenderer sr = flash.AddComponent<SpriteRenderer>();
+        sr.sprite = Projectile.CircleSprite;
+        if (playerSprite != null)
+        {
+            sr.sortingLayerID = playerSprite.sortingLayerID;
+            sr.sortingOrder = playerSprite.sortingOrder + 1;
+        }
+
+        const float duration = 0.12f;
+        float t = 0f;
+        while (t < duration)
+        {
+            float k = t / duration;
+            flash.transform.localScale = Vector3.one * Mathf.Lerp(fistRadius * 2f, fistRadius * 3f, k);
+            sr.color = new Color(1f, 1f, 1f, 0.6f * (1f - k));
+            t += Time.deltaTime;
+            yield return null;
+        }
+
+        Destroy(flash);
+    }
+
+    // Dibuixa la zona del puny a la vista Scene (només a l'editor)
     void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
-        Vector2 dir = Application.isPlaying ? facingDirection : Vector2.down;
-        Gizmos.DrawWireSphere((Vector2)transform.position + dir * attackRange, attackRadius);
+        Gizmos.DrawWireSphere((Vector2)transform.position + aimDirection * fistRange, fistRadius);
     }
 }
