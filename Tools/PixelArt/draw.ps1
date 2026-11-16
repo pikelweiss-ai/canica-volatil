@@ -29,7 +29,8 @@ $pairs = @(
   'b','4a7fe0', 'B','27448f',                     # blau / blau fosc (rar)
   'v','a259e0', 'V','5e2a8a',                     # morat / morat fosc (èpic)
   'n','2a1a12',                                   # interior fosc del cofre
-  'q','f5c542', 'Q','b07a1a'                      # monedes de dins del cofre (no es recoloregen)
+  'q','f5c542', 'Q','b07a1a',                     # monedes de dins del cofre (no es recoloregen)
+  'z','c8803a', 'Z','8a5424', 'x','f2c27a'        # bronze / bronze fosc / bronze clar (bales)
 )
 for ($i = 0; $i -lt $pairs.Count; $i += 2) { $P[$pairs[$i]] = $pairs[$i + 1] }
 
@@ -123,6 +124,13 @@ $sprites['Armes/Pedra'] = @{ size = 16; mirror = $true; rows = @(
   '.kmmmmmm',
   '..kmmddd',
   '...kkkkk'
+)}
+
+# Bala de l'AK (bronze, apunta cap a la dreta: el joc la gira cap on va)
+$sprites['Armes/Bala'] = @{ size = 8; rows = @(
+  '.kkkkk.',
+  'kZzzzxk',
+  '.kkkkk.'
 )}
 
 # ---------------- Items de cura (16x16) ----------------

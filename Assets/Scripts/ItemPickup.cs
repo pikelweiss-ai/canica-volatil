@@ -13,6 +13,9 @@ public class ItemPickup : MonoBehaviour
     public float floatHeight = 0.3f;   // Altura a la qual flota
     public float bobHeight = 0.06f;    // Quant puja i baixa
     public float bobSpeed = 3f;
+    public float dropScale = 0.6f;     // Al terra es veu més xicotet que a la mà
+
+    private bool waitForPlayerToLeave; // Si l'has deixat anar tu, no el tornes a agafar fins que t'allunyes
 
     private Transform itemVisual;
     private Transform shadow;
@@ -23,12 +26,13 @@ public class ItemPickup : MonoBehaviour
     private float bobOffset;
 
     // Crea l'item a 'from' i el fa saltar fins a 'to'
-    public static ItemPickup Spawn(WeaponData weapon, Vector3 from, Vector3 to)
+    public static ItemPickup Spawn(WeaponData weapon, Vector3 from, Vector3 to, bool droppedByPlayer = false)
     {
         GameObject go = new GameObject("Item " + weapon.weaponName);
         go.transform.position = from;
         ItemPickup item = go.AddComponent<ItemPickup>();
         item.weapon = weapon;
+        item.waitForPlayerToLeave = droppedByPlayer;
         item.Build();
         item.StartCoroutine(item.PopOut(from, to));
         return item;
@@ -67,6 +71,8 @@ public class ItemPickup : MonoBehaviour
         sr.sortingLayerName = "Player";
         sr.sortingOrder = 3;
         itemVisual = visualGo.transform;
+        if (weapon.icon != null)
+            itemVisual.localScale = Vector3.one * dropScale;
     }
 
     void Start()
@@ -109,7 +115,15 @@ public class ItemPickup : MonoBehaviour
         shadow.localScale = shadowScale * (1f - 0.12f * (s + 1f) * 0.5f);
 
         if (player == null || playerAttack == null) return;
-        if (Vector2.Distance(player.position, transform.position) > pickupRange) return;
+        float distance = Vector2.Distance(player.position, transform.position);
+
+        if (waitForPlayerToLeave)
+        {
+            if (distance > pickupRange + 0.3f) waitForPlayerToLeave = false;
+            return;
+        }
+
+        if (distance > pickupRange) return;
 
         if (playerAttack.AddWeapon(weapon))
         {

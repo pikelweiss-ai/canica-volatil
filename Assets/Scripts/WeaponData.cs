@@ -1,5 +1,10 @@
 using UnityEngine;
 
+// Quin so fa l'arma:
+// - Tret: un "bang" cada vegada que dispara (AK...)
+// - Llancament: un "fiuu" en llançar-la i un "toc" quan impacta (pedra...)
+public enum WeaponSound { Tret, Llancament }
+
 // Una arma de la hotbar. Es crea des de Unity amb:
 // clic dret a Project -> Create -> Canica -> Arma
 [CreateAssetMenu(fileName = "NovaArma", menuName = "Canica/Arma")]
@@ -7,8 +12,9 @@ public class WeaponData : ScriptableObject
 {
     [Header("General")]
     public string weaponName = "Arma";
-    public Sprite icon;                 // Icona de la hotbar i sprite quan està al terra
+    public Sprite icon;                 // Icona de la hotbar, sprite a la mà i al terra
     public ChestRarity rarity = ChestRarity.Comu; // Color de la vora quan està al terra
+    public float handScale = 0.75f;     // Mida de l'arma a la mà del jugador
 
     [Header("Atac")]
     public int damage = 1;
@@ -16,9 +22,16 @@ public class WeaponData : ScriptableObject
     public float knockbackForce = 4f;
 
     [Header("Projectil")]
-    public GameObject projectilePrefab; // Opcional: si està buit, es fa una boleta
+    public GameObject projectilePrefab; // Opcional: prefab propi del projectil
+    public Sprite projectileSprite;     // Opcional: sprite del projectil (s'orienta cap on va)
+    public float projectileSpriteScale = 1f;
     public float projectileSpeed = 12f;
     public float range = 6f;            // Distància màxima del projectil
-    public float projectileSize = 0.3f;
+    public float projectileSize = 0.3f; // Mida de la hitbox (i de la boleta si no hi ha sprite)
     public Color projectileColor = Color.white;
+
+    [Header("So (si els clips estan buits, es generen per codi)")]
+    public WeaponSound sound = WeaponSound.Tret;
+    public AudioClip shootSound;
+    public AudioClip impactSound;
 }

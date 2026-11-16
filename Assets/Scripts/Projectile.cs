@@ -12,9 +12,11 @@ public class Projectile : MonoBehaviour
     private float radius;
     private Transform owner;
     private Vector2 startPosition;
+    private WeaponData weapon;
 
     public void Init(Vector2 dir, WeaponData weapon, Transform shooter)
     {
+        this.weapon = weapon;
         direction = dir.normalized;
         speed = weapon.projectileSpeed;
         maxDistance = weapon.range;
@@ -43,22 +45,31 @@ public class Projectile : MonoBehaviour
             if (enemy != null)
             {
                 enemy.TakeHit(damage, direction * knockbackForce);
-                Destroy(gameObject);
+                End();
                 return;
             }
 
             // Collider sòlid (paret, arbre...) -> el projectil s'atura
             if (!hit.isTrigger)
             {
-                Destroy(gameObject);
+                End();
                 return;
             }
         }
 
+        // Arriba al final de l'abast (la pedra cau a terra)
         if (Vector2.Distance(startPosition, transform.position) >= maxDistance)
         {
-            Destroy(gameObject);
+            End();
         }
+    }
+
+    // El projectil s'acaba: so d'impacte (si l'arma en té) i desapareix
+    void End()
+    {
+        if (weapon != null)
+            WeaponSounds.Play(WeaponSounds.ImpactClip(weapon), 0.6f);
+        Destroy(gameObject);
     }
 
     // ---- Boleta generada per codi, per a armes sense prefab ----
@@ -102,11 +113,22 @@ public class Projectile : MonoBehaviour
         {
             go = new GameObject("Projectil " + weapon.weaponName);
             go.transform.position = position;
-            go.transform.localScale = Vector3.one * weapon.projectileSize;
+            go.layer = LayerMask.NameToLayer("Ignore Raycast");
 
             SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = CircleSprite;
-            sr.color = weapon.projectileColor;
+            if (weapon.projectileSprite != null)
+            {
+                // Sprite propi (bala, pedra...): Init el gira cap a on va
+                sr.sprite = weapon.projectileSprite;
+                go.transform.localScale = Vector3.one * weapon.projectileSpriteScale;
+            }
+            else
+            {
+                // Sense sprite: boleta de color
+                sr.sprite = CircleSprite;
+                sr.color = weapon.projectileColor;
+                go.transform.localScale = Vector3.one * weapon.projectileSize;
+            }
             sr.sortingLayerID = sortingLayerID;
             sr.sortingOrder = sortingOrder;
         }

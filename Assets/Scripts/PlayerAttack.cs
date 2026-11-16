@@ -26,8 +26,15 @@ public class PlayerAttack : MonoBehaviour
     [Range(0f, 1f)]
     public float aimChargingOpacity = 0.35f; // Opacitat de la part encara no carregada (respecte d'aimColor)
 
+    [Header("Arma a la mà")]
+    public float handDistance = 0.45f;   // Distància del centre del jugador a l'arma
+    public KeyCode dropKey = KeyCode.Z;  // Deixa anar al terra l'arma de la casella triada
+
     [Header("Efectes")]
     public CameraFollow cameraFollow;
+
+    private SpriteRenderer handSprite;   // L'arma que porta a la mà
+    private float recoil;                // Retrocés de l'arma en disparar
 
     private int selectedSlot = 0;
     private float nextAttackTime = 0f;
@@ -60,6 +67,7 @@ public class PlayerAttack : MonoBehaviour
             hotbarSlots = new WeaponData[4];
 
         CreateAimLine();
+        CreateHand();
 
         // Mateixa tipografia que el nom de damunt del jugador
         TMP_FontAsset font = hotbarFont;
@@ -82,6 +90,10 @@ public class PlayerAttack : MonoBehaviour
 
         UpdateAim();
         HandleSlotSelection();
+        UpdateHand();
+
+        if (Input.GetKeyDown(dropKey))
+            DropCurrentWeapon();
 
         bool attackPressed = Input.GetMouseButton(0) || Input.GetKey(KeyCode.Space);
 
@@ -262,12 +274,85 @@ public class PlayerAttack : MonoBehaviour
 
     void Shoot(WeaponData weapon)
     {
-        Vector2 spawnPos = (Vector2)transform.position + aimDirection * 0.5f;
+        // El projectil ix de la punta de l'arma (el canó)
+        Vector2 spawnPos = (Vector2)transform.position + aimDirection * MuzzleDistance(weapon);
         int layer = playerSprite != null ? playerSprite.sortingLayerID : 0;
         int order = playerSprite != null ? playerSprite.sortingOrder + 1 : 0;
 
         Projectile.Spawn(spawnPos, aimDirection, weapon, transform, layer, order);
-        StartCoroutine(AttackSquash());
+        WeaponSounds.Play(WeaponSounds.ShootClip(weapon), 0.5f);
+        recoil = 0.08f; // L'arma recula un poc
+    }
+
+    // Distància del centre del jugador a la punta de l'arma
+    float MuzzleDistance(WeaponData weapon)
+    {
+        if (weapon.icon == null) return handDistance;
+        float length = weapon.icon.rect.width / weapon.icon.pixelsPerUnit * weapon.handScale;
+        return handDistance + length * 0.5f;
+    }
+
+    // ---------- Arma a la mà ----------
+
+    void CreateHand()
+    {
+        // No és fill del jugador perquè la seua escala no deforme l'arma
+        GameObject go = new GameObject("Arma a la mà");
+        go.layer = LayerMask.NameToLayer("Ignore Raycast"); // Només visual
+        handSprite = go.AddComponent<SpriteRenderer>();
+        handSprite.enabled = false;
+    }
+
+    // L'arma segueix el jugador i apunta cap al ratolí.
+    // Quan apuntes cap a l'esquerra es gira en espill (si no, es veuria cap per avall).
+    void UpdateHand()
+    {
+        if (handSprite == null) return;
+
+        WeaponData weapon = CurrentWeapon;
+        if (weapon == null || weapon.icon == null)
+        {
+            handSprite.enabled = false; // Puny: no porta res
+            return;
+        }
+
+        handSprite.enabled = true;
+        handSprite.sprite = weapon.icon;
+        handSprite.flipY = aimDirection.x < 0f;
+
+        // Si apuntes cap amunt, l'arma queda darrere del jugador; si no, davant
+        if (playerSprite != null)
+        {
+            handSprite.sortingLayerID = playerSprite.sortingLayerID;
+            handSprite.sortingOrder = aimDirection.y > 0.35f ? playerSprite.sortingOrder - 1 : playerSprite.sortingOrder + 1;
+        }
+
+        recoil = Mathf.MoveTowards(recoil, 0f, Time.deltaTime * 0.6f);
+        Vector2 pos = (Vector2)transform.position + aimDirection * (handDistance - recoil) + Vector2.down * 0.08f;
+
+        Transform hand = handSprite.transform;
+        hand.position = pos;
+        hand.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(aimDirection.y, aimDirection.x) * Mathf.Rad2Deg);
+        hand.localScale = Vector3.one * weapon.handScale;
+    }
+
+    // Z: deixa l'arma de la casella triada al terra, davant del jugador
+    void DropCurrentWeapon()
+    {
+        WeaponData weapon = CurrentWeapon;
+        if (weapon == null) return;
+
+        hotbarSlots[selectedSlot] = null;
+        hotbarUI.Refresh(hotbarSlots, selectedSlot);
+
+        Vector3 from = transform.position;
+        Vector3 to = transform.position + (Vector3)(aimDirection * 1f);
+        ItemPickup.Spawn(weapon, from, to, true);
+    }
+
+    void OnDestroy()
+    {
+        if (handSprite != null) Destroy(handSprite.gameObject);
     }
 
     // ---------- Efectes visuals ----------
