@@ -115,7 +115,12 @@ public class Chest : MonoBehaviour
         }
 
         bool canOpen = IsInRange() && IsClosestChest();
-        bool playerMoved = (player.position - lastPlayerPos).sqrMagnitude > 0.000025f;
+        // Estàs movent-te si prems alguna tecla de moviment o si la canica s'ha desplaçat.
+        // (Només amb la posició no basta: el moviment va per passos de física i hi ha
+        //  fotogrames en què no canvia, i això feia sonar els colps com una metralleta.)
+        bool movingInput = Mathf.Abs(Input.GetAxisRaw("Horizontal")) > 0.01f ||
+                           Mathf.Abs(Input.GetAxisRaw("Vertical")) > 0.01f;
+        bool playerMoved = movingInput || (player.position - lastPlayerPos).sqrMagnitude > 0.0004f;
         lastPlayerPos = player.position;
 
         SetPromptVisible(canOpen);

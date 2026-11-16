@@ -177,8 +177,11 @@ public class PlayerAttack : MonoBehaviour
 
     LineRenderer CreateLine(string name, Material material, int orderOffset)
     {
+        // L'aim és NOMÉS visual: un LineRenderer sense collider (no té hitbox, no bloqueja
+        // res i els atacs no el detecten). La capa Ignore Raycast és per a assegurar-ho.
         GameObject lineGO = new GameObject(name);
         lineGO.transform.SetParent(transform, false);
+        lineGO.layer = LayerMask.NameToLayer("Ignore Raycast");
 
         LineRenderer line = lineGO.AddComponent<LineRenderer>();
         line.useWorldSpace = true;
@@ -282,6 +285,7 @@ public class PlayerAttack : MonoBehaviour
     {
         GameObject flash = new GameObject("PunchFlash");
         flash.transform.position = position;
+        flash.layer = LayerMask.NameToLayer("Ignore Raycast"); // També només visual
 
         SpriteRenderer sr = flash.AddComponent<SpriteRenderer>();
         sr.sprite = Projectile.CircleSprite;
