@@ -54,14 +54,6 @@ public class EnemyHealth : MonoBehaviour
         spriteRenderer.color = originalColor;
     }
 
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.J))
-        {
-            TakeDamage(1);
-        }
-    }
-
     public void TakeDamage(int damage)
     {
         if (isDead) return;

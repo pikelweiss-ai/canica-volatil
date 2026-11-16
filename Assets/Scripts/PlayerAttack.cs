@@ -72,6 +72,10 @@ public class PlayerAttack : MonoBehaviour
 
     void Update()
     {
+        // Tab: mostra / amaga la línia d'apuntat
+        if (Input.GetKeyDown(KeyCode.Tab))
+            showAimLine = !showAimLine;
+
         UpdateAim();
         HandleSlotSelection();
 
