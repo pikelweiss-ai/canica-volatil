@@ -24302,6 +24302,7 @@ GameObject:
   - component: {fileID: 1874617893}
   - component: {fileID: 1874617892}
   - component: {fileID: 1874617894}
+  - component: {fileID: 1874617895}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -24309,6 +24310,25 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &1874617895
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1874617885}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d4053fd2118408e8bafa2a94b053d51, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  damage: 1
+  attackRange: 0.8
+  attackRadius: 0.6
+  attackCooldown: 0.4
+  knockbackForce: 6
+  cameraFollow: {fileID: 1260936956}
+  slashEffectPrefab: {fileID: 0}
 --- !u!114 &1874617886
 MonoBehaviour:
   m_ObjectHideFlags: 0

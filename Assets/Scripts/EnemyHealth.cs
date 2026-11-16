@@ -10,11 +10,48 @@ public class EnemyHealth : MonoBehaviour
 
     public GameObject poofEffectPrefab;
 
+    [Header("Feedback del colp")]
+    public Color hitColor = Color.red;   // Color del flash en rebre un colp
+    public float flashDuration = 0.1f;
+
     private bool isDead = false;
+    private SpriteRenderer spriteRenderer;
+    private Color originalColor;
+    private EnemyPathfindingAI pathfinding;
 
     void Start()
     {
         currentHealth = maxHealth;
+
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        if (spriteRenderer != null)
+            originalColor = spriteRenderer.color;
+
+        pathfinding = GetComponent<EnemyPathfindingAI>();
+    }
+
+    // El crida PlayerAttack: fa mal, flash roig i empenta l'enemic
+    public void TakeHit(int damage, Vector2 knockback)
+    {
+        if (isDead) return;
+
+        if (pathfinding != null)
+            pathfinding.ApplyKnockback(knockback, 0.15f);
+
+        if (spriteRenderer != null)
+        {
+            StopCoroutine(nameof(HitFlash));
+            StartCoroutine(nameof(HitFlash));
+        }
+
+        TakeDamage(damage);
+    }
+
+    System.Collections.IEnumerator HitFlash()
+    {
+        spriteRenderer.color = hitColor;
+        yield return new WaitForSeconds(flashDuration);
+        spriteRenderer.color = originalColor;
     }
 
     void Update()

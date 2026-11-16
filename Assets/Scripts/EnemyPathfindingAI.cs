@@ -17,15 +17,39 @@ public class EnemyPathfindingAI : MonoBehaviour
     private int pathIndex = 0;
     private float timer = 0f;
 
+    // Retroces quan el jugador li pega
+    private Vector2 knockbackVelocity = Vector2.zero;
+    private float knockbackTimer = 0f;
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+    }
+
+    public void ApplyKnockback(Vector2 velocity, float duration)
+    {
+        knockbackVelocity = velocity;
+        knockbackTimer = duration;
     }
 
     void FixedUpdate()
     {
         if (player == null || referenceTilemap == null)
             return;
+
+        // Mentre dura el retroces, l'enemic no persegueix: nomes es empentat
+        if (knockbackTimer > 0f)
+        {
+            knockbackTimer -= Time.fixedDeltaTime;
+            Vector2 knockPos = rb.position + knockbackVelocity * Time.fixedDeltaTime;
+
+            // No l'empentem dins d'aigua, parets ni arbres
+            if (!IsBlocked(referenceTilemap.WorldToCell(knockPos)))
+                rb.MovePosition(knockPos);
+
+            timer = 0f; // Recalcula el cami just despres del retroces
+            return;
+        }
 
         float distance = Vector2.Distance(transform.position, player.position);
 
