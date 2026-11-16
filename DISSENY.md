@@ -55,7 +55,11 @@ Més modes: *"ja vorem"*.
 ## 8. Estil gràfic
 - **Píxel art de deveres**: imatges a la resolució real (p. ex. 16×16 o 32×32) amb **Filter Mode: Point**, **Compression: None** i **Pixels Per Unit = mida del tile**. No imatges grans que imiten píxels.
 - Ara els tiles són de 1024×1024 i "imiten" píxels.
-- La resolució encara **no està decidida**: provarem 16×16, 24×24 i 32×32 i triarem.
+- **Blocs/tiles: sempre 16×16**, per a poder conservar les textures originals del Ferran.
+- **Densitat: 16 píxels = 1 unitat** de Unity. Tot el que es pose dins d'una carpeta `Pixel/` s'importa sol amb aquesta configuració (`Assets/Editor/PixelArtImporter.cs`).
+- Armes: provant mides. Hi ha l'AK-47 a 16, 24 i 32 (`Assets/Sprites/Pixel/Armes`).
+- Items de cura (16×16): poció de vida, farmaciola, poma i bena (`Assets/Sprites/Pixel/Items`).
+- Els sprites es generen amb `Tools/PixelArt/draw.ps1`, a partir de graelles de lletres i una paleta.
 - Textures actuals: **refer i comparar**. Es fan versions noves i el Ferran tria quines li agraden més.
 - Fan falta moltes textures: un tileset per cada tema, enemics, armes, cofres i efectes.
 
