@@ -59,6 +59,7 @@ Més modes: *"ja vorem"*.
 - **Densitat: 16 píxels = 1 unitat** de Unity. Tot el que es pose dins d'una carpeta `Pixel/` s'importa sol amb aquesta configuració (`Assets/Editor/PixelArtImporter.cs`).
 - **Armes: 32 px** (triat amb l'AK-47; les de 16 i 24 es queden de referència a `Assets/Sprites/Pixel/Armes`). A 16 PPU, una arma de 32 px fa 2 blocs de llarg, estil Enter the Gungeon.
 - Items de cura (16×16): poció de vida, farmaciola, poma i bena (`Assets/Sprites/Pixel/Items`).
+- **Cofres**: model A de fusta, de 12×10 píxels (més xicotet que un bloc), tancat i obert, en 4 rareses: comú (ferro), rar (blau), èpic (morat) i llegendari (or amb gemma). Estan a `Assets/Sprites/Pixel/Cofres`. El baül (B) i el de metall (C) es guarden a `Cofres/Dungeon` per al mode masmorra.
 - Els sprites es generen amb `Tools/PixelArt/draw.ps1`, a partir de graelles de lletres i una paleta.
 - Textures actuals: **refer i comparar**. Es fan versions noves i el Ferran tria quines li agraden més.
 - Fan falta moltes textures: un tileset per cada tema, enemics, armes, cofres i efectes.

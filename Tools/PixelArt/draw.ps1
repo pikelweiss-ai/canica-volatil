@@ -1,4 +1,4 @@
-# Generador de píxel art de Canica Volàtil.
+﻿# Generador de píxel art de Canica Volàtil.
 # Cada sprite és una graella de lletres; cada lletra és un color de la paleta ($P).
 # Per a canviar un píxel, canvia la lletra i torna a executar:
 #   .\Tools\PixelArt\draw.ps1
@@ -28,7 +28,8 @@ $pairs = @(
   'Y','f5c542', 'u','b07a1a',                     # or / or fosc
   'b','4a7fe0', 'B','27448f',                     # blau / blau fosc (rar)
   'v','a259e0', 'V','5e2a8a',                     # morat / morat fosc (èpic)
-  'n','2a1a12'                                    # interior fosc del cofre
+  'n','2a1a12',                                   # interior fosc del cofre
+  'q','f5c542', 'Q','b07a1a'                      # monedes de dins del cofre (no es recoloregen)
 )
 for ($i = 0; $i -lt $pairs.Count; $i += 2) { $P[$pairs[$i]] = $pairs[$i + 1] }
 
@@ -188,54 +189,49 @@ $sprites['Items/Bena'] = @{ size = 16; rows = @(
   '................'
 )}
 
-# ---------------- Cofres (16x16, com els blocs) ----------------
-# Només la meitat esquerra (8 columnes): la dreta es fa en espill.
+# ---------------- Cofres ----------------
+# Només la meitat esquerra: la dreta es fa en espill.
+# m/d = tires i pany de metall: es recoloregen segons la raresa.
 
-# A) Cofre de fusta amb tires de ferro (m/d = metall: es recoloreja segons la raresa)
-$cofreA = @(
-  '........',
-  '........',
-  '..kkkkkk',
-  '.kyymyyy',
-  '.koomooo',
-  '.koomooo',
-  '.kwwdwwk',
-  '.kkkkkkY',
-  '.koomooY',
-  '.koomook',
-  '.koomooo',
-  '.kwwmwww',
-  '.kwwdwww',
-  '..kkkkkk',
-  '........',
-  '........'
+# Cofre del joc: fusta amb tires (12x10 dins d'un llenç de 16x16 -> més xicotet que un bloc)
+$cofre = @(
+  '......',
+  '.kkkkk',
+  'kyymyy',
+  'koomoo',
+  'kwwdwk',
+  'kkkkkY',
+  'koomoY',
+  'koomok',
+  'kwwdww',
+  '.kkkkk'
 )
-$cofreA_obert = @(
-  '........',
-  '..kkkkkk',
-  '.kyymyyy',
-  '.kwwdwww',
-  '.kkkkkkk',
-  '.knnnnnn',
-  '.knnYnYn',
-  '.kkkkkkk',
-  '.koomooY',
-  '.koomook',
-  '.koomooo',
-  '.kwwmwww',
-  '.kwwdwww',
-  '..kkkkkk',
-  '........',
-  '........'
+$cofreObert = @(
+  '.kkkkk',
+  'kyymyy',
+  'kwwdww',
+  'kkkkkk',
+  'knqQqq',
+  'kkkkkk',
+  'koomoY',
+  'koomok',
+  'kwwdww',
+  '.kkkkk'
 )
-$sprites['Cofres/A_Fusta']        = @{ size = 16; mirror = $true; rows = $cofreA }
-$sprites['Cofres/A_Fusta_Obert']  = @{ size = 16; mirror = $true; rows = $cofreA_obert }
-$sprites['Cofres/A_Rar']          = @{ size = 16; mirror = $true; rows = $cofreA; recolor = (New-Map 'm','b','d','B') }
-$sprites['Cofres/A_Epic']         = @{ size = 16; mirror = $true; rows = $cofreA; recolor = (New-Map 'm','v','d','V') }
-$sprites['Cofres/A_Llegendari']   = @{ size = 16; mirror = $true; rows = $cofreA; recolor = (New-Map 'm','Y','d','u','Y','r') }
+$rareses = [ordered]@{
+  'Comu'       = $null
+  'Rar'        = (New-Map 'm','b','d','B')
+  'Epic'       = (New-Map 'm','v','d','V')
+  'Llegendari' = (New-Map 'm','Y','d','u','Y','r')
+}
+foreach ($r in $rareses.Keys) {
+  $sprites["Cofres/Cofre_$r"]       = @{ size = 16; mirror = $true; rows = $cofre;      recolor = $rareses[$r] }
+  $sprites["Cofres/Cofre_${r}_Obert"] = @{ size = 16; mirror = $true; rows = $cofreObert; recolor = $rareses[$r] }
+}
 
+# ---- Per al mode masmorra (encara no es gasten) ----
 # B) Baül: tapa arredonida i vores d'or
-$sprites['Cofres/B_Baul'] = @{ size = 16; mirror = $true; rows = @(
+$sprites['Cofres/Dungeon/B_Baul'] = @{ size = 16; mirror = $true; rows = @(
   '........',
   '....kkkk',
   '..kkyyyy',
@@ -255,7 +251,7 @@ $sprites['Cofres/B_Baul'] = @{ size = 16; mirror = $true; rows = @(
 )}
 
 # C) Cofre de metall de masmorra amb gemma roja
-$sprites['Cofres/C_Metall'] = @{ size = 16; mirror = $true; rows = @(
+$sprites['Cofres/Dungeon/C_Metall'] = @{ size = 16; mirror = $true; rows = @(
   '........',
   '........',
   '..kkkkkk',
