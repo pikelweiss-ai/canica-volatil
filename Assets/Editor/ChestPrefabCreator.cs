@@ -79,7 +79,7 @@ public static class ChestPrefabCreator
             shadow.transform.localPosition = new Vector3(0f, -0.3f, 0f);
             SpriteRenderer ssr = shadow.AddComponent<SpriteRenderer>();
             ssr.sprite = shadowSprite;
-            ssr.color = new Color(0f, 0f, 0f, 0.3f);
+            ssr.color = new Color(0f, 0f, 0f, 130f / 255f); // Igual de fosca que l'ombra del jugador (sombra 1.png)
             ssr.sortingLayerName = "Shadows"; // Per davall del jugador i del cofre
         }
 
@@ -88,8 +88,8 @@ public static class ChestPrefabCreator
         visual.transform.SetParent(root.transform, false);
         SpriteRenderer sr = visual.AddComponent<SpriteRenderer>();
         sr.sprite = closed;
-        sr.sortingLayerName = "Player"; // Mateixa capa i ordre que el jugador:
-        sr.sortingOrder = 2;            // es dibuixa davant o darrere segons l'altura (eix Y)
+        sr.sortingLayerName = "Player"; // Mateixa capa que el jugador. En jugar, Chest posa l'ordre
+        sr.sortingOrder = 1;            // davant o darrere de la canica segons l'altura
 
         Chest chest = root.AddComponent<Chest>();
         chest.rarity = rarity;

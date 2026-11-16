@@ -43,6 +43,7 @@ public class Chest : MonoBehaviour
     private static readonly List<Chest> allChests = new List<Chest>();
 
     private Transform player;
+    private SpriteRenderer playerSprite;
     private Transform visual;
     private Vector3 visualStartPos;
     private Vector3 visualStartScale;
@@ -97,6 +98,8 @@ public class Chest : MonoBehaviour
 
     void Update()
     {
+        UpdateSortingWithPlayer();
+
         if (IsOpen || opening || player == null)
         {
             if (prompt != null) prompt.gameObject.SetActive(false);
@@ -114,6 +117,20 @@ public class Chest : MonoBehaviour
             if (Input.GetKeyDown(openKey))
                 StartCoroutine(OpenRoutine());
         }
+    }
+
+    // Si la canica està més amunt que el cofre (darrere), el cofre es dibuixa davant;
+    // si està més avall (davant), el cofre es dibuixa darrere d'ella.
+    void UpdateSortingWithPlayer()
+    {
+        if (player == null || spriteRenderer == null) return;
+        if (playerSprite == null) playerSprite = player.GetComponent<SpriteRenderer>();
+        if (playerSprite == null) return;
+
+        spriteRenderer.sortingLayerID = playerSprite.sortingLayerID;
+        spriteRenderer.sortingOrder = player.position.y > transform.position.y
+            ? playerSprite.sortingOrder + 1
+            : playerSprite.sortingOrder - 1;
     }
 
     bool IsInRange()
