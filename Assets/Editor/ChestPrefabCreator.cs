@@ -96,11 +96,24 @@ public static class ChestPrefabCreator
         chest.spriteRenderer = sr;
         chest.closedSprite = closed;
         chest.openSprite = open;
+        chest.lootTable = LoadAllWeapons();
 
         string path = PrefabFolder + "/Cofre_" + name + ".prefab";
         GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
         Object.DestroyImmediate(root);
         return prefab;
+    }
+
+    // De moment, tots els cofres poden donar qualsevol arma del projecte (Assets/Weapons)
+    static WeaponData[] LoadAllWeapons()
+    {
+        var list = new List<WeaponData>();
+        foreach (string guid in AssetDatabase.FindAssets("t:WeaponData"))
+        {
+            WeaponData w = AssetDatabase.LoadAssetAtPath<WeaponData>(AssetDatabase.GUIDToAssetPath(guid));
+            if (w != null) list.Add(w);
+        }
+        return list.ToArray();
     }
 
     static ChestTile CreateTile(ChestRarity rarity, Sprite preview, GameObject prefab)

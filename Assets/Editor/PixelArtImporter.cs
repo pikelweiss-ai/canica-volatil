@@ -8,6 +8,9 @@ public class PixelArtImporter : AssetPostprocessor
 {
     const int PixelsPerUnit = 16; // Mateixa densitat que els blocs de 16x16
 
+    // Si canvies la configuració, puja aquest número: Unity tornarà a importar les textures
+    public override uint GetVersion() { return 3; }
+
     void OnPreprocessTexture()
     {
         if (!assetPath.Replace('\\', '/').Contains("/Pixel/"))
@@ -15,6 +18,7 @@ public class PixelArtImporter : AssetPostprocessor
 
         TextureImporter importer = (TextureImporter)assetImporter;
         importer.textureType = TextureImporterType.Sprite;
+        importer.textureShape = TextureImporterShape.Texture2D; // Mai Cubemap (passava amb .meta incomplets)
         importer.spriteImportMode = SpriteImportMode.Single;
         importer.spritePixelsPerUnit = PixelsPerUnit;
         importer.filterMode = FilterMode.Point;
@@ -22,5 +26,6 @@ public class PixelArtImporter : AssetPostprocessor
         importer.mipmapEnabled = false;
         importer.alphaIsTransparency = true;
         importer.wrapMode = TextureWrapMode.Clamp;
+        importer.isReadable = true; // Per a poder fer la vora de raresa dels items per codi
     }
 }

@@ -34,7 +34,11 @@ public class Chest : MonoBehaviour
     public AudioClip openSound;
     [Range(0f, 1f)] public float volume = 0.6f;
 
-    [Header("Quan s'obri (ací anirà el loot)")]
+    [Header("Loot (n'ix un a l'atzar en obrir-lo)")]
+    public WeaponData[] lootTable;
+    public Vector2 lootDropOffset = new Vector2(0f, -0.8f); // On cau l'item (respecte del cofre)
+
+    [Header("Quan s'obri")]
     public UnityEvent onOpened;
 
     public bool IsOpen { get; private set; }
@@ -235,6 +239,8 @@ public class Chest : MonoBehaviour
         audioSource.pitch = 1f;
         audioSource.PlayOneShot(openSound, volume);
 
+        DropLoot();
+
         if (onOpened != null)
             onOpened.Invoke();
 
@@ -263,6 +269,19 @@ public class Chest : MonoBehaviour
         }
         visual.localScale = visualStartScale;
         opening = false;
+    }
+
+    // Trau un item a l'atzar de la taula de loot i el llança fora del cofre
+    void DropLoot()
+    {
+        if (lootTable == null || lootTable.Length == 0) return;
+
+        WeaponData weapon = lootTable[Random.Range(0, lootTable.Length)];
+        if (weapon == null) return;
+
+        Vector3 from = transform.position + Vector3.up * 0.1f;
+        Vector3 to = transform.position + (Vector3)lootDropOffset;
+        ItemPickup.Spawn(weapon, from, to);
     }
 
     // ---------- Indicador: cercle blanc + E negra + anell de temps ----------

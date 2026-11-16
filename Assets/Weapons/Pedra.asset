@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Pedra
   m_EditorClassIdentifier: 
   weaponName: Pedra
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: e4b8ecd0ea284a5d95f2e69351f77e68, type: 3}
   damage: 1
   cooldown: 0.5
   knockbackForce: 4

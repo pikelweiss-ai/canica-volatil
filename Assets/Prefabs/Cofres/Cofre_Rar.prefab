@@ -378,6 +378,10 @@ MonoBehaviour:
   shakeSound: {fileID: 0}
   openSound: {fileID: 0}
   volume: 0.6
+  lootTable:
+  - {fileID: 11400000, guid: 87ddefbb28d54c16842ee7bbdae59769, type: 2}
+  - {fileID: 11400000, guid: f237961a2b90426eb59e760813ea6ef4, type: 2}
+  lootDropOffset: {x: 0, y: -0.8}
   onOpened:
     m_PersistentCalls:
       m_Calls: []

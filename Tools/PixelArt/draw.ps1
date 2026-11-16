@@ -112,6 +112,19 @@ $sprites['Armes/AK47_32'] = @{ size = 32; rows = @(
   '.................kkkkk..........'
 )}
 
+# Pedra (arma llançable, 16x16)
+$sprites['Armes/Pedra'] = @{ size = 16; mirror = $true; rows = @(
+  '.....kkk',
+  '...kkggg',
+  '..kgggGG',
+  '..kgGGGG',
+  '.kGGGGmm',
+  '.kGGmmmm',
+  '.kmmmmmm',
+  '..kmmddd',
+  '...kkkkk'
+)}
+
 # ---------------- Items de cura (16x16) ----------------
 $sprites['Items/PocioVida'] = @{ size = 16; rows = @(
   '................',

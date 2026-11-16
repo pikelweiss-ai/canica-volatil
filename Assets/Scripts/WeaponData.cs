@@ -7,7 +7,8 @@ public class WeaponData : ScriptableObject
 {
     [Header("General")]
     public string weaponName = "Arma";
-    public Sprite icon;                 // Icona de la hotbar (opcional)
+    public Sprite icon;                 // Icona de la hotbar i sprite quan està al terra
+    public ChestRarity rarity = ChestRarity.Comu; // Color de la vora quan està al terra
 
     [Header("Atac")]
     public int damage = 1;
