@@ -226,6 +226,21 @@ public class EnemyPathfindingAI : MonoBehaviour
                 return true;
         }
 
+        return HasChest(cell);
+    }
+
+    // Els cofres tenen hitbox pero no son tiles: comprovem si n'hi ha un en la cel.la
+    bool HasChest(Vector3Int cell)
+    {
+        Vector2 center = referenceTilemap.GetCellCenterWorld(cell);
+        Vector2 size = (Vector2)referenceTilemap.layoutGrid.cellSize * 0.9f;
+
+        foreach (Collider2D hit in Physics2D.OverlapBoxAll(center, size, 0f))
+        {
+            if (!hit.isTrigger && hit.GetComponentInParent<Chest>() != null)
+                return true;
+        }
+
         return false;
     }
 }

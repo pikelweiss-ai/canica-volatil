@@ -49,9 +49,17 @@ public class Chest : MonoBehaviour
     private Vector3 visualStartScale;
     private Quaternion visualStartRot;
     private AudioSource audioSource;
-    private TextMeshPro prompt;
+    // Indicador: cercle blanc amb la E negra + anell que es descompta
+    private Transform promptRoot;
+    private LineRenderer promptRing;
     private Vector3 promptStartPos;
-    private bool opening;
+    private const float RingRadius = 0.27f;
+    private const int RingSegments = 48;
+
+    private bool opening;        // Fent l'animació d'obrir (bot)
+    private float holdTime;      // Quant de temps portes mantenint la E
+    private float nextKnock;
+    private Vector3 lastPlayerPos;
 
     void OnEnable() { allChests.Add(this); }
     void OnDisable() { allChests.Remove(this); }
@@ -102,21 +110,77 @@ public class Chest : MonoBehaviour
 
         if (IsOpen || opening || player == null)
         {
-            if (prompt != null) prompt.gameObject.SetActive(false);
+            SetPromptVisible(false);
             return;
         }
 
         bool canOpen = IsInRange() && IsClosestChest();
-        prompt.gameObject.SetActive(canOpen);
+        bool playerMoved = (player.position - lastPlayerPos).sqrMagnitude > 0.000025f;
+        lastPlayerPos = player.position;
 
-        if (canOpen)
+        SetPromptVisible(canOpen);
+        if (!canOpen)
         {
-            // La [E] puja i baixa suaument
-            prompt.transform.localPosition = promptStartPos + Vector3.up * Mathf.Sin(Time.time * 4f) * 0.04f;
-
-            if (Input.GetKeyDown(openKey))
-                StartCoroutine(OpenRoutine());
+            CancelHold();
+            return;
         }
+
+        // L'indicador puja i baixa suaument
+        promptRoot.localPosition = promptStartPos + Vector3.up * Mathf.Sin(Time.time * 4f) * 0.04f;
+
+        // Cal MANTINDRE la E sense moure's: mentrestant el cofre vibra
+        if (Input.GetKey(openKey) && !playerMoved)
+        {
+            holdTime += Time.deltaTime;
+            ShakeStep();
+
+            if (holdTime >= openTime)
+            {
+                ResetVisual();
+                StartCoroutine(OpenFinishRoutine());
+                return;
+            }
+        }
+        else
+        {
+            CancelHold(); // Has deixat anar la E o t'has mogut: torna a començar
+        }
+
+        SetRing(1f - holdTime / openTime);
+    }
+
+    // Vibració que creix mentre mantens la E, amb colps de fusta cada vegada més seguits
+    void ShakeStep()
+    {
+        float k = Mathf.Clamp01(holdTime / openTime);
+        float amp = Mathf.Lerp(shakeStrength * 0.35f, shakeStrength, k);
+
+        float x = Mathf.Sin(holdTime * 60f) * amp;
+        float angle = Mathf.Sin(holdTime * 47f) * amp * 45f;
+        visual.localPosition = visualStartPos + new Vector3(x, 0f, 0f);
+        visual.localRotation = visualStartRot * Quaternion.Euler(0f, 0f, angle);
+
+        if (holdTime >= nextKnock)
+        {
+            audioSource.pitch = Random.Range(0.85f, 1.25f);
+            audioSource.PlayOneShot(shakeSound, volume * Random.Range(0.6f, 1f));
+            nextKnock = holdTime + Mathf.Lerp(0.12f, 0.06f, k);
+        }
+    }
+
+    void CancelHold()
+    {
+        if (holdTime <= 0f) return;
+        holdTime = 0f;
+        nextKnock = 0f;
+        ResetVisual();
+    }
+
+    void ResetVisual()
+    {
+        visual.localPosition = visualStartPos;
+        visual.localRotation = visualStartRot;
+        visual.localScale = visualStartScale;
     }
 
     // Si la canica està més amunt que el cofre (darrere), el cofre es dibuixa davant;
@@ -150,43 +214,18 @@ public class Chest : MonoBehaviour
         return true;
     }
 
-    IEnumerator OpenRoutine()
+    // Ja has mantingut la E prou temps: s'obri, sona i bota
+    IEnumerator OpenFinishRoutine()
     {
         opening = true;
+        SetPromptVisible(false);
+        float t;
 
-        // 1) Vibra cada vegada més fort, amb colps de fusta
-        float t = 0f;
-        float nextKnock = 0f;
-        while (t < openTime)
-        {
-            float k = t / openTime;
-            float amp = Mathf.Lerp(shakeStrength * 0.35f, shakeStrength, k);
-
-            float x = Mathf.Sin(t * 60f) * amp;
-            float angle = Mathf.Sin(t * 47f) * amp * 45f;
-            visual.localPosition = visualStartPos + new Vector3(x, 0f, 0f);
-            visual.localRotation = visualStartRot * Quaternion.Euler(0f, 0f, angle);
-
-            if (t >= nextKnock)
-            {
-                audioSource.pitch = Random.Range(0.85f, 1.25f);
-                audioSource.PlayOneShot(shakeSound, volume * Random.Range(0.6f, 1f));
-                nextKnock = t + Mathf.Lerp(0.12f, 0.06f, k); // Colps més seguits al final
-            }
-
-            t += Time.deltaTime;
-            yield return null;
-        }
-
-        visual.localPosition = visualStartPos;
-        visual.localRotation = visualStartRot;
-
-        // 2) S'obri: sprite obert + so
+        // S'obri: sprite obert + so
         if (spriteRenderer != null && openSprite != null)
             spriteRenderer.sprite = openSprite;
 
         IsOpen = true;
-        opening = false;
 
         audioSource.pitch = 1f;
         audioSource.PlayOneShot(openSound, volume);
@@ -218,32 +257,82 @@ public class Chest : MonoBehaviour
             yield return null;
         }
         visual.localScale = visualStartScale;
+        opening = false;
     }
 
-    // Text "[E]" damunt del cofre
+    // ---------- Indicador: cercle blanc + E negra + anell de temps ----------
+
     void CreatePrompt()
     {
-        GameObject go = new GameObject("Prompt E");
-        go.transform.SetParent(transform, false);
-        promptStartPos = new Vector3(0f, 0.65f, 0f);
-        go.transform.localPosition = promptStartPos;
+        GameObject root = new GameObject("Prompt E");
+        root.transform.SetParent(transform, false);
+        promptStartPos = new Vector3(0f, 0.72f, 0f);
+        root.transform.localPosition = promptStartPos;
+        promptRoot = root.transform;
 
-        prompt = go.AddComponent<TextMeshPro>();
+        // Cercle blanc
+        GameObject disc = new GameObject("Cercle");
+        disc.transform.SetParent(promptRoot, false);
+        SpriteRenderer discSr = disc.AddComponent<SpriteRenderer>();
+        discSr.sprite = PromptGraphics.Disc;
+        discSr.color = Color.white;
+        discSr.sortingLayerName = "PlayerName";
+        discSr.sortingOrder = 5;
+
+        // Lletra E en negre
+        GameObject textGo = new GameObject("Lletra");
+        textGo.transform.SetParent(promptRoot, false);
+        TextMeshPro text = textGo.AddComponent<TextMeshPro>();
         PlayerNameTag nameTag = FindAnyObjectByType<PlayerNameTag>();
         if (nameTag != null && nameTag.playerNameText != null)
-            prompt.font = nameTag.playerNameText.font;
+            text.font = nameTag.playerNameText.font;
+        text.text = openKey.ToString();
+        text.fontSize = 2.8f;
+        text.fontStyle = FontStyles.Bold;
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = Color.black;
+        text.rectTransform.sizeDelta = new Vector2(1f, 1f);
+        MeshRenderer textMr = textGo.GetComponent<MeshRenderer>();
+        textMr.sortingLayerName = "PlayerName";
+        textMr.sortingOrder = 7;
 
-        prompt.text = "[" + openKey + "]";
-        prompt.fontSize = 3f;
-        prompt.alignment = TextAlignmentOptions.Center;
-        prompt.color = Color.white;
-        prompt.rectTransform.sizeDelta = new Vector2(2f, 1f);
+        // Anell exterior (es descompta mentre mantens la E)
+        GameObject ringGo = new GameObject("Anell");
+        ringGo.transform.SetParent(promptRoot, false);
+        promptRing = ringGo.AddComponent<LineRenderer>();
+        promptRing.useWorldSpace = false;
+        promptRing.startWidth = promptRing.endWidth = 0.045f;
+        promptRing.startColor = promptRing.endColor = Color.white;
+        promptRing.material = PromptGraphics.LineMaterial;
+        promptRing.numCapVertices = 2;
+        promptRing.sortingLayerName = "PlayerName";
+        promptRing.sortingOrder = 6;
+        SetRing(1f);
 
-        MeshRenderer mr = go.GetComponent<MeshRenderer>();
-        mr.sortingLayerName = "PlayerName";
-        mr.sortingOrder = 5;
+        root.SetActive(false);
+    }
 
-        go.SetActive(false);
+    void SetPromptVisible(bool visible)
+    {
+        if (promptRoot != null && promptRoot.gameObject.activeSelf != visible)
+            promptRoot.gameObject.SetActive(visible);
+    }
+
+    // fraction = 1 -> anell sencer, 0 -> buit. Es buida en sentit horari des de dalt.
+    void SetRing(float fraction)
+    {
+        if (promptRing == null) return;
+        fraction = Mathf.Clamp01(fraction);
+
+        int points = Mathf.Max(2, Mathf.CeilToInt(RingSegments * fraction) + 1);
+        promptRing.positionCount = points;
+        promptRing.enabled = fraction > 0.001f;
+
+        for (int i = 0; i < points; i++)
+        {
+            float a = (90f - 360f * fraction * i / (points - 1)) * Mathf.Deg2Rad;
+            promptRing.SetPosition(i, new Vector3(Mathf.Cos(a), Mathf.Sin(a), 0f) * RingRadius);
+        }
     }
 
     void OnDrawGizmosSelected()
@@ -332,6 +421,54 @@ public static class ChestSounds
                 open.SetData(data, 0);
             }
             return open;
+        }
+    }
+}
+
+// Gràfics generats per codi per a l'indicador de la E
+public static class PromptGraphics
+{
+    private static Sprite disc;
+    private static Material lineMaterial;
+
+    // Cercle blanc suau de 0.42 unitats de diàmetre
+    public static Sprite Disc
+    {
+        get
+        {
+            if (disc == null)
+            {
+                const int size = 64;
+                Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+                tex.wrapMode = TextureWrapMode.Clamp;
+                float r = size / 2f;
+                for (int y = 0; y < size; y++)
+                {
+                    for (int x = 0; x < size; x++)
+                    {
+                        float d = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(r, r));
+                        float a = Mathf.Clamp01(r - d); // Vora suavitzada d'1 píxel
+                        tex.SetPixel(x, y, new Color(1f, 1f, 1f, a));
+                    }
+                }
+                tex.Apply();
+                disc = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size / 0.42f);
+            }
+            return disc;
+        }
+    }
+
+    public static Material LineMaterial
+    {
+        get
+        {
+            if (lineMaterial == null)
+            {
+                Shader shader = Shader.Find("Sprites/Default");
+                if (shader == null) shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
+                lineMaterial = new Material(shader);
+            }
+            return lineMaterial;
         }
     }
 }
