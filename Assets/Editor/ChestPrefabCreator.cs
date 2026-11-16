@@ -60,20 +60,36 @@ public static class ChestPrefabCreator
         string name = rarity.ToString();
 
         // Arrel: script + hitbox (no es mou quan el cofre vibra)
+        // El dibuix del cofre va de y=-0.3125 (base) a y=0.25 (tapa).
+        // La hitbox només ocupa la meitat de baix: així pots passar per darrere.
         GameObject root = new GameObject("Cofre_" + name);
         BoxCollider2D col = root.AddComponent<BoxCollider2D>();
-        col.size = new Vector2(0.75f, 0.5f); // El dibuix fa 12x10 píxels (0.75 x 0.625)
+        col.size = new Vector2(0.75f, 0.28f);
+        col.offset = new Vector2(0f, -0.17f);
 
         AudioSource audio = root.AddComponent<AudioSource>();
         audio.playOnAwake = false;
+
+        // Ombra: a l'arrel, perquè es quede al terra quan el cofre vibra o bota
+        Sprite shadowSprite = AssetDatabase.LoadAssetAtPath<Sprite>(SpriteFolder + "/Ombra.png");
+        if (shadowSprite != null)
+        {
+            GameObject shadow = new GameObject("Ombra");
+            shadow.transform.SetParent(root.transform, false);
+            shadow.transform.localPosition = new Vector3(0f, -0.3f, 0f);
+            SpriteRenderer ssr = shadow.AddComponent<SpriteRenderer>();
+            ssr.sprite = shadowSprite;
+            ssr.color = new Color(0f, 0f, 0f, 0.3f);
+            ssr.sortingLayerName = "Shadows"; // Per davall del jugador i del cofre
+        }
 
         // Fill: l'sprite (és el que vibra i bota)
         GameObject visual = new GameObject("Sprite");
         visual.transform.SetParent(root.transform, false);
         SpriteRenderer sr = visual.AddComponent<SpriteRenderer>();
         sr.sprite = closed;
-        sr.sortingLayerName = "Player"; // Mateixa capa que el jugador...
-        sr.sortingOrder = 1;            // ...però per davall d'ell (ordre 2)
+        sr.sortingLayerName = "Player"; // Mateixa capa i ordre que el jugador:
+        sr.sortingOrder = 2;            // es dibuixa davant o darrere segons l'altura (eix Y)
 
         Chest chest = root.AddComponent<Chest>();
         chest.rarity = rarity;
@@ -142,7 +158,7 @@ public static class ChestPrefabCreator
             go.transform.SetParent(grid.transform, false);
             TilemapRenderer tr = go.GetComponent<TilemapRenderer>();
             tr.sortingLayerName = "Player";
-            tr.sortingOrder = 1;
+            tr.sortingOrder = 2;
             chests = go.GetComponent<Tilemap>();
         }
         chests.ClearAllTiles();

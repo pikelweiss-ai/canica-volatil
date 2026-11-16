@@ -229,6 +229,15 @@ foreach ($r in $rareses.Keys) {
   $sprites["Cofres/Cofre_${r}_Obert"] = @{ size = 16; mirror = $true; rows = $cofreObert; recolor = $rareses[$r] }
 }
 
+# Ombra del cofre (negre: al joc es posa semitransparent amb el color del SpriteRenderer)
+$sprites['Cofres/Ombra'] = @{ size = 16; mirror = $true; rows = @(
+  '....kkkk',
+  '.kkkkkkk',
+  'kkkkkkkk',
+  '.kkkkkkk',
+  '....kkkk'
+)}
+
 # ---- Per al mode masmorra (encara no es gasten) ----
 # B) Baül: tapa arredonida i vores d'or
 $sprites['Cofres/Dungeon/B_Baul'] = @{ size = 16; mirror = $true; rows = @(
