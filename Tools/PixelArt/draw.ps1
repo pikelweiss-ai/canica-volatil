@@ -1,16 +1,18 @@
 # Generador de píxel art de Canica Volàtil.
 # Cada sprite és una graella de lletres; cada lletra és un color de la paleta ($P).
 # Per a canviar un píxel, canvia la lletra i torna a executar:
-#   .\Tools\PixelArt\draw.ps1 -OutRoot Assets\Sprites\Pixel -PreviewPath Tools\PixelArt\preview.png
+#   .\Tools\PixelArt\draw.ps1
+# Genera els PNG a Assets\Sprites\Pixel\<Carpeta>\ i una previsualització ampliada
+# per carpeta a Tools\PixelArt\preview_<Carpeta>.png
 param(
   [string]$OutRoot = 'Assets\Sprites\Pixel',
-  [string]$PreviewPath = 'Tools\PixelArt\preview.png'
+  [string]$PreviewDir = 'Tools\PixelArt'
 )
 Add-Type -AssemblyName System.Drawing
 
 # Rutes absolutes (System.Drawing no entén les rutes relatives de PowerShell)
 $OutRoot = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutRoot)
-$PreviewPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($PreviewPath)
+$PreviewDir = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($PreviewDir)
 
 # Paleta comuna (lletra -> color). '.' = transparent
 $P = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([StringComparer]::Ordinal)
@@ -22,9 +24,36 @@ $pairs = @(
   'W','ffffff', 'g','d5d9e0', 'G','9aa0aa',       # blanc / gris clar / gris
   'h','a9d4f5',                                   # vidre
   'L','2e7d32', 'e','5cb85c', 's','6e3a1c',       # fulla fosca / fulla / tija
-  'c','f2ead8', 'C','cfc3a6'                      # bena / bena ombra
+  'c','f2ead8', 'C','cfc3a6',                     # bena / bena ombra
+  'Y','f5c542', 'u','b07a1a',                     # or / or fosc
+  'b','4a7fe0', 'B','27448f',                     # blau / blau fosc (rar)
+  'v','a259e0', 'V','5e2a8a',                     # morat / morat fosc (èpic)
+  'n','2a1a12'                                    # interior fosc del cofre
 )
 for ($i = 0; $i -lt $pairs.Count; $i += 2) { $P[$pairs[$i]] = $pairs[$i + 1] }
+
+# Diccionari que distingeix majúscules (per a canviar colors: 'm','b','d','B', ...)
+function New-Map([string[]]$pairs) {
+  $m = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([StringComparer]::Ordinal)
+  for ($i = 0; $i -lt $pairs.Count; $i += 2) { $m[$pairs[$i]] = $pairs[$i + 1] }
+  return ,$m
+}
+
+# mirror = $true  -> les files són només la meitat esquerra; la dreta es copia en espill
+# recolor = mapa  -> canvia unes lletres per altres (per a variants de color)
+function Expand-Rows($s) {
+  $rows = @($s.rows)
+  if ($s.mirror) {
+    $rows = @($rows | ForEach-Object { $a = $_.ToCharArray(); [array]::Reverse($a); $_ + (-join $a) })
+  }
+  if ($s.recolor) {
+    $map = $s.recolor
+    $rows = @($rows | ForEach-Object {
+      -join ($_.ToCharArray() | ForEach-Object { $c = [string]$_; if ($map.ContainsKey($c)) { $map[$c] } else { $c } })
+    })
+  }
+  return ,$rows
+}
 
 function New-Sprite($rows, $w, $h) {
   $gh = $rows.Count; $gw = $rows[0].Length
@@ -159,11 +188,97 @@ $sprites['Items/Bena'] = @{ size = 16; rows = @(
   '................'
 )}
 
+# ---------------- Cofres (16x16, com els blocs) ----------------
+# Només la meitat esquerra (8 columnes): la dreta es fa en espill.
+
+# A) Cofre de fusta amb tires de ferro (m/d = metall: es recoloreja segons la raresa)
+$cofreA = @(
+  '........',
+  '........',
+  '..kkkkkk',
+  '.kyymyyy',
+  '.koomooo',
+  '.koomooo',
+  '.kwwdwwk',
+  '.kkkkkkY',
+  '.koomooY',
+  '.koomook',
+  '.koomooo',
+  '.kwwmwww',
+  '.kwwdwww',
+  '..kkkkkk',
+  '........',
+  '........'
+)
+$cofreA_obert = @(
+  '........',
+  '..kkkkkk',
+  '.kyymyyy',
+  '.kwwdwww',
+  '.kkkkkkk',
+  '.knnnnnn',
+  '.knnYnYn',
+  '.kkkkkkk',
+  '.koomooY',
+  '.koomook',
+  '.koomooo',
+  '.kwwmwww',
+  '.kwwdwww',
+  '..kkkkkk',
+  '........',
+  '........'
+)
+$sprites['Cofres/A_Fusta']        = @{ size = 16; mirror = $true; rows = $cofreA }
+$sprites['Cofres/A_Fusta_Obert']  = @{ size = 16; mirror = $true; rows = $cofreA_obert }
+$sprites['Cofres/A_Rar']          = @{ size = 16; mirror = $true; rows = $cofreA; recolor = (New-Map 'm','b','d','B') }
+$sprites['Cofres/A_Epic']         = @{ size = 16; mirror = $true; rows = $cofreA; recolor = (New-Map 'm','v','d','V') }
+$sprites['Cofres/A_Llegendari']   = @{ size = 16; mirror = $true; rows = $cofreA; recolor = (New-Map 'm','Y','d','u','Y','r') }
+
+# B) Baül: tapa arredonida i vores d'or
+$sprites['Cofres/B_Baul'] = @{ size = 16; mirror = $true; rows = @(
+  '........',
+  '....kkkk',
+  '..kkyyyy',
+  '.kyyyyyy',
+  '.kYooooo',
+  '.kYooooo',
+  '.kYYYYYk',
+  '.kkkkkkY',
+  '.kYooooY',
+  '.kYooook',
+  '.kYooooo',
+  '.kYwwwww',
+  '.kYYYYYY',
+  '..kkkkkk',
+  '........',
+  '........'
+)}
+
+# C) Cofre de metall de masmorra amb gemma roja
+$sprites['Cofres/C_Metall'] = @{ size = 16; mirror = $true; rows = @(
+  '........',
+  '........',
+  '..kkkkkk',
+  '.kllllll',
+  '.kmlmmmm',
+  '.kmmmmmm',
+  '.kdddddk',
+  '.kkkkkkr',
+  '.kmlmmmR',
+  '.kmmmmmk',
+  '.kmmmmmm',
+  '.kdldddd',
+  '.kdddddd',
+  '..kkkkkk',
+  '........',
+  '........'
+)}
+
 # ---------------- Guardar PNG ----------------
 $bitmaps = [ordered]@{}
 foreach ($name in $sprites.Keys) {
   $s = $sprites[$name]
-  $bmp = New-Sprite $s.rows $s.size $s.size
+  $bmp = New-Sprite (Expand-Rows $s) $s.size $s.size
   $path = Join-Path $OutRoot ($name + '.png')
   New-Item -ItemType Directory -Force (Split-Path $path) | Out-Null
   $bmp.Save($path, [Drawing.Imaging.ImageFormat]::Png)
@@ -171,23 +286,28 @@ foreach ($name in $sprites.Keys) {
   "OK $name ($($s.size)x$($s.size))"
 }
 
-# ---------------- Previsualització ampliada ----------------
+# ---------------- Previsualitzacions ampliades (una per carpeta) ----------------
+New-Item -ItemType Directory -Force $PreviewDir | Out-Null
 $cell = 256; $pad = 24; $labelH = 30
-$cols = $bitmaps.Count
-$sheet = New-Object Drawing.Bitmap ($cols * ($cell + $pad) + $pad), ($cell + $labelH + 2 * $pad)
-$g = [Drawing.Graphics]::FromImage($sheet)
-$g.InterpolationMode = [Drawing.Drawing2D.InterpolationMode]::NearestNeighbor
-$g.PixelOffsetMode = [Drawing.Drawing2D.PixelOffsetMode]::Half
-$g.Clear([Drawing.ColorTranslator]::FromHtml('#4a8f3c'))
-$font = New-Object Drawing.Font 'Arial', 13, ([Drawing.FontStyle]::Bold)
-$i = 0
-foreach ($name in $bitmaps.Keys) {
-  $b = $bitmaps[$name]
-  $x = $pad + $i * ($cell + $pad); $y = $pad
-  $g.FillRectangle((New-Object Drawing.SolidBrush ([Drawing.ColorTranslator]::FromHtml('#3d7a31'))), $x, $y, $cell, $cell)
-  $g.DrawImage($b, $x, $y, $cell, $cell)
-  $g.DrawString(($name -replace '^.*/', ''), $font, [Drawing.Brushes]::White, $x, $y + $cell + 6)
-  $i++
+$groups = $bitmaps.Keys | Group-Object { ($_ -split '/')[0] }
+foreach ($group in $groups) {
+  $names = @($group.Group)
+  $sheet = New-Object Drawing.Bitmap ($names.Count * ($cell + $pad) + $pad), ($cell + $labelH + 2 * $pad)
+  $g = [Drawing.Graphics]::FromImage($sheet)
+  $g.InterpolationMode = [Drawing.Drawing2D.InterpolationMode]::NearestNeighbor
+  $g.PixelOffsetMode = [Drawing.Drawing2D.PixelOffsetMode]::Half
+  $g.Clear([Drawing.ColorTranslator]::FromHtml('#4a8f3c'))
+  $font = New-Object Drawing.Font 'Arial', 13, ([Drawing.FontStyle]::Bold)
+  $i = 0
+  foreach ($name in $names) {
+    $x = $pad + $i * ($cell + $pad); $y = $pad
+    $g.FillRectangle((New-Object Drawing.SolidBrush ([Drawing.ColorTranslator]::FromHtml('#3d7a31'))), $x, $y, $cell, $cell)
+    $g.DrawImage($bitmaps[$name], $x, $y, $cell, $cell)
+    $g.DrawString(($name -replace '^.*/', ''), $font, [Drawing.Brushes]::White, $x, $y + $cell + 6)
+    $i++
+  }
+  $out = Join-Path $PreviewDir ('preview_' + $group.Name + '.png')
+  $sheet.Save($out, [Drawing.Imaging.ImageFormat]::Png)
+  $g.Dispose(); $sheet.Dispose()
+  "Preview: $out"
 }
-$sheet.Save($PreviewPath, [Drawing.Imaging.ImageFormat]::Png)
-"Preview: $PreviewPath"
