@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using TMPro;
 
 // Atac estil Brawl Stars:
 // - Apuntes amb el ratolí (es veu una línia cap on apuntes)
@@ -13,15 +14,15 @@ public class PlayerAttack : MonoBehaviour
     public float fistRange = 0.7f;       // Distància del centre del jugador al colp
     public float fistRadius = 0.45f;     // Mida de la zona del colp
     public float fistCooldown = 0.35f;
-    public float fistKnockback = 6f;
+    public float punchKnockback = 2.5f;
 
     [Header("Hotbar (tecles 1-4)")]
     public WeaponData[] hotbarSlots = new WeaponData[4];
+    public TMP_FontAsset hotbarFont;     // Si està buit, agafa la font del nom del jugador
 
-    [Header("Línia d'apuntat")]
+    [Header("Apuntat")]
     public bool showAimLine = true;
-    public Color aimLineColor = new Color(0f, 0f, 0f, 0.3f);
-    public float aimLineWidth = 0.18f;
+    public Color aimColor = new Color(1f, 1f, 1f, 0.45f);
 
     [Header("Efectes")]
     public CameraFollow cameraFollow;
@@ -56,7 +57,16 @@ public class PlayerAttack : MonoBehaviour
 
         CreateAimLine();
 
-        hotbarUI = HotbarUI.Create(hotbarSlots.Length);
+        // Mateixa tipografia que el nom de damunt del jugador
+        TMP_FontAsset font = hotbarFont;
+        if (font == null)
+        {
+            PlayerNameTag nameTag = GetComponent<PlayerNameTag>();
+            if (nameTag != null && nameTag.playerNameText != null)
+                font = nameTag.playerNameText.font;
+        }
+
+        hotbarUI = HotbarUI.Create(hotbarSlots.Length, font);
         hotbarUI.Refresh(hotbarSlots, selectedSlot);
     }
 
@@ -101,10 +111,18 @@ public class PlayerAttack : MonoBehaviour
         {
             aimLine.enabled = showAimLine;
 
+            // Rectangle: per al puny, tan ample i llarg com la zona del colp;
+            // per a les armes, tan ample com el projectil i llarg com l'abast
             WeaponData weapon = CurrentWeapon;
             float length = weapon != null ? weapon.range : fistRange + fistRadius;
+            float width = weapon != null ? Mathf.Max(weapon.projectileSize, 0.15f) : fistRadius * 2f;
 
-            Vector2 start = (Vector2)transform.position + aimDirection * 0.4f;
+            aimLine.startWidth = width;
+            aimLine.endWidth = width;
+            aimLine.startColor = aimColor;
+            aimLine.endColor = aimColor;
+
+            Vector2 start = transform.position;
             Vector2 end = (Vector2)transform.position + aimDirection * Mathf.Max(length, 0.5f);
             aimLine.SetPosition(0, start);
             aimLine.SetPosition(1, end);
@@ -119,11 +137,7 @@ public class PlayerAttack : MonoBehaviour
         aimLine = lineGO.AddComponent<LineRenderer>();
         aimLine.useWorldSpace = true;
         aimLine.positionCount = 2;
-        aimLine.startWidth = aimLineWidth;
-        aimLine.endWidth = aimLineWidth;
-        aimLine.numCapVertices = 4;
-        aimLine.startColor = aimLineColor;
-        aimLine.endColor = aimLineColor;
+        aimLine.numCapVertices = 0; // Puntes rectes = rectangle
 
         Shader shader = Shader.Find("Sprites/Default");
         if (shader == null) shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
@@ -192,7 +206,7 @@ public class PlayerAttack : MonoBehaviour
             if (enemy == null)
                 continue;
 
-            enemy.TakeHit(fistDamage, aimDirection * fistKnockback);
+            enemy.TakeHit(fistDamage, aimDirection * punchKnockback);
             hitSomething = true;
         }
 
