@@ -23,12 +23,16 @@ public class PlayerAttack : MonoBehaviour
     [Header("Apuntat")]
     public bool showAimLine = true;
     public Color aimColor = new Color(1f, 1f, 1f, 0.45f);
+    [Range(0f, 1f)]
+    public float aimChargingOpacity = 0.35f; // Opacitat de la part encara no carregada (respecte d'aimColor)
 
     [Header("Efectes")]
     public CameraFollow cameraFollow;
 
     private int selectedSlot = 0;
     private float nextAttackTime = 0f;
+    private float lastCooldownDuration = 1f;
+    private LineRenderer aimFill; // Part carregada del cooldown, damunt de l'aim
     private Vector2 aimDirection = Vector2.right;
     private Vector3 originalScale;
 
@@ -88,13 +92,14 @@ public class PlayerAttack : MonoBehaviour
             if (weapon == null)
             {
                 Punch();
-                nextAttackTime = Time.time + fistCooldown;
+                lastCooldownDuration = fistCooldown;
             }
             else
             {
                 Shoot(weapon);
-                nextAttackTime = Time.time + weapon.cooldown;
+                lastCooldownDuration = weapon.cooldown;
             }
+            nextAttackTime = Time.time + lastCooldownDuration;
         }
     }
 
@@ -111,48 +116,82 @@ public class PlayerAttack : MonoBehaviour
         if (dir.sqrMagnitude > 0.001f)
             aimDirection = dir.normalized;
 
-        if (aimLine != null)
+        if (aimLine == null || aimFill == null)
+            return;
+
+        aimLine.enabled = showAimLine;
+
+        // Rectangle: per al puny, tan ample i llarg com la zona del colp;
+        // per a les armes, tan ample com el projectil i llarg com l'abast
+        WeaponData weapon = CurrentWeapon;
+        float length = Mathf.Max(weapon != null ? weapon.range : fistRange + fistRadius, 0.5f);
+        float width = weapon != null ? Mathf.Max(weapon.projectileSize, 0.15f) : fistRadius * 2f;
+
+        // Progrés del cooldown: 0 = acabes d'atacar, 1 = llest
+        float remaining = nextAttackTime - Time.time;
+        float progress = remaining <= 0f ? 1f : 1f - Mathf.Clamp01(remaining / lastCooldownDuration);
+        bool charging = progress < 1f;
+
+        Vector2 start = transform.position;
+        Vector2 end = start + aimDirection * length;
+
+        // Fons: mentre carrega és més fluix; quan està llest, color normal
+        Color baseColor = aimColor;
+        if (charging)
+            baseColor.a *= aimChargingOpacity;
+
+        SetLine(aimLine, start, end, width, baseColor);
+
+        // Part carregada: creix des del jugador cap a fora amb el color normal
+        // (l'opacitat es calcula perquè, sumada al fons, done just aimColor i no faça salt en acabar)
+        aimFill.enabled = showAimLine && charging;
+        if (aimFill.enabled)
         {
-            aimLine.enabled = showAimLine;
-
-            // Rectangle: per al puny, tan ample i llarg com la zona del colp;
-            // per a les armes, tan ample com el projectil i llarg com l'abast
-            WeaponData weapon = CurrentWeapon;
-            float length = weapon != null ? weapon.range : fistRange + fistRadius;
-            float width = weapon != null ? Mathf.Max(weapon.projectileSize, 0.15f) : fistRadius * 2f;
-
-            aimLine.startWidth = width;
-            aimLine.endWidth = width;
-            aimLine.startColor = aimColor;
-            aimLine.endColor = aimColor;
-
-            Vector2 start = transform.position;
-            Vector2 end = (Vector2)transform.position + aimDirection * Mathf.Max(length, 0.5f);
-            aimLine.SetPosition(0, start);
-            aimLine.SetPosition(1, end);
+            Color fillColor = aimColor;
+            fillColor.a = baseColor.a >= 1f ? 1f : (aimColor.a - baseColor.a) / (1f - baseColor.a);
+            SetLine(aimFill, start, start + aimDirection * (length * progress), width, fillColor);
         }
+    }
+
+    void SetLine(LineRenderer line, Vector2 start, Vector2 end, float width, Color color)
+    {
+        line.startWidth = width;
+        line.endWidth = width;
+        line.startColor = color;
+        line.endColor = color;
+        line.SetPosition(0, start);
+        line.SetPosition(1, end);
     }
 
     void CreateAimLine()
     {
-        GameObject lineGO = new GameObject("AimLine");
-        lineGO.transform.SetParent(transform, false);
-
-        aimLine = lineGO.AddComponent<LineRenderer>();
-        aimLine.useWorldSpace = true;
-        aimLine.positionCount = 2;
-        aimLine.numCapVertices = 0; // Puntes rectes = rectangle
-
         Shader shader = Shader.Find("Sprites/Default");
         if (shader == null) shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
-        aimLine.material = new Material(shader);
+        Material material = new Material(shader);
 
-        // Que la línia es dibuixe just davall del jugador
+        // Les dues línies es dibuixen davall del jugador; la de càrrega, damunt del fons
+        aimLine = CreateLine("AimLine", material, -2);
+        aimFill = CreateLine("AimCooldown", material, -1);
+        aimFill.enabled = false;
+    }
+
+    LineRenderer CreateLine(string name, Material material, int orderOffset)
+    {
+        GameObject lineGO = new GameObject(name);
+        lineGO.transform.SetParent(transform, false);
+
+        LineRenderer line = lineGO.AddComponent<LineRenderer>();
+        line.useWorldSpace = true;
+        line.positionCount = 2;
+        line.numCapVertices = 0; // Puntes rectes = rectangle
+        line.material = material;
+
         if (playerSprite != null)
         {
-            aimLine.sortingLayerID = playerSprite.sortingLayerID;
-            aimLine.sortingOrder = playerSprite.sortingOrder - 1;
+            line.sortingLayerID = playerSprite.sortingLayerID;
+            line.sortingOrder = playerSprite.sortingOrder + orderOffset;
         }
+        return line;
     }
 
     // ---------- Hotbar ----------
