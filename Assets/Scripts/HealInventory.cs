@@ -42,9 +42,38 @@ public class HealInventory : MonoBehaviour
         return false;
     }
 
+    // Arrossegar una cura a una altra casella: les intercanvia
+    public void Swap(int a, int b)
+    {
+        (items[a], items[b]) = (items[b], items[a]);
+        (counts[a], counts[b]) = (counts[b], counts[a]);
+        Changed();
+    }
+
+    // Arrossegar-la fora de la bossa: tira tota la pila al terra, davant teu
+    public void Drop(int slot)
+    {
+        HealItem item = items[slot];
+        if (item == null) return;
+        PlayerAttack attack = GetComponent<PlayerAttack>();
+        Vector3 dir = attack != null ? (Vector3)attack.AimDirection : Vector3.right;
+        for (int k = 0; k < counts[slot]; k++)
+        {
+            Vector3 to = transform.position + dir * 1f + (Vector3)(Random.insideUnitCircle * 0.25f);
+            HealPickup.Spawn(item, transform.position, to, true);
+        }
+        items[slot] = null;
+        counts[slot] = 0;
+        Changed();
+    }
+
     void Update()
     {
-        if (ui == null) ui = HealBarUI.Create(FindFont());
+        if (ui == null)
+        {
+            ui = HealBarUI.Create(FindFont());
+            ui.SetCallbacks(Use, Drop, Swap, i => items[i] != null ? items[i].icon : null);
+        }
 
         for (int i = 0; i < Slots; i++)
             if (Input.GetKeyDown(KeyCode.Alpha5 + i) || Input.GetKeyDown(KeyCode.Keypad5 + i))
@@ -104,12 +133,15 @@ public class HealBarUI : MonoBehaviour
     private TextMeshProUGUI[] countTexts = new TextMeshProUGUI[HealInventory.Slots];
     private TextMeshProUGUI[] healTexts = new TextMeshProUGUI[HealInventory.Slots];
     private RectTransform[] slots = new RectTransform[HealInventory.Slots];
+    private Vector2[] basePos = new Vector2[HealInventory.Slots];       // On va cada casella (no es mou mai)
+    private Coroutine[] shaking = new Coroutine[HealInventory.Slots];
+    private SlotInput[] inputs = new SlotInput[HealInventory.Slots];
     private TMP_FontAsset font;
     public bool NeedsRefresh { get; private set; } = true;
 
     public static HealBarUI Create(TMP_FontAsset font)
     {
-        GameObject go = new GameObject("HealBarCanvas", typeof(Canvas), typeof(CanvasScaler));
+        GameObject go = new GameObject("HealBarCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         Canvas c = go.GetComponent<Canvas>();
         c.renderMode = RenderMode.ScreenSpaceOverlay;
         c.sortingOrder = 10;
@@ -136,9 +168,13 @@ public class HealBarUI : MonoBehaviour
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0f);
             rt.pivot = Vector2.zero;
             rt.sizeDelta = Vector2.one * SlotSize;
-            rt.anchoredPosition = new Vector2(startX + i * (SlotSize + Spacing), 20f);
+            basePos[i] = new Vector2(startX + i * (SlotSize + Spacing), 20f);
+            rt.anchoredPosition = basePos[i];
             slot.GetComponent<Image>().color = new Color(0.35f, 0f, 0.05f, 0.45f);
             slots[i] = rt;
+            inputs[i] = slot.AddComponent<SlotInput>();
+            inputs[i].index = i;
+            inputs[i].group = this;
 
             Image icon = new GameObject("Icona", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
             icon.transform.SetParent(slot.transform, false);
@@ -185,17 +221,35 @@ public class HealBarUI : MonoBehaviour
         }
     }
 
-    // Tremola la casella (no es pot usar)
-    public void Shake(int i) => StartCoroutine(ShakeSlot(slots[i]));
-
-    System.Collections.IEnumerator ShakeSlot(RectTransform rt)
+    public void SetCallbacks(System.Action<int> click, System.Action<int> dropOutside,
+                             System.Action<int, int> swap, System.Func<int, Sprite> icon)
     {
-        Vector2 basePos = rt.anchoredPosition;
+        foreach (SlotInput s in inputs)
+        {
+            s.onClick = click;
+            s.onDropOutside = dropOutside;
+            s.onSwap = swap;
+            s.getIcon = icon;
+        }
+    }
+
+    // Tremola la casella (no es pot usar). Sempre torna a la seua posició original,
+    // encara que prems la tecla moltes vegades seguides.
+    public void Shake(int i)
+    {
+        if (shaking[i] != null) StopCoroutine(shaking[i]);
+        shaking[i] = StartCoroutine(ShakeSlot(i));
+    }
+
+    System.Collections.IEnumerator ShakeSlot(int i)
+    {
+        RectTransform rt = slots[i];
         for (int k = 0; k < 6; k++)
         {
-            rt.anchoredPosition = basePos + new Vector2(k % 2 == 0 ? 5f : -5f, 0f);
+            rt.anchoredPosition = basePos[i] + new Vector2(k % 2 == 0 ? 5f : -5f, 0f);
             yield return new WaitForSeconds(0.03f);
         }
-        rt.anchoredPosition = basePos;
+        rt.anchoredPosition = basePos[i];
+        shaking[i] = null;
     }
 }

@@ -17,6 +17,7 @@ public class HotbarUI : MonoBehaviour
 
     private Image[][] borders;
     private Image[] icons;
+    private SlotInput[] inputs;
     private TextMeshProUGUI[] names;
     private TextMeshProUGUI currentWeaponText;
     private TMP_FontAsset font;
@@ -24,7 +25,7 @@ public class HotbarUI : MonoBehaviour
     public static HotbarUI Create(int slotCount, TMP_FontAsset font = null)
     {
         // Canvas propi per a la hotbar
-        GameObject canvasGO = new GameObject("HotbarCanvas", typeof(Canvas), typeof(CanvasScaler));
+        GameObject canvasGO = new GameObject("HotbarCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         Canvas canvas = canvasGO.GetComponent<Canvas>();
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 10;
@@ -44,6 +45,7 @@ public class HotbarUI : MonoBehaviour
     {
         borders = new Image[slotCount][];
         icons = new Image[slotCount];
+        inputs = new SlotInput[slotCount];
         names = new TextMeshProUGUI[slotCount];
 
         float totalWidth = slotCount * SlotSize + (slotCount - 1) * Spacing;
@@ -59,6 +61,9 @@ public class HotbarUI : MonoBehaviour
             rt.sizeDelta = new Vector2(SlotSize, SlotSize);
             rt.anchoredPosition = new Vector2(-totalWidth / 2f + i * (SlotSize + Spacing), 20f);
             slot.GetComponent<Image>().color = SlotColor;
+            inputs[i] = slot.AddComponent<SlotInput>();
+            inputs[i].index = i;
+            inputs[i].group = this;
 
             // Vora: 4 barretes (dalt, baix, esquerra, dreta)
             borders[i] = new Image[]
@@ -133,6 +138,19 @@ public class HotbarUI : MonoBehaviour
         tmp.color = Color.white;
         tmp.raycastTarget = false;
         return tmp;
+    }
+
+    // Què fa el ratolí a les caselles (ho connecta PlayerAttack)
+    public void SetCallbacks(System.Action<int> click, System.Action<int> dropOutside,
+                             System.Action<int, int> swap, System.Func<int, Sprite> icon)
+    {
+        foreach (SlotInput s in inputs)
+        {
+            s.onClick = click;
+            s.onDropOutside = dropOutside;
+            s.onSwap = swap;
+            s.getIcon = icon;
+        }
     }
 
     // Actualitza la hotbar: quina casella està triada i què hi ha a cada una

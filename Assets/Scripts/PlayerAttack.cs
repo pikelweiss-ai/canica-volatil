@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using TMPro;
+using UnityEngine.EventSystems;
 
 // Atac estil Brawl Stars:
 // - Apuntes amb el ratolí (es veu una línia cap on apuntes)
@@ -37,10 +38,12 @@ public class PlayerAttack : MonoBehaviour
     private float recoil;                // Retrocés de l'arma en disparar
 
     private int selectedSlot = 0;
+    private bool mouseBlocked;          // El clic ha començat damunt de la UI
     private float nextAttackTime = 0f;
     private float lastCooldownDuration = 1f;
     private LineRenderer aimFill; // Part carregada del cooldown, damunt de l'aim
     private Vector2 aimDirection = Vector2.right;
+    public Vector2 AimDirection => aimDirection;
     private Vector3 originalScale;
 
     private Camera cam;
@@ -84,6 +87,8 @@ public class PlayerAttack : MonoBehaviour
         }
 
         hotbarUI = HotbarUI.Create(hotbarSlots.Length, font);
+        hotbarUI.SetCallbacks(SelectSlot, DropSlot, SwapSlots,
+            i => hotbarSlots[i] != null ? hotbarSlots[i].icon : null);
         hotbarUI.Refresh(hotbarSlots, selectedSlot);
     }
 
@@ -100,7 +105,14 @@ public class PlayerAttack : MonoBehaviour
         if (Input.GetKeyDown(dropKey))
             DropCurrentWeapon();
 
-        bool attackPressed = Input.GetMouseButton(0) || Input.GetKey(KeyCode.Space);
+        // Si el clic comença damunt de la UI (hotbar, bossa...), no dispara fins que solts el botó.
+        // Si ja estaves disparant i passes per damunt de la UI, continua disparant.
+        if (Input.GetMouseButtonDown(0))
+            mouseBlocked = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+        if (!Input.GetMouseButton(0))
+            mouseBlocked = false;
+
+        bool attackPressed = (Input.GetMouseButton(0) && !mouseBlocked) || Input.GetKey(KeyCode.Space);
 
         if (attackPressed && Time.time >= nextAttackTime)
         {
@@ -383,12 +395,33 @@ public class PlayerAttack : MonoBehaviour
     }
 
     // Z: deixa l'arma de la casella triada al terra, davant del jugador
-    void DropCurrentWeapon()
+    void DropCurrentWeapon() => DropSlot(selectedSlot);
+
+    // Clic a una casella de la hotbar: la tria
+    public void SelectSlot(int i)
     {
-        WeaponData weapon = CurrentWeapon;
+        if (i < 0 || i >= hotbarSlots.Length) return;
+        selectedSlot = i;
+        hotbarUI.Refresh(hotbarSlots, selectedSlot);
+    }
+
+    // Arrossegar una arma a una altra casella: les intercanvia
+    public void SwapSlots(int a, int b)
+    {
+        (hotbarSlots[a], hotbarSlots[b]) = (hotbarSlots[b], hotbarSlots[a]);
+        if (selectedSlot == a) selectedSlot = b;
+        else if (selectedSlot == b) selectedSlot = a;
+        hotbarUI.Refresh(hotbarSlots, selectedSlot);
+    }
+
+    // Tira al terra l'arma de la casella 'i' (Z o arrossegar-la fora de la hotbar)
+    public void DropSlot(int i)
+    {
+        if (i < 0 || i >= hotbarSlots.Length) return;
+        WeaponData weapon = hotbarSlots[i];
         if (weapon == null) return;
 
-        hotbarSlots[selectedSlot] = null;
+        hotbarSlots[i] = null;
         hotbarUI.Refresh(hotbarSlots, selectedSlot);
 
         Vector3 from = transform.position;

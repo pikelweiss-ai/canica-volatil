@@ -13,14 +13,16 @@ public class HealPickup : MonoBehaviour
     private Transform player;
     private HealInventory bag;
     private bool ready;
+    private bool waitForPlayerToLeave; // Si l'has tirat tu, no es torna a agafar fins que t'allunyes
     private float bob;
 
-    public static HealPickup Spawn(HealItem item, Vector3 from, Vector3 to)
+    public static HealPickup Spawn(HealItem item, Vector3 from, Vector3 to, bool droppedByPlayer = false)
     {
         GameObject go = new GameObject("Cura " + item.itemName);
         go.transform.position = from;
         HealPickup p = go.AddComponent<HealPickup>();
         p.item = item;
+        p.waitForPlayerToLeave = droppedByPlayer;
         p.Build();
         p.StartCoroutine(p.PopOut(from, to));
         return p;
@@ -76,7 +78,9 @@ public class HealPickup : MonoBehaviour
         visual.localPosition = Vector3.up * (0.3f + Mathf.Sin((Time.time + bob) * 3f) * 0.06f);
 
         if (player == null) return;
-        if (Vector2.Distance(player.position, transform.position) > pickupRange) return;
+        float dist = Vector2.Distance(player.position, transform.position);
+        if (waitForPlayerToLeave) { if (dist > pickupRange + 0.3f) waitForPlayerToLeave = false; return; }
+        if (dist > pickupRange) return;
 
         // Va a la bossa de cures (tecles 5-8). Si la bossa està plena, es queda al terra.
         if (bag == null) bag = player.GetComponent<HealInventory>();
