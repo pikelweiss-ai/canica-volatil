@@ -380,6 +380,7 @@ MonoBehaviour:
   volume: 0.6
   lootTable:
   - {fileID: 11400000, guid: 1d3ab467ac115e04e9e5b83220101ec1, type: 2}
+  - {fileID: 11400000, guid: cce5e921ff8cd1e47b5ba8916fd12a9a, type: 2}
   - {fileID: 11400000, guid: 2bc8af03c16b50a49bd5f356d60b821d, type: 2}
   lootDropOffset: {x: 0, y: -0.8}
   healChance: 0.75

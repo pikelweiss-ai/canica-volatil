@@ -13,21 +13,27 @@ MonoBehaviour:
   m_Name: Cosmetics
   m_EditorClassIdentifier: 
   playerSprite: {fileID: 21300000, guid: 7d69027968da82148b918575f8278db3, type: 3}
-  colors:
-  - name: Original
-    color: {r: 1, g: 1, b: 1, a: 1}
-  - name: Foc
-    color: {r: 1, g: 0.55, b: 0.45, a: 1}
-  - name: Gel
-    color: {r: 0.6, g: 0.85, b: 1, a: 1}
-  - name: Gespa
-    color: {r: 0.6, g: 1, b: 0.55, a: 1}
-  - name: "Ra\xEFm"
-    color: {r: 0.8, g: 0.6, b: 1, a: 1}
-  - name: Or
-    color: {r: 1, g: 0.88, b: 0.4, a: 1}
-  - name: Ombra
-    color: {r: 0.45, g: 0.45, b: 0.55, a: 1}
+  skins:
+  - name: "Cl\xE0ssica"
+    sprite: {fileID: 0}
+  - name: Canica de vidre
+    sprite: {fileID: 21300000, guid: d9fe1933ee723d741bd4dd19747d1731, type: 3}
+  - name: Bola de foc
+    sprite: {fileID: 21300000, guid: d598252272d1a3844a591670a4ec358e, type: 3}
+  - name: "Gla\xE7\xF3"
+    sprite: {fileID: 21300000, guid: 09e5f684b330d0b40894ef6af381a5bf, type: 3}
+  - name: Canica d'or
+    sprite: {fileID: 21300000, guid: fd8ac61774f484447a8904ceb3924a14, type: 3}
+  - name: Robot
+    sprite: {fileID: 21300000, guid: cb4a816a7f85d984296c3027b0a79943, type: 3}
+  - name: Zombi
+    sprite: {fileID: 21300000, guid: 0cc8dd8cec8fb8641bfde4ae5d57afa7, type: 3}
+  - name: Ninja
+    sprite: {fileID: 21300000, guid: a71e025e0a19ac247887062009e7ebbd, type: 3}
+  - name: "S\xEDndria"
+    sprite: {fileID: 21300000, guid: 92d5000c437fb684eb076704f1af16c1, type: 3}
+  - name: Fantasma
+    sprite: {fileID: 21300000, guid: e86cbe90ef3b13f49ac6778fb934d3d0, type: 3}
   hats:
   - name: Cap
     sprite: {fileID: 0}

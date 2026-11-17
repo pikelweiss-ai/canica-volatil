@@ -291,8 +291,40 @@ public class DungeonGenerator : MonoBehaviour
         Vector2Int c = r.Center;
         int qx = r.rect.width / 4, qy = r.rect.height / 4;
 
-        switch (rng.Next(4))
+        switch (rng.Next(7))
         {
+            case 4: // Anell de columnes al voltant del centre
+                for (int i = 0; i < 8; i++)
+                {
+                    float a = i * Mathf.PI / 4f;
+                    Vector2Int p = c + new Vector2Int(Mathf.RoundToInt(Mathf.Cos(a) * qx * 1.3f), Mathf.RoundToInt(Mathf.Sin(a) * qy * 1.3f));
+                    if (FreeForDecor(r, p)) solid.Add(p);
+                }
+                break;
+
+            case 5: // Franges de líquid a dalt i a baix (passadís pel mig)
+                if (Theme != null && Theme.liquidTile != null)
+                    for (int x = r.rect.xMin + 2; x < r.rect.xMax - 2; x++)
+                        foreach (int y in new[] { r.rect.yMin + 2, r.rect.yMax - 3 })
+                        {
+                            Vector2Int p = new Vector2Int(x, y);
+                            if (FreeForDecor(r, p)) { reserved.Add(p); poolCells.Add(p); }
+                        }
+                break;
+
+            case 6: // Parets en L als racons (cobertura)
+                foreach (Vector2Int s in new[] { new Vector2Int(-1, -1), new Vector2Int(1, -1), new Vector2Int(-1, 1), new Vector2Int(1, 1) })
+                {
+                    Vector2Int o = c + new Vector2Int(s.x * qx, s.y * qy);
+                    for (int k = 0; k < 3; k++)
+                    {
+                        Vector2Int h = o + new Vector2Int(k * s.x, 0), v = o + new Vector2Int(0, k * s.y);
+                        if (FreeForDecor(r, h)) solid.Add(h);
+                        if (FreeForDecor(r, v)) solid.Add(v);
+                    }
+                }
+                break;
+
             case 0: // Quatre columnes de 2x2
                 foreach (Vector2Int s in new[] { new Vector2Int(-1, -1), new Vector2Int(1, -1), new Vector2Int(-1, 1), new Vector2Int(1, 1) })
                 {
@@ -517,8 +549,10 @@ public class DungeonGenerator : MonoBehaviour
 
         if (r.type == RoomType.Boss)
         {
-            ui.ShowBanner("BOSS", 1.5f);
-            yield return SpawnEnemy(bossPrefab, r.Center + new Vector2Int(0, r.rect.height / 4), r, 1.2f);
+            GameObject boss = Theme != null && Theme.boss != null ? Theme.boss : bossPrefab;
+            EnemyBoss info = boss != null ? boss.GetComponent<EnemyBoss>() : null;
+            ui.ShowBanner(info != null ? info.bossName.ToUpper() : "BOSS", 1.5f);
+            yield return SpawnEnemy(boss, r.Center + new Vector2Int(0, r.rect.height / 4), r, 1.2f);
             yield return WaitClear(r);
             // Recompensa: cofre llegendari i portal
             SpawnChest(ChestRarity.Llegendari, r.Center + new Vector2Int(-2, 0));
@@ -559,6 +593,13 @@ public class DungeonGenerator : MonoBehaviour
 
     GameObject PickEnemy()
     {
+        // Cada tema té els seus enemics (tots igual de probables)
+        if (Theme != null && Theme.enemies != null && Theme.enemies.Length > 0)
+        {
+            GameObject e = Theme.enemies[rng.Next(Theme.enemies.Length)];
+            if (e != null) return e;
+        }
+
         if (enemyPrefabs == null || enemyPrefabs.Length == 0) return null;
         int f = RunState.Floor;
         float[] w = { 3f, 3f, f >= 1 ? 2f : 0f, f >= 2 ? 2f : 0.6f };

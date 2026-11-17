@@ -3,19 +3,28 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// Boss "Rei Llim". Entre atac i atac camina cap a tu; cada atac s'avisa abans.
-//  - Anell: dispara bales en totes direccions
-//  - Bot: marca on caurà (ombra roja), salta i en caure fa una ona de bales
-//  - Invocació (a mitja vida): crida llims xicotets
-//  - Espiral (a mitja vida): bales girant
-// A mitja vida es posa furiós: més ràpid i més bales.
+// Boss configurable (Rei Llim, Golem Gegant, Mag Fosc...). Entre atac i atac camina cap a tu;
+// cada atac s'avisa abans (parpelleja o marca el terra en roig).
+//  - Ring: bales en totes direccions        - Jump: bot amb ona de bales en caure
+//  - Summon: crida esbirros                 - Spiral: bales girant
+//  - Charge: envestides seguides            - RockRain: pluja de roques on estàs
+//  - Teleport: desapareix i reapareix       - Fan: ventall de bales apuntat
+// Els primers 'calmAttacks' atacs els fa sempre; a mitja vida es posa furiós i els fa tots.
 [RequireComponent(typeof(EnemyPathfindingAI), typeof(EnemyHealth))]
 public class EnemyBoss : MonoBehaviour
 {
+    public enum Attack { Ring, Jump, Summon, Spiral, Charge, RockRain, Teleport, Fan }
+
     public string bossName = "Rei Llim";
     public GameObject minionPrefab;
     public float timeBetweenAttacks = 1.4f;
     public float bulletSpeed = 5f;
+    [Tooltip("Atacs del boss. Els 'calmAttacks' primers els fa des del principi; la resta, quan està furiós (mitja vida).")]
+    public Attack[] attacks = { Attack.Ring, Attack.Jump, Attack.Summon, Attack.Spiral };
+    public int calmAttacks = 2;
+    public bool useBulletColor = false;
+    public Color bulletColor = Color.white;
+    public Color dustColor = new Color(0.6f, 0.9f, 0.35f);
 
     private EnemyPathfindingAI ai;
     private EnemyHealth health;
@@ -54,25 +63,30 @@ public class EnemyBoss : MonoBehaviour
         }
 
         timer -= Time.deltaTime;
-        if (timer <= 0f) StartCoroutine(Attack());
+        if (timer <= 0f) StartCoroutine(DoAttack());
     }
 
-    IEnumerator Attack()
+    IEnumerator DoAttack()
     {
         attacking = true;
         ai.mode = EnemyPathfindingAI.Mode.Hold;
 
-        int count = enraged ? 4 : 2;
+        int count = Mathf.Clamp(enraged ? attacks.Length : calmAttacks, 1, attacks.Length);
         int a;
-        do { a = Random.Range(0, count); } while (a == lastAttack && count > 1);
+        int guard = 0;
+        do { a = Random.Range(0, count); } while (a == lastAttack && count > 1 && guard++ < 10);
         lastAttack = a;
 
-        switch (a)
+        switch (attacks[a])
         {
-            case 0: yield return Ring(); break;
-            case 1: yield return Jump(); break;
-            case 2: yield return Summon(); break;
-            case 3: yield return Spiral(); break;
+            case Attack.Ring: yield return Ring(); break;
+            case Attack.Jump: yield return Jump(); break;
+            case Attack.Summon: yield return Summon(); break;
+            case Attack.Spiral: yield return Spiral(); break;
+            case Attack.Charge: yield return Charge(); break;
+            case Attack.RockRain: yield return RockRain(); break;
+            case Attack.Teleport: yield return Teleport(); break;
+            case Attack.Fan: yield return Fan(); break;
         }
 
         ai.mode = EnemyPathfindingAI.Mode.Chase;
@@ -141,7 +155,7 @@ public class EnemyBoss : MonoBehaviour
         // Aterratge: colp a prop + ona de bales
         Fx.Shake(0.35f, 0.35f);
         Fx.Play(Fx.Boom, 0.6f);
-        Fx.Burst(target, new Color(0.6f, 0.9f, 0.35f), 16, 5f);
+        Fx.Burst(target, dustColor, 16, 5f);
         if (ai.Player != null && Vector2.Distance(ai.Player.position, target) < 1.3f)
             ai.Player.GetComponent<PlayerHealth>()?.TakeDamage(1);
 
@@ -169,7 +183,7 @@ public class EnemyBoss : MonoBehaviour
             EnemyHealth h = m.GetComponent<EnemyHealth>();
             if (DungeonGenerator.Instance != null && h != null) DungeonGenerator.Instance.RegisterSpawned(h);
             m.GetComponent<EnemyPathfindingAI>()?.Alert();
-            Fx.Burst(pos, new Color(0.6f, 0.9f, 0.35f), 6, 2f);
+            Fx.Burst(pos, dustColor, 6, 2f);
         }
         yield return new WaitForSeconds(0.5f);
     }
@@ -191,9 +205,109 @@ public class EnemyBoss : MonoBehaviour
         }
     }
 
+    // Carrega: 3 envestides seguides cap a on estàs
+    IEnumerator Charge()
+    {
+        Rigidbody2D rb = GetComponent<Rigidbody2D>();
+        int dashes = enraged ? 4 : 3;
+        for (int d = 0; d < dashes && ai.Player != null; d++)
+        {
+            yield return Telegraph(0.45f);
+            Vector2 dir = ((Vector2)ai.Player.position - rb.position).normalized;
+            ai.enabled = false;
+            for (float moved = 0f; moved < 7f;)
+            {
+                yield return new WaitForFixedUpdate();
+                float step = 13f * Time.fixedDeltaTime;
+                Vector2 next = rb.position + dir * step;
+                if (!TileNav.CircleFree(next, ai.bodyRadius)) { Fx.Shake(0.2f, 0.2f); break; }
+                rb.MovePosition(next);
+                moved += step;
+                if (ai.Player != null && Vector2.Distance(next, ai.Player.position) < ai.bodyRadius + 0.4f)
+                    ai.Player.GetComponent<PlayerHealth>()?.TakeDamage(1);
+            }
+            ai.enabled = true;
+            Fx.Burst(transform.position, dustColor, 8, 3f);
+            yield return new WaitForSeconds(0.25f);
+        }
+    }
+
+    // Pluja de roques: marques roges al voltant teu i, després, cauen
+    IEnumerator RockRain()
+    {
+        if (ai.Player == null) yield break;
+        yield return Telegraph(0.4f);
+        int n = enraged ? 10 : 7;
+        var marks = new System.Collections.Generic.List<SpriteRenderer>();
+        for (int i = 0; i < n; i++)
+        {
+            Vector2 p = (Vector2)ai.Player.position + (i == 0 ? Vector2.zero : Random.insideUnitCircle * 3f);
+            SpriteRenderer m = Fx.MakeSprite("Roca avis", p, Fx.Disc, new Color(1f, 0.2f, 0.2f, 0.35f), "Shadows", 5);
+            m.transform.localScale = Vector3.one * 1.2f;
+            marks.Add(m);
+        }
+        yield return new WaitForSeconds(0.9f);
+        foreach (SpriteRenderer m in marks)
+        {
+            Vector2 p = m.transform.position;
+            Destroy(m.gameObject);
+            Fx.Burst(p, new Color(0.55f, 0.55f, 0.6f), 6, 2.5f);
+            if (ai.Player != null && Vector2.Distance(ai.Player.position, p) < 0.65f)
+                ai.Player.GetComponent<PlayerHealth>()?.TakeDamage(1);
+        }
+        Fx.Play(Fx.Boom, 0.5f);
+        Fx.Shake(0.3f, 0.25f);
+        yield return new WaitForSeconds(0.3f);
+    }
+
+    // Desapareix, reapareix lluny de tu i dispara un anell
+    IEnumerator Teleport()
+    {
+        for (float t = 0f; t < 0.35f; t += Time.deltaTime)
+        {
+            if (sr != null) sr.color = new Color(1f, 1f, 1f, 1f - t / 0.35f);
+            yield return null;
+        }
+        Fx.Burst(transform.position, dustColor, 12, 3f);
+        if (ai.Player != null && TileNav.Ground != null)
+            for (int i = 0; i < 30; i++)
+            {
+                Vector2 p = (Vector2)ai.Player.position + Random.insideUnitCircle.normalized * Random.Range(4f, 6f);
+                if (!TileNav.CircleFree(p, ai.bodyRadius)) continue;
+                Vector3Int c = TileNav.Cell(p);
+                DungeonGenerator.Room room = DungeonGenerator.Instance != null ? DungeonGenerator.Instance.CurrentRoom : null;
+                if (room != null && !room.rect.Contains(new Vector2Int(c.x, c.y))) continue;
+                transform.position = p;
+                break;
+            }
+        for (float t = 0f; t < 0.35f; t += Time.deltaTime)
+        {
+            if (sr != null) sr.color = new Color(1f, 1f, 1f, t / 0.35f);
+            yield return null;
+        }
+        if (sr != null) sr.color = Color.white;
+        yield return Ring();
+    }
+
+    // Ventall de bales apuntat, tres vegades
+    IEnumerator Fan()
+    {
+        yield return Telegraph(0.4f);
+        for (int w = 0; w < 3 && ai.Player != null; w++)
+        {
+            Vector2 dir = (ai.Player.position - transform.position).normalized;
+            int n = enraged ? 7 : 5;
+            for (int i = 0; i < n; i++)
+                Fire(EnemyShooter.Rotate(dir, Mathf.Lerp(-35f, 35f, i / (float)(n - 1))), 1.2f);
+            Fx.Play(Fx.Pew, 0.5f);
+            yield return new WaitForSeconds(0.4f);
+        }
+    }
+
     void Fire(Vector2 dir, float speedMul = 1f)
     {
-        EnemyBullet.Fire((Vector2)transform.position + dir * 0.9f, dir, bulletSpeed * speedMul, 1, transform, 1.3f);
+        EnemyBullet.Fire((Vector2)transform.position + dir * 0.9f, dir, bulletSpeed * speedMul, 1, transform, 1.3f,
+                         useBulletColor ? bulletColor : (Color?)null);
     }
 
     void OnDied(EnemyHealth h)

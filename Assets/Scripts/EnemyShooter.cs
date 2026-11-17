@@ -5,7 +5,7 @@ using UnityEngine;
 [RequireComponent(typeof(EnemyPathfindingAI))]
 public class EnemyShooter : MonoBehaviour
 {
-    public enum Pattern { Single, Spread3, Burst3 }
+    public enum Pattern { Single, Spread3, Burst3, Ring8 }
 
     public Pattern pattern = Pattern.Single;
     public float fireCooldown = 1.8f;
@@ -13,6 +13,8 @@ public class EnemyShooter : MonoBehaviour
     public int bulletDamage = 1;
     public float preferredDistance = 4.5f;
     public float telegraphTime = 0.35f;
+    public bool useColor = false;              // Bales d'un color (p. ex. espores verdes)
+    public Color bulletColor = Color.white;
 
     private EnemyPathfindingAI ai;
     private SpriteRenderer sr;
@@ -64,12 +66,20 @@ public class EnemyShooter : MonoBehaviour
                     yield return new WaitForSeconds(0.15f);
                 }
                 break;
+            case Pattern.Ring8: // Bolet: espores en totes direccions
+                for (int i = 0; i < 8; i++)
+                {
+                    float a = (i * 45f + Random.Range(0f, 20f)) * Mathf.Deg2Rad;
+                    Fire(new Vector2(Mathf.Cos(a), Mathf.Sin(a)));
+                }
+                break;
         }
     }
 
     void Fire(Vector2 dir)
     {
-        EnemyBullet.Fire((Vector2)transform.position + dir * 0.4f, dir, bulletSpeed, bulletDamage, transform);
+        EnemyBullet.Fire((Vector2)transform.position + dir * 0.4f, dir, bulletSpeed, bulletDamage, transform, 1f,
+                         useColor ? bulletColor : (Color?)null);
         Fx.Play(Fx.Pew, 0.35f);
     }
 

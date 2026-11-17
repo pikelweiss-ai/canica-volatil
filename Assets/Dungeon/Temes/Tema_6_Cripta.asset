@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48160bff1954df0438a8d79310d3a6cb, type: 3}
+  m_Name: Tema_6_Cripta
+  m_EditorClassIdentifier: 
+  themeName: Cripta
+  floorTiles:
+  - {fileID: 11400000, guid: 7460f02ab4fa59747b416447600f002e, type: 2}
+  - {fileID: 11400000, guid: b9f18d5c9c29e5646b83441ad6af0ee9, type: 2}
+  wallTile: {fileID: 11400000, guid: 27b18573059b34a46b339baf866fae2b, type: 2}
+  liquidTile: {fileID: 11400000, guid: 7b4ca08448bbea44ab2d2b0e25355a12, type: 2}
+  liquidChance: 0.1
+  lightColor: {r: 0.8, g: 0.75, b: 1, a: 1}
+  lightIntensity: 0.7
+  backgroundColor: {r: 0.06, g: 0.03, b: 0.08, a: 1}
+  enemies:
+  - {fileID: 8806987266807776986, guid: 1ac0eba9b5257474296709fc8e7c513c, type: 3}
+  - {fileID: 5969025284651876321, guid: 992c3b45572bde74ba396f70f4484e21, type: 3}
+  - {fileID: 4086869058332645981, guid: 9cf1f230b0449444fa5108bbb137cba9, type: 3}
+  - {fileID: 7892987745184238191, guid: a17a1846a44691f42b5c753526c8a3dd, type: 3}
+  boss: {fileID: 2174415939430943108, guid: ae944127ee584cc499d757efec0b37c6, type: 3}

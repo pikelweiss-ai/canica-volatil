@@ -14,4 +14,8 @@ public class DungeonTheme : ScriptableObject
     public Color lightColor = Color.white; // Color de la llum global 2D
     public float lightIntensity = 1f;
     public Color backgroundColor = new Color(0.07f, 0.07f, 0.09f);
+
+    [Header("Enemics d'este tema (si està buit, els de la masmorra)")]
+    public GameObject[] enemies;
+    public GameObject boss;                // Si està buit, el boss per defecte
 }

@@ -12,17 +12,10 @@ public class CosmeticsDatabase : ScriptableObject
     [System.Serializable]
     public class Tint { public string name; public Color color = Color.white; }
 
-    public Sprite playerSprite;        // Per a la previsualització del menú
-    public Tint[] colors =
-    {
-        new Tint { name = "Original", color = Color.white },
-        new Tint { name = "Foc", color = new Color(1f, 0.55f, 0.45f) },
-        new Tint { name = "Gel", color = new Color(0.6f, 0.85f, 1f) },
-        new Tint { name = "Gespa", color = new Color(0.6f, 1f, 0.55f) },
-        new Tint { name = "Raïm", color = new Color(0.8f, 0.6f, 1f) },
-        new Tint { name = "Or", color = new Color(1f, 0.88f, 0.4f) },
-        new Tint { name = "Ombra", color = new Color(0.45f, 0.45f, 0.55f) },
-    };
+    public Sprite playerSprite;        // La canica original (per a la previsualització del menú)
+
+    // Skins: un dibuix sencer de la canica (20x20 a Sprites/Pixel/Skins). La primera és l'original (sprite buit).
+    public Hat[] skins;
     public Hat[] hats;                 // El primer pot ser "Cap" (sprite buit)
     public Tint[] trails =
     {
@@ -34,7 +27,7 @@ public class CosmeticsDatabase : ScriptableObject
         new Tint { name = "Arc de Sant Martí", color = new Color(1f, 0f, 1f, 0.99f) }, // Especial: canvia de color
     };
 
-    public const string KeyColor = "Cos_Color", KeyHat = "Cos_Hat", KeyTrail = "Cos_Trail";
+    public const string KeySkin = "Cos_Skin", KeyHat = "Cos_Hat", KeyTrail = "Cos_Trail";
 
     static CosmeticsDatabase instance;
     public static CosmeticsDatabase Instance

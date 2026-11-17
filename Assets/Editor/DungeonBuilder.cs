@@ -44,7 +44,7 @@ public static class DungeonBuilder
         BuildWeapons();
         ChestPrefabCreator.CreateAll();   // Torna a omplir els cofres amb les armes noves
         BuildCosmetics();
-        var themes = BuildThemes(tiles);
+        var themes = BuildThemes(tiles, enemies);
         AssetDatabase.SaveAssets();
 
         bool sceneOk = BuildScene(tiles, props, enemies, themes);
@@ -84,7 +84,7 @@ public static class DungeonBuilder
     static Dictionary<string, TileBase> BuildTiles()
     {
         var d = new Dictionary<string, TileBase>();
-        foreach (string theme in new[] { "Cova", "Desert", "Neu", "Volca" })
+        foreach (string theme in new[] { "Cova", "Desert", "Neu", "Volca", "Bosc", "Cripta", "Cristall", "Claveguera" })
         {
             d[theme + "_Terra1"] = MakeTile(theme + "_Terra1", S("Masmorra/" + theme + "_Terra1"), Tile.ColliderType.None);
             d[theme + "_Terra2"] = MakeTile(theme + "_Terra2", S("Masmorra/" + theme + "_Terra2"), Tile.ColliderType.None);
@@ -98,6 +98,13 @@ public static class DungeonBuilder
         lava.damage = 1;
         EditorUtility.SetDirty(lava);
         d["Lava"] = lava;
+
+        DamageTile acid = LoadOrCreate<DamageTile>(TileDir + "/Acid.asset");
+        acid.sprite = S("Masmorra/Acid");
+        acid.colliderType = Tile.ColliderType.None;
+        acid.damage = 1;
+        EditorUtility.SetDirty(acid);
+        d["Acid"] = acid;
         return d;
     }
 
@@ -266,6 +273,67 @@ public static class DungeonBuilder
         boss.AddComponent<EnemyBoss>().minionPrefab = d["Llim"];
         d["ReiLlim"] = SavePrefab(boss, EnemyDir + "/ReiLlim.prefab");
 
+        // ---- Enemics nous ----
+        EnemyCharger Charger(GameObject g, float range, float tele, float speed, float dist, float cd, float stun, int dmg)
+        {
+            EnemyCharger c = g.AddComponent<EnemyCharger>();
+            c.chargeRange = range; c.telegraphTime = tele; c.dashSpeed = speed; c.dashDistance = dist;
+            c.cooldown = cd; c.stunTime = stun; c.dashDamage = dmg;
+            return c;
+        }
+
+        GameObject bat = Make("Ratpenat", S("Enemics/Ratpenat"), 1f, 2, 3.4f, 0.25f, 0.6f, new Color(0.45f, 0.2f, 0.6f), true);
+        bat.GetComponent<EnemyHealth>().coinsMax = 1;
+        Charger(bat, 4f, 0.25f, 9f, 3f, 1.3f, 0.3f, 1);
+        d["Ratpenat"] = SavePrefab(bat, EnemyDir + "/Ratpenat.prefab");
+
+        GameObject spider = Make("Aranya", S("Enemics/Aranya"), 1f, 3, 3f, 0.27f, 0.65f, new Color(0.3f, 0.3f, 0.35f), true);
+        Charger(spider, 5f, 0.35f, 12f, 4.5f, 2f, 0.5f, 1);
+        d["Aranya"] = SavePrefab(spider, EnemyDir + "/Aranya.prefab");
+
+        GameObject golem = Make("Golem", S("Enemics/Golem"), 1f, 12, 1.3f, 0.32f, 0.8f, new Color(0.45f, 0.45f, 0.5f), true);
+        golem.GetComponent<EnemyHealth>().knockbackResist = 0.6f;
+        golem.GetComponent<EnemyHealth>().coinsMax = 3;
+        Charger(golem, 6f, 0.7f, 9f, 6f, 3f, 1.2f, 2);
+        d["Golem"] = SavePrefab(golem, EnemyDir + "/Golem.prefab");
+
+        GameObject skel = Make("Esquelet", S("Enemics/Esquelet"), 1f, 4, 2f, 0.27f, 0.65f, new Color(0.9f, 0.9f, 0.85f), false);
+        EnemyShooter ss = skel.AddComponent<EnemyShooter>();
+        ss.pattern = EnemyShooter.Pattern.Burst3; ss.fireCooldown = 2.2f; ss.bulletSpeed = 7f;
+        d["Esquelet"] = SavePrefab(skel, EnemyDir + "/Esquelet.prefab");
+
+        GameObject mage = Make("Mag", S("Enemics/Mag"), 1f, 4, 2f, 0.27f, 0.65f, new Color(0.3f, 0.5f, 1f), false);
+        mage.AddComponent<EnemyTeleporter>();
+        d["Mag"] = SavePrefab(mage, EnemyDir + "/Mag.prefab");
+
+        GameObject shroom = Make("BoletVeri", S("Enemics/BoletVeri"), 1f, 5, 0f, 0.3f, 0.7f, new Color(0.64f, 0.35f, 0.88f), true);
+        shroom.GetComponent<EnemyPathfindingAI>().wanderWhenIdle = false;
+        EnemyShooter bs = shroom.AddComponent<EnemyShooter>();
+        bs.pattern = EnemyShooter.Pattern.Ring8; bs.fireCooldown = 2.4f; bs.bulletSpeed = 4f;
+        bs.useColor = true; bs.bulletColor = new Color(0.6f, 1f, 0.4f);
+        d["BoletVeri"] = SavePrefab(shroom, EnemyDir + "/BoletVeri.prefab");
+
+        // ---- Bosses nous ----
+        GameObject Boss(string name, string sprite, int hp, float speed, EnemyBoss.Attack[] attacks, GameObject minion, Color bullets, Color dust, string title)
+        {
+            GameObject b = Make(name, S("Enemics/" + sprite), 1f, hp, speed, 0.75f, 1.5f, dust, true);
+            EnemyHealth h = b.GetComponent<EnemyHealth>();
+            h.knockbackResist = 1f; h.coinsMin = 0; h.coinsMax = 0;
+            b.transform.Find("Ombra").localScale = new Vector3(2f, 1.5f, 1f);
+            b.transform.Find("Ombra").localPosition = new Vector3(0f, -0.8f, 0f);
+            EnemyBoss eb = b.AddComponent<EnemyBoss>();
+            eb.bossName = title; eb.attacks = attacks; eb.calmAttacks = 2; eb.minionPrefab = minion;
+            eb.useBulletColor = true; eb.bulletColor = bullets; eb.dustColor = dust;
+            return SavePrefab(b, EnemyDir + "/" + name + ".prefab");
+        }
+
+        d["GolemGegant"] = Boss("GolemGegant", "GolemGegant", 90, 1.3f,
+            new[] { EnemyBoss.Attack.Charge, EnemyBoss.Attack.RockRain, EnemyBoss.Attack.Ring, EnemyBoss.Attack.Jump },
+            d["Golem"], new Color(0.75f, 0.72f, 0.7f), new Color(0.55f, 0.55f, 0.6f), "Golem Gegant");
+        d["MagFosc"] = Boss("MagFosc", "MagFosc", 65, 2f,
+            new[] { EnemyBoss.Attack.Teleport, EnemyBoss.Attack.Fan, EnemyBoss.Attack.Summon, EnemyBoss.Attack.Spiral },
+            d["Ratpenat"], new Color(0.8f, 0.5f, 1f), new Color(0.6f, 0.35f, 0.9f), "Mag Fosc");
+
         return d;
     }
 
@@ -328,6 +396,37 @@ public static class DungeonBuilder
         }
         f.icon = S("Armes/Llancaflames"); f.projectileSprite = null;
         EditorUtility.SetDirty(f);
+
+        // ---- Armes noves (els valors només es posen la primera vegada; després els canvies a l'Inspector) ----
+        void New(string file, string name, ChestRarity rarity, string icon, string proj, float projScale,
+                 int dmg, float cd, float speed, float range, float size, WeaponSound sound,
+                 System.Action<WeaponData> extra = null)
+        {
+            WeaponData w = W(file);
+            if (string.IsNullOrEmpty(w.weaponName) || w.weaponName == "Arma")
+            {
+                w.weaponName = name; w.rarity = rarity; w.handScale = 0.75f;
+                w.damage = dmg; w.cooldown = cd; w.knockbackForce = 2f;
+                w.projectileSpeed = speed; w.range = range; w.projectileSize = size;
+                w.projectileSpriteScale = projScale; w.sound = sound;
+                extra?.Invoke(w);
+            }
+            w.icon = S("Armes/" + icon);
+            w.projectileSprite = proj != null ? S("Armes/" + proj) : null;
+            EditorUtility.SetDirty(w);
+        }
+
+        New("Revolver", "Revòlver", ChestRarity.Comu, "Revolver", "Bala", 1f, 2, 0.45f, 18f, 7.5f, 0.15f, WeaponSound.Tret);
+        New("Bumerang", "Bumerang", ChestRarity.Rar, "Bumerang", "Bumerang", 0.8f, 2, 0.7f, 11f, 5.5f, 0.35f, WeaponSound.Llancament,
+            w => { w.returns = true; w.spinSpeed = 900f; });
+        New("Shuriken", "Shurikens", ChestRarity.Comu, "Shuriken", "Shuriken", 0.7f, 1, 0.3f, 15f, 6f, 0.2f, WeaponSound.Llancament,
+            w => { w.pellets = 3; w.spreadAngle = 12f; w.pierce = 1; w.spinSpeed = 1080f; });
+        New("Vareta", "Vareta màgica", ChestRarity.Epic, "Vareta", "BolaMagica", 1f, 2, 0.35f, 9f, 9f, 0.25f, WeaponSound.Llancament,
+            w => { w.homing = 6f; });
+        New("Minigun", "Minigun", ChestRarity.Llegendari, "Minigun", "Bala", 1f, 1, 0.045f, 19f, 7.5f, 0.15f, WeaponSound.Tret,
+            w => { w.spreadAngle = 9f; w.knockbackForce = 0.8f; });
+        New("Laser", "Làser", ChestRarity.Llegendari, "Laser", "Raig", 1f, 3, 0.5f, 35f, 12f, 0.18f, WeaponSound.Tret,
+            w => { w.pierce = 5; });
     }
 
     static void BuildCosmetics()
@@ -343,10 +442,15 @@ public static class DungeonBuilder
             new CosmeticsDatabase.Hat { name = "Aureola", sprite = S("Barrets/Aureola") },
             new CosmeticsDatabase.Hat { name = "Bolet", sprite = S("Barrets/Bolet") },
         };
+        var skins = new List<CosmeticsDatabase.Hat> { new CosmeticsDatabase.Hat { name = "Clàssica", sprite = null } };
+        foreach (var s in new[] { ("Vidre", "Canica de vidre"), ("Foc", "Bola de foc"), ("Gel", "Glaçó"), ("Or", "Canica d'or"),
+                                  ("Robot", "Robot"), ("Zombi", "Zombi"), ("Ninja", "Ninja"), ("Sindria", "Síndria"), ("Fantasma", "Fantasma") })
+            skins.Add(new CosmeticsDatabase.Hat { name = s.Item2, sprite = S("Skins/" + s.Item1) });
+        db.skins = skins.ToArray();
         EditorUtility.SetDirty(db);
     }
 
-    static DungeonTheme[] BuildThemes(Dictionary<string, TileBase> tiles)
+    static DungeonTheme[] BuildThemes(Dictionary<string, TileBase> tiles, Dictionary<string, GameObject> enemies)
     {
         TileBase water = AssetDatabase.LoadAssetAtPath<TileBase>("Assets/Tiles/WaterTile.asset");
 
@@ -365,12 +469,37 @@ public static class DungeonBuilder
             return t;
         }
 
+        // Els temes vells (1_Cova, 2_Desert...) ja no es fan servir
+        foreach (string old in new[] { "1_Cova", "2_Desert", "3_Neu", "4_Volca" })
+            AssetDatabase.DeleteAsset(ThemeDir + "/" + old + ".asset");
+
+        DungeonTheme With(DungeonTheme t, string boss, params string[] list)
+        {
+            t.enemies = list.Select(n => enemies[n]).ToArray();
+            t.boss = enemies[boss];
+            EditorUtility.SetDirty(t);
+            return t;
+        }
+
+        // Ordre dels pisos: després del 8 torna a començar (més difícil)
         return new[]
         {
-            T("1_Cova", "Cova", "Cova", water, 0.3f, new Color(0.8f, 0.85f, 1f), 0.8f, new Color(0.05f, 0.05f, 0.08f)),
-            T("2_Desert", "Desert", "Desert", water, 0.1f, new Color(1f, 0.95f, 0.85f), 1.05f, new Color(0.2f, 0.14f, 0.08f)),
-            T("3_Neu", "Neu i gel", "Neu", water, 0.25f, new Color(0.9f, 0.95f, 1f), 1f, new Color(0.12f, 0.16f, 0.22f)),
-            T("4_Volca", "Volcà", "Volca", tiles["Lava"], 0.6f, new Color(1f, 0.75f, 0.6f), 0.85f, new Color(0.12f, 0.03f, 0.02f)),
+            With(T("Tema_1_Cova", "Cova", "Cova", water, 0.3f, new Color(0.8f, 0.85f, 1f), 0.8f, new Color(0.05f, 0.05f, 0.08f)),
+                 "ReiLlim", "Malo", "Llim", "Ratpenat", "Kamikaze"),
+            With(T("Tema_2_Bosc", "Bosc perdut", "Bosc", water, 0.3f, new Color(0.85f, 1f, 0.85f), 0.9f, new Color(0.03f, 0.08f, 0.03f)),
+                 "GolemGegant", "Llim", "Aranya", "BoletVeri", "Tirador"),
+            With(T("Tema_3_Desert", "Desert", "Desert", water, 0.1f, new Color(1f, 0.95f, 0.85f), 1.05f, new Color(0.2f, 0.14f, 0.08f)),
+                 "MagFosc", "Malo", "Golem", "Esquelet", "Kamikaze"),
+            With(T("Tema_4_Claveguera", "Claveguera", "Claveguera", tiles["Acid"], 0.7f, new Color(0.8f, 1f, 0.75f), 0.75f, new Color(0.04f, 0.06f, 0.03f)),
+                 "ReiLlim", "Llim", "BoletVeri", "Ratpenat", "Aranya"),
+            With(T("Tema_5_Neu", "Neu i gel", "Neu", water, 0.25f, new Color(0.9f, 0.95f, 1f), 1f, new Color(0.12f, 0.16f, 0.22f)),
+                 "GolemGegant", "Golem", "Mag", "Tirador", "Ratpenat"),
+            With(T("Tema_6_Cripta", "Cripta", "Cripta", water, 0.1f, new Color(0.8f, 0.75f, 1f), 0.7f, new Color(0.06f, 0.03f, 0.08f)),
+                 "MagFosc", "Esquelet", "Mag", "Ratpenat", "Tirador"),
+            With(T("Tema_7_Volca", "Volcà", "Volca", tiles["Lava"], 0.6f, new Color(1f, 0.75f, 0.6f), 0.85f, new Color(0.12f, 0.03f, 0.02f)),
+                 "GolemGegant", "Golem", "Kamikaze", "Mag", "Esquelet"),
+            With(T("Tema_8_Cristall", "Cova de cristall", "Cristall", water, 0.2f, new Color(0.75f, 0.85f, 1f), 0.85f, new Color(0.02f, 0.03f, 0.1f)),
+                 "MagFosc", "Mag", "Aranya", "Golem", "Tirador"),
         };
     }
 

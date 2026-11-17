@@ -305,6 +305,7 @@ $sprites['Cofres/Dungeon/C_Metall'] = @{ size = 16; mirror = $true; rows = @(
 
 # Masmorra: blocs, enemics, armes noves i barrets (Claude)
 . (Join-Path $PSScriptRoot 'masmorra.ps1')
+. (Join-Path $PSScriptRoot 'masmorra2.ps1')
 
 # ---------------- Guardar PNG ----------------
 $bitmaps = [ordered]@{}

@@ -421,3 +421,5 @@ MonoBehaviour:
   bulletDamage: 1
   preferredDistance: 4.5
   telegraphTime: 0.35
+  useColor: 0
+  bulletColor: {r: 1, g: 1, b: 1, a: 1}

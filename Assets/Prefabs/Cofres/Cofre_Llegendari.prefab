@@ -379,7 +379,9 @@ MonoBehaviour:
   openSound: {fileID: 0}
   volume: 0.6
   lootTable:
+  - {fileID: 11400000, guid: 5dea8b87b16516d44be6454a12e99a6f, type: 2}
   - {fileID: 11400000, guid: e53f92bc14d76b34daaef0fdc10e7674, type: 2}
+  - {fileID: 11400000, guid: c9a1c2ebbec65af47800517241c1161e, type: 2}
   - {fileID: 11400000, guid: c113548981a93df41a156100d62ad1ce, type: 2}
   lootDropOffset: {x: 0, y: -0.8}
   healChance: 0.75

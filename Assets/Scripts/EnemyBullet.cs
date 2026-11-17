@@ -10,10 +10,13 @@ public class EnemyBullet : MonoBehaviour
     private float life;
     private Transform owner;
 
-    public static EnemyBullet Fire(Vector2 pos, Vector2 dir, float speed, int damage, Transform owner, float scale = 1f)
+    public static EnemyBullet Fire(Vector2 pos, Vector2 dir, float speed, int damage, Transform owner, float scale = 1f, Color? tint = null)
     {
         Sprite s = sprite != null ? sprite : Fx.PixelCircle(6);
-        SpriteRenderer sr = Fx.MakeSprite("Bala enemiga", pos, s, sprite != null ? Color.white : new Color(1f, 0.3f, 0.4f), "Player", 8);
+        // Amb color: cercle d'aquest color (bales màgiques, pedres...); sense: la bala roja
+        if (tint.HasValue) s = Fx.PixelCircle(6);
+        Color c = tint ?? (sprite != null ? Color.white : new Color(1f, 0.3f, 0.4f));
+        SpriteRenderer sr = Fx.MakeSprite("Bala enemiga", pos, s, c, "Player", 8);
         sr.transform.localScale = Vector3.one * scale;
         EnemyBullet b = sr.gameObject.AddComponent<EnemyBullet>();
         b.velocity = dir.normalized * speed;

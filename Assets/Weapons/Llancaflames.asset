@@ -32,6 +32,9 @@ MonoBehaviour:
   explosionRadius: 0
   explosionDamage: 3
   pierce: 0
+  returns: 0
+  homing: 0
+  spinSpeed: 0
   sound: 1
   shootSound: {fileID: 0}
   impactSound: {fileID: 0}

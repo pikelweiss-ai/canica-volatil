@@ -15,9 +15,12 @@ public class PlayerCosmetics : MonoBehaviour
         body = GetComponent<SpriteRenderer>();
         if (db == null || body == null) return;
 
-        // Color
-        if (db.colors != null && db.colors.Length > 0)
-            body.color = db.colors[CosmeticsDatabase.Get(CosmeticsDatabase.KeyColor, db.colors.Length)].color;
+        // Skin (si és l'original, el sprite està buit i no es canvia res)
+        if (db.skins != null && db.skins.Length > 0)
+        {
+            Sprite skin = db.skins[CosmeticsDatabase.Get(CosmeticsDatabase.KeySkin, db.skins.Length)].sprite;
+            if (skin != null) body.sprite = skin;
+        }
 
         // Barret
         if (db.hats != null && db.hats.Length > 0)

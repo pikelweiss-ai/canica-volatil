@@ -9,7 +9,7 @@ public class CustomizeMenuUI : MonoBehaviour
     private TMP_FontAsset font;
     private CosmeticsDatabase db;
     private Image preview, hatPreview, trailPreview;
-    private TextMeshProUGUI colorLabel, hatLabel, trailLabel;
+    private TextMeshProUGUI colorLabel, hatLabel, trailLabel, coinsLabel;
 
     public static CustomizeMenuUI Create(TMP_FontAsset font)
     {
@@ -50,6 +50,9 @@ public class CustomizeMenuUI : MonoBehaviour
         Stretch(dim.rectTransform);
 
         Place(NewText("Titol", root, "Personalitza la canica", 56).rectTransform, new Vector2(0f, 330f), new Vector2(1200f, 80f));
+        coinsLabel = NewText("Monedes", root, "", 28);
+        coinsLabel.color = new Color(1f, 0.82f, 0.25f);
+        Place(coinsLabel.rectTransform, new Vector2(0f, 270f), new Vector2(800f, 40f));
 
         if (db == null)
         {
@@ -71,7 +74,7 @@ public class CustomizeMenuUI : MonoBehaviour
         hatPreview.preserveAspect = true;
         Place(hatPreview.rectTransform, new Vector2(0f, 125f), new Vector2(150f, 150f));
 
-        colorLabel = Row(root, "Color", -60f, d => Cycle(CosmeticsDatabase.KeyColor, db.colors.Length, d));
+        colorLabel = Row(root, "Skin", -60f, d => Cycle(CosmeticsDatabase.KeySkin, db.skins != null ? db.skins.Length : 0, d));
         hatLabel = Row(root, "Barret", -140f, d => Cycle(CosmeticsDatabase.KeyHat, db.hats != null ? db.hats.Length : 0, d));
         trailLabel = Row(root, "Rastre", -220f, d => Cycle(CosmeticsDatabase.KeyTrail, db.trails.Length, d));
 
@@ -122,9 +125,16 @@ public class CustomizeMenuUI : MonoBehaviour
     {
         if (db == null || colorLabel == null) return;
 
-        var tint = db.colors[CosmeticsDatabase.Get(CosmeticsDatabase.KeyColor, db.colors.Length)];
-        preview.color = tint.color;
-        colorLabel.text = tint.name;
+        if (db.skins != null && db.skins.Length > 0)
+        {
+            var skin = db.skins[CosmeticsDatabase.Get(CosmeticsDatabase.KeySkin, db.skins.Length)];
+            preview.sprite = skin.sprite != null ? skin.sprite : db.playerSprite;
+            colorLabel.text = skin.name;
+        }
+        else colorLabel.text = "Original";
+
+        // Monedes guardades de totes les partides
+        if (coinsLabel != null) coinsLabel.text = "Monedes totals: " + CoinBank.Total;
 
         if (db.hats != null && db.hats.Length > 0)
         {

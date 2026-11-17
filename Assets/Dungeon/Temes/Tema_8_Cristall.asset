@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48160bff1954df0438a8d79310d3a6cb, type: 3}
+  m_Name: Tema_8_Cristall
+  m_EditorClassIdentifier: 
+  themeName: Cova de cristall
+  floorTiles:
+  - {fileID: 11400000, guid: a05ba23f55d0ade4488012d1de463a58, type: 2}
+  - {fileID: 11400000, guid: 99ba6d31da83947428cade0aaa603eee, type: 2}
+  wallTile: {fileID: 11400000, guid: c797fe05fa6d37a40ab029a659a16508, type: 2}
+  liquidTile: {fileID: 11400000, guid: 7b4ca08448bbea44ab2d2b0e25355a12, type: 2}
+  liquidChance: 0.2
+  lightColor: {r: 0.75, g: 0.85, b: 1, a: 1}
+  lightIntensity: 0.85
+  backgroundColor: {r: 0.02, g: 0.03, b: 0.1, a: 1}
+  enemies:
+  - {fileID: 5969025284651876321, guid: 992c3b45572bde74ba396f70f4484e21, type: 3}
+  - {fileID: 5870496072010164621, guid: 0e33aff4c4463254fb3ef5fd4621cade, type: 3}
+  - {fileID: 2696947214165211307, guid: 0b06ba3bac8249843b3ecb8ae6f2280b, type: 3}
+  - {fileID: 7892987745184238191, guid: a17a1846a44691f42b5c753526c8a3dd, type: 3}
+  boss: {fileID: 2174415939430943108, guid: ae944127ee584cc499d757efec0b37c6, type: 3}

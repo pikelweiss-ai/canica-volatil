@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48160bff1954df0438a8d79310d3a6cb, type: 3}
+  m_Name: Tema_3_Desert
+  m_EditorClassIdentifier: 
+  themeName: Desert
+  floorTiles:
+  - {fileID: 11400000, guid: c6cb77f9c98eae84a8572cdb4dd41b5a, type: 2}
+  - {fileID: 11400000, guid: 60d04ab3af518914ab62fff96cd72dc0, type: 2}
+  wallTile: {fileID: 11400000, guid: 07d4c5ef205198149b69cfe7d3a10462, type: 2}
+  liquidTile: {fileID: 11400000, guid: 7b4ca08448bbea44ab2d2b0e25355a12, type: 2}
+  liquidChance: 0.1
+  lightColor: {r: 1, g: 0.95, b: 0.85, a: 1}
+  lightIntensity: 1.05
+  backgroundColor: {r: 0.2, g: 0.14, b: 0.08, a: 1}
+  enemies:
+  - {fileID: 4622517229540368454, guid: df2ef3f332635414bbb1d4b2639ade5a, type: 3}
+  - {fileID: 2696947214165211307, guid: 0b06ba3bac8249843b3ecb8ae6f2280b, type: 3}
+  - {fileID: 8806987266807776986, guid: 1ac0eba9b5257474296709fc8e7c513c, type: 3}
+  - {fileID: 7566981565024920386, guid: b242a9c0731539e40b8e0b74d8b0d35d, type: 3}
+  boss: {fileID: 2174415939430943108, guid: ae944127ee584cc499d757efec0b37c6, type: 3}

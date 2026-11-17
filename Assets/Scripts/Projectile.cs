@@ -49,15 +49,43 @@ public class Projectile : MonoBehaviour
 
     void FixedUpdate()
     {
-        // Avança, però sense passar-se del final (l'últim pas es retalla just al final)
-        float travelled = Vector2.Distance(startPosition, transform.position);
-        float step = speed * Time.fixedDeltaTime;
-        bool reachesEnd = travelled + step >= maxDistance;
+        float dt = Time.fixedDeltaTime;
 
-        if (reachesEnd)
-            transform.position = startPosition + direction * maxDistance;
-        else
-            transform.position += (Vector3)(direction * step);
+        // Gira el dibuix (shuriken, bumerang...)
+        if (weapon.spinSpeed != 0f)
+            transform.Rotate(0f, 0f, weapon.spinSpeed * dt);
+
+        // Bumerang tornant: vola cap al jugador travessant-ho tot i pegant de nou
+        if (returning)
+        {
+            if (owner == null) { End(); return; }
+            Vector2 to = (Vector2)owner.position - (Vector2)transform.position;
+            if (to.magnitude < 0.4f) { Destroy(gameObject); return; }
+            direction = to.normalized;
+            transform.position += (Vector3)(direction * speed * 1.2f * dt);
+            HitEnemiesOnly();
+            return;
+        }
+
+        // Teledirigit: gira poc a poc cap a l'enemic més pròxim de davant
+        if (weapon.homing > 0f)
+        {
+            EnemyHealth target = NearestEnemy();
+            if (target != null)
+            {
+                Vector2 want = ((Vector2)target.transform.position - (Vector2)transform.position).normalized;
+                direction = Vector3.RotateTowards(direction, want, weapon.homing * dt, 0f).normalized;
+                if (weapon.spinSpeed == 0f)
+                    transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
+            }
+        }
+
+        // Avança, però sense passar-se del final (l'últim pas es retalla just al final)
+        float step = speed * dt;
+        bool reachesEnd = travelled + step >= maxDistance;
+        if (reachesEnd) step = Mathf.Max(0f, maxDistance - travelled);
+        transform.position += (Vector3)(direction * step);
+        travelled += step;
 
         foreach (Collider2D hit in Physics2D.OverlapCircleAll(transform.position, radius))
         {
@@ -71,7 +99,7 @@ public class Projectile : MonoBehaviour
                 if (alreadyHit.Contains(enemy)) continue; // Fletxa que travessa: no pega dues vegades
                 alreadyHit.Add(enemy);
                 enemy.TakeHit(damage, direction * knockbackForce);
-                if (pierceLeft-- > 0) continue;
+                if (pierceLeft-- > 0 || weapon.returns) continue;
                 End();
                 return;
             }
@@ -81,22 +109,62 @@ public class Projectile : MonoBehaviour
             if (breakable != null)
             {
                 breakable.Hit(damage);
+                if (weapon.returns) { StartReturn(); return; }
                 End();
                 return;
             }
 
-            // Collider sòlid (paret, arbre...) -> el projectil s'atura
+            // Collider sòlid (paret, arbre...) -> el projectil s'atura (el bumerang torna)
             if (!hit.isTrigger)
             {
+                if (weapon.returns) { StartReturn(); return; }
                 End();
                 return;
             }
         }
 
-        // Arriba al final de l'aim (la pedra cau a terra)
+        // Arriba al final de l'aim (la pedra cau a terra; el bumerang torna)
         if (reachesEnd)
-            End();
+        {
+            if (weapon.returns) StartReturn();
+            else End();
+        }
     }
+
+    void StartReturn()
+    {
+        returning = true;
+        alreadyHit.Clear(); // En tornar pot pegar una altra vegada als mateixos
+    }
+
+    void HitEnemiesOnly()
+    {
+        foreach (Collider2D hit in Physics2D.OverlapCircleAll(transform.position, radius))
+        {
+            EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
+            if (enemy == null || alreadyHit.Contains(enemy)) continue;
+            alreadyHit.Add(enemy);
+            enemy.TakeHit(damage, direction * knockbackForce);
+        }
+    }
+
+    EnemyHealth NearestEnemy()
+    {
+        EnemyHealth best = null;
+        float bestD = 6f;
+        foreach (Collider2D hit in Physics2D.OverlapCircleAll(transform.position, 6f))
+        {
+            EnemyHealth e = hit.GetComponentInParent<EnemyHealth>();
+            if (e == null || e.IsDead || alreadyHit.Contains(e)) continue;
+            Vector2 to = (Vector2)e.transform.position - (Vector2)transform.position;
+            if (Vector2.Dot(to.normalized, direction) < 0.2f) continue; // Només els de davant
+            if (to.magnitude < bestD) { bestD = to.magnitude; best = e; }
+        }
+        return best;
+    }
+
+    private bool returning;
+    private float travelled;
 
     // El projectil s'acaba: so d'impacte (si l'arma en té) i desapareix
     void End()
