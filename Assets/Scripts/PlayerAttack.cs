@@ -139,6 +139,12 @@ public class PlayerAttack : MonoBehaviour
         float length = Mathf.Max(weapon != null ? weapon.range : fistRange + fistRadius, 0.5f);
         float width = weapon != null ? Mathf.Max(weapon.projectileSize, 0.15f) : fistRadius * 2f;
 
+        // Amb dispersió, l'aim és una V: estret al jugador i ample al final.
+        // Amplària final = 2 · llargària · tan(angle) -> les bales cauen just dins de la V
+        float endWidth = width;
+        if (weapon != null && weapon.spreadAngle > 0f)
+            endWidth = Mathf.Max(width, 2f * length * Mathf.Tan(weapon.spreadAngle * Mathf.Deg2Rad));
+
         // Progrés del cooldown: 0 = acabes d'atacar, 1 = llest
         float remaining = nextAttackTime - Time.time;
         float progress = remaining <= 0f ? 1f : 1f - Mathf.Clamp01(remaining / lastCooldownDuration);
@@ -152,7 +158,7 @@ public class PlayerAttack : MonoBehaviour
         if (charging)
             baseColor.a *= aimChargingOpacity;
 
-        SetLine(aimLine, start, end, width, baseColor);
+        SetLine(aimLine, start, end, width, endWidth, baseColor);
 
         // Part carregada: creix des del jugador cap a fora amb el color normal
         // (l'opacitat es calcula perquè, sumada al fons, done just aimColor i no faça salt en acabar)
@@ -161,14 +167,15 @@ public class PlayerAttack : MonoBehaviour
         {
             Color fillColor = aimColor;
             fillColor.a = baseColor.a >= 1f ? 1f : (aimColor.a - baseColor.a) / (1f - baseColor.a);
-            SetLine(aimFill, start, start + aimDirection * (length * progress), width, fillColor);
+            // La part carregada segueix la forma de la V (a mig camí, mitja amplària)
+            SetLine(aimFill, start, start + aimDirection * (length * progress), width, Mathf.Lerp(width, endWidth, progress), fillColor);
         }
     }
 
-    void SetLine(LineRenderer line, Vector2 start, Vector2 end, float width, Color color)
+    void SetLine(LineRenderer line, Vector2 start, Vector2 end, float startWidth, float endWidth, Color color)
     {
-        line.startWidth = width;
-        line.endWidth = width;
+        line.startWidth = startWidth;
+        line.endWidth = endWidth;
         line.startColor = color;
         line.endColor = color;
         line.SetPosition(0, start);
@@ -279,11 +286,35 @@ public class PlayerAttack : MonoBehaviour
         int layer = playerSprite != null ? playerSprite.sortingLayerID : 0;
         int order = playerSprite != null ? playerSprite.sortingOrder + 1 : 0;
 
-        // Mateix final que la línia d'apuntat (veure UpdateAim): el projectil s'atura just allà
-        Vector2 aimEnd = (Vector2)transform.position + aimDirection * Mathf.Max(weapon.range, 0.5f);
-        Projectile.Spawn(spawnPos, aimDirection, weapon, transform, layer, order, aimEnd);
+        float range = Mathf.Max(weapon.range, 0.5f);
+        int pellets = Mathf.Max(1, weapon.pellets);
+
+        for (int i = 0; i < pellets; i++)
+        {
+            // Cada bala es desvia un angle a l'atzar dins de la V
+            float angle = Random.Range(-weapon.spreadAngle, weapon.spreadAngle);
+            Vector2 dir = Rotate(aimDirection, angle);
+
+            // Acaba a la vora del final de l'aim: com més desviada, un poc més lluny
+            // (range / cos) perquè toque la línia del final de la V i no s'acurte.
+            // rangeRandom fa que algunes es queden més curtes (perdigons).
+            float dist = range / Mathf.Cos(angle * Mathf.Deg2Rad);
+            dist *= 1f - Random.Range(0f, weapon.rangeRandom);
+
+            Vector2 end = (Vector2)transform.position + dir * dist;
+            Projectile.Spawn(spawnPos, dir, weapon, transform, layer, order, end);
+        }
+
         WeaponSounds.Play(WeaponSounds.ShootClip(weapon), 0.5f);
-        recoil = 0.08f; // L'arma recula un poc
+        recoil = pellets > 1 ? 0.14f : 0.08f; // L'arma recula (més si és escopeta)
+    }
+
+    // Gira un vector 'degrees' graus (positiu = sentit antihorari)
+    static Vector2 Rotate(Vector2 v, float degrees)
+    {
+        float r = degrees * Mathf.Deg2Rad;
+        float c = Mathf.Cos(r), s = Mathf.Sin(r);
+        return new Vector2(v.x * c - v.y * s, v.x * s + v.y * c);
     }
 
     // Distància del centre del jugador a la punta de l'arma

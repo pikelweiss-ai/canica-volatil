@@ -9,8 +9,8 @@ using UnityEngine.Tilemaps;
 //  - "Crear prefabs i tiles": per a cada raresa crea
 //      Assets/Prefabs/Cofres/Cofre_<Raresa>.prefab  (cofre real: sprite, hitbox, script)
 //      Assets/Tiles/Cofres/TileCofre_<Raresa>.asset (per a pintar-lo amb la Tile Palette)
-//  - "Posar-ne de prova al mapa de proves": crea 'Tilemap Cofres' a GameScene i hi pinta
-//      un cofre de cada raresa en cel·les lliures prop del SpawnPoint.
+//  - "Omplir el mapa de cofres": crea 'Tilemap Cofres' a GameScene i hi pinta
+//      11 cofres per tot el mapa (cada raresa dona les seues armes) i mou els enemics a la vora.
 public static class ChestPrefabCreator
 {
     const string SpriteFolder = "Assets/Sprites/Pixel/Cofres";
@@ -96,7 +96,7 @@ public static class ChestPrefabCreator
         chest.spriteRenderer = sr;
         chest.closedSprite = closed;
         chest.openSprite = open;
-        chest.lootTable = LoadAllWeapons();
+        chest.lootTable = LoadWeapons(rarity);
 
         string path = PrefabFolder + "/Cofre_" + name + ".prefab";
         GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
@@ -104,16 +104,20 @@ public static class ChestPrefabCreator
         return prefab;
     }
 
-    // De moment, tots els cofres poden donar qualsevol arma del projecte (Assets/Weapons)
-    static WeaponData[] LoadAllWeapons()
+    // Cada cofre dona les armes de la SEUA raresa (cofre Rar -> armes Rar...).
+    // Si encara no hi ha cap arma d'eixa raresa, pot donar qualsevol arma del projecte.
+    static WeaponData[] LoadWeapons(ChestRarity rarity)
     {
-        var list = new List<WeaponData>();
+        var all = new List<WeaponData>();
+        var same = new List<WeaponData>();
         foreach (string guid in AssetDatabase.FindAssets("t:WeaponData"))
         {
             WeaponData w = AssetDatabase.LoadAssetAtPath<WeaponData>(AssetDatabase.GUIDToAssetPath(guid));
-            if (w != null) list.Add(w);
+            if (w == null) continue;
+            all.Add(w);
+            if (w.rarity == rarity) same.Add(w);
         }
-        return list.ToArray();
+        return (same.Count > 0 ? same : all).ToArray();
     }
 
     static ChestTile CreateTile(ChestRarity rarity, Sprite preview, GameObject prefab)
@@ -131,7 +135,7 @@ public static class ChestPrefabCreator
         return tile;
     }
 
-    [MenuItem("Canica/Cofres/Posar-ne de prova al mapa de proves")]
+    [MenuItem("Canica/Cofres/Omplir el mapa de cofres (i enemics a la vora)")]
     public static void PlaceTestChests()
     {
         if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
@@ -181,40 +185,48 @@ public static class ChestPrefabCreator
             FindTilemap("Tilemap Walls"), FindTilemap("Tilemap Liquid"), FindTilemap("Tilemap Trees")
         };
 
-        // Cel·les lliures (amb terra, sense obstacles) a 3-7 cel·les del SpawnPoint,
-        // separades entre elles i ordenades per proximitat
+        // Totes les cel·les lliures del mapa (amb terra, sense obstacles)
         Vector3Int center = ground.WorldToCell(spawn.transform.position);
-        var candidates = new List<Vector3Int>();
-        for (int x = -7; x <= 7; x++)
+        var free = new List<Vector3Int>();
+        float maxDist = 0f;
+        BoundsInt bounds = ground.cellBounds;
+        foreach (Vector3Int c in bounds.allPositionsWithin)
         {
-            for (int y = -7; y <= 7; y++)
-            {
-                Vector3Int c = center + new Vector3Int(x, y, 0);
-                float d = Mathf.Sqrt(x * x + y * y);
-                if (d < 3f || d > 7f) continue;
-                if (!ground.HasTile(c)) continue;
-                if (IsBlocked(c, obstacles)) continue;
-                candidates.Add(c);
-            }
+            if (!ground.HasTile(c) || IsBlocked(c, obstacles)) continue;
+            free.Add(c);
+            maxDist = Mathf.Max(maxDist, Dist(c, center));
         }
-        candidates.Sort((a, b) => (a - center).sqrMagnitude.CompareTo((b - center).sqrMagnitude));
+
+        // Cofres: per tot el mapa, entre 3 cel·les del SpawnPoint i el 70 % del radi
+        // (la vora queda per als enemics). Ordre a l'atzar, però sempre el mateix (llavor fixa).
+        var candidates = free.FindAll(c => Dist(c, center) >= 3f && Dist(c, center) <= maxDist * 0.7f);
+        var rng = new System.Random(1234);
+        for (int i = candidates.Count - 1; i > 0; i--)
+        {
+            int j = rng.Next(i + 1);
+            (candidates[i], candidates[j]) = (candidates[j], candidates[i]);
+        }
 
         var placed = new List<Vector3Int>();
         foreach (ChestRarity rarity in System.Enum.GetValues(typeof(ChestRarity)))
         {
             if (!tiles.ContainsKey(rarity)) continue;
+            int count = ChestsPerRarity[(int)rarity];
             foreach (Vector3Int c in candidates)
             {
+                if (count == 0) break;
                 bool farEnough = true;
                 foreach (Vector3Int p in placed)
-                    if ((p - c).sqrMagnitude < 9) { farEnough = false; break; } // 3 cel·les
+                    if ((p - c).sqrMagnitude < 16) { farEnough = false; break; } // 4 cel·les
                 if (!farEnough) continue;
 
                 chests.SetTile(c, tiles[rarity]);
                 placed.Add(c);
-                break;
+                count--;
             }
         }
+
+        int enemies = MoveEnemiesToEdge(ground, free, center, maxDist);
 
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
@@ -224,7 +236,48 @@ public static class ChestPrefabCreator
         if (!string.IsNullOrEmpty(originalScene) && originalScene != TestScene)
             EditorSceneManager.OpenScene(originalScene, OpenSceneMode.Single);
 
-        EditorUtility.DisplayDialog("Cofres", placed.Count + " cofres posats a GameScene (a '" + ChestTilemapName + "').", "OK");
+        EditorUtility.DisplayDialog("Cofres", placed.Count + " cofres posats a GameScene (a '" + ChestTilemapName + "').\n" +
+            enemies + " enemic(s) moguts a la vora del mapa.", "OK");
+    }
+
+    // Quants cofres de cada raresa: Comú, Rar, Èpic, Llegendari
+    static readonly int[] ChestsPerRarity = { 4, 3, 2, 2 };
+
+    static float Dist(Vector3Int a, Vector3Int b)
+    {
+        Vector3Int d = a - b;
+        return Mathf.Sqrt(d.x * d.x + d.y * d.y);
+    }
+
+    // Reparteix els enemics al voltant del cercle, a la vora del mapa (lluny del SpawnPoint):
+    // l'enemic i va a l'angle i·360/n, a la cel·la lliure més allunyada en eixa direcció.
+    static int MoveEnemiesToEdge(Tilemap ground, List<Vector3Int> free, Vector3Int center, float maxDist)
+    {
+        EnemyHealth[] enemies = Object.FindObjectsByType<EnemyHealth>(FindObjectsSortMode.InstanceID);
+        var edge = free.FindAll(c => Dist(c, center) >= maxDist * 0.85f);
+        if (edge.Count == 0) return 0;
+
+        for (int i = 0; i < enemies.Length; i++)
+        {
+            float angle = 45f + i * 360f / enemies.Length; // 45° = cantó de dalt a la dreta
+            Vector2 want = new Vector2(Mathf.Cos(angle * Mathf.Deg2Rad), Mathf.Sin(angle * Mathf.Deg2Rad));
+
+            Vector3Int best = edge[0];
+            float bestScore = float.MinValue;
+            foreach (Vector3Int c in edge)
+            {
+                Vector2 dir = new Vector2(c.x - center.x, c.y - center.y).normalized;
+                float score = Vector2.Dot(dir, want) * 10f + Dist(c, center) * 0.1f; // direcció primer, després lluny
+                if (score > bestScore) { bestScore = score; best = c; }
+            }
+
+            Transform t = enemies[i].transform;
+            Undo.RecordObject(t, "Moure enemic a la vora");
+            Vector3 pos = ground.GetCellCenterWorld(best);
+            t.position = new Vector3(pos.x, pos.y, t.position.z);
+            Debug.Log("[Cofres] Enemic '" + t.name + "' mogut a " + best);
+        }
+        return enemies.Length;
     }
 
     static Tilemap FindTilemap(string name)

@@ -1,4 +1,4 @@
-﻿# Generador de píxel art de Canica Volàtil.
+# Generador de píxel art de Canica Volàtil.
 # Cada sprite és una graella de lletres; cada lletra és un color de la paleta ($P).
 # Per a canviar un píxel, canvia la lletra i torna a executar:
 #   .\Tools\PixelArt\draw.ps1
@@ -300,6 +300,9 @@ $sprites['Cofres/Dungeon/C_Metall'] = @{ size = 16; mirror = $true; rows = @(
   '........'
 )}
 
+# Armes noves de ChatGPT
+. (Join-Path $PSScriptRoot 'ArmesClaude\armes-claude.ps1')
+
 # ---------------- Guardar PNG ----------------
 $bitmaps = [ordered]@{}
 foreach ($name in $sprites.Keys) {
@@ -337,3 +340,4 @@ foreach ($group in $groups) {
   $g.Dispose(); $sheet.Dispose()
   "Preview: $out"
 }
+

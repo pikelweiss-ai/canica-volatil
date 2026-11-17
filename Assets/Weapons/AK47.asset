@@ -29,3 +29,6 @@ MonoBehaviour:
   sound: 0
   shootSound: {fileID: 0}
   impactSound: {fileID: 0}
+  spreadAngle: 4
+  pellets: 1
+  rangeRandom: 0

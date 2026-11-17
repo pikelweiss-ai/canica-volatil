@@ -30,6 +30,14 @@ public class WeaponData : ScriptableObject
     public float projectileSize = 0.3f; // Mida de la hitbox (i de la boleta si no hi ha sprite)
     public Color projectileColor = Color.white;
 
+    [Header("Dispersió (0 = tret recte; l'aim es fa en V)")]
+    [Range(0f, 45f)]
+    public float spreadAngle = 0f;      // Angle màxim (cap a cada costat) que es desvia cada bala
+    [Min(1)]
+    public int pellets = 1;             // Bales per tret (escopeta: 5-8)
+    [Range(0f, 0.5f)]
+    public float rangeRandom = 0f;      // Cada bala pot quedar-se fins a aquest % més curta
+
     [Header("So (si els clips estan buits, es generen per codi)")]
     public WeaponSound sound = WeaponSound.Tret;
     public AudioClip shootSound;
