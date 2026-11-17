@@ -89,6 +89,7 @@ public class Chest : MonoBehaviour
 
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
+        GameAudio.Track(audioSource,SoundCategory.Effects);
         audioSource.playOnAwake = false;
         audioSource.spatialBlend = 0f;
 
@@ -125,8 +126,7 @@ public class Chest : MonoBehaviour
         // Estàs movent-te si prems alguna tecla de moviment o si la canica s'ha desplaçat.
         // (Només amb la posició no basta: el moviment va per passos de física i hi ha
         //  fotogrames en què no canvia, i això feia sonar els colps com una metralleta.)
-        bool movingInput = Mathf.Abs(Input.GetAxisRaw("Horizontal")) > 0.01f ||
-                           Mathf.Abs(Input.GetAxisRaw("Vertical")) > 0.01f;
+        bool movingInput = GameControls.Move.sqrMagnitude > 0f;
         bool playerMoved = movingInput || (player.position - lastPlayerPos).sqrMagnitude > 0.0004f;
         lastPlayerPos = player.position;
 
@@ -141,7 +141,7 @@ public class Chest : MonoBehaviour
         promptRoot.localPosition = promptStartPos + Vector3.up * Mathf.Sin(Time.time * 4f) * 0.04f;
 
         // Cal MANTINDRE la E sense moure's: mentrestant el cofre vibra
-        if (Input.GetKey(openKey) && !playerMoved)
+        if (GameControls.Held(5) && !playerMoved)
         {
             holdTime += Time.deltaTime;
             ShakeStep();
@@ -283,7 +283,7 @@ public class Chest : MonoBehaviour
         if (weapon == null) return;
 
         Vector3 from = transform.position + Vector3.up * 0.1f;
-        Vector3 to = transform.position + (Vector3)lootDropOffset;
+        Vector3 to = LootPosition();
         ItemPickup.Spawn(weapon, from, to);
 
         // Cura: com més rar el cofre, millor pot ser l'item (i els èpics i llegendaris en donen 2)
@@ -299,6 +299,23 @@ public class Chest : MonoBehaviour
     }
 
 
+    Vector3 LootPosition()
+    {
+        Vector3 fallback = transform.position + (Vector3)lootDropOffset;
+        // Provar els costats abans de tirar el premi als peus del jugador.
+        for (int i = 0; i < 8; i++)
+        {
+            float a = i * Mathf.PI / 4f;
+            Vector3 candidate = transform.position + new Vector3(Mathf.Cos(a), Mathf.Sin(a), 0f) * 1.15f;
+            if (player != null && Vector2.Distance(candidate, player.position) < 0.85f) continue;
+            if (TileNav.Ready() && TileNav.IsBlockedWorld(candidate)) continue;
+            bool blocked = false;
+            foreach (Collider2D hit in Physics2D.OverlapCircleAll(candidate, 0.25f))
+                if (!hit.isTrigger) { blocked = true; break; }
+            if (!blocked) return candidate;
+        }
+        return fallback;
+    }
     // ---------- Indicador: cercle blanc + E negra + anell de temps ----------
 
     void CreatePrompt()
@@ -325,7 +342,8 @@ public class Chest : MonoBehaviour
         PlayerNameTag nameTag = FindAnyObjectByType<PlayerNameTag>();
         if (nameTag != null && nameTag.playerNameText != null)
             text.font = nameTag.playerNameText.font;
-        text.text = openKey.ToString();
+        text.text = GameControls.Label(5);
+        textGo.AddComponent<WorldControlLabel>();
         text.fontSize = 2.8f;
         text.fontStyle = FontStyles.Bold;
         text.alignment = TextAlignmentOptions.Center;
@@ -510,4 +528,8 @@ public static class PromptGraphics
             return lineMaterial;
         }
     }
+}
+public class WorldControlLabel : MonoBehaviour
+{
+    void Update(){GetComponent<TMPro.TextMeshPro>().text=GameControls.Label(5);}
 }

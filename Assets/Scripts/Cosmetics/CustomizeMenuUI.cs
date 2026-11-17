@@ -2,10 +2,11 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// Pantalla "Personalitza la canica" del menú principal (feta per codi, com el selector de mapes).
+// Pantalla "TALLER DE CANIQUES" del menú principal (feta per codi, com el selector de mapes).
 // Tries el color, el barret i el rastre amb les fletxes. Es guarda a PlayerPrefs al moment.
 public class CustomizeMenuUI : MonoBehaviour
 {
+    private TMP_InputField nameInput;
     private TMP_FontAsset font;
     private CosmeticsDatabase db;
     private Image preview, hatPreview, trailPreview;
@@ -30,12 +31,12 @@ public class CustomizeMenuUI : MonoBehaviour
         return ui;
     }
 
-    public void Show() { gameObject.SetActive(true); Refresh(); }
+    public void Show() { gameObject.SetActive(true); if(nameInput!=null)nameInput.text=PlayerPrefs.GetString("PlayerName","Usuario"); Refresh(); }
     public void Hide() { gameObject.SetActive(false); }
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape)) Hide();
+        if (Input.GetKeyDown(KeyCode.Escape) && (nameInput==null || !nameInput.isFocused)) Hide();
         // Previsualització del rastre de l'arc de Sant Martí
         if (db != null && db.trails != null && db.trails.Length > 0)
         {
@@ -49,10 +50,10 @@ public class CustomizeMenuUI : MonoBehaviour
         Image dim = NewImage("Fons", root, new Color(0.06f, 0.06f, 0.09f, 0.97f));
         Stretch(dim.rectTransform);
 
-        Place(NewText("Titol", root, "Personalitza la canica", 56).rectTransform, new Vector2(0f, 330f), new Vector2(1200f, 80f));
-        coinsLabel = NewText("Monedes", root, "", 28);
+        Place(NewText("Titol", root, "TALLER DE CANIQUES", 44).rectTransform, new Vector2(0f, 330f), new Vector2(1200f, 80f));
+        coinsLabel = NewText("Monedes", root, "", 20);
         coinsLabel.color = new Color(1f, 0.82f, 0.25f);
-        Place(coinsLabel.rectTransform, new Vector2(0f, 270f), new Vector2(800f, 40f));
+        Place(coinsLabel.rectTransform, new Vector2(0f, 260f), new Vector2(1350f, 40f));
 
         if (db == null)
         {
@@ -61,7 +62,18 @@ public class CustomizeMenuUI : MonoBehaviour
             return;
         }
 
-        // Previsualització: rastre (darrere), canica i barret
+        Place(NewText("Nom",root,"Nom del jugador",22).rectTransform,new Vector2(-480,205),new Vector2(350,45));
+        Image nameBox=NewImage("Nom del jugador",root,new Color(0.12f,0.22f,0.3f));
+        Place(nameBox.rectTransform,new Vector2(-480,145),new Vector2(400,48));
+        nameInput=nameBox.gameObject.AddComponent<TMP_InputField>();nameInput.targetGraphic=nameBox;
+        var nameText=NewText("Text",nameBox.transform,"",24);Stretch(nameText.rectTransform);nameText.rectTransform.offsetMin=new Vector2(12,0);nameText.rectTransform.offsetMax=new Vector2(-12,0);
+        nameInput.textViewport=nameBox.rectTransform;nameInput.textComponent=nameText;nameInput.characterLimit=24;nameInput.lineType=TMP_InputField.LineType.SingleLine;
+        nameInput.text=PlayerPrefs.GetString("PlayerName","Usuario");
+        nameInput.onEndEdit.AddListener(value=>{
+            string clean=System.Text.RegularExpressions.Regex.Replace(value.Trim(),"<[^>]*>","");
+            if(string.IsNullOrWhiteSpace(clean))clean="Usuario";
+            PlayerPrefs.SetString("PlayerName",clean);PlayerPrefs.Save();nameInput.SetTextWithoutNotify(clean);
+        });        // Previsualització: rastre (darrere), canica i barret
         trailPreview = NewImage("Rastre", root, Color.clear);
         Place(trailPreview.rectTransform, new Vector2(-130f, 70f), new Vector2(200f, 60f));
 
@@ -78,7 +90,16 @@ public class CustomizeMenuUI : MonoBehaviour
         hatLabel = Row(root, "Barret", -140f, d => Cycle(CosmeticsDatabase.KeyHat, db.hats != null ? db.hats.Length : 0, d));
         trailLabel = Row(root, "Rastre", -220f, d => Cycle(CosmeticsDatabase.KeyTrail, db.trails.Length, d));
 
-        AddBackButton(root);
+        Button random = NewButton("Sorpren", root, new Color(0.25f, 0.8f, 0.85f));
+        Place((RectTransform)random.transform, new Vector2(480f, 70f), new Vector2(330f, 70f));
+        TextMeshProUGUI randomText = NewText("Text", random.transform, "Sorprén-me!", 20);
+        randomText.color = Color.black; Stretch(randomText.rectTransform);
+        random.onClick.AddListener(() => {
+            if (db.skins != null && db.skins.Length > 0) PlayerPrefs.SetInt(CosmeticsDatabase.KeySkin, Random.Range(0, db.skins.Length));
+            if (db.hats != null && db.hats.Length > 0) PlayerPrefs.SetInt(CosmeticsDatabase.KeyHat, Random.Range(0, db.hats.Length));
+            if (db.trails != null && db.trails.Length > 0) PlayerPrefs.SetInt(CosmeticsDatabase.KeyTrail, Random.Range(0, db.trails.Length));
+            PlayerPrefs.Save(); Refresh();
+        });        AddBackButton(root);
         Refresh();
     }
 
@@ -134,7 +155,7 @@ public class CustomizeMenuUI : MonoBehaviour
         else colorLabel.text = "Original";
 
         // Monedes guardades de totes les partides
-        if (coinsLabel != null) coinsLabel.text = "Monedes totals: " + CoinBank.Total;
+        if (coinsLabel != null) coinsLabel.text = "Monedes: " + CoinBank.Total + " · " + db.skins.Length + " skins · " + db.hats.Length + " barrets";
 
         if (db.hats != null && db.hats.Length > 0)
         {
@@ -142,6 +163,13 @@ public class CustomizeMenuUI : MonoBehaviour
             hatLabel.text = h.name;
             hatPreview.sprite = h.sprite;
             hatPreview.enabled = h.sprite != null;
+            if(h.sprite!=null)
+            {
+                float size=178.5f;
+                hatPreview.rectTransform.sizeDelta=Vector2.one*size;
+                float lift=h.sprite.name.Contains("Aureola")?34f:0f;
+                hatPreview.rectTransform.anchoredPosition=new Vector2(0,85f-12f+lift-(HatFit.Bottom(h.sprite)-0.5f)*size);
+            }
         }
         else { hatLabel.text = "Cap"; hatPreview.enabled = false; }
 

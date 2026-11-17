@@ -397,6 +397,21 @@ public static class DungeonBuilder
         f.icon = S("Armes/Llancaflames"); f.projectileSprite = null;
         EditorUtility.SetDirty(f);
 
+        void Melee(string file, string name, ChestRarity rarity, int damage, float cooldown, float reach, float arc, Color color)
+        {
+            WeaponData w = W(file);
+            w.weaponName = name; w.rarity = rarity; w.melee = true;
+            w.damage = damage; w.cooldown = cooldown; w.range = reach; w.meleeArc = arc;
+            w.knockbackForce = 5f; w.icon = S("Armes/" + file); w.projectileColor = color;
+            w.meleeDashDistance = file == "SabreCorall" ? 0.85f : 0f;
+            w.alternateSwing = file == "EspasaVidre";
+            w.meleeRadial = file == "MartellOrbital";
+            w.sound = WeaponSound.Llancament; EditorUtility.SetDirty(w);
+        }
+        Melee("EspasaVidre", "Espasa de vidre", ChestRarity.Comu, 3, 0.55f, 1.7f, 100f, new Color(0.6f, 0.9f, 1f));
+        Melee("SabreCorall", "Sabre de corall", ChestRarity.Rar, 4, 0.65f, 2f, 130f, new Color(1f, 0.45f, 0.6f));
+        Melee("MartellOrbital", "Martell orbital", ChestRarity.Epic, 7, 1.1f, 2.2f, 160f, new Color(0.8f, 0.6f, 1f));
+
         // ---- Armes noves (els valors només es posen la primera vegada; després els canvies a l'Inspector) ----
         void New(string file, string name, ChestRarity rarity, string icon, string proj, float projScale,
                  int dmg, float cd, float speed, float range, float size, WeaponSound sound,
@@ -425,6 +440,8 @@ public static class DungeonBuilder
             w => { w.homing = 6f; });
         New("Minigun", "Minigun", ChestRarity.Llegendari, "Minigun", "Bala", 1f, 1, 0.045f, 19f, 7.5f, 0.15f, WeaponSound.Tret,
             w => { w.spreadAngle = 9f; w.knockbackForce = 0.8f; });
+        W("Minigun").spinUpTime = 0.6f;
+        EditorUtility.SetDirty(W("Minigun"));
         New("Laser", "Làser", ChestRarity.Llegendari, "Laser", "Raig", 1f, 3, 0.5f, 35f, 12f, 0.18f, WeaponSound.Tret,
             w => { w.pierce = 5; });
     }
@@ -441,12 +458,26 @@ public static class DungeonBuilder
             new CosmeticsDatabase.Hat { name = "Banyes", sprite = S("Barrets/Banyes") },
             new CosmeticsDatabase.Hat { name = "Aureola", sprite = S("Barrets/Aureola") },
             new CosmeticsDatabase.Hat { name = "Bolet", sprite = S("Barrets/Bolet") },
+            new CosmeticsDatabase.Hat { name = "Astronauta", sprite = S("Barrets/Astronauta") },
+            new CosmeticsDatabase.Hat { name = "Samurai", sprite = S("Barrets/Samurai") },
+            new CosmeticsDatabase.Hat { name = "Cristall", sprite = S("Barrets/Cristall") },
+            new CosmeticsDatabase.Hat { name = "Pirata", sprite = S("Barrets/Pirata") },
+            new CosmeticsDatabase.Hat { name = "Viking", sprite = S("Barrets/Viking") },
+            new CosmeticsDatabase.Hat { name = "Flor", sprite = S("Barrets/Flor") },
+            new CosmeticsDatabase.Hat { name = "Copalta", sprite = S("Barrets/Copalta") },
         };
         var skins = new List<CosmeticsDatabase.Hat> { new CosmeticsDatabase.Hat { name = "Clàssica", sprite = null } };
         foreach (var s in new[] { ("Vidre", "Canica de vidre"), ("Foc", "Bola de foc"), ("Gel", "Glaçó"), ("Or", "Canica d'or"),
-                                  ("Robot", "Robot"), ("Zombi", "Zombi"), ("Ninja", "Ninja"), ("Sindria", "Síndria"), ("Fantasma", "Fantasma") })
+                                  ("Robot", "Robot"), ("Zombi", "Zombi"), ("Ninja", "Ninja"), ("Sindria", "Síndria"), ("Fantasma", "Fantasma"), ("Cosmos", "Cosmos"), ("Corall", "Corall"), ("Menta", "Menta"), ("Obsidiana", "Obsidiana"), ("Bombolla", "Bombolla"), ("Capvespre", "Capvespre"), ("Aurora", "Aurora"), ("Coure", "Coure"), ("Caramel", "Caramel"), ("Llima", "Llima"), ("Safir", "Safir"), ("Perla", "Perla") })
             skins.Add(new CosmeticsDatabase.Hat { name = s.Item2, sprite = S("Skins/" + s.Item1) });
         db.skins = skins.ToArray();
+        var trails = new List<CosmeticsDatabase.Tint>(db.trails ?? new CosmeticsDatabase.Tint[0]);
+        foreach(var entry in new[] {
+            ("Corall",new Color(1f,0.3f,0.5f)), ("Cosmos",new Color(0.55f,0.25f,1f)),
+            ("Or",new Color(1f,0.8f,0.2f)), ("Gel",new Color(0.65f,0.9f,1f)),
+            ("Menta",new Color(0.2f,1f,0.7f)), ("Obsidiana",new Color(0.3f,0.3f,0.45f)) })
+            if(!trails.Any(t=>t.name==entry.Item1)) trails.Add(new CosmeticsDatabase.Tint {name=entry.Item1,color=entry.Item2});
+        db.trails=trails.ToArray();
         EditorUtility.SetDirty(db);
     }
 

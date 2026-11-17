@@ -81,7 +81,7 @@ public class EnemyTeleporter : MonoBehaviour
                 Vector2 d = EnemyShooter.Rotate(dir, a);
                 EnemyBullet.Fire((Vector2)transform.position + d * 0.4f, d, bulletSpeed, 1, transform, 1f, bulletColor);
             }
-            Fx.Play(Fx.Pew, 0.4f);
+            GameAudio.Enemy(Fx.Pew, 0.4f);
         }
 
         ai.speedMultiplier = 1f;

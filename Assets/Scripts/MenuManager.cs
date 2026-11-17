@@ -5,11 +5,7 @@ public class MenuManager : MonoBehaviour
     public GameObject MainMenuPanel;
     public GameObject SettingsPanel;
 
-    public void OpenSettings()
-    {
-        MainMenuPanel.SetActive(false);
-        SettingsPanel.SetActive(true);
-    }
+    public void OpenSettings() { SettingsUI.Open(); }
 
     public void BackToMenu()
     {

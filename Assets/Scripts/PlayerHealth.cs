@@ -31,6 +31,7 @@ public class PlayerHealth : MonoBehaviour
 
     void Start()
     {
+        GameAudio.Track(damageAudioSource,SoundCategory.Effects);
         sprite = GetComponent<SpriteRenderer>();
         currentHealth = maxHealth;
 

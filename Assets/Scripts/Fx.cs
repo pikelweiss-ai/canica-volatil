@@ -182,7 +182,7 @@ public static class Fx
 
     // ---------- Sons ----------
 
-    public static void Play(AudioClip clip, float volume = 0.6f) => WeaponSounds.Play(clip, volume);
+    public static void Play(AudioClip clip, float volume = 0.6f) => GameAudio.Play(clip, volume);
 
     static AudioClip boom, pew, heal, door, coin;
 

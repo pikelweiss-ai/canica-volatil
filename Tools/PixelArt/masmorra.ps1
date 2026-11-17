@@ -19,10 +19,10 @@ function Floor-Rows([int]$seed, [string]$base, [string]$light, [string]$dark, [s
     for ($x = 0; $x -lt 16; $x++) {
       $isGrout = ($y -eq 15) -or ($x -eq 15) -or ($y -eq 7) -or (($y -lt 7) -and ($x -eq 7)) -or (($y -gt 7) -and ($x -eq 3 -or $x -eq 11))
       $r = $rnd.NextDouble()
-      if ($isGrout) { $c = $grout }
-      elseif ($spark -ne '' -and $r -lt 0.03) { $c = $spark }
-      elseif ($r -lt 0.14) { $c = $light }
-      elseif ($r -lt 0.24) { $c = $dark }
+      if ($isGrout) { $c = $dark }
+      elseif ($spark -ne '' -and $r -lt 0.012) { $c = $spark }
+      elseif ($r -lt 0.035) { $c = $light }
+      elseif ($r -lt 0.07) { $c = $dark }
       else { $c = $base }
       $line += $c
     }
@@ -37,7 +37,8 @@ function Wall-Rows([string]$top, [string]$topDark, [string]$front, [string]$fron
   for ($y = 0; $y -lt 16; $y++) {
     $line = ''
     for ($x = 0; $x -lt 16; $x++) {
-      if ($y -lt 4) { $c = if (($x + $y) % 7 -eq 0) { $topDark } else { $top } }
+      if ($y -eq 0) { $c = $top }
+      elseif ($y -lt 4) { $c = $topDark }
       elseif ($y -eq 4) { $c = 'k' }
       else {
         $row = [Math]::Floor(($y - 5) / 4)

@@ -120,7 +120,7 @@ public class EnemyBoss : MonoBehaviour
                 float ang = (off + i * 360f / n) * Mathf.Deg2Rad;
                 Fire(new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)));
             }
-            Fx.Play(Fx.Pew, 0.5f);
+            GameAudio.Enemy(Fx.Pew, 0.5f);
             yield return new WaitForSeconds(0.35f);
         }
     }
@@ -154,7 +154,7 @@ public class EnemyBoss : MonoBehaviour
 
         // Aterratge: colp a prop + ona de bales
         Fx.Shake(0.35f, 0.35f);
-        Fx.Play(Fx.Boom, 0.6f);
+        GameAudio.Enemy(Fx.Boom, 0.6f);
         Fx.Burst(target, dustColor, 16, 5f);
         if (ai.Player != null && Vector2.Distance(ai.Player.position, target) < 1.3f)
             ai.Player.GetComponent<PlayerHealth>()?.TakeDamage(1);
@@ -199,7 +199,7 @@ public class EnemyBoss : MonoBehaviour
                 float a = (ang + arm * 120f) * Mathf.Deg2Rad;
                 Fire(new Vector2(Mathf.Cos(a), Mathf.Sin(a)), 0.9f);
             }
-            if (i % 3 == 0) Fx.Play(Fx.Pew, 0.25f);
+            if (i % 3 == 0) GameAudio.Enemy(Fx.Pew, 0.25f);
             ang += 13f;
             yield return new WaitForSeconds(0.07f);
         }
@@ -255,7 +255,7 @@ public class EnemyBoss : MonoBehaviour
             if (ai.Player != null && Vector2.Distance(ai.Player.position, p) < 0.65f)
                 ai.Player.GetComponent<PlayerHealth>()?.TakeDamage(1);
         }
-        Fx.Play(Fx.Boom, 0.5f);
+        GameAudio.Enemy(Fx.Boom, 0.5f);
         Fx.Shake(0.3f, 0.25f);
         yield return new WaitForSeconds(0.3f);
     }
@@ -299,7 +299,7 @@ public class EnemyBoss : MonoBehaviour
             int n = enraged ? 7 : 5;
             for (int i = 0; i < n; i++)
                 Fire(EnemyShooter.Rotate(dir, Mathf.Lerp(-35f, 35f, i / (float)(n - 1))), 1.2f);
-            Fx.Play(Fx.Pew, 0.5f);
+            GameAudio.Enemy(Fx.Pew, 0.5f);
             yield return new WaitForSeconds(0.4f);
         }
     }

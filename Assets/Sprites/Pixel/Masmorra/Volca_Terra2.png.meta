@@ -134,7 +134,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      Volca_Terra2_0: 4947094614403835350
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

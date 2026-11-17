@@ -46,15 +46,13 @@ public class PlayerCosmetics : MonoBehaviour
         hat.sortingLayerID = body.sortingLayerID;
         hat.sortingOrder = body.sortingOrder + 1;
 
-        // El dibuix del barret està a baix del seu requadre: el posem perquè la vora de baix
-        // quede un poc per davall de la part de dalt de la canica
-        float scaleWorld = 0.85f;
-        float parentScale = Mathf.Max(0.01f, transform.lossyScale.y);
-        go.transform.localScale = Vector3.one * (scaleWorld / parentScale);
-        float bodyTop = body.sprite != null ? body.sprite.bounds.max.y : 0.5f;          // Local
-        float hatHalf = s.bounds.extents.y * scaleWorld / parentScale;                 // Local
-        go.transform.localPosition = new Vector3(0f, bodyTop - 0.15f / parentScale + hatHalf, 0f);
-
+        float parentScale=Mathf.Max(0.01f,transform.lossyScale.y);
+        float bodyWidth=body.sprite.bounds.size.x;
+        float localScale=bodyWidth*1.05f/s.bounds.size.x;
+        go.transform.localScale=Vector3.one*localScale;
+        float bottom=(HatFit.Bottom(s)-0.5f)*s.bounds.size.y;
+        float lift=s.name.Contains("Aureola")?0.2f:0f;
+        go.transform.localPosition=new Vector3(0f,body.sprite.bounds.max.y-0.07f+lift-bottom*localScale,0f);
         // El nom puja un poc perquè no tape el barret
         PlayerNameTag tag = GetComponent<PlayerNameTag>();
         if (tag != null && tag.playerNameText != null)
@@ -91,5 +89,19 @@ public class PlayerCosmetics : MonoBehaviour
 
         // Mentre el jugador parpelleja (invulnerable), el barret també
         if (hat != null && body != null) hat.enabled = body.enabled;
+    }
+}
+
+// Mesura la base opaca; els marges transparents no compten com a barret.
+public static class HatFit
+{
+    static readonly System.Collections.Generic.Dictionary<Sprite,float> cache=new System.Collections.Generic.Dictionary<Sprite,float>();
+    public static float Bottom(Sprite sprite)
+    {
+        if(cache.TryGetValue(sprite,out float bottom))return bottom;
+        Rect rect=sprite.rect;
+        for(int y=0;y<(int)rect.height;y++) for(int x=0;x<(int)rect.width;x++)
+            if(sprite.texture.GetPixel((int)rect.x+x,(int)rect.y+y).a>0.1f) {bottom=y/rect.height;cache[sprite]=bottom;return bottom;}
+        return 0f;
     }
 }

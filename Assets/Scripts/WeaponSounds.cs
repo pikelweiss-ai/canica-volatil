@@ -5,23 +5,13 @@ public static class WeaponSounds
 {
     const int SampleRate = 44100;
 
-    private static AudioSource source;
+
     private static AudioClip shot, throwClip, impact;
 
     // Reprodueix un so en 2D (mateix volum a tot arreu), amb el to un poc aleatori
     public static void Play(AudioClip clip, float volume = 0.6f, float pitchVariation = 0.08f)
     {
-        if (clip == null) return;
-        if (source == null)
-        {
-            GameObject go = new GameObject("SFX Armes");
-            Object.DontDestroyOnLoad(go);
-            source = go.AddComponent<AudioSource>();
-            source.playOnAwake = false;
-            source.spatialBlend = 0f;
-        }
-        source.pitch = 1f + Random.Range(-pitchVariation, pitchVariation);
-        source.PlayOneShot(clip, volume);
+        GameAudio.Play(clip,volume,SoundCategory.Weapons,pitchVariation);
     }
 
     public static AudioClip ShootClip(WeaponData w)

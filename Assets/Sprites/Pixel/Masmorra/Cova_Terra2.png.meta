@@ -134,7 +134,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      Cova_Terra2_0: 8816950179591577236
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

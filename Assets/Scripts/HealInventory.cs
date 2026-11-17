@@ -16,6 +16,7 @@ public class HealInventory : MonoBehaviour
     public HealItem[] items = new HealItem[Slots];
     public int[] counts = new int[Slots];
 
+    private int selectedHeal;
     private PlayerHealth health;
     private HealBarUI ui;
 
@@ -69,6 +70,7 @@ public class HealInventory : MonoBehaviour
 
     void Update()
     {
+        if (Time.timeScale == 0f) return;
         if (ui == null)
         {
             ui = HealBarUI.Create(FindFont());
@@ -76,8 +78,11 @@ public class HealInventory : MonoBehaviour
         }
 
         for (int i = 0; i < Slots; i++)
-            if (Input.GetKeyDown(KeyCode.Alpha5 + i) || Input.GetKeyDown(KeyCode.Keypad5 + i))
-                Use(i);
+            if (GameControls.Down(15 + i))
+                { selectedHeal = i; Use(i); }
+        if (GameControls.WheelHeals && Input.mouseScrollDelta.y != 0f) selectedHeal = (selectedHeal + (Input.mouseScrollDelta.y < 0 ? 1 : 3)) % Slots;
+        if (GameControls.Down(10)) Use(selectedHeal);
+        ui.Select(selectedHeal);
     }
 
     public void Use(int slot)
@@ -136,6 +141,7 @@ public class HealBarUI : MonoBehaviour
     private Vector2[] basePos = new Vector2[HealInventory.Slots];       // On va cada casella (no es mou mai)
     private Coroutine[] shaking = new Coroutine[HealInventory.Slots];
     private SlotInput[] inputs = new SlotInput[HealInventory.Slots];
+    private TextMeshProUGUI usageLabel;
     private TMP_FontAsset font;
     public bool NeedsRefresh { get; private set; } = true;
 
@@ -160,6 +166,8 @@ public class HealBarUI : MonoBehaviour
     {
         // La hotbar d'armes fa 4 x 90 + 3 x 10 = 390 d'ample i està centrada: ens posem a la dreta
         float startX = 390f / 2f + 30f;
+        usageLabel=Text(transform,"",16,TextAlignmentOptions.Center,Vector2.zero,Vector2.zero);
+        var hint=usageLabel.rectTransform;hint.anchorMin=hint.anchorMax=new Vector2(0.5f,0);hint.sizeDelta=new Vector2(370,28);hint.anchoredPosition=new Vector2(390,105);
         for (int i = 0; i < HealInventory.Slots; i++)
         {
             GameObject slot = new GameObject("Cura " + (i + 5), typeof(RectTransform), typeof(Image));
@@ -185,7 +193,7 @@ public class HealBarUI : MonoBehaviour
             icon.raycastTarget = false;
             icons[i] = icon;
 
-            Text(slot.transform, (i + 5).ToString(), 18, TextAlignmentOptions.TopLeft, new Vector2(5f, 0f), new Vector2(0f, -3f));
+            Text(slot.transform, GameControls.Label(15 + i), 18, TextAlignmentOptions.TopLeft, new Vector2(5f, 0f), new Vector2(0f, -3f)).gameObject.AddComponent<ControlKeyLabel>().action = 15 + i;
             countTexts[i] = Text(slot.transform, "", 20, TextAlignmentOptions.BottomRight, Vector2.zero, new Vector2(-5f, 2f));
             healTexts[i] = Text(slot.transform, "", 16, TextAlignmentOptions.TopRight, Vector2.zero, new Vector2(-4f, -3f));
             healTexts[i].color = new Color(0.5f, 1f, 0.5f);
@@ -233,6 +241,11 @@ public class HealBarUI : MonoBehaviour
         }
     }
 
+    public void Select(int index)
+    {
+        if(usageLabel!=null) usageLabel.text=GameControls.Label(10)+" · usar cura seleccionada";
+        for (int i=0;i<slots.Length;i++) slots[i].GetComponent<Image>().color = i==index ? new Color(0.6f,0.2f,0.3f,0.9f) : new Color(0.35f,0f,0.05f,0.45f);
+    }
     // Tremola la casella (no es pot usar). Sempre torna a la seua posició original,
     // encara que prems la tecla moltes vegades seguides.
     public void Shake(int i)

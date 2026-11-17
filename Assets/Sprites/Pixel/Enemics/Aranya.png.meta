@@ -134,7 +134,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      Aranya_0: 6209561372234026313
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

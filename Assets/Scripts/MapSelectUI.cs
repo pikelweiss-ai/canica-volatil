@@ -12,13 +12,13 @@ public class MapInfo
     public Sprite preview;               // Miniatura. Si està buida, es busca a Resources/MapPreviews/<sceneName>
 }
 
-// Pantalla "Tria el mapa": targetes amb la miniatura del mapa i el nom a baix.
+// Pantalla "TRIA LA TEUA EXPEDICIÓ": targetes amb la miniatura del mapa i el nom a baix.
 // Es crea per codi des de MainMenuController.
 public class MapSelectUI : MonoBehaviour
 {
     private const float CardWidth = 400f;
     private const float ImageHeight = 225f; // 16:9
-    private const float LabelHeight = 50f;
+    private const float LabelHeight = 145f;
     private const float Border = 6f;
     private const float Spacing = 40f;
 
@@ -55,12 +55,14 @@ public class MapSelectUI : MonoBehaviour
     void Build(Transform root, MapInfo[] maps)
     {
         // Fons fosc que tapa el menú (i bloqueja els clics de darrere)
-        Image dim = CreateImage("Fons", root, new Color(0f, 0f, 0f, 0.8f));
+        Image dim = CreateImage("Fons", root, new Color(0.025f, 0.04f, 0.075f, 0.99f));
         Stretch(dim.rectTransform);
 
-        TextMeshProUGUI title = CreateText("Titol", root, "Tria el mapa", 56);
-        Place(title.rectTransform, new Vector2(0f, 300f), new Vector2(1000f, 80f));
+        TextMeshProUGUI title = CreateText("Titol", root, "TRIA LA TEUA EXPEDICIÓ", 38);
+        Place(title.rectTransform, new Vector2(0f, 340f), new Vector2(1450f, 80f));
 
+        var version = CreateText("Versio", root, "CANICA VOLÀTIL · PRE-ALPHA v1.0.0 · EN DESENVOLUPAMENT", 22);
+        Place(version.rectTransform, new Vector2(0, 280), new Vector2(1400, 45));
         int count = maps != null ? maps.Length : 0;
         float cardHeight = ImageHeight + LabelHeight + Border * 2f;
         float totalWidth = count * (CardWidth + Border * 2f) + Mathf.Max(0, count - 1) * Spacing;
@@ -71,9 +73,11 @@ public class MapSelectUI : MonoBehaviour
             CreateCard(root, maps[i], new Vector2(x, 0f), cardHeight);
         }
 
+                TextMeshProUGUI help = CreateText("Controls", root, "Configura les tecles des de Controls al menú\nRoda configurable · Dues tecles per acció · Esc per tornar", 23);
+        Place(help.rectTransform, new Vector2(0f, -260f), new Vector2(1300f, 80f));
         // Botó per a tornar al menú
         Button back = CreateButton("Tornar", root, new Color(1f, 1f, 1f, 0.9f));
-        Place((RectTransform)back.transform, new Vector2(0f, -300f), new Vector2(240f, 60f));
+        Place((RectTransform)back.transform, new Vector2(0f, -370f), new Vector2(240f, 60f));
         TextMeshProUGUI backText = CreateText("Text", back.transform, "Tornar", 30);
         backText.color = Color.black;
         Stretch(backText.rectTransform);
@@ -87,15 +91,20 @@ public class MapSelectUI : MonoBehaviour
         Place((RectTransform)card.transform, position, new Vector2(CardWidth + Border * 2f, cardHeight));
 
         ColorBlock colors = card.colors;
-        colors.normalColor = new Color(1f, 1f, 1f, 0.85f);
+        colors.normalColor = new Color(0.12f, 0.19f, 0.27f, 1f);
         colors.highlightedColor = new Color(1f, 0.85f, 0.1f, 1f);
         colors.pressedColor = new Color(1f, 0.7f, 0f, 1f);
         colors.selectedColor = colors.normalColor;
         card.colors = colors;
 
         string sceneName = map.sceneName;
-        card.onClick.AddListener(() => SceneManager.LoadScene(sceneName));
-
+                bool available = sceneName != "Lobby" && Application.CanStreamedLevelBeLoaded(sceneName);
+        card.interactable = available;
+        if (available) card.onClick.AddListener(() => { RunState.Reset(); SceneManager.LoadScene(sceneName); });
+        string description = sceneName == "Dungeon" ? "SOLO · ROGUELITE\nTresors, armes i bosses" :
+            sceneName == "Lobby" ? "ONLINE · PRÒXIMAMENT\nSales amb codi" : "PRÀCTICA OFFLINE\nMoviment i punteria";
+        TextMeshProUGUI detail = CreateText("Descripcio", card.transform, description, 18);
+        Place(detail.rectTransform, new Vector2(0f, -82f), new Vector2(380f, 74f));
         // Miniatura
         Sprite preview = map.preview;
         if (preview == null && !string.IsNullOrEmpty(map.sceneName))
@@ -113,20 +122,20 @@ public class MapSelectUI : MonoBehaviour
 
         if (preview == null)
         {
-            TextMeshProUGUI noPreview = CreateText("SenseMiniatura", image.transform, "(sense miniatura)", 22);
+            TextMeshProUGUI noPreview = CreateText("SenseMiniatura", image.transform, map.sceneName == "Dungeon" ? "8 TEMES · 3 BOSSES" : "CANICA VOLÀTIL", 22);
             noPreview.color = new Color(1f, 1f, 1f, 0.5f);
             Stretch(noPreview.rectTransform);
         }
 
         // Nom del mapa, a baix
-        TextMeshProUGUI label = CreateText("Nom", card.transform, map.displayName, 32);
-        label.color = Color.black;
+        TextMeshProUGUI label = CreateText("Nom", card.transform, map.displayName, 25);
+        label.color = Color.white;
         RectTransform lrt = label.rectTransform;
         lrt.anchorMin = new Vector2(0f, 0f);
         lrt.anchorMax = new Vector2(1f, 0f);
         lrt.pivot = new Vector2(0.5f, 0f);
         lrt.offsetMin = new Vector2(Border, Border);
-        lrt.offsetMax = new Vector2(-Border, Border + LabelHeight);
+        lrt.offsetMax = new Vector2(-Border, Border + 54f);
     }
 
     // ---------- Ajudes per a crear UI ----------

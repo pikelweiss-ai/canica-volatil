@@ -86,7 +86,8 @@ public class HotbarUI : MonoBehaviour
             icons[i] = icon;
 
             // Número de la tecla
-            TextMeshProUGUI number = CreateText(slot.transform, (i + 1).ToString(), 22, TextAlignmentOptions.TopLeft);
+            TextMeshProUGUI number = CreateText(slot.transform, GameControls.Label(11 + i), 18, TextAlignmentOptions.TopLeft);
+            number.gameObject.AddComponent<ControlKeyLabel>().action = 11 + i;
             number.rectTransform.offsetMin = new Vector2(6f, 0f);
             number.rectTransform.offsetMax = new Vector2(0f, -4f);
 

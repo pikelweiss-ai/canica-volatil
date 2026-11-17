@@ -7,16 +7,12 @@ public class AlwaysMenu : MonoBehaviour
 
     private void Start()
     {
-        // Quan comença, assegura que només el Main Menu està actiu.
+        // En iniciar, mostrar el menu principal.
         MainMenuPanel.SetActive(true);
         SettingsPanel.SetActive(false);
     }
 
-    public void OpenSettings()
-    {
-        MainMenuPanel.SetActive(false);
-        SettingsPanel.SetActive(true);
-    }
+    public void OpenSettings() { SettingsUI.Open(); }
 
     public void BackToMenu()
     {

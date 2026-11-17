@@ -6,7 +6,8 @@
 # per carpeta a Tools\PixelArt\preview_<Carpeta>.png
 param(
   [string]$OutRoot = 'Assets\Sprites\Pixel',
-  [string]$PreviewDir = 'Tools\PixelArt'
+  [string]$PreviewDir = 'Tools\PixelArt',
+  [string]$Only = '*' # Exemple: -Only 'Skins/*' per regenerar nomes les skins
 )
 Add-Type -AssemblyName System.Drawing
 
@@ -306,10 +307,12 @@ $sprites['Cofres/Dungeon/C_Metall'] = @{ size = 16; mirror = $true; rows = @(
 # Masmorra: blocs, enemics, armes noves i barrets (Claude)
 . (Join-Path $PSScriptRoot 'masmorra.ps1')
 . (Join-Path $PSScriptRoot 'masmorra2.ps1')
+. (Join-Path $PSScriptRoot 'prealpha.ps1')
 
 # ---------------- Guardar PNG ----------------
 $bitmaps = [ordered]@{}
 foreach ($name in $sprites.Keys) {
+  if ($name -notlike $Only) { continue }
   $s = $sprites[$name]
   $bmp = New-Sprite (Expand-Rows $s) $s.size $s.size
   $path = Join-Path $OutRoot ($name + '.png')

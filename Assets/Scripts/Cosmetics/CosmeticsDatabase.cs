@@ -14,7 +14,7 @@ public class CosmeticsDatabase : ScriptableObject
 
     public Sprite playerSprite;        // La canica original (per a la previsualització del menú)
 
-    // Skins: un dibuix sencer de la canica (20x20 a Sprites/Pixel/Skins). La primera és l'original (sprite buit).
+    // Skins: un dibuix sencer de la canica (16x16 a Sprites/Pixel/Skins). La primera és l'original (sprite buit).
     public Hat[] skins;
     public Hat[] hats;                 // El primer pot ser "Cap" (sprite buit)
     public Tint[] trails =

@@ -37,6 +37,9 @@ public class PlayerAttack : MonoBehaviour
     private SpriteRenderer handSprite;   // L'arma que porta a la mà
     private float recoil;                // Retrocés de l'arma en disparar
 
+    private WeaponData spinningWeapon;
+    private float spinCharge;
+    private bool reverseSwing;
     private int selectedSlot = 0;
     private bool mouseBlocked;          // El clic ha començat damunt de la UI
     private float nextAttackTime = 0f;
@@ -94,15 +97,16 @@ public class PlayerAttack : MonoBehaviour
 
     void Update()
     {
+        if (Time.timeScale == 0f) return;
         // Tab: mostra / amaga la línia d'apuntat
-        if (Input.GetKeyDown(KeyCode.Tab))
+        if (GameControls.Down(7))
             showAimLine = !showAimLine;
 
         UpdateAim();
         HandleSlotSelection();
         UpdateHand();
 
-        if (Input.GetKeyDown(dropKey))
+        if (GameControls.Down(6))
             DropCurrentWeapon();
 
         // Si el clic comença damunt de la UI (hotbar, bossa...), no dispara fins que solts el botó.
@@ -112,8 +116,15 @@ public class PlayerAttack : MonoBehaviour
         if (!Input.GetMouseButton(0))
             mouseBlocked = false;
 
-        bool attackPressed = (Input.GetMouseButton(0) && !mouseBlocked) || Input.GetKey(KeyCode.Space);
+        bool attackPressed = GameControls.Held(4) && !mouseBlocked && !(EventSystem.current != null && EventSystem.current.IsPointerOverGameObject());
 
+        if(!attackPressed || spinningWeapon!=CurrentWeapon){spinCharge=0;spinningWeapon=CurrentWeapon;}
+        if(attackPressed && CurrentWeapon!=null && CurrentWeapon.spinUpTime>0)
+        {
+            if(spinCharge==0) Fx.Text(transform.position,"Carregant...",new Color(1f,0.8f,0.2f));
+            spinCharge+=Time.deltaTime;
+            if(spinCharge<CurrentWeapon.spinUpTime) return;
+        }
         if (attackPressed && Time.time >= nextAttackTime)
         {
             WeaponData weapon = CurrentWeapon;
@@ -241,11 +252,11 @@ public class PlayerAttack : MonoBehaviour
 
         for (int i = 0; i < hotbarSlots.Length && i < 9; i++)
         {
-            if (Input.GetKeyDown(KeyCode.Alpha1 + i) || Input.GetKeyDown(KeyCode.Keypad1 + i))
+            if (GameControls.Down(11 + i))
                 newSlot = i;
         }
 
-        float scroll = Input.mouseScrollDelta.y;
+        float scroll = GameControls.Wheel == 3 || GameControls.WheelHeals ? 0f : Input.mouseScrollDelta.y;
         if (scroll < 0f) newSlot = (selectedSlot + 1) % hotbarSlots.Length;
         if (scroll > 0f) newSlot = (selectedSlot - 1 + hotbarSlots.Length) % hotbarSlots.Length;
 
@@ -306,6 +317,7 @@ public class PlayerAttack : MonoBehaviour
 
     void Shoot(WeaponData weapon)
     {
+        if (weapon.melee) { Swing(weapon); return; }
         // El projectil ix de la punta de l'arma (el canó)
         Vector2 spawnPos = (Vector2)transform.position + aimDirection * MuzzleDistance(weapon);
         int layer = playerSprite != null ? playerSprite.sortingLayerID : 0;
@@ -334,6 +346,41 @@ public class PlayerAttack : MonoBehaviour
         recoil = pellets > 1 ? 0.14f : 0.08f; // L'arma recula (més si és escopeta)
     }
 
+    // Un colp per objectiu dins de l'arc, amb visibilitat per evitar pegar a traves de murs.
+    void Swing(WeaponData weapon)
+    {
+        if(weapon.meleeDashDistance>0) GetComponent<PlayerMovement>()?.Dash(aimDirection,weapon.meleeDashDistance);
+        reverseSwing=weapon.alternateSwing && !reverseSwing;
+        var enemies = new System.Collections.Generic.HashSet<EnemyHealth>();
+        var objects = new System.Collections.Generic.HashSet<Breakable>();
+        Vector2 origin = transform.position;
+        foreach (Collider2D hit in Physics2D.OverlapCircleAll(origin, weapon.range))
+        {
+            Vector2 delta = (Vector2)hit.ClosestPoint(origin) - origin;
+            if (delta.sqrMagnitude > 0.01f && !weapon.meleeRadial && Vector2.Angle(aimDirection, delta) > weapon.meleeArc * 0.5f) continue;
+            if (TileNav.Ready() && !TileNav.LineOfSight(origin, hit.transform.position)) continue;
+            EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
+            if (enemy != null && enemies.Add(enemy)) enemy.TakeHit(weapon.damage, aimDirection * weapon.knockbackForce);
+            Breakable box = hit.GetComponentInParent<Breakable>();
+            if (box != null && objects.Add(box)) box.Hit(weapon.damage);
+        }
+        StartCoroutine(AttackSquash());
+        StartCoroutine(SwingArc(weapon));
+        WeaponSounds.Play(WeaponSounds.ShootClip(weapon), 0.35f);
+    }
+
+    IEnumerator SwingArc(WeaponData weapon)
+    {
+        GameObject go = new GameObject("Arc de tall");
+        LineRenderer line = go.AddComponent<LineRenderer>();
+        line.material = new Material(Shader.Find("Sprites/Default"));
+        line.positionCount = 17; line.startWidth = 0.13f; line.endWidth = 0.03f;
+        line.sortingLayerID = playerSprite.sortingLayerID; line.sortingOrder = playerSprite.sortingOrder + 3;
+        Color color = weapon.projectileColor;
+        for (int i = 0; i < 17; i++) line.SetPosition(i, transform.position + (Vector3)(Rotate(aimDirection, (reverseSwing?-1:1) * ((weapon.meleeRadial?360:weapon.meleeArc) * (i / 16f - 0.5f))) * weapon.range));
+        for (float t = 0; t < 0.16f; t += Time.deltaTime) { color.a = 1f - t / 0.16f; line.startColor = line.endColor = color; yield return null; }
+        Destroy(line.material); Destroy(go);
+    }
     // Gira un vector 'degrees' graus (positiu = sentit antihorari)
     static Vector2 Rotate(Vector2 v, float degrees)
     {

@@ -273,41 +273,38 @@ $sprites['Armes/Raig'] = @{ size = 16; rows = @(
   'kkkkkkkkkkkk'
 )}
 
-# ---- Skins de la canica (20x20: a 16 PPU fa 1.25 unitats, com la canica original) ----
+# ---- Skins: graella real 16x16, igual que la classica (128x128 ampliada x8). ----
+# A 16 PPU totes ocupen una unitat. No cal canviar l'escala del jugador.
 $cercle = @(
-  '......kkkk',
-  '....kkXXXX',
-  '...kXXXXXX',
-  '..kXXXXXXX',
-  '.kXXXXXXXX',
-  '.kXXXXXXXX',
-  'kXXXXXXXXX',
-  'kXXXXXXXXX',
-  'kXXXXXXXXX',
-  'kXXXXXXXXX',
-  'kXXXXXXXXX',
-  'kXXXXXXXXX',
-  'kXXXXXXXXX',
-  'kXXXXXXXXX',
-  '.kXXXXXXXX',
-  '.kXXXXXXXX',
-  '..kXXXXXXX',
-  '...kXXXXXX',
-  '....kkXXXX',
-  '......kkkk'
+  '.....kkk',
+  '...kkXXX',
+  '..kXXXXX',
+  '.kXXXXXX',
+  '.kXXXXXX',
+  'kXXXXXXX',
+  'kXXXXXXX',
+  'kXXXXXXX',
+  'kXXXXXXX',
+  'kXXXXXXX',
+  'kXXXXXXX',
+  '.kXXXXXX',
+  '.kXXXXXX',
+  '..kXXXXX',
+  '...kkXXX',
+  '.....kkk'
 )
 
-# Fa una skin: color de base, ombra (baix), brillantor (dalt a l'esquerra) i detalls de la cara
-# $extra: llista de "fila,columna,lletra" (columna 0-9 de la meitat esquerra; es copia en espill)
+# Els detalls de les variants es conserven en coordenades de la graella antiga
+# 20x20 i es traslladen a 16x16. La cara comuna es dibuixa a resolucio nativa.
 function Skin([string]$fill, [string]$shade, [string]$light, [string[]]$extra, [bool]$face = $true) {
   $rows = @()
-  for ($y = 0; $y -lt 20; $y++) {
+  for ($y = 0; $y -lt 16; $y++) {
     $line = ''
-    for ($x = 0; $x -lt 10; $x++) {
+    for ($x = 0; $x -lt 8; $x++) {
       $ch = [string]$cercle[$y][$x]
       if ($ch -eq 'X') {
-        if ($y -ge 15 -or ($y -ge 13 -and $x -le 2)) { $ch = $shade }
-        elseif ($y -ge 3 -and $y -le 5 -and $x -ge 3 -and $x -le 4) { $ch = $light }
+        if ($y -ge 13 -or ($y -ge 11 -and $x -le 2)) { $ch = $shade }
+        elseif ($y -ge 2 -and $y -le 3 -and $x -ge 3 -and $x -le 4) { $ch = $light }
         else { $ch = $fill }
       }
       $line += $ch
@@ -315,15 +312,23 @@ function Skin([string]$fill, [string]$shade, [string]$light, [string[]]$extra, [
     $rows += $line
   }
   $chars = @($rows | ForEach-Object { ,($_.ToCharArray()) })
-  $marks = @()
-  if ($face) { $marks += @('7,6,k','8,6,k','9,6,k','12,4,k','13,5,k','13,6,k','13,7,k','13,8,k','13,9,k') }
-  if ($extra) { $marks += $extra }
-  foreach ($m in $marks) {
-    $p = $m.Split(','); $chars[[int]$p[0]][[int]$p[1]] = $p[2]
+  if ($extra) {
+    foreach ($m in $extra) {
+      $p = $m.Split(',')
+      $y = [int][Math]::Round([int]$p[0] * 15.0 / 19)
+      $x = [int][Math]::Round([int]$p[1] * 7.0 / 9)
+      # Respectar la silueta: un detall no pinta fora de la canica.
+      if ($cercle[$y][$x] -ne '.') { $chars[$y][$x] = [char]$p[2] }
+    }
+  }
+  if ($face) {
+    foreach ($y in 4..6) { foreach ($x in 5..6) { $chars[$y][$x] = 'k' } }
+    foreach ($y in 9..10) { foreach ($x in 3..7) { $chars[$y][$x] = 'k' } }
+    foreach ($x in 4..7) { $chars[11][$x] = 'k' }
+    foreach ($x in 5..7) { $chars[12][$x] = 'k' }
   }
   return ,@($chars | ForEach-Object { -join $_ })
 }
-
 $skins = [ordered]@{
   'Vidre'   = (Skin 'b' 'B' 'W' @('5,7,h','6,8,h','10,2,h','11,3,h','15,6,h','16,7,h'))
   'Foc'     = (Skin 'f' 't' 'F' @('0,6,F','0,7,f','1,4,F','1,5,f','2,9,F','16,4,F','16,8,F'))
@@ -336,5 +341,5 @@ $skins = [ordered]@{
   'Fantasma'= (Skin 'W' 'g' 'W' @('7,6,k','7,5,k','8,5,k','8,6,k','9,5,k','9,6,k','12,4,W','13,5,W','13,6,W','13,7,W','13,8,W','13,9,W','12,7,k','12,8,k','12,9,k') $false)
 }
 foreach ($s in $skins.Keys) {
-  $sprites["Skins/$s"] = @{ size = 20; mirror = $true; rows = $skins[$s] }
+  $sprites["Skins/$s"] = @{ size = 16; mirror = $true; rows = $skins[$s] }
 }

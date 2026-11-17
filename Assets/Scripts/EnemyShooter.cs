@@ -80,7 +80,7 @@ public class EnemyShooter : MonoBehaviour
     {
         EnemyBullet.Fire((Vector2)transform.position + dir * 0.4f, dir, bulletSpeed, bulletDamage, transform, 1f,
                          useColor ? bulletColor : (Color?)null);
-        Fx.Play(Fx.Pew, 0.35f);
+        GameAudio.Enemy(Fx.Pew, 0.35f);
     }
 
     public static Vector2 Rotate(Vector2 v, float deg)

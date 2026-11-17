@@ -38,6 +38,14 @@ public class WeaponData : ScriptableObject
     [Range(0f, 0.5f)]
     public float rangeRandom = 0f;      // Cada bala pot quedar-se fins a aquest % més curta
 
+    [Header("Cos a cos")]
+    public float spinUpTime;
+    public float meleeDashDistance;
+    public bool alternateSwing;
+    public bool meleeRadial;
+    public bool melee = false;
+    [Range(20f, 180f)] public float meleeArc = 110f;
+
     [Header("Especials")]
     public float explosionRadius = 0f;  // > 0: el projectil explota en acabar (granades)
     public int explosionDamage = 3;

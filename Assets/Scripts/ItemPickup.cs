@@ -248,6 +248,6 @@ public static class ItemGraphics
         }
 
         Vector3 listenerPos = Camera.main != null ? Camera.main.transform.position : position;
-        AudioSource.PlayClipAtPoint(pickupSound, listenerPos, 0.7f);
+        GameAudio.Play(pickupSound, 0.7f);
     }
 }

@@ -29,6 +29,12 @@ MonoBehaviour:
   spreadAngle: 12
   pellets: 3
   rangeRandom: 0
+  spinUpTime: 0
+  meleeDashDistance: 0
+  alternateSwing: 0
+  meleeRadial: 0
+  melee: 0
+  meleeArc: 110
   explosionRadius: 0
   explosionDamage: 3
   pierce: 1

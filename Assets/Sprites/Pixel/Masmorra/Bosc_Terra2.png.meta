@@ -134,7 +134,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      Bosc_Terra2_0: -7382211143250716665
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

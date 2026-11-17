@@ -33,3 +33,7 @@ crashlytics-buildid.txt
 sysinfo.txt
 .DS_Store
 Thumbs.db
+
+# Fitxers temporals generats pel paquet de proves de Unity
+/Assets/Resources/PerformanceTestRunInfo.json*
+/Assets/Resources/PerformanceTestRunSettings.json*

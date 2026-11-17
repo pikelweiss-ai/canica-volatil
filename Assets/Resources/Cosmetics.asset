@@ -34,6 +34,30 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 92d5000c437fb684eb076704f1af16c1, type: 3}
   - name: Fantasma
     sprite: {fileID: 21300000, guid: e86cbe90ef3b13f49ac6778fb934d3d0, type: 3}
+  - name: Cosmos
+    sprite: {fileID: 21300000, guid: 39f40229da8644d49a5c40c911a59a36, type: 3}
+  - name: Corall
+    sprite: {fileID: 21300000, guid: ce5d23ef0ffac1b40b27b987a68b8ce4, type: 3}
+  - name: Menta
+    sprite: {fileID: 21300000, guid: 746bc558fa233a34889dd1af064aa962, type: 3}
+  - name: Obsidiana
+    sprite: {fileID: 21300000, guid: 253b5e69b6361364ba138c6939bc25ab, type: 3}
+  - name: Bombolla
+    sprite: {fileID: 21300000, guid: f37e48bd861cb024a934118bce658b98, type: 3}
+  - name: Capvespre
+    sprite: {fileID: 21300000, guid: 7daf049fd3c26c24a9e9e391ece932f2, type: 3}
+  - name: Aurora
+    sprite: {fileID: 21300000, guid: 7672dd6e431f5f546b986bf36172a22d, type: 3}
+  - name: Coure
+    sprite: {fileID: 21300000, guid: b7d3ba7941c2b1e43a00110cc485b09c, type: 3}
+  - name: Caramel
+    sprite: {fileID: 21300000, guid: 7f580cd4b31a2f547a8aa5bc13806bcd, type: 3}
+  - name: Llima
+    sprite: {fileID: 21300000, guid: b29a20e85a70d9f459343db94c40da08, type: 3}
+  - name: Safir
+    sprite: {fileID: 21300000, guid: b2a3d89d51a87c346950a764ae2fe24e, type: 3}
+  - name: Perla
+    sprite: {fileID: 21300000, guid: 0fc1936407ff6654b9ec5d0b5d506ee7, type: 3}
   hats:
   - name: Cap
     sprite: {fileID: 0}
@@ -47,6 +71,20 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 4f2636d2a58e51f4a82b343b55d009ff, type: 3}
   - name: Bolet
     sprite: {fileID: 21300000, guid: f43dde2e950568e4089d0bf90b0bce22, type: 3}
+  - name: Astronauta
+    sprite: {fileID: 21300000, guid: 6cb80f0a7fa8769469e59364b74cd8ce, type: 3}
+  - name: Samurai
+    sprite: {fileID: 21300000, guid: febb26f677d219349986880751431480, type: 3}
+  - name: Cristall
+    sprite: {fileID: 21300000, guid: c91f058994a5b644a9ab4929b0a6d03b, type: 3}
+  - name: Pirata
+    sprite: {fileID: 21300000, guid: ce497571e16c5e142899f586306db812, type: 3}
+  - name: Viking
+    sprite: {fileID: 21300000, guid: 4995d2c36e7a292488d2ec1dffa9ea90, type: 3}
+  - name: Flor
+    sprite: {fileID: 21300000, guid: c07bb7713daa9504c953bd6697490abb, type: 3}
+  - name: Copalta
+    sprite: {fileID: 21300000, guid: 28023af5d8436734a8debdb814c23bac, type: 3}
   trails:
   - name: Cap
     color: {r: 0, g: 0, b: 0, a: 0}
@@ -60,3 +98,15 @@ MonoBehaviour:
     color: {r: 0.55, g: 1, b: 0.3, a: 1}
   - name: "Arc de Sant Mart\xED"
     color: {r: 1, g: 0, b: 1, a: 0.99}
+  - name: Corall
+    color: {r: 1, g: 0.3, b: 0.5, a: 1}
+  - name: Cosmos
+    color: {r: 0.55, g: 0.25, b: 1, a: 1}
+  - name: Or
+    color: {r: 1, g: 0.8, b: 0.2, a: 1}
+  - name: Gel
+    color: {r: 0.65, g: 0.9, b: 1, a: 1}
+  - name: Menta
+    color: {r: 0.2, g: 1, b: 0.7, a: 1}
+  - name: Obsidiana
+    color: {r: 0.3, g: 0.3, b: 0.45, a: 1}

@@ -11,18 +11,20 @@ using UnityEngine.UI;
 // - Pantalla de "Has mort".
 public class DungeonUI : MonoBehaviour
 {
-    const float Cell = 22f, RoomSize = 16f;
+
+
+
 
     private DungeonGenerator gen;
     private TMP_FontAsset font;
-    private RectTransform mapRoot;
+
     private TextMeshProUGUI banner;
     private CanvasGroup bannerGroup;
-    private readonly List<GameObject> mapItems = new List<GameObject>();
+
 
     public static DungeonUI Create(DungeonGenerator gen)
     {
-        GameObject go = new GameObject("UI Masmorra", typeof(Canvas), typeof(CanvasScaler));
+        GameObject go = new GameObject("UI Masmorra", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         Canvas c = go.GetComponent<Canvas>();
         c.renderMode = RenderMode.ScreenSpaceOverlay;
         c.sortingOrder = 30;
@@ -41,26 +43,14 @@ public class DungeonUI : MonoBehaviour
 
     void Build()
     {
-        // Minimapa
-        Image frame = NewImage("Minimapa", transform, new Color(0.05f, 0.05f, 0.07f, 0.75f));
-        RectTransform frameRt = frame.rectTransform;
-        frameRt.anchorMin = frameRt.anchorMax = frameRt.pivot = new Vector2(1f, 1f);
-        frameRt.anchoredPosition = new Vector2(-20f, -20f);
-        frameRt.sizeDelta = new Vector2(240f, 190f);
-
-        // Contingut centrat (les sales es posen respecte del centre del requadre)
-        GameObject content = new GameObject("Contingut", typeof(RectTransform), typeof(RectMask2D));
-        content.transform.SetParent(frameRt, false);
-        mapRoot = (RectTransform)content.transform;
-        mapRoot.anchorMin = Vector2.zero;
-        mapRoot.anchorMax = Vector2.one;
-        mapRoot.offsetMin = mapRoot.offsetMax = Vector2.zero;
-
-        TextMeshProUGUI floorText = NewText("Pis", frameRt, $"Pis {RunState.Floor}", 22);
-        RectTransform fr = floorText.rectTransform;
-        fr.anchorMin = new Vector2(0f, 0f); fr.anchorMax = new Vector2(1f, 0f); fr.pivot = new Vector2(0.5f, 1f);
-        fr.anchoredPosition = new Vector2(0f, -4f); fr.sizeDelta = new Vector2(0f, 30f);
-
+        Image frame = NewImage("Radar", transform, Color.clear);
+        RectTransform frameRt=frame.rectTransform;
+        frameRt.anchorMin=frameRt.anchorMax=frameRt.pivot=Vector2.one;
+        frameRt.anchoredPosition=new Vector2(-20,-86);
+        frameRt.sizeDelta=new Vector2(240,190);
+        frame.gameObject.AddComponent<DungeonRadar>().gen=gen;
+        var floorText=NewText("Pis",frameRt,"Pis " + RunState.Floor + " · N ↑",20);
+        var fr=floorText.rectTransform;fr.anchorMin=fr.anchorMax=new Vector2(0.5f,0);fr.anchoredPosition=new Vector2(0,-22);fr.sizeDelta=new Vector2(240,40);
         // Rètol central
         banner = NewText("Retol", transform, "", 64);
         banner.rectTransform.anchoredPosition = new Vector2(0f, 180f);
@@ -73,58 +63,7 @@ public class DungeonUI : MonoBehaviour
         ShowBanner($"Pis {RunState.Floor}" + (theme != "" ? " · " + theme : ""), 2.5f);
     }
 
-    public void RefreshMap()
-    {
-        foreach (GameObject g in mapItems) Destroy(g);
-        mapItems.Clear();
-
-        // Què es veu: visitades + veïnes de les visitades
-        var shown = new HashSet<DungeonGenerator.Room>();
-        foreach (var r in gen.Rooms)
-            if (r.visited) { shown.Add(r); foreach (var n in r.links) shown.Add(n); }
-
-        Vector2 center = gen.CurrentRoom != null ? (Vector2)gen.CurrentRoom.slot : Vector2.zero;
-
-        // Passadissos
-        foreach (var r in shown)
-            foreach (var n in r.links)
-            {
-                if (!shown.Contains(n) || !(r.visited || n.visited)) continue;
-                Vector2 a = ((Vector2)r.slot - center) * Cell, b = ((Vector2)n.slot - center) * Cell;
-                Image line = NewImage("Pas", mapRoot, new Color(1f, 1f, 1f, 0.35f));
-                line.rectTransform.anchoredPosition = (a + b) / 2f;
-                line.rectTransform.sizeDelta = a.x != b.x ? new Vector2(Cell, 4f) : new Vector2(4f, Cell);
-                Keep(line.rectTransform);
-            }
-
-        foreach (var r in shown)
-        {
-            Color c = r.visited ? new Color(0.85f, 0.85f, 0.9f, 1f) : new Color(0.45f, 0.47f, 0.55f, 1f);
-            if (r.type == DungeonGenerator.RoomType.Boss) c = r.visited ? new Color(0.95f, 0.3f, 0.3f) : new Color(0.7f, 0.2f, 0.2f, 0.8f);
-            if (r.type == DungeonGenerator.RoomType.Treasure) c = new Color(1f, 0.8f, 0.25f, r.visited ? 1f : 0.7f);
-            if (r == gen.CurrentRoom) c = new Color(1f, 0.95f, 0.4f);
-
-            Image img = NewImage("Sala", mapRoot, c);
-            img.rectTransform.anchoredPosition = ((Vector2)r.slot - center) * Cell;
-            img.rectTransform.sizeDelta = Vector2.one * (r.type == DungeonGenerator.RoomType.Boss ? RoomSize + 4f : RoomSize);
-            Keep(img.rectTransform);
-
-            if (r.visited && !r.cleared && r.type == DungeonGenerator.RoomType.Combat)
-            {
-                Image dot = NewImage("Pendent", img.transform, new Color(0.9f, 0.2f, 0.25f));
-                dot.rectTransform.sizeDelta = Vector2.one * 6f;
-            }
-        }
-    }
-
-    void Keep(RectTransform rt)
-    {
-        // El RectMask2D del contingut retalla el que ix del requadre
-        Vector2 p = rt.anchoredPosition;
-        rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
-        rt.anchoredPosition = p;
-        mapItems.Add(rt.gameObject);
-    }
+    public void RefreshMap() { } // El radar actualitza el terreny en temps real.
 
     public void ShowBanner(string text, float time)
     {
@@ -144,6 +83,8 @@ public class DungeonUI : MonoBehaviour
 
     public void ShowDeath(int floor, int coins)
     {
+
+        Time.timeScale=1f;
         Image dim = NewImage("Mort", transform, new Color(0f, 0f, 0f, 0f));
         RectTransform r = dim.rectTransform;
         r.anchorMin = Vector2.zero; r.anchorMax = Vector2.one; r.offsetMin = r.offsetMax = Vector2.zero;

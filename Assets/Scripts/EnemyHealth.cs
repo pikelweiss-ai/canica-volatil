@@ -41,6 +41,7 @@ public class EnemyHealth : MonoBehaviour
 
     void Start()
     {
+        GameAudio.Track(damageAudioSource,SoundCategory.Enemies);
         if (currentHealth <= 0) currentHealth = maxHealth;
 
         spriteRenderer = GetComponent<SpriteRenderer>();

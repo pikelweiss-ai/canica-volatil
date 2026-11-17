@@ -54,6 +54,11 @@ public class MainMenuController : MonoBehaviour
         {
             b.onClick = new Button.ButtonClickedEvent(); // Lleva el "PlayGame" copiat
             b.onClick.AddListener(OpenCustomize);
+        GameObject controls=Instantiate(copy,copy.transform.parent);
+        controls.name="Controls";
+        controls.GetComponent<RectTransform>().anchoredPosition=rt.anchoredPosition+new Vector2(0,-60);
+        controls.GetComponentInChildren<TextMeshProUGUI>().text="Controls";
+        var cb=controls.GetComponent<Button>();cb.onClick=new Button.ButtonClickedEvent();cb.onClick.AddListener(ControlsUI.Open);
         }
     }
 

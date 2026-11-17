@@ -134,7 +134,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      Cripta_Terra1_0: 6590217369645200739
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

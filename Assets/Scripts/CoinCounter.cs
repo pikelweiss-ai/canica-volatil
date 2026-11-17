@@ -19,6 +19,7 @@ public class CoinCounter : MonoBehaviour
 
     void Start()
     {
+        GameAudio.Track(coinAudioSource,SoundCategory.Effects);
         if (RunState.Active)
             currentCoins = RunState.Coins;
         UpdateText();
