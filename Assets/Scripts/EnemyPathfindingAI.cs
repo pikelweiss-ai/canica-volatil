@@ -2,245 +2,237 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
+// Moviment i "cervell" bàsic de tots els enemics.
+//
+// Com pensa:
+// 1) Tranquil: passeja a poc a poc per la zona.
+// 2) Et VEU (estàs a 'detectionRange' i no hi ha cap paret pel mig) o li pegues -> s'enfada.
+// 3) Enfadat: et persegueix amb A* (camí per caselles en 8 direccions, sense tallar cantons).
+//    Si et veu en línia recta, va directe (moviment suau, sense zig-zag de casella en casella).
+// 4) Si et perd de vista prou temps i estàs lluny, s'oblida de tu.
+// Els enemics s'aparten entre ells perquè no es facen una pilota.
+//
+// Altres scripts (Tirador, Kamikaze, Boss...) canvien 'mode', 'preferredDistance' i 'speedMultiplier'.
 public class EnemyPathfindingAI : MonoBehaviour
 {
+    public enum Mode { Chase, KeepDistance, Hold }
+
+    [Header("Referències (si estan buides, es busquen soles)")]
     public Transform player;
     public Tilemap referenceTilemap;
     public Tilemap[] obstacleTilemaps;
 
+    [Header("Moviment")]
     public float detectionRange = 8f;
     public float moveSpeed = 2.5f;
     public float recalculateTime = 0.25f;
+    public float bodyRadius = 0.28f;          // Mida del cos (per a no ficar-se a les parets)
+
+    [Header("Comportament")]
+    public Mode mode = Mode.Chase;
+    public float preferredDistance = 4.5f;    // Per a KeepDistance (tiradors)
+    public float forgetTime = 3f;             // Segons sense veure't abans d'oblidar-se'n
+    public bool wanderWhenIdle = true;
+    [HideInInspector] public float speedMultiplier = 1f;
+
+    public bool HasAggro { get; private set; }
+    public Transform Player => player;
+    public bool SeesPlayer { get; private set; }
+    public Vector2 Velocity { get; private set; }
+
+    static readonly List<EnemyPathfindingAI> All = new List<EnemyPathfindingAI>();
 
     private Rigidbody2D rb;
-    private List<Vector3Int> path = new List<Vector3Int>();
-    private int pathIndex = 0;
-    private float timer = 0f;
+    private List<Vector2> path = new List<Vector2>();
+    private int pathIndex;
+    private float repathTimer;
+    private float lastSeenTime = -999f;
+    private Vector2 knockbackVelocity;
+    private float knockbackTimer;
+    private Vector2 wanderTarget;
+    private float wanderTimer;
+    private float strafeSign = 1f;
+    private float strafeTimer;
+    private Vector2 home;
 
-    // Retroces quan el jugador li pega
-    private Vector2 knockbackVelocity = Vector2.zero;
-    private float knockbackTimer = 0f;
+    void OnEnable() { All.Add(this); }
+    void OnDisable() { All.Remove(this); }
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        home = transform.position;
+        wanderTarget = home;
+
+        if (player == null)
+        {
+            GameObject p = GameObject.FindWithTag("Player");
+            if (p != null) player = p.transform;
+        }
+
+        // Si l'enemic ve configurat a mà (escena vella), registrem els seus tilemaps
+        if (referenceTilemap != null && TileNav.Ground == null)
+        {
+            TileNav.SetGround(referenceTilemap);
+            if (obstacleTilemaps != null)
+                foreach (Tilemap t in obstacleTilemaps) TileNav.Register(t);
+        }
+        TileNav.Ready();
+    }
+
+    // Li han pegat o la sala s'ha activat: s'enfada encara que no et veja
+    public void Alert()
+    {
+        HasAggro = true;
+        lastSeenTime = Time.time;
     }
 
     public void ApplyKnockback(Vector2 velocity, float duration)
     {
         knockbackVelocity = velocity;
         knockbackTimer = duration;
+        Alert();
     }
 
     void FixedUpdate()
     {
-        if (player == null || referenceTilemap == null)
-            return;
+        if (rb == null || !TileNav.Ready()) return;
+        float dt = Time.fixedDeltaTime;
 
-        // Mentre dura el retroces, l'enemic no persegueix: nomes es empentat
+        // Retrocés: l'empenta mana (sense ficar-lo dins de parets)
         if (knockbackTimer > 0f)
         {
-            knockbackTimer -= Time.fixedDeltaTime;
-            Vector2 knockPos = rb.position + knockbackVelocity * Time.fixedDeltaTime;
-
-            // No l'empentem dins d'aigua, parets ni arbres
-            if (!IsBlocked(referenceTilemap.WorldToCell(knockPos)))
-                rb.MovePosition(knockPos);
-
-            timer = 0f; // Recalcula el cami just despres del retroces
+            knockbackTimer -= dt;
+            TryMove(rb.position + knockbackVelocity * dt);
+            repathTimer = 0f;
             return;
         }
 
-        float distance = Vector2.Distance(transform.position, player.position);
+        if (player == null) { Wander(dt); return; }
 
-        if (distance > detectionRange)
+        Vector2 pos = rb.position;
+        Vector2 target = player.position;
+        float dist = Vector2.Distance(pos, target);
+
+        SeesPlayer = dist <= detectionRange * 1.75f && TileNav.LineOfSight(pos, target);
+        if (SeesPlayer && (HasAggro || dist <= detectionRange))
         {
-            path.Clear();
-            return;
+            HasAggro = true;
+            lastSeenTime = Time.time;
         }
+        if (HasAggro && Time.time - lastSeenTime > forgetTime && dist > detectionRange)
+            HasAggro = false;
 
-        timer -= Time.fixedDeltaTime;
+        if (!HasAggro) { Wander(dt); return; }
 
-        if (timer <= 0f)
+        Vector2 dir = Vector2.zero;
+        switch (mode)
         {
-            CalculatePath();
-            timer = recalculateTime;
-        }
-
-        MoveAlongPath();
-    }
-
-    void CalculatePath()
-    {
-        Vector3Int startCell = referenceTilemap.WorldToCell(transform.position);
-        Vector3Int targetCell = referenceTilemap.WorldToCell(player.position);
-
-        targetCell = FindNearestFreeCell(targetCell);
-
-        path = FindPath(startCell, targetCell);
-        pathIndex = 0;
-    }
-
-    void MoveAlongPath()
-    {
-        if (path == null || path.Count == 0)
-        {
-            MoveDirectlyToPlayer();
-            return;
-        }
-
-        if (pathIndex >= path.Count)
-        {
-            MoveDirectlyToPlayer();
-            return;
-        }
-
-        Vector3 targetWorld = referenceTilemap.GetCellCenterWorld(path[pathIndex]);
-
-        Vector2 newPosition = Vector2.MoveTowards(
-            rb.position,
-            targetWorld,
-            moveSpeed * Time.fixedDeltaTime
-        );
-
-        rb.MovePosition(newPosition);
-
-        if (Vector2.Distance(rb.position, targetWorld) < 0.08f)
-        {
-            pathIndex++;
-        }
-    }
-
-    void MoveDirectlyToPlayer()
-    {
-        Vector2 direction = ((Vector2)player.position - rb.position).normalized;
-
-        Vector2 newPosition = rb.position + direction * moveSpeed * Time.fixedDeltaTime;
-
-        Vector3Int enemyNextCell = referenceTilemap.WorldToCell(newPosition);
-        Vector3Int playerCell = referenceTilemap.WorldToCell(player.position);
-
-        // Si la seg�ent posici� �s obstacle, no es mou
-        if (IsBlocked(enemyNextCell))
-        {
-            return;
-        }
-
-        // Si el jugador est� damunt d'aigua/paret/arbre, no intentes entrar al seu tile
-        if (IsBlocked(playerCell))
-        {
-            return;
-        }
-
-        rb.MovePosition(newPosition);
-    }
-
-    List<Vector3Int> FindPath(Vector3Int start, Vector3Int target)
-    {
-        Queue<Vector3Int> queue = new Queue<Vector3Int>();
-        Dictionary<Vector3Int, Vector3Int> cameFrom = new Dictionary<Vector3Int, Vector3Int>();
-
-        queue.Enqueue(start);
-        cameFrom[start] = start;
-
-        Vector3Int[] directions =
-        {
-            new Vector3Int(1, 0, 0),
-            new Vector3Int(-1, 0, 0),
-            new Vector3Int(0, 1, 0),
-            new Vector3Int(0, -1, 0)
-        };
-
-        int maxSearch = 300;
-        int searched = 0;
-
-        while (queue.Count > 0 && searched < maxSearch)
-        {
-            searched++;
-
-            Vector3Int current = queue.Dequeue();
-
-            if (current == target)
+            case Mode.Hold:
                 break;
 
-            foreach (Vector3Int dir in directions)
-            {
-                Vector3Int next = current + dir;
+            case Mode.Chase:
+                dir = DirectionTo(pos, target);
+                break;
 
-                if (cameFrom.ContainsKey(next))
-                    continue;
-
-                if (IsBlocked(next))
-                    continue;
-
-                queue.Enqueue(next);
-                cameFrom[next] = current;
-            }
-        }
-
-        if (!cameFrom.ContainsKey(target))
-            return new List<Vector3Int>();
-
-        List<Vector3Int> newPath = new List<Vector3Int>();
-        Vector3Int currentCell = target;
-
-        while (currentCell != start)
-        {
-            newPath.Add(currentCell);
-            currentCell = cameFrom[currentCell];
-        }
-
-        newPath.Reverse();
-        return newPath;
-    }
-
-    Vector3Int FindNearestFreeCell(Vector3Int cell)
-    {
-        if (!IsBlocked(cell))
-            return cell;
-
-        for (int radius = 1; radius <= 15; radius++)
-        {
-            for (int x = -radius; x <= radius; x++)
-            {
-                for (int y = -radius; y <= radius; y++)
+            case Mode.KeepDistance:
+                if (!SeesPlayer || dist > preferredDistance + 1f)
+                    dir = DirectionTo(pos, target);                         // S'acosta
+                else if (dist < preferredDistance - 1f)
+                    dir = (pos - target).normalized;                         // Recula
+                else
                 {
-                    Vector3Int testCell = cell + new Vector3Int(x, y, 0);
-
-                    if (!IsBlocked(testCell))
-                    {
-                        return testCell;
-                    }
+                    // A bona distància: es mou de costat (més difícil d'encertar)
+                    strafeTimer -= dt;
+                    if (strafeTimer <= 0f) { strafeSign = Random.value < 0.5f ? -1f : 1f; strafeTimer = Random.Range(0.8f, 1.8f); }
+                    Vector2 toP = (target - pos).normalized;
+                    dir = new Vector2(-toP.y, toP.x) * strafeSign * 0.6f;
                 }
-            }
+                break;
         }
 
-        return cell;
+        dir += Separation(pos);
+        if (dir.sqrMagnitude > 1f) dir.Normalize();
+
+        Vector2 step = dir * moveSpeed * speedMultiplier * dt;
+        Velocity = step / dt;
+        if (step.sqrMagnitude > 0f)
+        {
+            // Si no pot anar en diagonal contra una paret, llisca per l'eix que puga
+            if (!TryMove(pos + step) && !TryMove(pos + new Vector2(step.x, 0f)))
+                TryMove(pos + new Vector2(0f, step.y));
+        }
     }
 
-    bool IsBlocked(Vector3Int cell)
+    // Cap on caminar per a arribar a 'target': directe si hi ha via lliure, si no, pel camí A*
+    Vector2 DirectionTo(Vector2 pos, Vector2 target)
     {
-        foreach (Tilemap tilemap in obstacleTilemaps)
+        if (TileNav.LineOfSight(pos, target, bodyRadius))
         {
-            if (tilemap != null && tilemap.HasTile(cell))
-                return true;
+            path.Clear();
+            return (target - pos).normalized;
         }
 
-        return HasChest(cell);
+        repathTimer -= Time.fixedDeltaTime;
+        if (repathTimer <= 0f || path.Count == 0)
+        {
+            path = TileNav.FindPath(pos, target);
+            pathIndex = 0;
+            repathTimer = recalculateTime;
+        }
+        if (path.Count == 0) return Vector2.zero;
+
+        // Allisa el camí: salta punts si ja veu el següent
+        while (pathIndex + 1 < path.Count && TileNav.LineOfSight(pos, path[pathIndex + 1], bodyRadius))
+            pathIndex++;
+
+        if (Vector2.Distance(pos, path[pathIndex]) < 0.1f && pathIndex + 1 < path.Count)
+            pathIndex++;
+
+        return (path[pathIndex] - pos).normalized;
     }
 
-    // Els cofres tenen hitbox pero no son tiles: comprovem si n'hi ha un en la cel.la
-    bool HasChest(Vector3Int cell)
+    // Empenta suau per a separar-se dels enemics que té enganxats
+    Vector2 Separation(Vector2 pos)
     {
-        Vector2 center = referenceTilemap.GetCellCenterWorld(cell);
-        Vector2 size = (Vector2)referenceTilemap.layoutGrid.cellSize * 0.9f;
-
-        foreach (Collider2D hit in Physics2D.OverlapBoxAll(center, size, 0f))
+        Vector2 push = Vector2.zero;
+        for (int i = 0; i < All.Count; i++)
         {
-            if (!hit.isTrigger && hit.GetComponentInParent<Chest>() != null)
-                return true;
+            EnemyPathfindingAI o = All[i];
+            if (o == this || o == null) continue;
+            Vector2 d = pos - (Vector2)o.transform.position;
+            float min = bodyRadius + o.bodyRadius + 0.15f;
+            float m = d.magnitude;
+            if (m < min && m > 0.001f) push += d / m * (1f - m / min) * 1.5f;
+        }
+        return push;
+    }
+
+    void Wander(float dt)
+    {
+        Velocity = Vector2.zero;
+        if (!wanderWhenIdle) return;
+
+        wanderTimer -= dt;
+        Vector2 pos = rb.position;
+        if (wanderTimer <= 0f)
+        {
+            wanderTimer = Random.Range(1.5f, 3.5f);
+            Vector2 tryTarget = home + Random.insideUnitCircle * 3f;
+            wanderTarget = TileNav.LineOfSight(pos, tryTarget, bodyRadius) ? tryTarget : pos;
         }
 
-        return false;
+        Vector2 to = wanderTarget - pos;
+        if (to.magnitude < 0.1f) return;
+        Vector2 step = to.normalized * moveSpeed * 0.4f * dt;
+        if (!TryMove(pos + step)) wanderTimer = 0f;
+        Velocity = step / dt;
+    }
+
+    bool TryMove(Vector2 newPos)
+    {
+        if (!TileNav.CircleFree(newPos, bodyRadius)) return false;
+        rb.MovePosition(newPos);
+        return true;
     }
 }

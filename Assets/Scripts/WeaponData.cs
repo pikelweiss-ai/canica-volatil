@@ -38,6 +38,12 @@ public class WeaponData : ScriptableObject
     [Range(0f, 0.5f)]
     public float rangeRandom = 0f;      // Cada bala pot quedar-se fins a aquest % més curta
 
+    [Header("Especials")]
+    public float explosionRadius = 0f;  // > 0: el projectil explota en acabar (granades)
+    public int explosionDamage = 3;
+    [Min(0)]
+    public int pierce = 0;              // Enemics que travessa abans de parar (fletxes)
+
     [Header("So (si els clips estan buits, es generen per codi)")]
     public WeaponSound sound = WeaponSound.Tret;
     public AudioClip shootSound;

@@ -303,6 +303,9 @@ $sprites['Cofres/Dungeon/C_Metall'] = @{ size = 16; mirror = $true; rows = @(
 # Armes noves de ChatGPT
 . (Join-Path $PSScriptRoot 'ArmesClaude\armes-claude.ps1')
 
+# Masmorra: blocs, enemics, armes noves i barrets (Claude)
+. (Join-Path $PSScriptRoot 'masmorra.ps1')
+
 # ---------------- Guardar PNG ----------------
 $bitmaps = [ordered]@{}
 foreach ($name in $sprites.Keys) {

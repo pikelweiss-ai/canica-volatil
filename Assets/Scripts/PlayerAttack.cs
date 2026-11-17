@@ -66,6 +66,11 @@ public class PlayerAttack : MonoBehaviour
         if (hotbarSlots == null || hotbarSlots.Length == 0)
             hotbarSlots = new WeaponData[4];
 
+        // A la masmorra, les armes es conserven entre pisos
+        if (RunState.Active && RunState.Weapons != null)
+            for (int i = 0; i < hotbarSlots.Length && i < RunState.Weapons.Length; i++)
+                hotbarSlots[i] = RunState.Weapons[i];
+
         CreateAimLine();
         CreateHand();
 
@@ -267,6 +272,14 @@ public class PlayerAttack : MonoBehaviour
 
         foreach (Collider2D hit in Physics2D.OverlapCircleAll(hitPoint, fistRadius))
         {
+            Breakable breakable = hit.GetComponentInParent<Breakable>();
+            if (breakable != null)
+            {
+                breakable.Hit(fistDamage);
+                hitSomething = true;
+                continue;
+            }
+
             EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
             if (enemy == null)
                 continue;

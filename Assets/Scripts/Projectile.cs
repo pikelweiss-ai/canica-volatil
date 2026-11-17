@@ -25,6 +25,7 @@ public class Projectile : MonoBehaviour
         radius = weapon.projectileSize * 0.5f;
         owner = shooter;
         startPosition = transform.position;
+        pierceLeft = weapon.pierce;
 
         // Gira el projectil cap a on va (els sprites apunten cap a la dreta)
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
@@ -67,7 +68,19 @@ public class Projectile : MonoBehaviour
             EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
             if (enemy != null)
             {
+                if (alreadyHit.Contains(enemy)) continue; // Fletxa que travessa: no pega dues vegades
+                alreadyHit.Add(enemy);
                 enemy.TakeHit(damage, direction * knockbackForce);
+                if (pierceLeft-- > 0) continue;
+                End();
+                return;
+            }
+
+            // Caixes i barrils
+            Breakable breakable = hit.GetComponentInParent<Breakable>();
+            if (breakable != null)
+            {
+                breakable.Hit(damage);
                 End();
                 return;
             }
@@ -88,10 +101,20 @@ public class Projectile : MonoBehaviour
     // El projectil s'acaba: so d'impacte (si l'arma en té) i desapareix
     void End()
     {
+        if (ended) return;
+        ended = true;
         if (weapon != null)
+        {
             WeaponSounds.Play(WeaponSounds.ImpactClip(weapon), 0.6f);
+            if (weapon.explosionRadius > 0f)
+                Fx.Explode(transform.position, weapon.explosionRadius, 0, weapon.explosionDamage, owner); // No et fa mal a tu
+        }
         Destroy(gameObject);
     }
+
+    private bool ended;
+    private int pierceLeft;
+    private readonly System.Collections.Generic.List<EnemyHealth> alreadyHit = new System.Collections.Generic.List<EnemyHealth>();
 
     // ---- Boleta generada per codi, per a armes sense prefab ----
 

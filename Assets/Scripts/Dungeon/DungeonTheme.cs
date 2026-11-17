@@ -1,0 +1,17 @@
+using UnityEngine;
+using UnityEngine.Tilemaps;
+
+// Tema d'un pis de la masmorra: quins tiles fa servir i de quin color és la llum.
+// Es crea amb: clic dret a Project -> Create -> Canica -> Tema de masmorra
+[CreateAssetMenu(fileName = "NouTema", menuName = "Canica/Tema de masmorra")]
+public class DungeonTheme : ScriptableObject
+{
+    public string themeName = "Cova";
+    public TileBase[] floorTiles;          // Es trien a l'atzar (el primer surt més)
+    public TileBase wallTile;
+    public TileBase liquidTile;            // Basses dins de les sales (aigua, lava...)
+    [Range(0f, 1f)] public float liquidChance = 0.3f;
+    public Color lightColor = Color.white; // Color de la llum global 2D
+    public float lightIntensity = 1f;
+    public Color backgroundColor = new Color(0.07f, 0.07f, 0.09f);
+}

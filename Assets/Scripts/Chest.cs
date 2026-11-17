@@ -37,6 +37,8 @@ public class Chest : MonoBehaviour
     [Header("Loot (n'ix un a l'atzar en obrir-lo)")]
     public WeaponData[] lootTable;
     public Vector2 lootDropOffset = new Vector2(0f, -0.8f); // On cau l'item (respecte del cofre)
+    [Range(0f, 1f)] public float healChance = 0.5f;        // A més de l'arma, pot deixar un item de cura
+                                                            // (els de Assets/Resources/Items)
 
     [Header("Quan s'obri")]
     public UnityEvent onOpened;
@@ -70,6 +72,7 @@ public class Chest : MonoBehaviour
 
     void Start()
     {
+        TileNav.AddBlocker(transform.position); // Els enemics l'esquiven
         if (spriteRenderer == null)
             spriteRenderer = GetComponentInChildren<SpriteRenderer>();
 
@@ -282,7 +285,18 @@ public class Chest : MonoBehaviour
         Vector3 from = transform.position + Vector3.up * 0.1f;
         Vector3 to = transform.position + (Vector3)lootDropOffset;
         ItemPickup.Spawn(weapon, from, to);
+
+        // Cura: com més rar el cofre, millor pot ser l'item
+        if (Random.value < healChance)
+        {
+            HealItem heal = HealItem.Random(rarity);
+            if (heal != null)
+                HealPickup.Spawn(heal, from, to + new Vector3(0.7f, 0.1f, 0f));
+        }
+        for (int i = 0; i < (int)rarity + 1; i++)
+            CoinDrop.Spawn(transform.position + (Vector3)lootDropOffset * 0.5f);
     }
+
 
     // ---------- Indicador: cercle blanc + E negra + anell de temps ----------
 

@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48160bff1954df0438a8d79310d3a6cb, type: 3}
+  m_Name: 4_Volca
+  m_EditorClassIdentifier: 
+  themeName: "Volc\xE0"
+  floorTiles:
+  - {fileID: 11400000, guid: b50932fcb06628c47bd430e056af8a19, type: 2}
+  - {fileID: 11400000, guid: f25668813c0f26f4e83a34fa9d583dbe, type: 2}
+  wallTile: {fileID: 11400000, guid: 8751e952c78024742ba90e723fce4859, type: 2}
+  liquidTile: {fileID: 11400000, guid: ab82a2036ddd14d48994bd25c6f813a8, type: 2}
+  liquidChance: 0.6
+  lightColor: {r: 1, g: 0.75, b: 0.6, a: 1}
+  lightIntensity: 0.85
+  backgroundColor: {r: 0.12, g: 0.03, b: 0.02, a: 1}
