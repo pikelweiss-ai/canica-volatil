@@ -382,7 +382,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e53f92bc14d76b34daaef0fdc10e7674, type: 2}
   - {fileID: 11400000, guid: c113548981a93df41a156100d62ad1ce, type: 2}
   lootDropOffset: {x: 0, y: -0.8}
-  healChance: 0.5
+  healChance: 0.75
   onOpened:
     m_PersistentCalls:
       m_Calls: []

@@ -97,6 +97,7 @@ public static class ChestPrefabCreator
         chest.closedSprite = closed;
         chest.openSprite = open;
         chest.lootTable = LoadWeapons(rarity);
+        chest.healChance = 0.75f;
 
         string path = PrefabFolder + "/Cofre_" + name + ".prefab";
         GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, path);

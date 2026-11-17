@@ -286,12 +286,13 @@ public class Chest : MonoBehaviour
         Vector3 to = transform.position + (Vector3)lootDropOffset;
         ItemPickup.Spawn(weapon, from, to);
 
-        // Cura: com més rar el cofre, millor pot ser l'item
-        if (Random.value < healChance)
+        // Cura: com més rar el cofre, millor pot ser l'item (i els èpics i llegendaris en donen 2)
+        int heals = rarity >= ChestRarity.Epic ? 2 : (Random.value < healChance ? 1 : 0);
+        for (int i = 0; i < heals; i++)
         {
             HealItem heal = HealItem.Random(rarity);
             if (heal != null)
-                HealPickup.Spawn(heal, from, to + new Vector3(0.7f, 0.1f, 0f));
+                HealPickup.Spawn(heal, from, to + new Vector3(i == 0 ? 0.7f : -0.7f, 0.1f, 0f));
         }
         for (int i = 0; i < (int)rarity + 1; i++)
             CoinDrop.Spawn(transform.position + (Vector3)lootDropOffset * 0.5f);

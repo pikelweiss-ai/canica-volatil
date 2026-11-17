@@ -8,6 +8,8 @@ public static class RunState
     public static int Health;               // Cors en acabar el pis anterior
     public static int Coins;                // Monedes de la partida
     public static WeaponData[] Weapons;     // Hotbar en acabar el pis anterior
+    public static HealItem[] HealItems;     // Bossa de cures
+    public static int[] HealCounts;
     public static int Seed;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -20,6 +22,8 @@ public static class RunState
         Health = 0;
         Coins = 0;
         Weapons = null;
+        HealItems = null;
+        HealCounts = null;
         Seed = 0;
     }
 }

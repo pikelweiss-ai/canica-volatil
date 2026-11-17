@@ -411,11 +411,34 @@ public class DungeonGenerator : MonoBehaviour
                                    : rng.NextDouble() < 0.5 ? ChestRarity.Epic : ChestRarity.Rar;
                 SpawnChest(rarity, r.Center);
             }
-            else if (r.type == RoomType.Start && RunState.Floor == 1)
+            else if (r.type == RoomType.Start)
             {
-                SpawnChest(ChestRarity.Comu, r.Center + new Vector2Int(3, 3)); // Primera arma (fora del camí de les portes)
+                // Cofre a la sala inicial de cada pis (al pis 1 és la primera arma)
+                SpawnChest(RunState.Floor >= 3 && rng.NextDouble() < 0.4 ? ChestRarity.Rar : ChestRarity.Comu, r.Center + new Vector2Int(3, 3));
+            }
+            else if (r.type == RoomType.Combat && rng.NextDouble() < 0.45)
+            {
+                // Cofres escampats per les sales de combat
+                for (int tries = 0; tries < 30; tries++)
+                {
+                    Vector2Int p = RandomCell(r);
+                    if (!FreeForDecor(r, p, 2)) continue;
+                    reserved.Add(p);
+                    SpawnChest(RandomRarity(), p);
+                    break;
+                }
             }
         }
+    }
+
+    // Comú 55 %, Rar 30 %, Èpic 12 %, Llegendari 3 % (més bons als pisos de dalt)
+    ChestRarity RandomRarity()
+    {
+        double x = rng.NextDouble() - 0.04 * (RunState.Floor - 1);
+        if (x < 0.03) return ChestRarity.Llegendari;
+        if (x < 0.15) return ChestRarity.Epic;
+        if (x < 0.45) return ChestRarity.Rar;
+        return ChestRarity.Comu;
     }
 
     GameObject Spawn(GameObject prefab, Vector2Int cell)
@@ -514,8 +537,9 @@ public class DungeonGenerator : MonoBehaviour
                 yield return WaitClear(r);
                 if (w < waves - 1) yield return new WaitForSeconds(0.6f);
             }
-            if (rng.NextDouble() < 0.3)
-                SpawnChest(rng.NextDouble() < 0.7 ? ChestRarity.Comu : ChestRarity.Rar, r.Center + new Vector2Int(2, 2));
+            // Recompensa per netejar la sala
+            if (rng.NextDouble() < 0.5)
+                SpawnChest(RandomRarity(), r.Center + new Vector2Int(2, 2));
         }
 
         r.cleared = true;

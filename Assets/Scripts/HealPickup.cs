@@ -1,8 +1,9 @@
 using System.Collections;
 using UnityEngine;
 
-// Item de cura al terra: flota amb ombra (com les armes) i et cura quan hi passes per damunt.
-// Si tens la vida plena, no l'agafes (es queda per a després).
+// Item de cura al terra: flota amb ombra (com les armes). Quan hi passes per damunt, va a la bossa
+// de cures (HealInventory) i el fas servir quan vols amb les tecles 5-8.
+// Si la bossa està plena, es queda al terra.
 public class HealPickup : MonoBehaviour
 {
     public HealItem item;
@@ -10,7 +11,7 @@ public class HealPickup : MonoBehaviour
 
     private Transform visual;
     private Transform player;
-    private PlayerHealth health;
+    private HealInventory bag;
     private bool ready;
     private float bob;
 
@@ -50,7 +51,7 @@ public class HealPickup : MonoBehaviour
     void Start()
     {
         GameObject p = GameObject.FindWithTag("Player");
-        if (p != null) { player = p.transform; health = p.GetComponent<PlayerHealth>(); }
+        if (p != null) player = p.transform;
     }
 
     IEnumerator PopOut(Vector3 from, Vector3 to)
@@ -74,13 +75,15 @@ public class HealPickup : MonoBehaviour
         if (!ready) return;
         visual.localPosition = Vector3.up * (0.3f + Mathf.Sin((Time.time + bob) * 3f) * 0.06f);
 
-        if (player == null || health == null) return;
+        if (player == null) return;
         if (Vector2.Distance(player.position, transform.position) > pickupRange) return;
-        if (health.IsFull) return;
 
-        health.Heal(item.healAmount);
-        Fx.Play(Fx.Heal, 0.6f);
-        Fx.Burst(transform.position, new Color(1f, 0.35f, 0.45f), 8, 2.5f);
+        // Va a la bossa de cures (tecles 5-8). Si la bossa està plena, es queda al terra.
+        if (bag == null) bag = player.GetComponent<HealInventory>();
+        if (bag == null || !bag.Add(item)) return;
+
+        ItemGraphics.PlayPickupSound(transform.position);
+        Fx.Text(transform.position, item.itemName, Color.white, 3f);
         Destroy(gameObject);
     }
 }

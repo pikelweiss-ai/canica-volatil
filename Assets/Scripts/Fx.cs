@@ -77,13 +77,17 @@ public static class Fx
 
     // ---------- Números de dany ----------
 
-    public static void DamageNumber(Vector3 pos, int amount, Color color)
+    public static void DamageNumber(Vector3 pos, int amount, Color color) => Text(pos, amount.ToString(), color, 4f);
+
+    // Text que puja i s'esvaeix damunt d'algú ("+2", "Vida plena!"...)
+    public static void Text(Vector3 pos, string text, Color color, float size = 3.5f)
     {
-        GameObject go = new GameObject("Dany");
+        GameObject go = new GameObject("Text flotant");
         go.transform.position = pos + new Vector3(Random.Range(-0.15f, 0.15f), 0.4f, 0f);
         TextMeshPro t = go.AddComponent<TextMeshPro>();
-        t.text = amount.ToString();
-        t.fontSize = 4f;
+        t.text = text;
+        t.fontSize = size;
+        t.rectTransform.sizeDelta = new Vector2(6f, 1.5f);
         t.alignment = TextAlignmentOptions.Center;
         t.color = color;
         t.outlineWidth = 0.25f;
