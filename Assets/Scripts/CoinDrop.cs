@@ -9,12 +9,22 @@ public class CoinDrop : MonoBehaviour
     private Transform player;
     private bool ready;
     private float speed;
+    private float hoverOnOther; // online: temps esperant damunt d'un company
 
-    public static void Spawn(Vector3 pos)
+    public static CoinDrop Spawn(Vector3 pos)
+    {
+        Vector3 to = pos + (Vector3)(Random.insideUnitCircle * 0.8f);
+        CoinDrop c = SpawnAt(pos, to);
+        NetShared.Spawned(c, NetShared.Kind.Coin, "", pos, to); // Online: tots la veuen
+        return c;
+    }
+
+    public static CoinDrop SpawnAt(Vector3 pos, Vector3 to)
     {
         SpriteRenderer sr = Fx.MakeSprite("Moneda", pos, Fx.PixelCircle(5), new Color(1f, 0.82f, 0.25f), "Player", 4);
         CoinDrop c = sr.gameObject.AddComponent<CoinDrop>();
-        c.StartCoroutine(c.Pop(pos + (Vector3)(Random.insideUnitCircle * 0.8f)));
+        c.StartCoroutine(c.Pop(to));
+        return c;
     }
 
     void Start()
@@ -41,16 +51,34 @@ public class CoinDrop : MonoBehaviour
     void Update()
     {
         if (!ready || player == null) return;
-        float d = Vector2.Distance(transform.position, player.position);
-        if (d > MagnetRange) return;
+        // Online: la moneda va cap al jugador MES PROXIM (tambe els companys); nomes l'agafa ell
+        Transform target = player.gameObject.activeInHierarchy ? player : null;
+        float d = target != null ? Vector2.Distance(transform.position, player.position) : float.MaxValue;
+        float mine = d;
+        if (hoverOnOther < 1.2f) // si fa estona que espera damunt d'un company, ja la pot agafar qualsevol
+            foreach (var av in NetShared.Avatars())
+            {
+                if (av == null || av.Down) continue;
+                float da = Vector2.Distance(transform.position, av.transform.position);
+                if (da + 0.5f < mine && da < d) { d = da; target = av.transform; } // el company ha d'estar clarament mes a prop
+            }
+        if (target != player && d < 0.45f) hoverOnOther += Time.deltaTime;
+        if (target == null || d > MagnetRange) return;
 
         speed = Mathf.Min(speed + 25f * Time.deltaTime, 14f);
-        transform.position = Vector3.MoveTowards(transform.position, player.position, speed * Time.deltaTime);
-        if (d < 0.25f)
+        transform.position = Vector3.MoveTowards(transform.position, target.position, speed * Time.deltaTime);
+        if (target == player && d < 0.25f)
         {
-            if (CoinCounter.instance != null) CoinCounter.instance.AddCoin();
-            else { Fx.Play(Fx.Coin, 0.4f); RunState.Coins++; CoinBank.Add(1); }
-            Destroy(gameObject);
+            // Online: la moneda es del primer que l'agafa
+            if (NetShared.Claim(this, Collect)) return;
+            Collect();
         }
+    }
+
+    void Collect()
+    {
+        if (CoinCounter.instance != null) CoinCounter.instance.AddCoin();
+        else { Fx.Play(Fx.Coin, 0.4f); RunState.Coins++; CoinBank.Add(1); }
+        Destroy(gameObject);
     }
 }

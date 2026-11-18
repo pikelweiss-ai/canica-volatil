@@ -18,7 +18,7 @@ public class SettingsUI : MonoBehaviour
         var c=go.GetComponent<Canvas>();c.renderMode=RenderMode.ScreenSpaceOverlay;c.sortingOrder=110;
         var sc=go.GetComponent<CanvasScaler>();sc.uiScaleMode=CanvasScaler.ScaleMode.ScaleWithScreenSize;sc.referenceResolution=new Vector2(1600,900);sc.screenMatchMode=CanvasScaler.ScreenMatchMode.Expand;
         var ui=go.AddComponent<SettingsUI>();ui.previousScale=Time.timeScale;ui.previousEditing=GameControls.Editing;
-        ui.resolutions=DisplaySettings.Options();ui.resolutionIndex=Mathf.Max(0,ui.resolutions.IndexOf(new Vector2Int(Screen.width,Screen.height)));ui.fullscreen=Screen.fullScreen;
+        ui.resolutions=DisplaySettings.Options();ui.resolutionIndex=Mathf.Max(0,ui.resolutions.IndexOf(new Vector2Int(Screen.width,Screen.height)));ui.fullscreen=DisplaySettings.IsFullscreen;
         Time.timeScale=0;GameControls.Editing=true;ui.Build();
     }
     RectTransform Box(string name,Transform parent,Vector2 pos,Vector2 size,Color color)
@@ -49,7 +49,7 @@ public class SettingsUI : MonoBehaviour
         {
             Row("Mida del mapa",100,140,360,GameSettings.MapSize,v=>GameSettings.MapSize=v,0);
             Row("Abast del mapa",0,1,2,GameSettings.MapRange,v=>GameSettings.MapRange=v,1);
-            Text("Les tecles i la roda del ratolí es configuren en Controls.",panel.transform,new Vector2(0,-125),new Vector2(1350,60),22);
+            Text(MobileInput.Active?"Consulta els controls tàctils i els dos joysticks en Controls.":"Les tecles i la roda del ratolí es configuren en Controls.",panel.transform,new Vector2(0,-125),new Vector2(1350,60),22);
             Button("OBRIR CONTROLS",new Vector2(0,-220),new Vector2(600,65),()=>{Close();ControlsUI.Open();});
         }
         else if(page==1)
@@ -60,17 +60,25 @@ public class SettingsUI : MonoBehaviour
             Row("Efectes i objectes",-140,0,1,GameSettings.Volume(SoundCategory.Effects),v=>GameSettings.Volume(SoundCategory.Effects,v),2);
             Row("Música i ambient",-225,0,1,GameSettings.Volume(SoundCategory.Music),v=>GameSettings.Volume(SoundCategory.Music,v),2);
         }
+        else if(page==2 && MobileInput.Active)
+        {
+            Text("La pantalla s'adapta al dispositiu en horitzontal.",panel.transform,new Vector2(0,110),new Vector2(1300,80),26);
+            Button("LÍMIT FPS: "+(PresentationSettings.Limit==0?"60":PresentationSettings.Limit.ToString()),new Vector2(0,-20),new Vector2(900,75),()=>{PresentationSettings.VSync=false;PresentationSettings.Limit=PresentationSettings.Limit==30?60:30;Build();});
+            Text("30 FPS estalvia bateria; 60 FPS ofereix més fluïdesa.",panel.transform,new Vector2(0,-140),new Vector2(1300,80),23);
+        }
         else if(page==2)
         {
             Text("Resolució",panel.transform,new Vector2(-430,135),new Vector2(400,60),28);
             var size=resolutions[resolutionIndex];
             Button("<",new Vector2(-100,135),new Vector2(80,65),()=>{resolutionIndex=(resolutionIndex+resolutions.Count-1)%resolutions.Count;Build();});
-            Text(size.x+" × "+size.y,panel.transform,new Vector2(170,135),new Vector2(420,60),30);
+            var shown=fullscreen ? DisplaySettings.NativeSize() : size;
+            Text(shown.x+" × "+shown.y,panel.transform,new Vector2(170,135),new Vector2(420,60),30);
             Button(">",new Vector2(450,135),new Vector2(80,65),()=>{resolutionIndex=(resolutionIndex+1)%resolutions.Count;Build();});
-            Button(fullscreen ? "PANTALLA COMPLETA (SENSE VORES)" : "FINESTRA",new Vector2(0,45),new Vector2(1100,65),()=>{fullscreen=!fullscreen;Build();});
+            // El mode s'aplica en clicar (amb confirmacio de 15 s), igual que F11
+            Button(fullscreen ? "MODE: PANTALLA COMPLETA  ·  clica per a passar a finestra" : "MODE: FINESTRA  ·  clica per a passar a pantalla completa",new Vector2(0,45),new Vector2(1100,65),()=>DisplaySettings.Request(resolutions[resolutionIndex],!DisplaySettings.IsFullscreen));
             Button(PresentationSettings.VSync ? "V-SYNC: ACTIVAT (REFRESC DEL MONITOR)" : "V-SYNC: DESACTIVAT",new Vector2(0,-45),new Vector2(1100,60),()=>{PresentationSettings.VSync=!PresentationSettings.VSync;Build();});
             Button("LÍMIT FPS: "+(PresentationSettings.VSync ? "MONITOR" : PresentationSettings.Limit==0 ? "SENSE LÍMIT" : PresentationSettings.Limit.ToString()),new Vector2(0,-120),new Vector2(1100,60),()=>{int i=System.Array.IndexOf(PresentationSettings.Limits,PresentationSettings.Limit);PresentationSettings.VSync=false;PresentationSettings.Limit=PresentationSettings.Limits[(i+1)%PresentationSettings.Limits.Length];Build();});
-            Button("APLICAR",new Vector2(0,-215),new Vector2(550,65),()=>DisplaySettings.Request(resolutions[resolutionIndex],fullscreen));
+            Button(fullscreen ? "APLICAR (EN PANTALLA COMPLETA S'USA LA NATIVA)" : "APLICAR RESOLUCIÓ",new Vector2(0,-215),new Vector2(fullscreen?900:550,65),()=>DisplaySettings.Request(resolutions[resolutionIndex],DisplaySettings.IsFullscreen));
             Text("F11 alterna entre finestra i pantalla completa.\nConfirma el canvi en 15 segons o es desfarà automàticament.",panel.transform,new Vector2(0,-285),new Vector2(1400,65),20);
         }
         else
@@ -81,7 +89,7 @@ public class SettingsUI : MonoBehaviour
             Button("POSICIONS ORIGINALS",new Vector2(0,-230),new Vector2(700,65),()=>{HudLayout.HealthPosition=0;HudLayout.CoinPosition=0;Build();});
         }
         Button("FET",new Vector2(0,-355),new Vector2(350,65),Close);
-        Text(page==2 ? "La configuració de pantalla es guarda en confirmar-la." : "Els canvis es guarden automàticament.",panel.transform,new Vector2(0,-415),new Vector2(1300,35),17);
+        Text(page==2 && !MobileInput.Active ? "La configuració de pantalla es guarda en confirmar-la." : "Els canvis es guarden automàticament.",panel.transform,new Vector2(0,-415),new Vector2(1300,35),17);
     }
     void Row(string label,float y,float min,float max,float initial,UnityEngine.Events.UnityAction<float> change,int format)
     {
@@ -96,7 +104,12 @@ public class SettingsUI : MonoBehaviour
         System.Action<float> display=v=>value.text=format==0?Mathf.RoundToInt(v)+" px":format==1?v.ToString("0.0")+"x":Mathf.RoundToInt(v*100)+"%";
         display(initial);slider.onValueChanged.AddListener(v=>{change(v);display(v);});
     }
-    void Update(){if(Input.GetKeyDown(KeyCode.Escape) && !DisplaySettings.Pending && !DisplaySettings.ConsumedEscape)Close();}
+    void Update()
+    {
+        // Quan es confirma o es desfa un canvi de pantalla, la pestanya mostra el mode real
+        if(!DisplaySettings.Pending && DisplaySettings.IsFullscreen!=fullscreen){fullscreen=DisplaySettings.IsFullscreen;if(page==2)Build();}
+        if(Input.GetKeyDown(KeyCode.Escape) && !DisplaySettings.Pending && !DisplaySettings.ConsumedEscape)Close();
+    }
     void Close(){gameObject.SetActive(false);Destroy(gameObject);}
     void OnDisable(){GameControls.Editing=previousEditing;Time.timeScale=previousScale;}
 }

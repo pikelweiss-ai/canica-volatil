@@ -28,7 +28,9 @@ public class Breakable : MonoBehaviour
 
     public void Hit(int damage)
     {
-        if (broken) return;
+        if (broken || !DungeonGenerator.CanDamageBreakableAt(transform.position, explodes)) return;
+        // El client demana el colp; nomes l'amfitrio canvia vida i decideix el trencament.
+        if (NetShared.RequestBreakableHit(this, damage)) return;
         health -= damage;
         if (sr != null) { StopAllCoroutines(); StartCoroutine(Flash()); }
         Fx.Play(WeaponSounds.Impact, 0.4f);
@@ -51,6 +53,7 @@ public class Breakable : MonoBehaviour
     void Break()
     {
         broken = true;
+        NetShared.Broken(this); // Online: es trenca per a tots
         TileNav.RemoveBlocker(transform.position);
         Fx.Burst(transform.position, debrisColor, 10, 3f);
 
@@ -64,6 +67,24 @@ public class Breakable : MonoBehaviour
                 HealItem item = HealItem.RandomCommon();
                 if (item != null) HealPickup.Spawn(item, transform.position, transform.position);
             }
+        }
+        Destroy(gameObject);
+    }
+
+    // Online: l'ha trencat un altre jugador. Sense boti (el genera qui l'ha trencat).
+    // Si explota, el dany el rep el jugador d'aquest PC (si l'amfitrio ja l'ha gestionat, nomes desapareix).
+    public void RemoteBreak(bool explosionHandled)
+    {
+        if (broken) return;
+        broken = true;
+        TileNav.RemoveBlocker(transform.position);
+        Fx.Burst(transform.position, debrisColor, 10, 3f);
+        if (explodes && !explosionHandled)
+        {
+            Fx.ExplodeVisual(transform.position, explosionRadius);
+            var local = Object.FindFirstObjectByType<PlayerHealth>();
+            if (local != null && explosionPlayerDamage > 0 && Vector2.Distance(local.transform.position, transform.position) <= explosionRadius)
+                local.TakeDamage(explosionPlayerDamage);
         }
         Destroy(gameObject);
     }

@@ -1,0 +1,576 @@
+using System;
+using System.Collections;
+using System.IO;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+// Bot de proves de les sales online. No fa res si no s'arranca amb -canicaBot.
+// Exemples (cada un en una finestra/proces diferent, sense grafics):
+//   Joc.exe -batchmode -nographics -canicaBot host -botNet lan -botPassword abc -botExpect 2 -botCodeFile codi.txt
+//   Joc.exe -batchmode -nographics -canicaBot join -botJoin lan-list -botPassword abc
+//   Joc.exe -batchmode -nographics -canicaBot join -botJoin code-file:codi.txt -botPassword abc
+//   (Internet) afegir -botServer 127.0.0.1:7780 i -botNet internet / -botJoin internet-list
+// Escriu "NETBOT OK: ..." per cada pas i "NETBOT PASS" o "NETBOT FAIL: ..." al final (codi d'eixida 0/1).
+public class NetBot : MonoBehaviour
+{
+    string role, net, join, password, codeFile, mode, botName, shots, roomName;
+    int maxPlayers = 4;
+    bool coop;
+    int expect;
+    bool failed;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    static void FromCommandLine()
+    {
+        var a = Environment.GetCommandLineArgs();
+        string Arg(string key, string def) { int i = Array.IndexOf(a, key); return i >= 0 && i + 1 < a.Length ? a[i + 1] : def; }
+        string role = Arg("-canicaBot", null);
+        if (role == null) return;
+        var go = new GameObject("NetBot");
+        DontDestroyOnLoad(go);
+        var bot = go.AddComponent<NetBot>();
+        bot.role = role;
+        bot.net = Arg("-botNet", "lan");
+        bot.join = Arg("-botJoin", "lan-list");
+        bot.password = Arg("-botPassword", "");
+        bot.codeFile = Arg("-botCodeFile", null);
+        bot.mode = Arg("-botMode", "free");
+        bot.expect = int.Parse(Arg("-botExpect", "2"));
+        bot.shots = Arg("-botShots", null);
+        bot.coop = Array.IndexOf(a, "-botCoop") >= 0;
+        bot.roomName = Arg("-botRoom", "BotRoom");
+        bot.maxPlayers = int.Parse(Arg("-botMax", "4"));
+        bot.botName = Arg("-botName", role == "host" ? "BotAmfitrio" : "BotJugador");
+        NetSession.NameOverride = bot.botName;
+        NetSession.ServerOverride = Arg("-botServer", "");
+        Application.runInBackground = true;
+        Application.targetFrameRate = 60;
+        AudioListener.volume = 0;
+    }
+
+    void Start() { StartCoroutine(role == "host" ? Host() : Join()); StartCoroutine(Watchdog()); }
+
+    static void Log(string s) => Debug.Log("NETBOT " + s);
+    void Ok(string s) => Log("OK: " + s);
+    void Fail(string s) { if (failed) return; failed = true; Log("FAIL: " + s); Application.Quit(1); }
+    void Pass() { Log("PASS"); Application.Quit(0); }
+
+    IEnumerator Watchdog() { yield return new WaitForSecondsRealtime(240); Fail("temps esgotat (240 s)"); }
+
+    IEnumerator WaitFor(Func<bool> cond, float seconds, string what)
+    {
+        float until = Time.realtimeSinceStartup + seconds;
+        while (!cond())
+        {
+            if (Time.realtimeSinceStartup > until) { Fail("esperant: " + what); yield break; }
+            yield return null;
+        }
+        Ok(what);
+    }
+
+    static string Scene => SceneManager.GetActiveScene().name;
+    static int Avatars => FindObjectsByType<RemoteAvatar>(FindObjectsSortMode.None).Length;
+
+    // ------------------------------------------------------------------
+    IEnumerator Host()
+    {
+        yield return WaitFor(() => Scene == "MainMenu", 20, "menu principal carregat");
+        string error = "pending";
+        var settings = new NetSession.HostSettings { name = roomName, mode = mode == "dungeon" ? RoomMode.Dungeon : RoomMode.FreeMap, maxPlayers = maxPlayers, isPublic = true, password = password, internet = net == "internet" };
+        NetSession.HostRoom(settings, e => error = e);
+        yield return WaitFor(() => error != "pending", 10, "sala creada");
+        if (failed) yield break;
+        if (error != null) { Fail("no s'ha pogut crear: " + error); yield break; }
+        var s = NetSession.Instance;
+        Ok("codi " + s.Room.code + " · " + s.NetworkLabel);
+        if (codeFile != null) File.WriteAllText(codeFile, s.Room.code);
+        yield return WaitFor(() => Scene == "Lobby", 10, "lobby carregat");
+
+        bool gotChat = false;
+        s.ChatReceived += l => { if (!l.system && l.text.Contains("hola")) gotChat = true; };
+        yield return WaitFor(() => s.Players.Count >= expect, 60, expect + " jugadors a la sala");
+        if (coop) yield return WaitFor(() => NetShared.MapTakenCount > 0, 30, "moneda del lobby agafada pel company: ja no es pot agafar ací");
+        yield return WaitFor(() => gotChat, 20, "xat rebut del jugador");
+        yield return WaitFor(() => s.EveryoneReady, 20, "tots llestos");
+        yield return WaitFor(() => Avatars >= expect - 1, 15, "avatar remot visible al lobby");
+        if (failed) yield break;
+        yield return Shot("4-lobby-amfitrio");
+        if (failed) yield break;
+        s.SetMode(settings.mode);
+        s.StartCountdown();
+        yield return WaitFor(() => s.Room.phase == RoomPhase.Countdown, 2, "compte enrere");
+        if (shots != null) { yield return new WaitForSecondsRealtime(1.2f); yield return Shot("5-compte-enrere"); }
+        string target = RoomModes.Scene(settings.mode);
+        yield return WaitFor(() => Scene == target, 10, "partida carregada (" + target + ")");
+        yield return null; Ok("llavor " + s.Seed + " · " + NetBotLayout.Fingerprint());
+        yield return WaitFor(() => Avatars >= expect - 1, 20, "avatar remot visible en partida");
+        if (coop && Scene == "Dungeon") { yield return HostCoop(); if (failed) yield break; }
+        yield return new WaitForSecondsRealtime(0.5f);
+        yield return Shot("6-partida-amfitrio");
+        if (failed) yield break;
+        yield return new WaitForSecondsRealtime(2);
+        s.BackToLobby();
+        yield return WaitFor(() => Scene == "Lobby" && s.Room.phase == RoomPhase.Lobby, 10, "tornada al lobby");
+        yield return new WaitForSecondsRealtime(3);
+        if (failed) yield break;
+        s.Leave(null);
+        Ok("sala tancada");
+        yield return new WaitForSecondsRealtime(1);
+        Pass();
+    }
+
+    // ------------------------------------------------------------------
+    IEnumerator Join()
+    {
+        yield return WaitFor(() => Scene == "MainMenu", 20, "menu principal carregat");
+        RoomInfo target = null;
+
+        if (join == "lan-list" || join == "internet-list")
+        {
+            float until = Time.realtimeSinceStartup + 30;
+            while (target == null && Time.realtimeSinceStartup < until)
+            {
+                bool done = false; string err = null;
+                if (join == "lan-list") NetSession.ListLan(list => { foreach (var r in list) if (r.name == "BotRoom") target = r; done = true; });
+                else NetSession.ListInternet((list, e) => { err = e; foreach (var r in list) if (r.name == "BotRoom") target = r; done = true; });
+                while (!done) yield return null;
+                if (err != null) Log("llista: " + err);
+                if (target == null) yield return new WaitForSecondsRealtime(1);
+            }
+            if (target == null) { Fail("no apareix BotRoom a la llista " + join); yield break; }
+            if (shots != null)
+            {
+                RoomBrowserUI.Open(); yield return new WaitForSecondsRealtime(3f);
+                RoomBrowserUI.DebugShow("select", null); yield return Shot("1-navegador");
+                RoomBrowserUI.DebugShow("password", target); yield return Shot("2b-contrasenya");
+                RoomBrowserUI.DebugShow("create", null); yield return Shot("2-crear-sala");
+                RoomBrowserUI.DebugShow("close", null);
+            }
+            Ok("sala trobada a la llista: " + target.code + " (" + target.players + "/" + target.maxPlayers + ", contrasenya=" + target.hasPassword + ", ping " + target.pingMs + " ms)");
+        }
+
+        NetSession.JoinResult res = null;
+        if (target == null)
+        {
+            // Per codi (o IP), sense contrasenya primer: ha de demanar-la
+            string code = join;
+            if (join.StartsWith("code-file:"))
+            {
+                string path = join.Substring(10);
+                yield return WaitFor(() => File.Exists(path) && File.ReadAllText(path).Trim().Length == 6, 30, "codi publicat per l'amfitrio");
+                if (failed) yield break;
+                code = File.ReadAllText(path).Trim();
+            }
+            NetSession.JoinByCode(code, "", r => res = r);
+        }
+        else NetSession.Join(target, "", r => res = r);
+        yield return WaitFor(() => res != null, 15, "resposta de la sala");
+        if (failed) yield break;
+
+        if (!string.IsNullOrEmpty(password))
+        {
+            if (!res.needPassword) { Fail("la sala hauria de demanar contrasenya: " + (res.ok ? "ha deixat entrar" : res.error)); yield break; }
+            Ok("demana contrasenya: " + res.error);
+            var again = res.target;
+            res = null;
+            NetSession.Join(again, "dolenta", r => res = r);
+            yield return WaitFor(() => res != null, 15, "resposta amb contrasenya dolenta");
+            if (failed) yield break;
+            if (res.ok || !res.needPassword) { Fail("contrasenya dolenta acceptada o error inesperat: " + res.error); yield break; }
+            Ok("rebutja contrasenya dolenta: " + res.error);
+            res = null;
+            NetSession.Join(again, password, r => res = r);
+            yield return WaitFor(() => res != null, 15, "resposta amb contrasenya bona");
+            if (failed) yield break;
+        }
+        if (!res.ok) { Fail("no ha pogut entrar: " + res.error); yield break; }
+        var s = NetSession.Instance;
+        yield return WaitFor(() => Scene == "Lobby" && s.Players.Count >= 2, 10, "dins del lobby amb l'amfitrio");
+        yield return WaitFor(() => Avatars >= 1, 10, "avatar de l'amfitrio visible al lobby");
+        if (failed) yield break;
+        if (coop)
+        {
+            Coin mapCoin = null; float bestc = float.MaxValue; var me = FindFirstObjectByType<PlayerMovement>();
+            foreach (var mc in FindObjectsByType<Coin>(FindObjectsSortMode.None)) { float d = Vector2.Distance(mc.transform.position, me.transform.position); if (d < bestc) { bestc = d; mapCoin = mc; } }
+            if (mapCoin != null) { var mrb = me.GetComponent<Rigidbody2D>(); me.transform.position = mapCoin.transform.position; if (mrb != null) mrb.position = mapCoin.transform.position; }
+            yield return WaitFor(() => NetShared.MapCoinsGranted > 0, 10, "moneda del lobby agafada (concedida per l'amfitrio)");
+            if (failed) yield break;
+        }
+        s.SendChat("hola des del bot");
+        yield return new WaitForSecondsRealtime(0.5f);
+        s.SetReady(true);
+        if (shots != null) { yield return new WaitForSecondsRealtime(0.4f); yield return Shot("3-lobby-jugador"); }
+        bool closed = false;
+        yield return WaitFor(() => Scene == "GameScene" || Scene == "Dungeon", 30, "partida començada per l'amfitrio");
+        yield return null; Ok("llavor " + s.Seed + " · " + NetBotLayout.Fingerprint());
+        if (coop && Scene == "Dungeon") { yield return JoinCoop(); if (failed) yield break; }
+        yield return WaitFor(() => Avatars >= 1, 20, "avatar de l'amfitrio visible en partida");
+        yield return WaitFor(() => Scene == "Lobby", 20, "tornada al lobby");
+        yield return WaitFor(() => { closed = !NetSession.Active; return closed && Scene == "MainMenu"; }, 20, "sala tancada per l'amfitrio i tornada al menu");
+        if (failed) yield break;
+        Pass();
+    }
+
+    // ---------- Proves del cooperatiu a la masmorra (-botCoop) ----------
+    static DungeonGenerator.Room FirstCombat(DungeonGenerator g) => g.Rooms.Find(r => r.type == DungeonGenerator.RoomType.Combat && r.links.Count > 1);
+
+    bool CheckWaitingDoors(DungeonGenerator g, DungeonGenerator.Room room)
+    {
+        int open = 0, closed = 0;
+        foreach (var cell in room.doorCells)
+        {
+            bool expectedClosed = DungeonGenerator.DoorSide(room, cell) != room.waitingEntrance;
+            if (g.doors.HasTile(cell) != expectedClosed) { Fail("porta en espera incorrecta: " + cell); return false; }
+            if (expectedClosed) closed++; else open++;
+        }
+        if (room.waitingEntrance < 0 || open != 3 || closed < 3) { Fail("cal una entrada oberta i les altres portes tancades"); return false; }
+        Ok("portes en espera: nomes les 3 caselles de l'entrada obertes");
+        return true;
+    }
+
+    static void Teleport(DungeonGenerator g, DungeonGenerator.Room room)
+    {
+        Vector3 c = g.ground.GetCellCenterWorld(new Vector3Int(room.Center.x, room.Center.y, 0));
+        var rb = g.player.GetComponent<Rigidbody2D>();
+        g.player.position = new Vector3(c.x, c.y, g.player.position.z); if (rb != null) rb.position = c;
+    }
+
+    bool keepAlive;
+
+    void SpawnTestCrate(DungeonGenerator g)
+    {
+        var c=g.Rooms[0].Center;
+        Instantiate(g.cratePrefab,g.ground.GetCellCenterWorld(new Vector3Int(c.x+2,c.y+2,0)),Quaternion.identity);
+    }
+
+    IEnumerator CheckProjectiles(DungeonGenerator g)
+    {
+        yield return WaitFor(()=>FindFirstObjectByType<RemoteAvatar>()!=null,15,"company carregat abans de provar projectils");
+        if(failed)yield break;
+        var weapon = ScriptableObject.CreateInstance<WeaponData>();
+        weapon.weaponName="Prova de pas"; weapon.projectileSpeed=4; weapon.range=5; weapon.projectileSize=.12f;
+        var center = g.player.position;
+        var avatar = FindFirstObjectByType<RemoteAvatar>();
+        foreach(bool cosmetic in new[] { false, true })
+        {
+            var shot = Projectile.Spawn(center-Vector3.right,Vector2.right,weapon,avatar.transform,0,0,center+Vector3.right*4);
+            shot.cosmetic=cosmetic;
+            yield return WaitFor(()=>shot==null || shot.transform.position.x>center.x+.8f,3,"tret travessant jugador local");
+            if(shot==null) { Fail("el tret s'ha aturat al company (cosmetic="+cosmetic+")"); Destroy(weapon); yield break; }
+            Destroy(shot.gameObject);
+        }
+        Destroy(weapon);
+        Ok("tret real i cosmetic travessen el company");
+    }
+
+    bool CheckRoomLocked(DungeonGenerator g, DungeonGenerator.Room room)
+    {
+        var pos=g.ground.GetCellCenterWorld(new Vector3Int(room.Center.x,room.Center.y,0));
+        if(DungeonGenerator.CanInteractAt(pos)) { Fail("la sala no netejada permet interactuar"); return false; }
+        var chest=FindFirstObjectByType<Chest>(); var old=chest.transform.position; chest.transform.position=pos;
+        bool stopped=NetCoop.InterceptChestOpen(chest); chest.transform.position=old;
+        if(!stopped || chest.IsOpen) { Fail("s'ha pogut obrir cofre en sala bloquejada"); return false; }
+        var crate=FindFirstObjectByType<Breakable>(); old=crate.transform.position; crate.transform.position=pos;
+        int hp=crate.health; crate.Hit(999); crate.transform.position=old;
+        if(crate.health!=hp) { Fail("s'ha pogut fer mal a una caixa en sala bloquejada"); return false; }
+        if(DungeonGenerator.CanDamageBreakableAt(pos,true)!=room.active) { Fail("TNT: ha d'estar bloquejada en espera i disponible en combat"); return false; }
+        if(NetCoop.IsHost)
+        {
+            bool explosive=crate.explodes; crate.explodes=true; crate.health=10; crate.transform.position=pos;
+            crate.Hit(1); bool damaged=crate.health==9;
+            crate.health=hp; crate.explodes=explosive; crate.transform.position=old;
+            if(damaged!=room.active){Fail("TNT: colp real incorrecte en espera/combat");return false;}
+        }
+        Ok(room.active?"TNT rep colps durant el combat":"TNT protegida mentre falten companys");
+        Ok("cofre i caixa bloquejats en sala pendent/combat"); return true;
+    }
+    IEnumerator KeepAlive(PlayerHealth h) { while (keepAlive) { if (h != null && h.gameObject.activeInHierarchy) h.Heal(5); yield return new WaitForSecondsRealtime(0.3f); } }
+
+    IEnumerator HostCoop()
+    {
+        var g = DungeonGenerator.Instance;
+        if (g == null) { Fail("no hi ha masmorra"); yield break; }
+        keepAlive = true; StartCoroutine(KeepAlive(g.player.GetComponent<PlayerHealth>()));
+        SpawnTestCrate(g);
+        yield return CheckProjectiles(g); if(failed)yield break;
+        int remoteKills = 0;
+        System.Action<EnemyHealth> onDied = h => { if (h.netId != 0) remoteKills++; };
+        EnemyHealth.AnyDied += onDied;
+        var combat = FirstCombat(g);
+        if (combat == null) { Fail("cap sala de combat"); yield break; }
+        // Receptor en fred: totes les cures, lluny dels jugadors per no recollir-les.
+        int n = 0;
+        foreach (var heal in HealItem.All)
+        {
+            var p = new Vector3(1000 + n++ * 2, 1000);
+            HealPickup.Spawn(heal, p, p);
+        }
+        // 1) L'amfitrio entra sol: la sala NO s'ha de tancar fins que entre el company
+        Teleport(g, combat);
+        yield return new WaitForSecondsRealtime(3f);
+        if (combat.active || NetCoop.EnemyCount > 0) { Fail("la sala s'ha tancat sense el company"); yield break; }
+        if (!CheckWaitingDoors(g, combat)) yield break;
+        if (!CheckRoomLocked(g, combat)) yield break;
+        Ok("la sala espera que entre el company");
+        yield return WaitFor(() => NetCoop.EnemyCount > 0, 25, "sala començada quan han entrat tots dos");
+        if (failed) yield break;
+        Ok("enemics vius: " + NetCoop.EnemyCount);
+        if (!CheckRoomLocked(g, combat)) yield break;
+        if (shots != null) yield return new WaitForSecondsRealtime(1f);
+        yield return Shot("7-masmorra-amfitrio");
+        // 2) El client en mata un (via colp a la seua copia)
+        yield return WaitFor(() => remoteKills > 0, 25, "un enemic ha mort pel colp del company");
+        // 3) Bales del company visibles
+        yield return WaitFor(() => { foreach (var p in FindObjectsByType<Projectile>(FindObjectsSortMode.None)) if (p.cosmetic) return true; return false; }, 25, "bala del company visible (cosmetica, sense dany)");
+        // 4) Cofre: l'obri el company i per a l'amfitrio ja queda obert
+        Chest opened = null;
+        yield return WaitFor(() => { foreach (var ch in FindObjectsByType<Chest>(FindObjectsSortMode.None)) if (ch.IsOpen && NetCoop.IsChestOpenedForAll(NetCoop.ChestKey(ch))) { opened = ch; return true; } return false; }, 25, "cofre obert pel company, obert tambe ací");
+        if (failed) yield break;
+        if (!NetCoop.InterceptChestOpen(opened)) { Fail("l'amfitrio ha pogut tornar a obrir el cofre"); yield break; }
+        Ok("el cofre no es pot obrir dues vegades");
+        yield return WaitFor(() => NetShared.RemoteHealsSeen > 0, 10, "cura del cofre del client visible a l'amfitrio");
+        // Bot real de boss: forcem la probabilitat, no substituim la ruta de botí.
+        var bossPrefab = g.Theme != null && g.Theme.boss != null ? g.Theme.boss : g.bossPrefab;
+        var testBoss = Instantiate(bossPrefab, new Vector3(1100, 1100), Quaternion.identity);
+        var bossHealth = testBoss.GetComponent<EnemyHealth>();
+        bossHealth.healDropChance = 1;
+        yield return null;
+        bossHealth.TakeHit(99999, Vector2.zero);
+        Ok("boss mort amb cura garantida per provar el boti compartit");
+        // 5) Caixa trencada pel company i moneda compartida
+        yield return WaitFor(() => NetShared.RemoteBreaks > 0, 20, "caixa trencada pel company, trencada tambe ací");
+        yield return WaitFor(() => NetShared.RemoteItemsSeen > 0, 20, "moneda del company visible ací");
+        yield return WaitFor(() => NetShared.ItemsTakenByOthers > 0, 20, "moneda agafada pel company, desapareix ací");
+        var avc = FindFirstObjectByType<RemoteAvatar>();
+        Teleport(g, g.Rooms[0]); // l'amfitrio s'aparta: el company queda clarament mes a prop
+        yield return new WaitForSecondsRealtime(0.3f);
+        if (avc != null) { CoinDrop.Spawn(avc.transform.position); Ok("moneda de l'amfitrio als peus del company"); }
+        // 6) Dany al company
+        var av = FindFirstObjectByType<RemoteAvatar>();
+        if (av == null) { Fail("no hi ha avatar del company"); yield break; }
+        NetCoop.DamagePlayer(av.transform, 1);
+        Ok("dany enviat al company");
+        // 7) El company cau i espera
+        yield return WaitFor(() => NetCoop.DownedCount > 0, 25, "el company ha caigut i espera");
+        yield return WaitFor(() => { foreach (var ip in FindObjectsByType<ItemPickup>(FindObjectsSortMode.None)) { var ni = ip.GetComponent<NetItem>(); if (ni != null && ni.id / 1000000 == av.playerId) return true; } return false; }, 10, "les armes del company caigut son al terra ací");
+        // 8) Acabem la sala: tots els enemics morts -> portes obertes i el company torna
+        float until = Time.realtimeSinceStartup + 40;
+        while (!combat.cleared && Time.realtimeSinceStartup < until)
+        {
+            foreach (var h in new System.Collections.Generic.List<EnemyHealth>(NetCoop.Enemies)) if (h != null && !h.IsDead) h.TakeHit(9999, Vector2.zero);
+            yield return new WaitForSecondsRealtime(0.4f);
+        }
+        if (!combat.cleared) { Fail("la sala no s'ha acabat"); yield break; }
+        Ok("sala netejada");
+        if(!DungeonGenerator.CanInteractAt(g.ground.GetCellCenterWorld(new Vector3Int(combat.Center.x,combat.Center.y,0)))) { Fail("la sala netejada no desbloqueja objectes"); yield break; }
+        Ok("sala netejada desbloqueja objectes");
+        yield return WaitFor(() => NetCoop.DownedCount == 0, 5, "el company ha tornat");
+        // El company torna a caure i nosaltres passem de pis: ell ha de reapareixer al pis seguent
+        yield return WaitFor(() => NetCoop.DownedCount > 0, 20, "el company ha caigut altra vegada");
+        if (failed) yield break;
+        g.NextFloor();
+        yield return WaitFor(() => Scene == "Dungeon" && RunState.Floor == 2 && DungeonGenerator.Instance != null && DungeonGenerator.Instance != g, 15, "passem al pis 2 amb el company caigut");
+        yield return WaitFor(() => Avatars >= 1, 20, "el company ha reaparegut al pis 2");
+        EnemyHealth.AnyDied -= onDied;
+        keepAlive = false;
+        yield return new WaitForSecondsRealtime(3);
+    }
+
+    IEnumerator JoinCoop()
+    {
+        var g = DungeonGenerator.Instance;
+        if (g == null) { Fail("no hi ha masmorra"); yield break; }
+        var health = FindFirstObjectByType<PlayerHealth>();
+        keepAlive = true; StartCoroutine(KeepAlive(health));
+        SpawnTestCrate(g);
+        yield return CheckProjectiles(g); if(failed)yield break;
+        // L'amfitrio entra primer i comprova que la sala l'espera
+        yield return WaitFor(() => NetShared.RemoteHealsSeen >= 4, 15, "totes les cures rebudes en fred de l'amfitrio");
+        // Simulem un objecte que el client ha perdut en carregar i repetim l'estat.
+        HealPickup missing = null;
+        foreach(var hp in FindObjectsByType<HealPickup>(FindObjectsSortMode.None))
+            if(hp.transform.position.x >= 1000 && hp.GetComponent<NetItem>() != null) { missing=hp;break; }
+        if(missing == null) { Fail("falta cura per provar resincronitzacio");yield break; }
+        int missingId=missing.GetComponent<NetItem>().id;
+        using(var stream=new MemoryStream())
+        {
+            using(var writer=new BinaryWriter(stream,System.Text.Encoding.UTF8,true))writer.Write(missingId);
+            stream.Position=0;
+            using(var reader=new BinaryReader(stream))NetShared.OnClient(Msg.PickupTaken,reader);
+        }
+        yield return null;
+        NetSession.Instance.SendToHost(NetProtocol.Frame(Msg.EnemyMark,w=>{w.Write(-1);w.Write(NetSession.SceneToken());}));
+        yield return WaitFor(()=>{
+            foreach(var ni in FindObjectsByType<NetItem>(FindObjectsSortMode.None))if(ni.id==missingId)return true;
+            return false;
+        },10,"cura perduda recuperada en resincronitzar");
+        NetSession.Instance.SendToHost(NetProtocol.Frame(Msg.EnemyMark,w=>{w.Write(-1);w.Write(NetSession.SceneToken());}));
+        yield return new WaitForSecondsRealtime(.4f);
+        foreach (var heal in HealItem.All)
+        {
+            bool visible = false;
+            int copies = 0;
+            foreach (var pickup in FindObjectsByType<HealPickup>(FindObjectsSortMode.None))
+                if (pickup.item == heal && pickup.GetComponentInChildren<SpriteRenderer>() != null) { visible = true; if(pickup.transform.position.x>=1000 && pickup.transform.position.x<1010)copies++; }
+            if (!visible) { Fail("cura no visible: " + heal.name); yield break; }
+            if(copies!=1) { Fail("resincronitzacio duplica la cura: "+heal.name);yield break; }
+        }
+        Ok("resincronitzacio repetida sense duplicar cures");
+        var catalog = Resources.Load<NetContentCatalog>("NetContent");
+        if (catalog == null) { Fail("falta cataleg d'armes"); yield break; }
+        foreach (var weapon in catalog.weapons)
+            if (NetCoop.Weapon(weapon.name) != weapon) { Fail("arma no resolta: " + weapon.name); yield break; }
+        Ok("totes les armes resoltes pel nom");
+        var waiting = FirstCombat(g);
+        yield return WaitFor(() => waiting != null && waiting.waitingEntrance >= 0, 15, "estat de portes en espera rebut del host");
+        if (!CheckWaitingDoors(g, waiting)) yield break;
+        if (!CheckRoomLocked(g, waiting)) yield break;
+        yield return new WaitForSecondsRealtime(4f);
+        Teleport(g, FirstCombat(g));
+        Ok("el client entra a la sala");
+        yield return WaitFor(() => NetCoop.EnemyCount > 0, 25, "copies dels enemics de l'amfitrio");
+        if (failed) yield break;
+        Ok("copies d'enemics: " + NetCoop.EnemyCount);
+        if (!CheckRoomLocked(g, waiting)) yield break;
+        EnemyHealth victim = null;
+        foreach (var h in NetCoop.Enemies) if (h != null && !h.IsDead) { victim = h; break; }
+        if (victim == null || !victim.netProxy) { Fail("la copia no esta marcada com a copia"); yield break; }
+        if (victim.GetComponent<EnemyPathfindingAI>() is EnemyPathfindingAI ai && ai.enabled) { Fail("la copia te la IA activa"); yield break; }
+        if (victim.transform.Find("Ombra") != null) Ok("la copia de l'enemic te la seua ombra"); else Log("avis: la copia no te fill Ombra");
+        victim.TakeHit(9999, Vector2.zero);
+        yield return WaitFor(() => victim == null, 10, "l'amfitrio ha confirmat la mort de l'enemic");
+        if (failed) yield break;
+        // Disparem unes quantes bales perque l'amfitrio les veja
+        WeaponData gun = null;
+        foreach (var wd in Resources.FindObjectsOfTypeAll<WeaponData>()) if (wd != null && !wd.melee) { gun = wd; break; }
+        if (gun == null) { Fail("no trobe cap arma"); yield break; }
+        for (int i = 0; i < 8; i++)
+        {
+            Vector2 p = g.player.position;
+            NetCoop.LocalPellet(gun, p, Vector2.right, p + Vector2.right * 4f);
+            yield return new WaitForSecondsRealtime(0.25f);
+        }
+        Ok("bales enviades (" + gun.name + ")");
+        yield return Shot("8-masmorra-jugador");
+        // Cofre de la sala inicial
+        Chest nearest = null; float best = float.MaxValue;
+        foreach (var ch in FindObjectsByType<Chest>(FindObjectsSortMode.None))
+        {
+            float d = Vector2.Distance(ch.transform.position, g.player.position);
+            if (!ch.IsOpen && DungeonGenerator.CanInteractAt(ch.transform.position) && d < best) { best = d; nearest = ch; }
+        }
+        if (nearest == null) { Fail("cap cofre tancat"); yield break; }
+        nearest.healChance = 1; // prova determinista del boti del cofre
+        if (!NetCoop.InterceptChestOpen(nearest)) { Fail("el client ha obert el cofre sense preguntar"); yield break; }
+        yield return WaitFor(() => nearest.IsOpen, 10, "l'amfitrio ha donat el cofre al client");
+        yield return WaitFor(() =>
+        {
+            foreach (var hp in FindObjectsByType<HealPickup>(FindObjectsSortMode.None))
+                if (hp.transform.position.x > 1090 && hp.GetComponent<NetItem>() != null) return true;
+            return false;
+        }, 15, "cura del boss de l'amfitrio visible al client");
+        // Caixa (no explosiva)
+        Breakable crate = null; best = float.MaxValue;
+        foreach (var b in FindObjectsByType<Breakable>(FindObjectsSortMode.None))
+        {
+            float d = Vector2.Distance(b.transform.position, g.player.position);
+            if (!b.explodes && DungeonGenerator.CanInteractAt(b.transform.position) && d < best) { best = d; crate = b; }
+        }
+        if (crate == null) { Fail("cap caixa"); yield break; }
+        crate.Hit(999);
+        Ok("caixa trencada");
+        // Moneda: apareix als peus, l'agafem i l'amfitrio ens la dona
+        int coins = RunState.Coins;
+        CoinDrop.Spawn(g.player.position);
+        yield return WaitFor(() => RunState.Coins > coins, 15, "moneda agafada (concedida per l'amfitrio)");
+        yield return WaitFor(() => RunState.Coins > coins + 1, 15, "moneda de l'amfitrio agafada pel client (iman cap al mes proxim)");
+        yield return WaitFor(() => NetCoop.HurtsReceived > 0, 20, "dany rebut des de l'amfitrio");
+        // Caiem: mode espectador
+        keepAlive = false;
+        yield return new WaitForSecondsRealtime(1.3f); // fora la invulnerabilitat del colp
+        var att = g.player.GetComponent<PlayerAttack>(); if (att != null) att.AddWeapon(gun); // una arma per a veure que la solta
+        health.TakeDamage(999);
+        yield return WaitFor(() => Spectate.Active, 5, "caigut: espectant el company");
+        var myAttack = g.player.GetComponent<PlayerAttack>();
+        if (myAttack != null && myAttack.CurrentWeapon == null && !System.Array.Exists(myAttack.hotbarSlots, w => w != null)) Ok("en caure, les armes han quedat al terra"); else Fail("encara te armes despres de caure");
+        var cam = Camera.main != null ? Camera.main.GetComponent<CameraFollow>() : null;
+        yield return null;
+        if (cam != null && cam.target != null && cam.target.GetComponent<RemoteAvatar>() != null) Ok("la camera segueix el company");
+        else Log("avis: la camera no segueix cap avatar");
+        yield return Shot("9-espectant");
+        yield return WaitFor(() => NetCoop.RoomEvents >= 2, 45, "sala començada i acabada per l'amfitrio");
+        yield return WaitFor(() => health != null && health.gameObject.activeInHierarchy && !Spectate.Active, 10, "tornat a la partida en netejar la sala");
+        if (cam != null && cam.target == health.transform) Ok("la camera torna al jugador");
+        // Tornem a caure i l'amfitrio passa de pis: hem de reapareixer al pis 2 sense armes i amb tota la vida
+        var att2 = g.player.GetComponent<PlayerAttack>(); if (att2 != null) att2.AddWeapon(gun);
+        yield return new WaitForSecondsRealtime(2.4f); // fora la invulnerabilitat de tornar
+        health.TakeDamage(999);
+        yield return WaitFor(() => Spectate.Active, 5, "caigut altra vegada");
+        yield return WaitFor(() => RunState.Floor == 2 && Scene == "Dungeon" && DungeonGenerator.Instance != null && DungeonGenerator.Instance != g, 30, "els companys han passat de pis");
+        if (failed) yield break;
+        yield return null; yield return null;
+        var p2 = FindFirstObjectByType<PlayerHealth>();
+        var a2 = p2 != null ? p2.GetComponent<PlayerAttack>() : null;
+        if (p2 == null || !p2.gameObject.activeInHierarchy) { Fail("no ha reaparegut al pis 2"); yield break; }
+        if (a2 != null && System.Array.Exists(a2.hotbarSlots, w => w != null)) { Fail("ha reaparegut amb armes"); yield break; }
+        Ok("reaparegut al pis 2 sense armes, vida " + p2.currentHealth + "/" + p2.maxHealth);
+    }
+
+    // ---------- Captures (nomes amb -botShots <carpeta>, sense -nographics) ----------
+    IEnumerator Shot(string label)
+    {
+        if (shots == null) yield break;
+        yield return null; yield return null;
+        Directory.CreateDirectory(shots);
+        var cam = Camera.main; bool temp = false;
+        if (cam == null) { cam = new GameObject("Camera captura").AddComponent<Camera>(); cam.clearFlags = CameraClearFlags.SolidColor; cam.backgroundColor = Color.black; temp = true; }
+        var rt = new RenderTexture(1600, 900, 24, RenderTextureFormat.ARGB32);
+        var saved = new System.Collections.Generic.List<(Canvas c, RenderMode m, Camera w, float d, int layer, int order)>();
+        var layers = SortingLayer.layers;
+        int top = layers.Length > 0 ? layers[layers.Length - 1].id : 0;
+        foreach (var c in FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+        {
+            if (!c.isRootCanvas || c.renderMode != RenderMode.ScreenSpaceOverlay) continue;
+            saved.Add((c, c.renderMode, c.worldCamera, c.planeDistance, c.sortingLayerID, c.sortingOrder));
+            // Com en Overlay: per damunt del mon i ordenats pel seu sortingOrder
+            c.renderMode = RenderMode.ScreenSpaceCamera; c.worldCamera = cam;
+            c.planeDistance = 1f + (1000 - Mathf.Clamp(c.sortingOrder, 0, 999)) * 0.001f;
+            c.sortingLayerID = top; c.sortingOrder = 20000 + c.sortingOrder;
+        }
+        var prev = cam.targetTexture; cam.targetTexture = rt;
+        yield return null; yield return null; yield return null;
+        // En -batchmode les cameres no es dibuixen soles: ho demanem explicitament
+        Canvas.ForceUpdateCanvases();
+        var request = new UnityEngine.Rendering.RenderPipeline.StandardRequest { destination = rt };
+        if (UnityEngine.Rendering.RenderPipeline.SupportsRenderRequest(cam, request)) UnityEngine.Rendering.RenderPipeline.SubmitRenderRequest(cam, request);
+        else cam.Render();
+        RenderTexture.active = rt;
+        var tex = new Texture2D(1600, 900, TextureFormat.RGB24, false);
+        tex.ReadPixels(new Rect(0, 0, 1600, 900), 0, 0); tex.Apply();
+        RenderTexture.active = null;
+        string path = Path.Combine(shots, label + ".png");
+        File.WriteAllBytes(path, tex.EncodeToPNG());
+        cam.targetTexture = prev;
+        foreach (var s in saved) if (s.c != null) { s.c.renderMode = s.m; s.c.worldCamera = s.w; s.c.planeDistance = s.d; s.c.sortingLayerID = s.layer; s.c.sortingOrder = s.order; }
+        if (temp) Destroy(cam.gameObject);
+        Destroy(rt); Destroy(tex);
+        Ok("captura " + path);
+    }
+}
+
+
+public static class NetBotLayout
+{
+    // Empremta de la masmorra generada: si coincideix entre amfitrio i jugador, tenen la mateixa masmorra
+    public static string Fingerprint()
+    {
+        var g = DungeonGenerator.Instance;
+        if (g == null) return "sense masmorra";
+        unchecked
+        {
+            int h = 17;
+            foreach (var r in g.Rooms) h = h * 31 + r.slot.x * 7 + r.slot.y * 13 + (int)r.type * 101 + r.rect.x * 3 + r.rect.y * 5 + r.rect.width * 11 + r.rect.height * 19;
+            return g.Rooms.Count + " sales, empremta " + h.ToString("X8");
+        }
+    }
+}

@@ -7,8 +7,8 @@ using UnityEngine;
 
 public static class AlphaReviewBuild
 {
-    public static void BuildWindows() { AlphaVisualBuilder.BuildAssets(); AlphaSettingsChecks.Validate(); Build(BuildTarget.StandaloneWindows64,"Windows/CanicaAlphaReview.exe"); }
-    public static void BuildLinux() { AlphaVisualBuilder.Validate(); AlphaSettingsChecks.Validate(); Build(BuildTarget.StandaloneLinux64,"Linux/CanicaAlphaReview.x86_64"); }
+    public static void BuildWindows() { AlphaVisualBuilder.BuildAssets(); AlphaContentBuilder.Build(); NetContentBuilder.Build(); AlphaSettingsChecks.Validate(); MobileInputChecks.Validate(); Build(BuildTarget.StandaloneWindows64,"Windows/CanicaAlphaReview.exe"); }
+    public static void BuildLinux() { AlphaVisualBuilder.Validate(); AlphaContentBuilder.Validate(); NetContentBuilder.Build(); AlphaSettingsChecks.Validate(); Build(BuildTarget.StandaloneLinux64,"Linux/CanicaAlphaReview.x86_64"); }
     static void Build(BuildTarget target,string output)
     {
         PlayerSettings.bundleVersion=GameVersion.Package;
@@ -20,5 +20,8 @@ public static class AlphaReviewBuild
         string result=target+": "+report.summary.result+"; errors="+report.summary.totalErrors;
         File.WriteAllText(Path.GetDirectoryName(path)+"/build-result.txt",result);Debug.Log("ALPHA_REVIEW: "+result);
         if(report.summary.result!=BuildResult.Succeeded)throw new Exception(result);
+        BuildCompatibility.Write(Path.GetDirectoryName(path), target.ToString());
+        if(target==BuildTarget.StandaloneLinux64)
+            File.WriteAllText(Path.GetDirectoryName(path)+"/Jugar.sh","#!/usr/bin/env bash\ncd -- \"$(dirname -- \"$0\")\" || exit 1\nchmod u+x ./CanicaAlphaReview.x86_64\nexec ./CanicaAlphaReview.x86_64 \"$@\"\n");
     }
 }

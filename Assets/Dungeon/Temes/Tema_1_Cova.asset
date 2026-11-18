@@ -24,6 +24,7 @@ MonoBehaviour:
   backgroundColor: {r: 0.05, g: 0.05, b: 0.08, a: 1}
   voidSprite: {fileID: 21300000, guid: 9e6aad185a9d5cb4b818715f9ac4109e, type: 3}
   refugeFloor: {fileID: 0}
+  decorPrefabs: []
   enemies:
   - {fileID: 4622517229540368454, guid: df2ef3f332635414bbb1d4b2639ade5a, type: 3}
   - {fileID: 2183061633328060674, guid: c6ca1a562f1818d4592b8d7046c69dff, type: 3}

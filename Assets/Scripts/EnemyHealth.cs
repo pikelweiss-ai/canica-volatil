@@ -30,6 +30,10 @@ public class EnemyHealth : MonoBehaviour
     public static event Action<EnemyHealth> AnyDied;
 
     private bool isDead = false;
+
+    // Online: identificador comu i si aquest enemic es una copia d'un enemic de l'amfitrio
+    [System.NonSerialized] public int netId;
+    [System.NonSerialized] public bool netProxy;
     private SpriteRenderer spriteRenderer;
     private Color originalColor;
     private EnemyPathfindingAI pathfinding;
@@ -50,12 +54,23 @@ public class EnemyHealth : MonoBehaviour
             originalColor = spriteRenderer.color;
 
         pathfinding = GetComponent<EnemyPathfindingAI>();
+        NetCoop.EnemyStarted(this);
     }
 
     // El crida PlayerAttack / Projectile / explosions: fa mal, flash roig i empenta l'enemic
     public void TakeHit(int damage, Vector2 knockback)
     {
         if (isDead) return;
+
+        // Copia online: es veu el colp ací, pero el dany el decideix l'amfitrio
+        if (netProxy)
+        {
+            if (spriteRenderer != null) { StopCoroutine(nameof(HitFlash)); StartCoroutine(nameof(HitFlash)); }
+            Fx.DamageNumber(transform.position, damage, Color.white);
+            PlayRandomDamageSound();
+            NetCoop.ProxyHit(this, damage, knockback * (1f - knockbackResist));
+            return;
+        }
 
         if (pathfinding != null)
             pathfinding.ApplyKnockback(knockback * (1f - knockbackResist), 0.15f);
@@ -80,6 +95,7 @@ public class EnemyHealth : MonoBehaviour
     public void TakeDamage(int damage)
     {
         if (isDead) return;
+        if (netProxy) { NetCoop.ProxyHit(this, damage, Vector2.zero); return; }
 
         currentHealth -= damage;
 
@@ -112,7 +128,19 @@ public class EnemyHealth : MonoBehaviour
 
         Died?.Invoke(this);
         AnyDied?.Invoke(this);
+        NetCoop.EnemyDied(this);
 
+        Destroy(gameObject);
+    }
+
+    // Copia online: l'amfitrio diu que ha mort. Efectes i boti per al jugador d'aquest PC
+    public void NetDie()
+    {
+        if (isDead) return;
+        isDead = true;
+        if (poofEffectPrefab != null) Instantiate(poofEffectPrefab, transform.position, Quaternion.identity);
+        Fx.Burst(transform.position, deathColor, 10, 3.5f);
+        // El boti el crea l'amfitrio i es comparteix (el primer que l'agafa)
         Destroy(gameObject);
     }
 

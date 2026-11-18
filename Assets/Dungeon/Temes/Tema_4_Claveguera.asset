@@ -24,9 +24,13 @@ MonoBehaviour:
   backgroundColor: {r: 0.04, g: 0.06, b: 0.03, a: 1}
   voidSprite: {fileID: 21300000, guid: 9e6aad185a9d5cb4b818715f9ac4109e, type: 3}
   refugeFloor: {fileID: 0}
+  decorPrefabs:
+  - {fileID: 4626146311486231265, guid: 0ed6dc098a3d372489826f933fc9b26f, type: 3}
+  - {fileID: 8021298681483060450, guid: 14c013bafbeb96b4a9c1d72f6a77a219, type: 3}
   enemies:
   - {fileID: 2183061633328060674, guid: c6ca1a562f1818d4592b8d7046c69dff, type: 3}
   - {fileID: 5777466996196190977, guid: 372b6c8329ee5bb4dada4201aa4a9a53, type: 3}
   - {fileID: 4086869058332645981, guid: 9cf1f230b0449444fa5108bbb137cba9, type: 3}
   - {fileID: 5870496072010164621, guid: 0e33aff4c4463254fb3ef5fd4621cade, type: 3}
+  - {fileID: 6155995179530356856, guid: fde01ca30c3c8814d9a274a7a9ceb587, type: 3}
   boss: {fileID: 2767157674481483285, guid: cbdd44b94b39d164ca13361ea498d1de, type: 3}

@@ -9,6 +9,9 @@ public class HudLayout : MonoBehaviour
     public static int CoinPosition { get=>Mathf.Clamp(PlayerPrefs.GetInt("HUD_Coins",0),0,3);set{PlayerPrefs.SetInt("HUD_Coins",Mathf.Clamp(value,0,3));PlayerPrefs.Save();} }
     GameObject canvas;
     RectTransform safe,healthGroup,coinGroup;
+    HotbarUI hotbar;
+    RectTransform hotbarSlot;
+    readonly Vector3[] corners=new Vector3[4];
     void Start()
     {
         canvas=new GameObject("HUD personalitzable",typeof(Canvas),typeof(CanvasScaler));
@@ -43,13 +46,32 @@ public class HudLayout : MonoBehaviour
         if(safe==null)return;var area=Screen.safeArea;
         safe.anchorMin=new Vector2(area.xMin/Screen.width,area.yMin/Screen.height);safe.anchorMax=new Vector2(area.xMax/Screen.width,area.yMax/Screen.height);safe.offsetMin=safe.offsetMax=Vector2.zero;
         Anchor(healthGroup,HealthPosition,false);Anchor(coinGroup,CoinPosition,true);
+        if(hotbar==null)hotbar=Object.FindFirstObjectByType<HotbarUI>();
+        if(hotbar!=null)
+        {
+            hotbar.SetHudAbove(HealthPosition==3 || CoinPosition==3);
+            if(hotbarSlot==null){var slot=hotbar.GetComponentInChildren<SlotInput>();if(slot!=null)hotbarSlot=(RectTransform)slot.transform;}
+            if(hotbarSlot!=null)
+            {
+                hotbarSlot.GetWorldCorners(corners);float factor=canvas.GetComponent<Canvas>().scaleFactor;
+                float center=hotbar.transform.position.x,y=corners[1].y+4*factor;
+                if(MobileInput.Active)
+                {
+                    var heals=Object.FindFirstObjectByType<HealBarUI>();
+                    var slot=heals!=null?heals.GetComponentInChildren<SlotInput>():null;
+                    if(slot!=null){((RectTransform)slot.transform).GetWorldCorners(corners);y=corners[1].y+4*factor;}
+                }
+                if(HealthPosition==3)healthGroup.position=new Vector3(center,y,0);
+                if(CoinPosition==3)coinGroup.position=new Vector3(center-(HealthPosition==3?202*factor:0),y,0);
+            }
+        }
     }
     static void Anchor(RectTransform r,int position,bool coins)
     {
         if(position==0){r.anchorMin=r.anchorMax=r.pivot=new Vector2(0,1);r.anchoredPosition=new Vector2(18,coins?-66:-18);}
         else if(position==1){r.anchorMin=r.anchorMax=r.pivot=Vector2.one;r.anchoredPosition=new Vector2(-20,-140-GameSettings.MapSize*190/240-(coins?48:0));}
         else if(position==2){r.anchorMin=r.anchorMax=r.pivot=Vector2.zero;r.anchoredPosition=new Vector2(18,coins?20:68);}
-        else {r.anchorMin=r.anchorMax=r.pivot=new Vector2(.5f,0);r.anchoredPosition=new Vector2(0,coins?180:228);}
+        else {r.anchorMin=r.anchorMax=r.pivot=new Vector2(.5f,0);r.anchoredPosition=new Vector2(0,96);}
     }
     void OnDestroy(){if(canvas!=null)Destroy(canvas);}
 }

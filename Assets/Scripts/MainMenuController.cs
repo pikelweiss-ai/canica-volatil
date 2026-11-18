@@ -23,6 +23,8 @@ public class MainMenuController : MonoBehaviour
         RunState.Reset();
         EnsureDungeonMap();
         AlphaMainMenu.Create(this);
+        // Venim d'una sala online (eixir, expulsio, l'amfitrio ha tancat): tornem al navegador de sales
+        if (NetSession.ReopenBrowser) { NetSession.ReopenBrowser = false; RoomBrowserUI.Open(); }
     }
 
     // L'escena guardada pot tindre la llista vella: afegim la Masmorra al principi si no hi és

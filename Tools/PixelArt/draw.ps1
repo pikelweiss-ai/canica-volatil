@@ -308,6 +308,7 @@ $sprites['Cofres/Dungeon/C_Metall'] = @{ size = 16; mirror = $true; rows = @(
 . (Join-Path $PSScriptRoot 'masmorra.ps1')
 . (Join-Path $PSScriptRoot 'masmorra2.ps1')
 . (Join-Path $PSScriptRoot 'prealpha.ps1')
+. (Join-Path $PSScriptRoot 'alpha-personality.ps1')
 
 # ---------------- Guardar PNG ----------------
 $bitmaps = [ordered]@{}

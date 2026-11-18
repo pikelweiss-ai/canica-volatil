@@ -116,12 +116,19 @@ public static class Fx
     // ---------- Explosions ----------
 
     // Fa mal en un radi: al jugador, als enemics i als objectes trencables
-    public static void Explode(Vector2 pos, float radius, int playerDamage, int enemyDamage, Transform ignore = null)
+    // Nomes la part que es veu i se sent (online: explosions d'un altre PC)
+    public static void ExplodeVisual(Vector2 pos, float radius)
     {
         SpriteRenderer sr = MakeSprite("Explosio", pos, Disc, new Color(1f, 0.85f, 0.3f, 0.9f), "Player", 10);
         Runner.Run(ExplosionAnim(sr, radius));
         Play(Boom, 0.8f);
         Shake(0.25f, 0.25f);
+    }
+
+    public static void Explode(Vector2 pos, float radius, int playerDamage, int enemyDamage, Transform ignore = null)
+    {
+        ExplodeVisual(pos, radius);
+        NetCoop.Exploded(pos, radius, playerDamage); // Online: tambe als companys
 
         var done = new HashSet<Object>();
         foreach (Collider2D hit in Physics2D.OverlapCircleAll(pos, radius))

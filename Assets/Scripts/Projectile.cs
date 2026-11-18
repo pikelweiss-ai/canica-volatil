@@ -13,6 +13,8 @@ public class Projectile : MonoBehaviour
     private Transform owner;
     private Vector2 startPosition;
     private WeaponData weapon;
+    // Online: bala d'un company. Es veu igual pero no fa mal (el dany el compta el PC de qui dispara)
+    [System.NonSerialized] public bool cosmetic;
 
     // endPoint: on acaba la línia d'apuntat. El projectil s'atura quan la seua PUNTA hi arriba.
     public void Init(Vector2 dir, WeaponData weapon, Transform shooter, Vector2? endPoint = null)
@@ -93,12 +95,17 @@ public class Projectile : MonoBehaviour
             if (owner != null && hit.transform.IsChildOf(owner))
                 continue;
 
+            // Cooperatiu: tant el tret real com la copia visual travessen els companys.
+            // Al receptor el jugador local te collider solid, no es una paret.
+            if (NetCoop.Online && (hit.GetComponentInParent<PlayerHealth>() != null || hit.GetComponentInParent<RemoteAvatar>() != null))
+                continue;
+
             EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
             if (enemy != null)
             {
                 if (alreadyHit.Contains(enemy)) continue; // Fletxa que travessa: no pega dues vegades
                 alreadyHit.Add(enemy);
-                enemy.TakeHit(damage, direction * knockbackForce);
+                if (!cosmetic) enemy.TakeHit(damage, direction * knockbackForce);
                 if (pierceLeft-- > 0 || weapon.returns) continue;
                 End();
                 return;
@@ -108,7 +115,7 @@ public class Projectile : MonoBehaviour
             Breakable breakable = hit.GetComponentInParent<Breakable>();
             if (breakable != null)
             {
-                breakable.Hit(damage);
+                if (!cosmetic) breakable.Hit(damage);
                 if (weapon.returns) { StartReturn(); return; }
                 End();
                 return;
@@ -144,7 +151,7 @@ public class Projectile : MonoBehaviour
             EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
             if (enemy == null || alreadyHit.Contains(enemy)) continue;
             alreadyHit.Add(enemy);
-            enemy.TakeHit(damage, direction * knockbackForce);
+            if (!cosmetic) enemy.TakeHit(damage, direction * knockbackForce);
         }
     }
 
@@ -175,7 +182,7 @@ public class Projectile : MonoBehaviour
         {
             WeaponSounds.Play(WeaponSounds.ImpactClip(weapon), 0.6f);
             if (weapon.explosionRadius > 0f)
-                Fx.Explode(transform.position, weapon.explosionRadius, 0, weapon.explosionDamage, owner); // No et fa mal a tu
+                { if (cosmetic) Fx.ExplodeVisual(transform.position, weapon.explosionRadius); else Fx.Explode(transform.position, weapon.explosionRadius, 0, weapon.explosionDamage, owner); } // No et fa mal a tu
         }
         Destroy(gameObject);
     }

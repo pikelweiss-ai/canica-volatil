@@ -7,10 +7,10 @@ using UnityEngine;
 public class CosmeticsDatabase : ScriptableObject
 {
     [System.Serializable]
-    public class Hat { public string name; public Sprite sprite; }
+    public class Hat { public string name; public Sprite sprite; public bool fullHelmet; }
 
     [System.Serializable]
-    public class Tint { public string name; public Color color = Color.white; }
+    public class Tint { public string name; public Color color = Color.white; public TrailShape shape; }
 
     public Sprite playerSprite;        // La canica original (per a la previsualització del menú)
 
@@ -43,3 +43,4 @@ public class CosmeticsDatabase : ScriptableObject
 
     public static bool IsRainbow(Color c) => c.a > 0.98f && c.a < 1f;
 }
+public enum TrailShape { Ribbon, Dots, Sparks, Rings, Zigzag, Footsteps, Stars }

@@ -25,6 +25,7 @@ public class HealPickup : MonoBehaviour
         p.waitForPlayerToLeave = droppedByPlayer;
         p.Build();
         p.StartCoroutine(p.PopOut(from, to));
+        NetShared.Spawned(p, NetShared.Kind.Heal, item.name, from, to); // Online: tots el veuen
         return p;
     }
 
@@ -84,8 +85,15 @@ public class HealPickup : MonoBehaviour
 
         // Va a la bossa de cures (tecles 5-8). Si la bossa està plena, es queda al terra.
         if (bag == null) bag = player.GetComponent<HealInventory>();
-        if (bag == null || !bag.Add(item)) return;
+        if (bag == null || !bag.CanAdd(item)) return;
+        // Online: el primer que l'agafa se la queda
+        if (NetShared.Claim(this, Collect)) return;
+        Collect();
+    }
 
+    void Collect()
+    {
+        if (bag == null || !bag.Add(item)) return;
         ItemGraphics.PlayPickupSound(transform.position);
         Fx.Text(transform.position, item.itemName, Color.white, 3f);
         Destroy(gameObject);

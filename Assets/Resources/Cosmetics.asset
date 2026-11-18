@@ -16,97 +16,183 @@ MonoBehaviour:
   skins:
   - name: "Cl\xE0ssica"
     sprite: {fileID: 0}
+    fullHelmet: 0
   - name: Canica de vidre
     sprite: {fileID: 21300000, guid: d9fe1933ee723d741bd4dd19747d1731, type: 3}
+    fullHelmet: 0
   - name: Bola de foc
     sprite: {fileID: 21300000, guid: d598252272d1a3844a591670a4ec358e, type: 3}
+    fullHelmet: 0
   - name: "Gla\xE7\xF3"
     sprite: {fileID: 21300000, guid: 09e5f684b330d0b40894ef6af381a5bf, type: 3}
+    fullHelmet: 0
   - name: Canica d'or
     sprite: {fileID: 21300000, guid: fd8ac61774f484447a8904ceb3924a14, type: 3}
+    fullHelmet: 0
   - name: Robot
     sprite: {fileID: 21300000, guid: cb4a816a7f85d984296c3027b0a79943, type: 3}
+    fullHelmet: 0
   - name: Zombi
     sprite: {fileID: 21300000, guid: 0cc8dd8cec8fb8641bfde4ae5d57afa7, type: 3}
+    fullHelmet: 0
   - name: Ninja
     sprite: {fileID: 21300000, guid: a71e025e0a19ac247887062009e7ebbd, type: 3}
+    fullHelmet: 0
   - name: "S\xEDndria"
     sprite: {fileID: 21300000, guid: 92d5000c437fb684eb076704f1af16c1, type: 3}
+    fullHelmet: 0
   - name: Fantasma
     sprite: {fileID: 21300000, guid: e86cbe90ef3b13f49ac6778fb934d3d0, type: 3}
+    fullHelmet: 0
   - name: Cosmos
     sprite: {fileID: 21300000, guid: 39f40229da8644d49a5c40c911a59a36, type: 3}
+    fullHelmet: 0
   - name: Corall
     sprite: {fileID: 21300000, guid: ce5d23ef0ffac1b40b27b987a68b8ce4, type: 3}
+    fullHelmet: 0
   - name: Menta
     sprite: {fileID: 21300000, guid: 746bc558fa233a34889dd1af064aa962, type: 3}
+    fullHelmet: 0
   - name: Obsidiana
     sprite: {fileID: 21300000, guid: 253b5e69b6361364ba138c6939bc25ab, type: 3}
+    fullHelmet: 0
   - name: Bombolla
     sprite: {fileID: 21300000, guid: f37e48bd861cb024a934118bce658b98, type: 3}
+    fullHelmet: 0
   - name: Capvespre
     sprite: {fileID: 21300000, guid: 7daf049fd3c26c24a9e9e391ece932f2, type: 3}
+    fullHelmet: 0
   - name: Aurora
     sprite: {fileID: 21300000, guid: 7672dd6e431f5f546b986bf36172a22d, type: 3}
+    fullHelmet: 0
   - name: Coure
     sprite: {fileID: 21300000, guid: b7d3ba7941c2b1e43a00110cc485b09c, type: 3}
+    fullHelmet: 0
   - name: Caramel
     sprite: {fileID: 21300000, guid: 7f580cd4b31a2f547a8aa5bc13806bcd, type: 3}
+    fullHelmet: 0
   - name: Llima
     sprite: {fileID: 21300000, guid: b29a20e85a70d9f459343db94c40da08, type: 3}
+    fullHelmet: 0
   - name: Safir
     sprite: {fileID: 21300000, guid: b2a3d89d51a87c346950a764ae2fe24e, type: 3}
+    fullHelmet: 0
   - name: Perla
     sprite: {fileID: 21300000, guid: 0fc1936407ff6654b9ec5d0b5d506ee7, type: 3}
+    fullHelmet: 0
+  - name: "C\xEDclop"
+    sprite: {fileID: 21300000, guid: fad44ef1a6054874788becca4879a06e, type: 3}
+    fullHelmet: 0
+  - name: Gat
+    sprite: {fileID: 21300000, guid: 462f9889dcbdbae4c927364fef07c43c, type: 3}
+    fullHelmet: 0
+  - name: Gota
+    sprite: {fileID: 21300000, guid: 7be117bd83761e849ae60cf674e1d4c7, type: 3}
+    fullHelmet: 0
   hats:
   - name: Cap
     sprite: {fileID: 0}
+    fullHelmet: 0
   - name: Corona
     sprite: {fileID: 21300000, guid: 1caffa29caec0f14e8133c9111dd3ec0, type: 3}
+    fullHelmet: 0
   - name: Gorra
     sprite: {fileID: 21300000, guid: bb915057900504c44a0ed830d33536f3, type: 3}
+    fullHelmet: 0
   - name: Banyes
     sprite: {fileID: 21300000, guid: 2a90d462b78b4a848a55381e942b3fb6, type: 3}
+    fullHelmet: 0
   - name: Aureola
     sprite: {fileID: 21300000, guid: 4f2636d2a58e51f4a82b343b55d009ff, type: 3}
+    fullHelmet: 0
   - name: Bolet
     sprite: {fileID: 21300000, guid: f43dde2e950568e4089d0bf90b0bce22, type: 3}
-  - name: Astronauta
+    fullHelmet: 0
+  - name: Casc d'astronauta
     sprite: {fileID: 21300000, guid: 6cb80f0a7fa8769469e59364b74cd8ce, type: 3}
+    fullHelmet: 1
   - name: Samurai
     sprite: {fileID: 21300000, guid: febb26f677d219349986880751431480, type: 3}
+    fullHelmet: 0
   - name: Cristall
     sprite: {fileID: 21300000, guid: c91f058994a5b644a9ab4929b0a6d03b, type: 3}
+    fullHelmet: 0
   - name: Pirata
     sprite: {fileID: 21300000, guid: ce497571e16c5e142899f586306db812, type: 3}
+    fullHelmet: 0
   - name: Viking
     sprite: {fileID: 21300000, guid: 4995d2c36e7a292488d2ec1dffa9ea90, type: 3}
+    fullHelmet: 0
   - name: Flor
     sprite: {fileID: 21300000, guid: c07bb7713daa9504c953bd6697490abb, type: 3}
+    fullHelmet: 0
   - name: Copalta
     sprite: {fileID: 21300000, guid: 28023af5d8436734a8debdb814c23bac, type: 3}
+    fullHelmet: 0
+  - name: Bruixa
+    sprite: {fileID: 21300000, guid: 957185a9ff415a6489bdb9914bcc9d3c, type: 3}
+    fullHelmet: 0
+  - name: Explorador
+    sprite: {fileID: 21300000, guid: 31392efbf20952f40b6b867a8c08ad0c, type: 3}
+    fullHelmet: 0
+  - name: Enginyer
+    sprite: {fileID: 21300000, guid: 47948c7f27a1c78469d892411455cc5e, type: 3}
+    fullHelmet: 0
+  - name: "Capit\xE0"
+    sprite: {fileID: 21300000, guid: 1a3820dfde839d44cb87c4cdee532f7c, type: 3}
+    fullHelmet: 0
   trails:
   - name: Cap
     color: {r: 0, g: 0, b: 0, a: 0}
+    shape: 0
   - name: Blanc
     color: {r: 1, g: 1, b: 1, a: 1}
+    shape: 1
   - name: Foc
     color: {r: 1, g: 0.5, b: 0.15, a: 1}
+    shape: 2
   - name: "El\xE8ctric"
     color: {r: 0.3, g: 0.9, b: 1, a: 1}
+    shape: 4
   - name: Toxic
     color: {r: 0.55, g: 1, b: 0.3, a: 1}
+    shape: 3
   - name: "Arc de Sant Mart\xED"
     color: {r: 1, g: 0, b: 1, a: 0.99}
+    shape: 0
   - name: Corall
     color: {r: 1, g: 0.3, b: 0.5, a: 1}
+    shape: 0
   - name: Cosmos
     color: {r: 0.55, g: 0.25, b: 1, a: 1}
+    shape: 0
   - name: Or
     color: {r: 1, g: 0.8, b: 0.2, a: 1}
+    shape: 0
   - name: Gel
     color: {r: 0.65, g: 0.9, b: 1, a: 1}
+    shape: 0
   - name: Menta
     color: {r: 0.2, g: 1, b: 0.7, a: 1}
+    shape: 0
   - name: Obsidiana
     color: {r: 0.3, g: 0.3, b: 0.45, a: 1}
+    shape: 0
+  - name: Pols d'estrelles
+    color: {r: 1, g: 0.8, b: 0.3, a: 1}
+    shape: 6
+  - name: Bombolles
+    color: {r: 0.4, g: 0.9, b: 0.8, a: 1}
+    shape: 3
+  - name: Petjades
+    color: {r: 0.9, g: 0.85, b: 0.7, a: 1}
+    shape: 5
+  - name: Punts de pluja
+    color: {r: 0.4, g: 0.7, b: 1, a: 1}
+    shape: 1
+  - name: Espurnes
+    color: {r: 1, g: 0.55, b: 0.2, a: 1}
+    shape: 2
+  - name: Ziga-zaga
+    color: {r: 0.7, g: 0.5, b: 1, a: 1}
+    shape: 4

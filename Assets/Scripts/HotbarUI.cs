@@ -21,6 +21,10 @@ public class HotbarUI : MonoBehaviour
     private TextMeshProUGUI[] names;
     private TextMeshProUGUI currentWeaponText;
     private TMP_FontAsset font;
+    public void SetHudAbove(bool value)
+    {
+        if(currentWeaponText!=null)currentWeaponText.rectTransform.anchoredPosition=new Vector2(0,MobileInput.Active?(value?320:245):value?180:120);
+    }
 
     public static HotbarUI Create(int slotCount, TMP_FontAsset font = null)
     {

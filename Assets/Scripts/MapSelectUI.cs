@@ -73,7 +73,7 @@ public class MapSelectUI : MonoBehaviour
             CreateCard(root, maps[i], new Vector2(x, 0f), cardHeight);
         }
 
-                TextMeshProUGUI help = CreateText("Controls", root, "Configura les tecles des de Controls al menú\nRoda configurable · Dues tecles per acció · Esc per tornar", 23);
+                TextMeshProUGUI help = CreateText("Controls", root, MobileInput.Active ? "Dos joysticks: mou-te i ataca alhora\nToca les armes i les cures · Ajuda en Controls" : "Configura les tecles des de Controls al menú\nRoda configurable · Dues tecles per acció · Esc per tornar", 23);
         Place(help.rectTransform, new Vector2(0f, -260f), new Vector2(1300f, 80f));
         // Botó per a tornar al menú
         Button back = CreateButton("Tornar", root, new Color(1f, 1f, 1f, 0.9f));
@@ -98,11 +98,13 @@ public class MapSelectUI : MonoBehaviour
         card.colors = colors;
 
         string sceneName = map.sceneName;
-                bool available = sceneName != "Lobby" && Application.CanStreamedLevelBeLoaded(sceneName);
+        bool available = Application.CanStreamedLevelBeLoaded(sceneName);
         card.interactable = available;
-        if (available) card.onClick.AddListener(() => { RunState.Reset(); SceneManager.LoadScene(sceneName); });
+        // La targeta del Lobby obri el navegador de sales online (la sala ja carrega el Lobby)
+        if (available && sceneName == "Lobby") card.onClick.AddListener(() => { Hide(); RoomBrowserUI.Open(); });
+        else if (available) card.onClick.AddListener(() => { RunState.Reset(); SceneManager.LoadScene(sceneName); });
         string description = sceneName == "Dungeon" ? "SOLO · ROGUELITE\nTresors, armes i bosses" :
-            sceneName == "Lobby" ? "ONLINE · PRÒXIMAMENT\nSales amb codi" : "PRÀCTICA OFFLINE\nMoviment i punteria";
+            sceneName == "Lobby" ? "ONLINE · SALES\nCodi, xarxa local o Internet" : "PRÀCTICA OFFLINE\nMoviment i punteria";
         TextMeshProUGUI detail = CreateText("Descripcio", card.transform, description, 18);
         Place(detail.rectTransform, new Vector2(0f, -82f), new Vector2(380f, 74f));
         // Miniatura
@@ -128,7 +130,7 @@ public class MapSelectUI : MonoBehaviour
         }
 
         // Nom del mapa, a baix
-        TextMeshProUGUI label = CreateText("Nom", card.transform, map.displayName, 25);
+        TextMeshProUGUI label = CreateText("Nom", card.transform, map.sceneName == "Lobby" ? "Online" : map.displayName, 25);
         label.color = Color.white;
         RectTransform lrt = label.rectTransform;
         lrt.anchorMin = new Vector2(0f, 0f);

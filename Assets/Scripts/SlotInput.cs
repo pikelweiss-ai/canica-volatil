@@ -26,6 +26,7 @@ public class SlotInput : MonoBehaviour, IPointerClickHandler, IBeginDragHandler,
 
     public void OnBeginDrag(PointerEventData e)
     {
+        if(MobileInput.Active) { e.pointerDrag = null; return; }
         Sprite icon = getIcon?.Invoke(index);
         if (icon == null) { e.pointerDrag = null; return; } // Casella buida: no s'arrossega res
 
@@ -48,6 +49,7 @@ public class SlotInput : MonoBehaviour, IPointerClickHandler, IBeginDragHandler,
 
     public void OnEndDrag(PointerEventData e)
     {
+        if(MobileInput.Active) return;
         if (ghost != null) Destroy(ghost.gameObject);
         ghost = null;
 

@@ -35,6 +35,7 @@ public class ItemPickup : MonoBehaviour
         item.waitForPlayerToLeave = droppedByPlayer;
         item.Build();
         item.StartCoroutine(item.PopOut(from, to));
+        NetShared.Spawned(item, NetShared.Kind.Weapon, weapon.name, from, to); // Online: tots el veuen
         return item;
     }
 
@@ -125,7 +126,15 @@ public class ItemPickup : MonoBehaviour
 
         if (distance > pickupRange) return;
 
-        if (playerAttack.AddWeapon(weapon))
+        // Online: el primer que l'agafa se'l queda (si tens lloc a la hotbar)
+        if (!playerAttack.HasFreeSlot) return;
+        if (NetShared.Claim(this, Collect)) return;
+        Collect();
+    }
+
+    void Collect()
+    {
+        if (playerAttack != null && playerAttack.AddWeapon(weapon))
         {
             ItemGraphics.PlayPickupSound(transform.position);
             Destroy(gameObject);

@@ -104,12 +104,25 @@ public class PlayerHealth : MonoBehaviour
         // A la masmorra: s'acaba la partida i tornes a començar
         if (DungeonGenerator.Instance != null)
         {
-            DungeonGenerator.Instance.PlayerDied();
+            // Online: caus i esperes els companys (si cauen tots, s'acaba per a tots)
+            if (!NetCoop.InterceptDeath(this)) DungeonGenerator.Instance.PlayerDied();
             gameObject.SetActive(false);
             return;
         }
 
         Respawn();
+    }
+
+    // Online: torna a la partida (quan els companys netegen la sala)
+    public void Revive(int health)
+    {
+        gameObject.SetActive(true);
+        currentHealth = Mathf.Clamp(health, 1, maxHealth);
+        invulnerableUntil = Time.time + 2f;
+        StopCoroutine(nameof(Blink));
+        StartCoroutine(nameof(Blink));
+        UpdateHealthUI();
+        Fx.Burst(transform.position, new Color(0.5f, 1f, 0.6f), 12, 3f);
     }
 
     void Respawn()

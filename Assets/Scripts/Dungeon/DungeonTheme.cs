@@ -16,6 +16,7 @@ public class DungeonTheme : ScriptableObject
     public Color backgroundColor = new Color(0.07f, 0.07f, 0.09f);
     public Sprite voidSprite;
     public TileBase refugeFloor;
+    public GameObject[] decorPrefabs;
 
     [Header("Enemics d'este tema (si està buit, els de la masmorra)")]
     public GameObject[] enemies;

@@ -134,6 +134,7 @@ public class EnemyBoss : MonoBehaviour
         // Ombra roja on caurà
         SpriteRenderer mark = Fx.MakeSprite("Avis bot", target, Fx.Disc, new Color(1f, 0.2f, 0.2f, 0.35f), "Shadows", 5);
         mark.transform.localScale = Vector3.one * 2.4f;
+        NetShared.Telegraph(target, 2.4f, 1.3f); // Online: els companys tambe veuen on caura
         yield return Telegraph(0.6f);
 
         Vector2 from = transform.position;
@@ -157,7 +158,7 @@ public class EnemyBoss : MonoBehaviour
         GameAudio.Enemy(Fx.Boom, 0.6f);
         Fx.Burst(target, dustColor, 16, 5f);
         if (ai.Player != null && Vector2.Distance(ai.Player.position, target) < 1.3f)
-            ai.Player.GetComponent<PlayerHealth>()?.TakeDamage(1);
+            NetCoop.DamagePlayer(ai.Player, 1);
 
         int n = enraged ? 20 : 14;
         for (int i = 0; i < n; i++)
@@ -224,7 +225,7 @@ public class EnemyBoss : MonoBehaviour
                 rb.MovePosition(next);
                 moved += step;
                 if (ai.Player != null && Vector2.Distance(next, ai.Player.position) < ai.bodyRadius + 0.4f)
-                    ai.Player.GetComponent<PlayerHealth>()?.TakeDamage(1);
+                    NetCoop.DamagePlayer(ai.Player, 1);
             }
             ai.enabled = true;
             Fx.Burst(transform.position, dustColor, 8, 3f);
@@ -244,6 +245,7 @@ public class EnemyBoss : MonoBehaviour
             Vector2 p = (Vector2)ai.Player.position + (i == 0 ? Vector2.zero : Random.insideUnitCircle * 3f);
             SpriteRenderer m = Fx.MakeSprite("Roca avis", p, Fx.Disc, new Color(1f, 0.2f, 0.2f, 0.35f), "Shadows", 5);
             m.transform.localScale = Vector3.one * 1.2f;
+            NetShared.Telegraph(p, 1.2f, 0.9f);
             marks.Add(m);
         }
         yield return new WaitForSeconds(0.9f);
@@ -253,7 +255,7 @@ public class EnemyBoss : MonoBehaviour
             Destroy(m.gameObject);
             Fx.Burst(p, new Color(0.55f, 0.55f, 0.6f), 6, 2.5f);
             if (ai.Player != null && Vector2.Distance(ai.Player.position, p) < 0.65f)
-                ai.Player.GetComponent<PlayerHealth>()?.TakeDamage(1);
+                NetCoop.DamagePlayer(ai.Player, 1);
         }
         GameAudio.Enemy(Fx.Boom, 0.5f);
         Fx.Shake(0.3f, 0.25f);
@@ -370,7 +372,7 @@ public class EnemyBoss : MonoBehaviour
         float k = Mathf.Clamp01((float)health.currentHealth / health.maxHealth);
         barFill.rectTransform.localScale = new Vector3(k, 1f, 1f);
         barFill.color = enraged ? new Color(0.95f, 0.35f, 0.3f) : new Color(0.55f, 0.85f, 0.3f);
-        barRoot.SetActive(ai != null && ai.HasAggro);
+        barRoot.SetActive((health != null && health.netProxy) || (ai != null && ai.HasAggro)); // Online: als clients sempre es veu
     }
 
     static Image NewImage(string name, Transform parent, Color color)

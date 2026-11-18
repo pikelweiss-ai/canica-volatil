@@ -9,6 +9,10 @@ public class PlayerCosmetics : MonoBehaviour
     private TrailRenderer trail;
     private bool rainbow;
 
+    // Online: per a un company, les seues tries en lloc de les d'aquest PC (-1 = les d'aquest PC)
+    [System.NonSerialized] public int skinOverride = -1, hatOverride = -1, trailOverride = -1;
+    int Pick(int over, string key, int count) => over >= 0 && over < count ? over : CosmeticsDatabase.Get(key, count);
+
     void Start()
     {
         CosmeticsDatabase db = CosmeticsDatabase.Instance;
@@ -18,27 +22,32 @@ public class PlayerCosmetics : MonoBehaviour
         // Skin (si és l'original, el sprite està buit i no es canvia res)
         if (db.skins != null && db.skins.Length > 0)
         {
-            Sprite skin = db.skins[CosmeticsDatabase.Get(CosmeticsDatabase.KeySkin, db.skins.Length)].sprite;
+            Sprite skin = db.skins[Pick(skinOverride, CosmeticsDatabase.KeySkin, db.skins.Length)].sprite;
             if (skin != null) body.sprite = skin;
         }
 
         // Barret
         if (db.hats != null && db.hats.Length > 0)
         {
-            Sprite s = db.hats[CosmeticsDatabase.Get(CosmeticsDatabase.KeyHat, db.hats.Length)].sprite;
-            if (s != null) CreateHat(s);
+            var definition = db.hats[Pick(hatOverride, CosmeticsDatabase.KeyHat, db.hats.Length)];
+            if (definition.sprite != null) CreateHat(definition);
         }
 
         // Rastre
         if (db.trails != null && db.trails.Length > 0)
         {
-            Color c = db.trails[CosmeticsDatabase.Get(CosmeticsDatabase.KeyTrail, db.trails.Length)].color;
-            if (c.a > 0f) CreateTrail(c);
+            var selected = db.trails[Pick(trailOverride, CosmeticsDatabase.KeyTrail, db.trails.Length)];
+            if (selected.color.a > 0f)
+            {
+                if(selected.shape==TrailShape.Ribbon)CreateTrail(selected.color);
+                else gameObject.AddComponent<TrailParticleEmitter>().Init(selected.shape,selected.color,body);
+            }
         }
     }
 
-    void CreateHat(Sprite s)
+    void CreateHat(CosmeticsDatabase.Hat definition)
     {
+        Sprite s=definition.sprite;
         GameObject go = new GameObject("Barret");
         go.transform.SetParent(transform, false);
         hat = go.AddComponent<SpriteRenderer>();
@@ -48,11 +57,12 @@ public class PlayerCosmetics : MonoBehaviour
 
         float parentScale=Mathf.Max(0.01f,transform.lossyScale.y);
         float bodyWidth=body.sprite.bounds.size.x;
-        float localScale=bodyWidth*1.05f/s.bounds.size.x;
+        float localScale=bodyWidth*(definition.fullHelmet?1.18f:1.05f)/s.bounds.size.x;
         go.transform.localScale=Vector3.one*localScale;
         float bottom=(HatFit.Bottom(s)-0.5f)*s.bounds.size.y;
         float lift=s.name.Contains("Aureola")?0.2f:0f;
-        go.transform.localPosition=new Vector3(0f,body.sprite.bounds.max.y-0.07f+lift-bottom*localScale,0f);
+        float bodyTop=(HatFit.Top(body.sprite)-0.5f)*body.sprite.bounds.size.y;
+        go.transform.localPosition=definition.fullHelmet ? new Vector3(0,body.sprite.bounds.center.y,0) : new Vector3(0f,bodyTop-0.025f+lift-bottom*localScale,0f);
         // El nom puja un poc perquè no tape el barret
         PlayerNameTag tag = GetComponent<PlayerNameTag>();
         if (tag != null && tag.playerNameText != null)
@@ -90,11 +100,20 @@ public class PlayerCosmetics : MonoBehaviour
         // Mentre el jugador parpelleja (invulnerable), el barret també
         if (hat != null && body != null) hat.enabled = body.enabled;
     }
+    void OnDestroy(){if(trail!=null && trail.sharedMaterial!=null)Destroy(trail.sharedMaterial);}
 }
 
 // Mesura la base opaca; els marges transparents no compten com a barret.
 public static class HatFit
 {
+    static readonly System.Collections.Generic.Dictionary<Sprite,float> tops=new System.Collections.Generic.Dictionary<Sprite,float>();
+    public static float Top(Sprite sprite)
+    {
+        if(tops.TryGetValue(sprite,out float top))return top;Rect r=sprite.rect;
+        for(int y=(int)r.height-1;y>=0;y--)for(int x=0;x<(int)r.width;x++)
+            if(sprite.texture.GetPixel((int)r.x+x,(int)r.y+y).a>0.1f){top=(y+1)/r.height;tops[sprite]=top;return top;}
+        return 1;
+    }
     static readonly System.Collections.Generic.Dictionary<Sprite,float> cache=new System.Collections.Generic.Dictionary<Sprite,float>();
     public static float Bottom(Sprite sprite)
     {

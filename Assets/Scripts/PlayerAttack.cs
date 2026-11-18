@@ -54,7 +54,7 @@ public class PlayerAttack : MonoBehaviour
     private HotbarUI hotbarUI;
     private SpriteRenderer playerSprite;
 
-    WeaponData CurrentWeapon
+    public WeaponData CurrentWeapon
     {
         get
         {
@@ -116,7 +116,7 @@ public class PlayerAttack : MonoBehaviour
         if (!Input.GetMouseButton(0))
             mouseBlocked = false;
 
-        bool attackPressed = GameControls.Held(4) && !mouseBlocked && !(EventSystem.current != null && EventSystem.current.IsPointerOverGameObject());
+        bool attackPressed = MobileInput.Active ? !GameControls.Editing && MobileInput.Firing : GameControls.Held(4) && !mouseBlocked && !(EventSystem.current != null && EventSystem.current.IsPointerOverGameObject());
 
         if(!attackPressed || spinningWeapon!=CurrentWeapon){spinCharge=0;spinningWeapon=CurrentWeapon;}
         if(attackPressed && CurrentWeapon!=null && CurrentWeapon.spinUpTime>0)
@@ -151,7 +151,7 @@ public class PlayerAttack : MonoBehaviour
         if (cam == null) return;
 
         Vector3 mouseWorld = cam.ScreenToWorldPoint(Input.mousePosition);
-        Vector2 dir = (Vector2)mouseWorld - (Vector2)transform.position;
+        Vector2 dir = MobileInput.Active ? MobileInput.Aim : (Vector2)mouseWorld - (Vector2)transform.position;
 
         if (dir.sqrMagnitude > 0.001f)
             aimDirection = dir.normalized;
@@ -268,6 +268,8 @@ public class PlayerAttack : MonoBehaviour
     }
 
     // Per si en el futur vols recollir armes del terra
+    public bool HasFreeSlot { get { if (hotbarSlots == null) return false; foreach (var w in hotbarSlots) if (w == null) return true; return false; } }
+
     public bool AddWeapon(WeaponData weapon)
     {
         for (int i = 0; i < hotbarSlots.Length; i++)
@@ -290,6 +292,7 @@ public class PlayerAttack : MonoBehaviour
 
         StartCoroutine(AttackSquash());
         StartCoroutine(PunchFlash(hitPoint));
+        NetCoop.LocalPunch(hitPoint);
 
         bool hitSomething = false;
 
@@ -340,6 +343,7 @@ public class PlayerAttack : MonoBehaviour
 
             Vector2 end = (Vector2)transform.position + dir * dist;
             Projectile.Spawn(spawnPos, dir, weapon, transform, layer, order, end);
+            NetCoop.LocalPellet(weapon, spawnPos, dir, end); // Online: els companys tambe la veuen
         }
 
         WeaponSounds.Play(WeaponSounds.ShootClip(weapon), 0.5f);
@@ -351,6 +355,7 @@ public class PlayerAttack : MonoBehaviour
     {
         if(weapon.meleeDashDistance>0) GetComponent<PlayerMovement>()?.Dash(aimDirection,weapon.meleeDashDistance);
         reverseSwing=weapon.alternateSwing && !reverseSwing;
+        NetCoop.LocalSwing(weapon, aimDirection, reverseSwing);
         var enemies = new System.Collections.Generic.HashSet<EnemyHealth>();
         var objects = new System.Collections.Generic.HashSet<Breakable>();
         Vector2 origin = transform.position;
@@ -459,6 +464,21 @@ public class PlayerAttack : MonoBehaviour
         if (selectedSlot == a) selectedSlot = b;
         else if (selectedSlot == b) selectedSlot = a;
         hotbarUI.Refresh(hotbarSlots, selectedSlot);
+    }
+
+    // Online: en caure, totes les armes queden al terra al voltant (els companys les poden agafar)
+    public void DropAllOnDeath()
+    {
+        for (int i = 0; i < hotbarSlots.Length; i++)
+        {
+            WeaponData weapon = hotbarSlots[i];
+            if (weapon == null) continue;
+            hotbarSlots[i] = null;
+            float a = (i / (float)hotbarSlots.Length) * Mathf.PI * 2f + Random.Range(-0.3f, 0.3f);
+            ItemPickup.Spawn(weapon, transform.position, transform.position + new Vector3(Mathf.Cos(a), Mathf.Sin(a)) * 1.1f);
+        }
+        if (hotbarUI != null) hotbarUI.Refresh(hotbarSlots, selectedSlot);
+        RunState.Weapons = (WeaponData[])hotbarSlots.Clone();
     }
 
     // Tira al terra l'arma de la casella 'i' (Z o arrossegar-la fora de la hotbar)

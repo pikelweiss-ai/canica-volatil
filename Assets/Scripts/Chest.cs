@@ -116,13 +116,14 @@ public class Chest : MonoBehaviour
     {
         UpdateSortingWithPlayer();
 
-        if (IsOpen || opening || player == null)
+        if (netWaiting && Time.unscaledTime > netWaitUntil) netWaiting = false; // Sense resposta: es pot tornar a provar
+        if (IsOpen || opening || player == null || netWaiting)
         {
             SetPromptVisible(false);
             return;
         }
 
-        bool canOpen = IsInRange() && IsClosestChest();
+        bool canOpen = DungeonGenerator.CanInteractAt(transform.position) && IsInRange() && IsClosestChest();
         // Estàs movent-te si prems alguna tecla de moviment o si la canica s'ha desplaçat.
         // (Només amb la posició no basta: el moviment va per passos de física i hi ha
         //  fotogrames en què no canvia, i això feia sonar els colps com una metralleta.)
@@ -149,6 +150,8 @@ public class Chest : MonoBehaviour
             if (holdTime >= openTime)
             {
                 ResetVisual();
+                // Online: el primer que l'obri se l'emporta (un client espera la resposta de l'amfitrio)
+                if (NetCoop.InterceptChestOpen(this)) { holdTime = 0f; netWaiting = !IsOpen; netWaitUntil = Time.unscaledTime + 3f; SetPromptVisible(false); return; }
                 StartCoroutine(OpenFinishRoutine());
                 return;
             }
@@ -224,6 +227,30 @@ public class Chest : MonoBehaviour
                 return false;
         }
         return true;
+    }
+
+    // ---------- Online ----------
+    bool netWaiting;
+    float netWaitUntil;
+
+    // Un altre jugador l'ha obert: queda obert per a tu, sense boti
+    public void NetMarkOpened()
+    {
+        netWaiting = false;
+        if (IsOpen) return;
+        IsOpen = true;
+        if (spriteRenderer != null && openSprite != null) spriteRenderer.sprite = openSprite;
+        SetPromptVisible(false);
+        ResetVisual();
+        Fx.Burst(transform.position, new Color(1f, 0.9f, 0.5f), 5, 1.5f);
+    }
+
+    // L'amfitrio diu que es teu: s'obri com sempre (so, bot i boti)
+    public void NetGrantOpen()
+    {
+        netWaiting = false;
+        if (IsOpen || opening) return;
+        StartCoroutine(OpenFinishRoutine());
     }
 
     // Ja has mantingut la E prou temps: s'obri, sona i bota

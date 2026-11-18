@@ -20,6 +20,35 @@ public class DisplaySettings : MonoBehaviour
     const string WidthKey="Display_Width",HeightKey="Display_Height",ModeKey="Display_Mode";
     Vector2Int lastWindow;
     bool lastFullscreen;
+    bool switching;
+    FullScreenMode targetMode;
+    public static bool IsFullscreen => instance!=null && instance.switching ? instance.targetMode!=FullScreenMode.Windowed : Screen.fullScreen;
+    public static Vector2Int NativeSize()
+    {
+        var d=Screen.mainWindowDisplayInfo;
+        int w=d.width>0?d.width:Screen.currentResolution.width,h=d.height>0?d.height:Screen.currentResolution.height;
+        return new Vector2Int(Mathf.Max(640,w),Mathf.Max(480,h));
+    }
+    void ApplyResolution(Vector2Int size,FullScreenMode mode)
+    {
+        StopAllCoroutines();switching=true;targetMode=mode;
+        Screen.SetResolution(size.x,size.y,mode);
+        StartCoroutine(SettleResolution(size,mode));
+    }
+    IEnumerator SettleResolution(Vector2Int size,FullScreenMode mode)
+    {
+        yield return null;yield return null;
+        float until=Time.realtimeSinceStartup+5;
+        while(Time.realtimeSinceStartup<until && ((mode==FullScreenMode.Windowed?Screen.fullScreen:!Screen.fullScreen) || Screen.width!=size.x || Screen.height!=size.y))yield return null;
+        if((mode==FullScreenMode.Windowed && Screen.fullScreen)||(mode!=FullScreenMode.Windowed && !Screen.fullScreen))
+        {
+            Debug.LogWarning("No s'ha pogut aplicar el mode de pantalla; restaurem l'anterior.");
+            switching=false;if(Pending)Revert();yield break;
+        }
+        if(mode==FullScreenMode.Windowed)yield return FitAndCenter();
+        switching=false;
+        if(Pending)deadline=Time.realtimeSinceStartup+15;
+    }
     public static Vector2Int FitWindow(Vector2Int requested,Vector2Int workArea)
     {
         float maxW=Mathf.Max(320,workArea.x-24),maxH=Mathf.Max(240,workArea.y-72);
@@ -35,28 +64,29 @@ public class DisplaySettings : MonoBehaviour
     IEnumerator FitAndCenter()
     {
         yield return null;yield return null;
-        if(Screen.fullScreen)yield break;
+        if(targetMode!=FullScreenMode.Windowed || Screen.fullScreen)yield break;
         var size=WindowSize(new Vector2Int(Screen.width,Screen.height));
         if(size.x!=Screen.width || size.y!=Screen.height)Screen.SetResolution(size.x,size.y,FullScreenMode.Windowed);
         yield return null;
         var display=Screen.mainWindowDisplayInfo;var area=display.workArea;
-        if(area.width>0 && area.height>0)Screen.MoveMainWindowTo(display,new Vector2Int(area.x+Mathf.Max(0,(area.width-size.x)/2),area.y+Mathf.Max(0,(area.height-size.y)/2)));
+        if(targetMode==FullScreenMode.Windowed && !Screen.fullScreen && area.width>0 && area.height>0)Screen.MoveMainWindowTo(display,new Vector2Int(area.x+Mathf.Max(0,(area.width-size.x)/2),area.y+Mathf.Max(0,(area.height-size.y)/2)));
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void Init()
     {
+        if(MobileInput.Active) return; // Android controla la pantalla i no te finestres redimensionables.
         instance=new GameObject("Configuracio de pantalla",typeof(DisplaySettings)).GetComponent<DisplaySettings>();
         DontDestroyOnLoad(instance.gameObject);
         var args=System.Environment.GetCommandLineArgs();
         bool commandLine=System.Array.IndexOf(args,"-screen-width")>=0 || System.Array.IndexOf(args,"-screen-fullscreen")>=0;
         if(PlayerPrefs.HasKey(WidthKey) && !commandLine)
         {
-            var size=Closest(PlayerPrefs.GetInt(WidthKey),PlayerPrefs.GetInt(HeightKey));
-            bool full=PlayerPrefs.GetInt(ModeKey,0)==1;if(!full)size=WindowSize(size);
-            Screen.SetResolution(size.x,size.y,full ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed);
+            bool full=PlayerPrefs.GetInt(ModeKey,0)==1;
+            var size=full ? NativeSize() : WindowSize(Closest(PlayerPrefs.GetInt(WidthKey),PlayerPrefs.GetInt(HeightKey)));
+            instance.ApplyResolution(size,full ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed);
         }
-        instance.StartCoroutine(instance.FitAndCenter());
+        else { instance.targetMode=Screen.fullScreenMode;instance.ApplyResolution(new Vector2Int(Screen.width,Screen.height),Screen.fullScreenMode); }
     }
     public static List<Vector2Int> Options()
     {
@@ -82,41 +112,43 @@ public class DisplaySettings : MonoBehaviour
     {
         if(instance == null || Pending) return;
         instance.previousWidth=Screen.width;instance.previousHeight=Screen.height;instance.previousMode=Screen.fullScreenMode;
-        var safe=Closest(size.x,size.y);if(!fullscreen)safe=WindowSize(safe);instance.requestedWidth=safe.x;instance.requestedHeight=safe.y;
+        var safe=fullscreen ? NativeSize() : WindowSize(Closest(size.x,size.y));instance.requestedWidth=safe.x;instance.requestedHeight=safe.y;
         instance.requestedMode=fullscreen ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed;
         instance.previousScale=Time.timeScale;instance.previousEditing=GameControls.Editing;
         Time.timeScale=0;GameControls.Editing=true;
-        Screen.SetResolution(safe.x,safe.y,instance.requestedMode);
-        if(!fullscreen)instance.StartCoroutine(instance.FitAndCenter());
-        instance.OpenConfirmation();instance.deadline=Time.realtimeSinceStartup+15;
+        instance.OpenConfirmation();instance.deadline=float.PositiveInfinity;
+        instance.ApplyResolution(safe,instance.requestedMode);
     }
     public static void Confirm()
     {
-        if(!Pending) return;
-        PlayerPrefs.SetInt(WidthKey,instance.requestedWidth);PlayerPrefs.SetInt(HeightKey,instance.requestedHeight);
+        if(!Pending || instance.switching) return;
+        PlayerPrefs.SetInt(WidthKey,Screen.width);PlayerPrefs.SetInt(HeightKey,Screen.height);
         PlayerPrefs.SetInt(ModeKey,instance.requestedMode==FullScreenMode.Windowed ? 0 : 1);PlayerPrefs.Save();instance.CloseConfirmation();
     }
     public static void Revert()
     {
         if(!Pending) return;
-        Screen.SetResolution(instance.previousWidth,instance.previousHeight,instance.previousMode);instance.CloseConfirmation();
+        instance.ApplyResolution(new Vector2Int(instance.previousWidth,instance.previousHeight),instance.previousMode);instance.CloseConfirmation();
     }
     void Update()
     {
         var current=new Vector2Int(Screen.width,Screen.height);
-        if(current!=lastWindow || Screen.fullScreen!=lastFullscreen)
+        if(!switching && !Pending && (current!=lastWindow || Screen.fullScreen!=lastFullscreen))
         {
             lastWindow=current;lastFullscreen=Screen.fullScreen;
-            if(!Screen.fullScreen) { var fit=WindowSize(current);if(fit!=current)StartCoroutine(FitAndCenter()); }
+            targetMode=Screen.fullScreenMode;
+            // Les mides triades al menu es limiten en Request/FitAndCenter.
+            // Els canvis natius (maximitzar/arrossegar) els gestiona el sistema operatiu:
+            // tornar a reservar marges aci desfaria immediatament la maximitzacio.
         }
         if(Pending)
         {
-            countdown.text="Tornarem als ajustos anteriors en "+Mathf.Max(0,Mathf.CeilToInt(deadline-Time.realtimeSinceStartup))+" s";
+            countdown.text=switching ? "Aplicant la configuració..." : "Tornarem als ajustos anteriors en "+Mathf.Max(0,Mathf.CeilToInt(deadline-Time.realtimeSinceStartup))+" s";
             if(Input.GetKeyDown(KeyCode.Escape)) { escapeFrame=Time.frameCount;Revert(); }
             else if(Time.realtimeSinceStartup>=deadline) Revert();
             else if(Input.GetKeyDown(KeyCode.Return)) Confirm();
         }
-        else if(Input.GetKeyDown(KeyCode.F11) && !GameControls.Editing) Request(new Vector2Int(Screen.width,Screen.height),!Screen.fullScreen);
+        else if(Input.GetKeyDown(KeyCode.F11) && !GameControls.Editing && !switching) Request(new Vector2Int(Screen.width,Screen.height),!IsFullscreen); // Durant una transicio, Screen.fullScreen encara no es fiable
     }
     void CloseConfirmation()
     {

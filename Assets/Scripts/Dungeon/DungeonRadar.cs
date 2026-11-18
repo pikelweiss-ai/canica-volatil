@@ -60,6 +60,19 @@ public class DungeonRadar : MonoBehaviour
             if(c.a>0f) c.a=known?0.78f:0.32f;
             pixels[y*Width+x]=c;
         }
+        // Online: els companys com a punts blau cel
+        foreach(var av in NetShared.Avatars())
+        {
+            if(av==null || av.Down) continue;
+            var d=gen.ground.WorldToCell(av.transform.position)-center;
+            int px=Width/2+Mathf.RoundToInt(d.x/scale), py=Height/2+Mathf.RoundToInt(d.y/scale);
+            for(int oy=-2;oy<=2;oy++)for(int ox=-2;ox<=2;ox++)
+            {
+                int x=Mathf.Clamp(px+ox,0,Width-1), y=Mathf.Clamp(py+oy,0,Height-1);
+                bool edge=Mathf.Abs(ox)==2 || Mathf.Abs(oy)==2;
+                pixels[y*Width+x]=edge?new Color32(10,20,30,255):new Color32(110,210,255,255);
+            }
+        }
         texture.SetPixels32(pixels);texture.Apply(false);
     }
     void OnDestroy(){if(texture!=null)Destroy(texture);}

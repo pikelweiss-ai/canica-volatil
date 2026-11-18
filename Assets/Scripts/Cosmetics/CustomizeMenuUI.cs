@@ -165,16 +165,28 @@ public class CustomizeMenuUI : MonoBehaviour
             hatPreview.enabled = h.sprite != null;
             if(h.sprite!=null)
             {
-                float size=178.5f;
+                float bodySize=preview.rectTransform.sizeDelta.y;
+                float size=bodySize*(h.fullHelmet?1.18f:1.05f);
                 hatPreview.rectTransform.sizeDelta=Vector2.one*size;
                 float lift=h.sprite.name.Contains("Aureola")?34f:0f;
-                hatPreview.rectTransform.anchoredPosition=new Vector2(0,85f-12f+lift-(HatFit.Bottom(h.sprite)-0.5f)*size);
+                float top=(HatFit.Top(preview.sprite)-.5f)*bodySize;
+                hatPreview.rectTransform.anchoredPosition=h.fullHelmet?Vector2.zero:new Vector2(0,top-4+lift-(HatFit.Bottom(h.sprite)-0.5f)*size);
             }
         }
         else { hatLabel.text = "Cap"; hatPreview.enabled = false; }
 
         var tr = db.trails[CosmeticsDatabase.Get(CosmeticsDatabase.KeyTrail, db.trails.Length)];
         trailLabel.text = tr.name;
+        foreach(Transform child in trailPreview.transform)Destroy(child.gameObject);
+        trailPreview.enabled=tr.shape==TrailShape.Ribbon;
+        if(tr.shape!=TrailShape.Ribbon && tr.color.a>0)
+            for(int i=0;i<7;i++)
+            {
+                var sample=NewImage("Mostra d'estela",trailPreview.transform,tr.color);
+                sample.sprite=TrailParticleEmitter.SpriteFor(tr.shape);sample.preserveAspect=true;
+                Place(sample.rectTransform,new Vector2(-80+i*25,Mathf.Sin(i*.9f)*12),Vector2.one*(tr.shape==TrailShape.Dots?12:23));
+                sample.rectTransform.localRotation=Quaternion.Euler(0,0,tr.shape==TrailShape.Footsteps?90:i*12);
+            }
         Color tc = tr.color; if (tc.a > 0f) tc.a = 0.6f;
         trailPreview.color = tc;
     }

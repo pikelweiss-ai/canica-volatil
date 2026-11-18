@@ -11,13 +11,14 @@ public static class GameControls
     static string Pref(int a, int slot) => "Controls_" + a + "_" + slot;
     public static KeyCode DefaultKey(int a,int slot=0) => slot==0 ? Primary[a] : Secondary[a];
     public static KeyCode Key(int a, int slot = 0) => (KeyCode)PlayerPrefs.GetInt(Pref(a, slot), (int)(slot == 0 ? Primary[a] : Secondary[a]));
-    public static bool Held(int a) => !Editing && ((Key(a) != KeyCode.None && Input.GetKey(Key(a))) || (Key(a, 1) != KeyCode.None && Input.GetKey(Key(a, 1))));
-    public static bool Down(int a) => !Editing && ((Key(a) != KeyCode.None && Input.GetKeyDown(Key(a))) || (Key(a, 1) != KeyCode.None && Input.GetKeyDown(Key(a, 1))));
-    public static Vector2 Move => new Vector2((Held(3)?1:0)-(Held(2)?1:0), (Held(0)?1:0)-(Held(1)?1:0)).normalized;
+    public static bool Held(int a) => !Editing && (MobileInput.Held(a) || (Key(a) != KeyCode.None && Input.GetKey(Key(a))) || (Key(a, 1) != KeyCode.None && Input.GetKey(Key(a, 1))));
+    public static bool Down(int a) => !Editing && (MobileInput.Down(a) || (Key(a) != KeyCode.None && Input.GetKeyDown(Key(a))) || (Key(a, 1) != KeyCode.None && Input.GetKeyDown(Key(a, 1))));
+    public static Vector2 Move => Editing ? Vector2.zero : MobileInput.Active ? MobileInput.Movement : new Vector2((Held(3)?1:0)-(Held(2)?1:0), (Held(0)?1:0)-(Held(1)?1:0)).normalized;
     public static int Wheel { get => Mathf.Clamp(PlayerPrefs.GetInt("Controls_Wheel", 2), 0, 3); set { PlayerPrefs.SetInt("Controls_Wheel", value); PlayerPrefs.Save(); } }
     public static bool WheelHeals => Wheel == 1 || (Wheel == 2 && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)));
     public static string Label(int a)
     {
+        if(MobileInput.Active) return a >= 11 ? ((a >= 15 ? a - 14 : a - 10)).ToString() : a == 5 ? "OBRIR" : a == 10 ? "Toca" : "";
         KeyCode key=Key(a)==KeyCode.None?Key(a,1):Key(a);
         if(key==KeyCode.Mouse0) return "Clic esquerre";
         if(key==KeyCode.Mouse1) return "Clic dret";

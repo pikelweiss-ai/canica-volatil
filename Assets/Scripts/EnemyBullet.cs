@@ -23,6 +23,7 @@ public class EnemyBullet : MonoBehaviour
         b.damage = damage;
         b.owner = owner;
         b.life = 6f;
+        NetCoop.EnemyBulletFired(pos, b.velocity, damage, scale, tint);
         return b;
     }
 

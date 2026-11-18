@@ -19,6 +19,7 @@ public class EnemyPathfindingAI : MonoBehaviour
 
     [Header("Referències (si estan buides, es busquen soles)")]
     public Transform player;
+    float nextRetarget;
     public Tilemap referenceTilemap;
     public Tilemap[] obstacleTilemaps;
 
@@ -108,6 +109,9 @@ public class EnemyPathfindingAI : MonoBehaviour
             repathTimer = 0f;
             return;
         }
+
+        // Online (amfitrio): persegueix el jugador mes proxim, siga qui siga
+        if (NetCoop.IsHost && Time.time >= nextRetarget) { nextRetarget = Time.time + 0.4f; var t = NetCoop.NearestTarget(rb.position); if (t != null) player = t; }
 
         if (player == null) { Wander(dt); return; }
 

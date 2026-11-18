@@ -70,7 +70,7 @@ public class EnemyCharger : MonoBehaviour
                 if (!hitPlayer && Vector2.Distance(next, ai.Player.position) < ai.bodyRadius + 0.35f)
                 {
                     hitPlayer = true;
-                    ai.Player.GetComponent<PlayerHealth>()?.TakeDamage(dashDamage);
+                    NetCoop.DamagePlayer(ai.Player, dashDamage);
                 }
             }
             ai.enabled = true;

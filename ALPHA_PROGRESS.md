@@ -1,5 +1,7 @@
 # Alpha de PC · primera passada visual i ajustos
 
+Estat vigent de xarxa: vegeu l'última secció i ONLINE.md; els pendents i bugs de les seccions anteriors són històrics.
+
 Branca `alpha/pc-foundation`, compilació de treball **Alpha v1.0.0**. Encara no s'ha publicat com a release.
 
 ## Revisió de les anotacions de Ferran
@@ -44,3 +46,66 @@ Unity 6000.0.53f1. `AlphaReviewBuild.BuildWindows` regenera els visuals i execut
 Eixides: `Builds/AlphaReview/Windows/CanicaAlphaReview.exe` i `Builds/AlphaReview/Linux/CanicaAlphaReview.x86_64`. Mantindre l'executable amb tota la seua carpeta. La compilació Windows de revisió rep el pegat oficial Unity Application Patcher 1.3.3 després de compilar.
 
 Pendents de l'Alpha: xarxa LAN/codi, noves sales funcionals, peces parcials i portes interactives, perfil local/estadístiques, tenda i modes. Comptes independents i sincronització entre equips: Beta. Vegeu `ALPHA_PLAN.md`.
+
+## 18 novembre 2026 — traspas pendent de revisio
+
+Ferran para el desenvolupament per continuar amb Claude. Llegir TRASPAS_CLAUDE_ALPHA.md en aquest worktree. Implementats fix fullscreen/HUD, cares diferents, 3 skins, 4 barrets, 6 esteles amb formes diferents, 3 armes, 2 enemics i 2 props. Ultima compilacio Windows correcta amb zero errors (alpha-personality-final-windows.log); comprovacions Editor superades. Falta prova runtime dels canvis, recompilar Linux i reaplicar pegat Windows. Canvis locals sense commit sobre 5f91db6; no release nova.
+
+## 18 novembre 2026 — sales online (Claude)
+
+Menu de sales online implementat: JUGAR > targeta Online. Navegador estil HaxBall amb pestanyes Internet/LAN, cerca, filtres, ping i cadenat; unir-se per codi de 6 lletres o IP:port; crear sala (masmorra o mapa lliure, 2-8 jugadors, publica/privada, contrasenya opcional, LAN o Internet). Lobby amb jugadors movent-se, llista LLEST/amfitrio, xat amb bafarades, codi copiable, mode triat per l'amfitrio i compte enrere quan tots estan llestos. En partida es veuen els altres i la masmorra es la mateixa (llavor de la sala); l'amfitrio pot tornar tots al lobby. Servidor de sales = el mateix joc amb -canicaServer (relay, sense obrir ports). Scripts a Assets/Scripts/Net; detalls a ONLINE.md. Proves automatiques Tools/Net/test-online.ps1: 4 escenaris passen (LAN llista, LAN codi, Internet llista, Internet codi). Captures amb Tools/Net/shots-online.ps1. Pendent: enemics/dany/cofres sincronitzats (cadascu lluita els seus), proves amb dos PCs reals, Linux i servidor en AWS. Sense commit.
+
+## 18 novembre 2026 — cooperatiu online (Claude)
+
+Ferran ha provat les sales amb dues finestres i funcionen. Afegit cooperatiu amb amfitrio autoritari (Assets/Scripts/Net/NetCoop.cs): enemics creats i moguts per l'amfitrio amb copies als clients, colps dels clients enviats a l'amfitrio, dany als companys, sales/portes/cofres de recompensa/portal compartits, cofres d'un sol us, pas de pis conjunt, caure i tornar en netejar la sala, bales/talls/punys visibles als altres, i avatars amb ombra, estela, barret i arma a la ma. Panell de sala en partida mogut perque no tape "Pis 1". Proves test-online.ps1: 4 escenaris passen, 2 amb masmorra cooperativa (LAN i Internet). Sense commit.
+
+## 18 novembre 2026 — cooperatiu complet (Claude)
+
+Sales que nomes es tanquen amb tots els jugadors vius dins. Espectar un company en caure (A/D o clic per triar); tornar en netejar la sala o als 4 s si has caigut fora de combat. Monedes, cures i armes del terra compartides (el primer que les agafa, amb arbitratge de l'amfitrio). Caixes i TNT trencades per a tots, sense doble dany. Barra de vida i avisos del boss als clients, color i mida dels enemics copiats. Ombres dels enemics comprovades (fill Ombra del prefab). Arreglat F11 durant la transicio de pantalla. Windows i Linux compilats sense errors; test-online.ps1 passa 2 vegades seguides (4/4). Sense commit.
+
+## 18 novembre 2026 — revisio de Ferran amb dues finestres (Claude)
+
+Arreglat: el boto de mode d'Ajustos > Pantalla ara aplica la pantalla completa en clicar (abans nomes canviava l'opcio i calia APLICAR). Monedes d'enemics: l'iman va cap al jugador mes proxim (abans l'amfitrio les robava sempre); monedes animades del mapa d'un sol us. En caure es solten armes i cures (no monedes) i es reapareix sense res al pis seguent (vida plena) si els companys passen. Radar amb els companys. Proves test-online.ps1 4/4 dues vegades, Windows i Linux compilats. Sense commit.
+
+## 18 novembre 2026 — traspas a Codex (online)
+
+Ferran passa l'online a Codex. Llegir TRASPAS_CODEX_ONLINE.md. Bugs oberts: cures de cofre/boss que no es veuen a tots els PCs, boto de maximitzar la finestra, portes de sala obertes mentre s'espera el company (es pot entrar al boss). Tot sense commit sobre 5f91db6.
+
+## 18 novembre 2026 — correccio dels tres bugs online (Codex)
+
+Cures remotes resoltes amb HealItem.All, sense dependre dels assets ja carregats. Cataleg explicít NetContent per a totes les armes, generat per NetContentBuilder en les dues compilacions. Maximitzacio nativa respectada: Update ja no redimensiona els canvis de finestra de Windows; les peticions del menu continuen ajustades a l'area util. Portes en espera: l'amfitrio tanca totes menys l'entrada, conserva l'estat per resincronitzar i tanca l'entrada quan hi son tots els vius. Si tots retrocedeixen, cancel·la l'espera. Jugadors caiguts exclosos del recompte de posicions. Protocol 4 (mateix build per host/client/relay).
+
+Windows i Linux recompilats amb zero errors: Builds/ReleaseLogs/alpha-online-fixes-windows.log i alpha-online-fixes-linux.log en el projecte principal. Pegat oficial de Windows comprovat (183, ja aplicat). Proves Tools/Net/test-online.ps1 ampliades: 4/4, logs a %TEMP%/canica-online-fixes. Inclou cures rebudes en fred, totes les armes resoltes, cura de cofre client->host, cura de boss host->client i portes en espera als dos processos. Probabilitats de botí forçades nomes en el bot. Sense excepcions del joc en aquests logs (avisos de shaders esperables amb -nographics).
+
+Control del PC: botons natius restaurar/maximitzar i doble clic de titol correctes; finestra es mante maximitzada. F11 entrar/eixir confirmat amb Intro. Linux no executat en Mint; dos PCs reals i servidor remot continuen pendents. Tambe falta prova especifica de retirada de tots, entrada inicial del client i resincronitzacio durant l'espera. ONLINE.md i TRASPAS_CODEX_ONLINE.md actualitzats. Codi del joc encara SENSE COMMIT sobre 5f91db6; no release publicada ni canvis en Canica 1/main.
+
+## 18 novembre 2026 — projectils, interaccions i Alpha Android compartida (Codex)
+
+- Projectils reals i visuals ignoren els colliders de companys, incloent el jugador local del receptor. Ja no desapareix el tret nomes en una pantalla.
+- Cofres i objectes trencables de sales de combat/boss bloquejats fins a netejar la sala (inclou espera i onades). Inicial/tresor lliures. El client demana cada colp de caixa/TNT a l'amfitrio; nomes el host resta vida i replica destruccio. Cofres validats tambe al host.
+- Protocol 5, mateix codi a Android/Windows/Linux. Catalegs complets i manifest compatibility.json compartit: 21 armes, 4 cures, sourceSha256 b429526bc2ab613ec381f6e543e011905de86d04cfc982467c5097f100031149. Tools/Build/check-crossplay.ps1 PASS.
+- Android integrat al projecte Alpha actual (no copia de la branca Pre-Alpha): dos joysticks, hotbar tactil, cures, ajuda, zona segura, pausa, xat ENVIA i espectador amb botons. Textos tactils i vida separada de la fila de cures revisats en Windows --mobile-preview. Eixir al menu tanca la sala online. Permisos de xarxa i MulticastLock Wi-Fi al paquet Android.
+- Compilacions finals Android, Windows i Linux amb zero errors. Logs Builds/BuildLogs/{Android,Windows,Linux}-build.log en aquest worktree. Preparacio del sistema Input en sessio separada via Tools/Build/build-alpha.ps1 evita incompatibilitat de serialitzacio URP; al final activeInputHandler=2 per PC. Android IL2CPP ARM64/ARMv7, API26+, versionCode3, package com.pikelweiss.canicavolatil.mobile, versionName1.0.0-alpha.
+- APK final Builds/AlphaReview/Android/CanicaVolatil-Alpha-v1.0.0-Android.apk (61.887.261 bytes), pegat oficial Unity1.3.3 aplicat exit0, alineacio i signatures v2/v3 verificades. SHA256 c4b3fe3b25cea5c20d68af3d084f610d7bc37cdff42ebaa65f6c0f9f6356f263. Original sense pegat nomes a Builds/BuildLogs/Android-unpatched.apk. Windows comprovat ja parchejat. Linux inclou Jugar.sh: executar bash Jugar.sh.
+- Proves online amb -MobileClient passen 4/4 dues vegades (la segona amb build final). Logs finals Builds/Crossplay FinalTests. Comproven projectils travessant jugador, cofres/caixes bloquejats pendent/combat i desbloqueig en netejar, colps de client autoritzats, cures, portes i cooperatiu anterior. MobileInputChecks passa 7 comprovacions de dos dits/analogic/pausa.
+
+Limits reals: la variant de bot mobil corre en Windows, no en Android. ADB sense dispositius i WSL/Linux no disponibles: NO partida real Android + Windows + Linux, ni multitàctil fisic, ni Mint, ni relay remot. Compatibilitat de protocol/codi/catalegs comprovada; queda revisio en dispositius. No publicar release ni donar per provat el que falta. Codi del joc sense commit; Canica 1 i fonts del projecte principal intactes. Guia MOBILE_ALPHA.md i ONLINE.md actualitzades.
+
+## 18 novembre 2026 — hotfix TNT durant combat
+
+Ferran detecta que les TNT nomes es trenquen despres de la baralla, tambe en Android. Causa: compartien el bloqueig de cofres/caixes. Nova regla DungeonGenerator.CanDamageBreakableAt: explosius disponibles quan la sala esta activa, protegits en espera; objectes normals i cofres mantenen el desbloqueig despres de netejar. Breakable.Hit i NetShared.BreakableHit usen la mateixa regla, tambe al host autoritari. Barril.prefab te explodes=1; no s'han modificat prefabs.
+
+Android/Windows/Linux recompilats amb zero errors, mateix protocol5 i sourceSha256 23005f5bf5099b7b4a2b32ff1fbcfd1a54b11919cd03918afb4bc12bb4fc396c. check-crossplay.ps1 PASS. test-online.ps1 -MobileClient PASS4/4 (Builds/TntCombatTests); prova regla i colp real del host: TNT intacta durant espera, resta vida en combat, cofres/caixes encara bloquejats. Sense excepcions als logs. No prova fisica en telefon/Mint.
+
+APK actualitzada al mateix cami Builds/AlphaReview/Android/CanicaVolatil-Alpha-v1.0.0-Android.apk, 61883165 bytes. Pegat Unity aplicat i signatures v2/v3/zipalign verificats. SHA256 f59dea45bbe92097e0555de48f807c791d3bb0a14550338ed0ab318c12974b3c. Windows comprovat ja parchejat. Logs compilacio Builds/BuildLogs/*-build.log; pegats *-tnt-patch.log. ONLINE.md actualitzat. Tot el codi segueix sense commit, sense release nova; main/Canica1 intactes.
+
+## 18 novembre 2026 — candidata oficial Alpha v1.0.0
+
+Ferran autoritza revisio final i publicacio oficial amb Windows, Ubuntu/Linux i Android. Corregit un cas de carrega tardana: NetShared.Resync reenvia objectes del terra que encara existeixen; el client recupera cures perdudes i evita duplicats. Prova nova de perdua i resincronitzacio repetida superada en LAN i relay. Suite test-online.ps1 -MobileClient PASS4/4 (Builds/AlphaReleaseTests), sense excepcions de joc. Comprovacions Editor/compilacions dels tres sistemes: zero errors, mateix protocol5, 21 armes, 4 cures i sourceSha256 d49d1f40294a0f18fce9d4a70180b43da8b5b8722e7e89f1499b6557947fe7d0.
+
+Paquets de distribucio en Builds/Distribucio/Alpha-v1.0.0-release: Windows ZIP, Ubuntu/Linux TAR.GZ, Android APK i SHA256SUMS.txt; BUILD_INFO.json identifica commit i manifests. Windows/Android amb pegat Unity1.3.3; APK v2/v3 i alineacio verificades. ZIP sense errors CRC, dependencies i dades comprovades; TAR amb executable i llancador755, sense carpetes DoNotShip. Executables i dades reanomenats CanicaVolatil per distribucio. README i notes actualitzats per Alpha/online, sense enllacos antics ni afirmacions de proves no fetes.
+
+La publicacio usa v1.0.0-alpha i conserva Pre-Alpha PC/Android. No s'ha executat en Ubuntu/Mint ni en Android fisic des d'aquest entorn; no partida conjunta dels tres sistemes ni relay remot. Cap credencial de signatura o servidor dins del Git. Les fonts/metadades/cache generades que ja estaven modificades queden preservades localment; no reset/clean/stash, ni canvis a Canica1 o a les quatre fonts del projecte principal.
+
+Verificacio del paquet Windows reanomenat: host i client cooperatius complets PASS (Builds/AlphaPackageSmoke). Les tres sumes SHA256 de distribucio, CRC ZIP i permisos TAR verificats. Sense excepcions als logs.
+

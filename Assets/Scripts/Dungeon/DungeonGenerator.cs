@@ -31,6 +31,7 @@ public class DungeonGenerator : MonoBehaviour
         public readonly List<Vector3Int> doorCells = new List<Vector3Int>();
         public readonly List<EnemyHealth> alive = new List<EnemyHealth>();
         public bool visited, active, cleared;
+        public int waitingEntrance = -1; // costat obert mentre s'esperen els companys
         public Vector2Int Center => new Vector2Int(rect.x + rect.width / 2, rect.y + rect.height / 2);
     }
 
@@ -93,7 +94,9 @@ public class DungeonGenerator : MonoBehaviour
             RunState.Active = true;
         }
 
-        rng = new System.Random(seed != 0 ? seed : System.Environment.TickCount);
+        // En una sala online tots generen la mateixa masmorra: llavor de la sala + pis
+        int netSeed = NetSession.Active && NetSession.Instance.Seed != 0 ? NetSession.Instance.Seed + RunState.Floor * 7919 : 0;
+        rng = new System.Random(netSeed != 0 ? netSeed : seed != 0 ? seed : System.Environment.TickCount);
         Theme = themes != null && themes.Length > 0 ? themes[(RunState.Floor - 1) % themes.Length] : null;
         if (enemyBulletSprite != null) EnemyBullet.sprite = enemyBulletSprite;
 
@@ -437,6 +440,14 @@ public class DungeonGenerator : MonoBehaviour
 
     void Populate()
     {
+        if(Theme!=null && Theme.decorPrefabs!=null && Theme.decorPrefabs.Length>0)
+            foreach(Room room in Rooms)
+                if(room.type==RoomType.Combat)
+                    for(int tries=0;tries<30;tries++)
+                    {
+                        var cell=RandomCell(room);if(!FreeForDecor(room,cell,2))continue;
+                        reserved.Add(cell);Spawn(Theme.decorPrefabs[rng.Next(Theme.decorPrefabs.Length)],cell);break;
+                    }
         foreach (Vector2Int p in cratesToSpawn) Spawn(cratePrefab, p);
         foreach (Vector2Int p in barrelsToSpawn) Spawn(barrelPrefab, p);
         foreach (Vector2Int p in spikesToSpawn) Spawn(spikePrefab, p);
@@ -518,6 +529,9 @@ public class DungeonGenerator : MonoBehaviour
 
     void Update()
     {
+        // Online (amfitrio): els companys tambe obrin sales, encara que l'amfitrio haja caigut
+        if (!gameOver && NetCoop.IsHost) TryStartRoomTogether();
+
         if (gameOver || player == null || !player.gameObject.activeInHierarchy) return;
 
         Vector3Int pc = ground.WorldToCell(player.position);
@@ -530,10 +544,146 @@ public class DungeonGenerator : MonoBehaviour
         }
 
         // Entres de deveres (una casella endins): comença el combat
-        if (r != null && !r.cleared && !r.active && (r.type == RoomType.Combat || r.type == RoomType.Boss) && RoomAt(pc, 1) == r)
-            StartCoroutine(RunRoom(r));
+        // Online: nomes l'amfitrio comença les sales (tambe quan hi entra un company); els clients ho reben
+        if (!NetCoop.Online) TryStartRoom(pc);
+        else WaitingHint(pc);
 
         if (r != null && (r.type == RoomType.Start || r.type == RoomType.Treasure)) r.cleared = true;
+    }
+
+    Room waitingRoom;
+    readonly Dictionary<int, Vector3Int> previousPlayerCells = new Dictionary<int, Vector3Int>();
+
+    // Online: nomes l'entrada queda oberta fins que hi son tots els jugadors vius.
+    void TryStartRoomTogether()
+    {
+        var cells = new List<Vector3Int>();
+        var ids = new List<int>();
+        var session = NetSession.Instance;
+        if (player != null && player.gameObject.activeInHierarchy) ids.Add(session.LocalId);
+        if (player != null && player.gameObject.activeInHierarchy) cells.Add(ground.WorldToCell(player.position));
+        foreach (var p in session.Players.Values)
+            if (p.id != session.LocalId && !NetCoop.IsDown(p.id) && p.scene == NetSession.SceneToken() && Time.realtimeSinceStartupAsDouble - p.lastPos < 2)
+            { ids.Add(p.id); cells.Add(ground.WorldToCell(new Vector2(p.x, p.y))); }
+        try
+        {
+            if (waitingRoom != null && !cells.Exists(c => RoomAt(c, 0) == waitingRoom))
+            {
+                SetDoors(waitingRoom, false);
+                NetCoop.RoomChanged(Rooms.IndexOf(waitingRoom), 0);
+                waitingRoom = null;
+            }
+            if (waitingRoom == null)
+                for (int i = 0; i < cells.Count; i++)
+                {
+                    Room candidate = RoomAt(cells[i], 1);
+                    if (candidate == null || candidate.active || candidate.cleared || (candidate.type != RoomType.Combat && candidate.type != RoomType.Boss)) continue;
+                    if (candidate.doorCells.Count == 0) continue;
+                    var from = previousPlayerCells.TryGetValue(ids[i], out var previous) ? previous : cells[i];
+                    var nearest = candidate.doorCells[0];
+                    foreach (var door in candidate.doorCells)
+                        if ((door - from).sqrMagnitude < (nearest - from).sqrMagnitude) nearest = door;
+                    waitingRoom = candidate;
+                    SetWaitingDoors(candidate, DoorSide(candidate, nearest));
+                    NetCoop.RoomChanged(Rooms.IndexOf(candidate), 3 + candidate.waitingEntrance);
+                    break;
+                }
+            if (waitingRoom == null || cells.Count < NetCoop.AliveCount) return;
+            foreach (var c in cells) if (RoomAt(c, 1) != waitingRoom) return;
+            Room ready = waitingRoom;
+            waitingRoom = null;
+            TryStartRoom(new Vector3Int(ready.Center.x, ready.Center.y, 0));
+        }
+        finally
+        {
+            for (int i = 0; i < cells.Count; i++) previousPlayerCells[ids[i]] = cells[i];
+        }
+    }
+
+    Room hintRoom;
+    void WaitingHint(Vector3Int pc)
+    {
+        Room r = RoomAt(pc, 1);
+        bool waiting = r != null && !r.cleared && !r.active && (r.type == RoomType.Combat || r.type == RoomType.Boss);
+        if (waiting && hintRoom != r) NetToast.Show("Esperant que entren tots els companys a la sala...", 2.5f);
+        hintRoom = waiting ? r : null;
+    }
+
+    void TryStartRoom(Vector3Int cell)
+    {
+        Room r = RoomAt(cell, 1);
+        if (r != null && !r.cleared && !r.active && (r.type == RoomType.Combat || r.type == RoomType.Boss))
+            StartCoroutine(RunRoom(r));
+    }
+
+    static IEnumerable<Vector2> RemotePlayerPositions()
+    {
+        var s = NetSession.Instance;
+        if (s == null) yield break;
+        int token = NetSession.SceneToken();
+        double now = Time.realtimeSinceStartupAsDouble;
+        foreach (var p in s.Players.Values)
+            if (p.id != s.LocalId && p.scene == token && now - p.lastPos < 2) yield return new Vector2(p.x, p.y);
+    }
+
+    // ------------------------------------------------------------------ Online (ho crida NetCoop als clients)
+
+    public void NetRoomState(int index, int state)
+    {
+        if (index < 0 || index >= Rooms.Count) return;
+        Room r = Rooms[index];
+        if (state >= 3 && state <= 6 && !r.active && !r.cleared) SetWaitingDoors(r, state - 3);
+        else if (state == 0 && !r.active && !r.cleared) SetDoors(r, false);
+        else if (state == 1 && !r.active && !r.cleared)
+        {
+            r.active = true;
+            SetDoors(r, true);
+            if (r.type == RoomType.Boss)
+            {
+                GameObject boss = Theme != null && Theme.boss != null ? Theme.boss : bossPrefab;
+                EnemyBoss info = boss != null ? boss.GetComponent<EnemyBoss>() : null;
+                ui.ShowBanner(info != null ? info.bossName.ToUpper() : "BOSS", 1.5f);
+            }
+        }
+        else if (state == 2 && !r.cleared)
+        {
+            r.cleared = true; r.active = false;
+            SetDoors(r, false);
+            ui.RefreshMap();
+        }
+    }
+
+    public void NetSpawnChest(int rarity, Vector2Int cell) => SpawnChest((ChestRarity)rarity, cell);
+    public void NetSpawnPortal(Vector2Int cell) => SpawnPortal(cell);
+
+    public void NetNextFloor(int floor)
+    {
+        RunState.Floor = floor - 1;
+        NextFloorLocal();
+    }
+
+    public void NetGameOver() => PlayerDied();
+
+    // Hi ha alguna sala en combat ara mateix?
+    public bool AnyRoomFighting => Rooms.Exists(r => r.active && !r.cleared);
+
+    // El boti i la decoracio d'una sala de combat es desbloquegen en netejar-la.
+    // Tambe protegeix una sala encara no activada (no es pot saquejar des de la porta).
+    public static bool CanInteractAt(Vector3 position)
+    {
+        var g = Instance;
+        if (g == null) return true;
+        Room r = g.RoomAt(g.ground.WorldToCell(position), 0);
+        return r == null || r.cleared || (r.type != RoomType.Combat && r.type != RoomType.Boss);
+    }
+
+    public static bool CanDamageBreakableAt(Vector3 position, bool explosive)
+    {
+        if (CanInteractAt(position)) return true;
+        var g = Instance;
+        Room r = g.RoomAt(g.ground.WorldToCell(position), 0);
+        // Les TNT formen part del combat; no es poden detonar abans que entre tothom.
+        return explosive && r != null && r.active;
     }
 
     Room RoomAt(Vector3Int cell, int inset)
@@ -551,6 +701,7 @@ public class DungeonGenerator : MonoBehaviour
     {
         r.active = true;
         SetDoors(r, true);
+        NetCoop.RoomChanged(Rooms.IndexOf(r), 1);
         yield return new WaitForSeconds(0.4f);
 
         if (r.type == RoomType.Boss)
@@ -562,7 +713,9 @@ public class DungeonGenerator : MonoBehaviour
             yield return WaitClear(r);
             // Recompensa: cofre llegendari i portal
             SpawnChest(ChestRarity.Llegendari, r.Center + new Vector2Int(-2, 0));
+            NetCoop.ChestSpawned((int)ChestRarity.Llegendari, r.Center + new Vector2Int(-2, 0));
             SpawnPortal(r.Center + new Vector2Int(2, 0));
+            NetCoop.PortalSpawned(r.Center + new Vector2Int(2, 0));
         }
         else
         {
@@ -579,12 +732,17 @@ public class DungeonGenerator : MonoBehaviour
             }
             // Recompensa per netejar la sala
             if (rng.NextDouble() < 0.5)
-                SpawnChest(RandomRarity(), r.Center + new Vector2Int(2, 2));
+            {
+                ChestRarity reward = RandomRarity();
+                SpawnChest(reward, r.Center + new Vector2Int(2, 2));
+                NetCoop.ChestSpawned((int)reward, r.Center + new Vector2Int(2, 2));
+            }
         }
 
         r.cleared = true;
         SetDoors(r, false);
         ui.RefreshMap();
+        NetCoop.RoomChanged(Rooms.IndexOf(r), 2);
     }
 
     IEnumerator WaitClear(Room r)
@@ -646,6 +804,7 @@ public class DungeonGenerator : MonoBehaviour
         r.alive.Add(placeholder);
 
         SpriteRenderer mark = Fx.MakeSprite("Avis enemic", pos, Fx.Disc, new Color(1f, 0.25f, 0.3f, 0.5f), "Shadows", 5);
+        NetCoop.SpawnMark(pos);
         float t = 0f;
         while (t < 0.7f)
         {
@@ -682,10 +841,25 @@ public class DungeonGenerator : MonoBehaviour
 
     void SetDoors(Room r, bool closed)
     {
+        r.waitingEntrance = -1;
         foreach (Vector3Int c in r.doorCells)
             doors.SetTile(c, closed ? doorTile : null);
         Fx.Play(Fx.Door, 0.6f);
         if (closed) Fx.Shake(0.15f, 0.1f);
+    }
+
+    // Les tres caselles d'una porta han de romandre juntes.
+    public static int DoorSide(Room r, Vector3Int c)
+    {
+        if (c.x < r.rect.xMin) return 0;
+        if (c.x >= r.rect.xMax) return 1;
+        return c.y < r.rect.yMin ? 2 : 3;
+    }
+
+    void SetWaitingDoors(Room r, int entrance)
+    {
+        r.waitingEntrance = entrance;
+        foreach (var c in r.doorCells) doors.SetTile(c, DoorSide(r, c) == entrance ? null : doorTile);
     }
 
     void SpawnPortal(Vector2Int cell)
@@ -698,6 +872,13 @@ public class DungeonGenerator : MonoBehaviour
     // ------------------------------------------------------------------ Canvi de pis i mort
 
     public void NextFloor()
+    {
+        // Online: tota la colla passa de pis alhora (un client ho demana a l'amfitrio)
+        if (NetCoop.InterceptNextFloor()) return;
+        NextFloorLocal();
+    }
+
+    void NextFloorLocal()
     {
         PlayerAttack attack = player != null ? player.GetComponent<PlayerAttack>() : null;
         if (attack != null) RunState.Weapons = (WeaponData[])attack.hotbarSlots.Clone();

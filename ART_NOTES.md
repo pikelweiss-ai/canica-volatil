@@ -15,3 +15,7 @@ Es va intentar la via integrada `image_gen` per al logo. Va retornar HTTP 429 `u
 Prompt de l'intent fallit: «Use case: logo-brand. Production game logo asset on genuinely transparent background. Exact text, two stacked lines: CANICA / VOLÀTIL (uppercase, accent grave on À). A confident handcrafted retro pixel-art title for a 2D marble dungeon game. Large chunky cream-to-gold pixel lettering with dark navy extruded shadow, carefully legible, tiny geometric chipped highlights, compact integrated yellow round smiling marble with black rectangular eyes and smiling mouth as small emblem beside lettering. Balanced wide 3:2 composition, close-fitting logo with modest transparent margins. Restrained dark navy, ivory, warm gold palette. Authentic deliberate pixel clusters, crisp stepped outlines, no smooth 3D render, no glow, no gradients except stepped pixel bands. No slogan, no extra words, no version, no surrounding UI or background. Both words must be spelled exactly CANICA VOLÀTIL.»
 
 La composició final per codi conserva la lletra daurada i la canica, i desenvolupa una escena pròpia amb portal i passarel·la. Els assets anteriors es conserven.
+
+
+## Personalitat de cosmetics — 18 novembre 2026
+Font editable: Tools/PixelArt/alpha-personality.ps1 (carregada per draw.ps1). Graelles per a cares i siluetes, casc transparent, barrets, armes, enemics i props. Preview combinat: Tools/PixelArt/preview_AlphaPersonalitzacio.png, generat per preview-alpha.ps1. Aquesta tanda usa pixel art per codi; pendent revisio visual final. Vegeu TRASPAS_CLAUDE_ALPHA.md.
