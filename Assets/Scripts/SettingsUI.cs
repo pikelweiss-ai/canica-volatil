@@ -41,9 +41,10 @@ public class SettingsUI : MonoBehaviour
         if(panel!=null) { panel.SetActive(false); Destroy(panel); }
         var bg=Box("Fons",transform,Vector2.zero,Vector2.zero,new Color(.025f,.045f,.07f,.99f));panel=bg.gameObject;bg.anchorMin=Vector2.zero;bg.anchorMax=Vector2.one;bg.offsetMin=bg.offsetMax=Vector2.zero;
         Text("AJUSTOS",panel.transform,new Vector2(0,350),new Vector2(1200,70),42);
-        Button("PARTIDA",new Vector2(-420,245),new Vector2(380,65),()=>{page=0;Build();},page==0);
-        Button("SO",new Vector2(0,245),new Vector2(380,65),()=>{page=1;Build();},page==1);
-        Button("PANTALLA",new Vector2(420,245),new Vector2(380,65),()=>{page=2;Build();},page==2);
+        Button("PARTIDA",new Vector2(-480,245),new Vector2(280,65),()=>{page=0;Build();},page==0);
+        Button("SO",new Vector2(-160,245),new Vector2(280,65),()=>{page=1;Build();},page==1);
+        Button("PANTALLA",new Vector2(160,245),new Vector2(280,65),()=>{page=2;Build();},page==2);
+        Button("INTERFÍCIE",new Vector2(480,245),new Vector2(280,65),()=>{page=3;Build();},page==3);
         if(page==0)
         {
             Row("Mida del mapa",100,140,360,GameSettings.MapSize,v=>GameSettings.MapSize=v,0);
@@ -59,16 +60,25 @@ public class SettingsUI : MonoBehaviour
             Row("Efectes i objectes",-140,0,1,GameSettings.Volume(SoundCategory.Effects),v=>GameSettings.Volume(SoundCategory.Effects,v),2);
             Row("Música i ambient",-225,0,1,GameSettings.Volume(SoundCategory.Music),v=>GameSettings.Volume(SoundCategory.Music,v),2);
         }
+        else if(page==2)
+        {
+            Text("Resolució",panel.transform,new Vector2(-430,135),new Vector2(400,60),28);
+            var size=resolutions[resolutionIndex];
+            Button("<",new Vector2(-100,135),new Vector2(80,65),()=>{resolutionIndex=(resolutionIndex+resolutions.Count-1)%resolutions.Count;Build();});
+            Text(size.x+" × "+size.y,panel.transform,new Vector2(170,135),new Vector2(420,60),30);
+            Button(">",new Vector2(450,135),new Vector2(80,65),()=>{resolutionIndex=(resolutionIndex+1)%resolutions.Count;Build();});
+            Button(fullscreen ? "PANTALLA COMPLETA (SENSE VORES)" : "FINESTRA",new Vector2(0,45),new Vector2(1100,65),()=>{fullscreen=!fullscreen;Build();});
+            Button(PresentationSettings.VSync ? "V-SYNC: ACTIVAT (REFRESC DEL MONITOR)" : "V-SYNC: DESACTIVAT",new Vector2(0,-45),new Vector2(1100,60),()=>{PresentationSettings.VSync=!PresentationSettings.VSync;Build();});
+            Button("LÍMIT FPS: "+(PresentationSettings.VSync ? "MONITOR" : PresentationSettings.Limit==0 ? "SENSE LÍMIT" : PresentationSettings.Limit.ToString()),new Vector2(0,-120),new Vector2(1100,60),()=>{int i=System.Array.IndexOf(PresentationSettings.Limits,PresentationSettings.Limit);PresentationSettings.VSync=false;PresentationSettings.Limit=PresentationSettings.Limits[(i+1)%PresentationSettings.Limits.Length];Build();});
+            Button("APLICAR",new Vector2(0,-215),new Vector2(550,65),()=>DisplaySettings.Request(resolutions[resolutionIndex],fullscreen));
+            Text("F11 alterna entre finestra i pantalla completa.\nConfirma el canvi en 15 segons o es desfarà automàticament.",panel.transform,new Vector2(0,-285),new Vector2(1400,65),20);
+        }
         else
         {
-            Text("Resolució",panel.transform,new Vector2(-430,100),new Vector2(400,60),28);
-            var size=resolutions[resolutionIndex];
-            Button("<",new Vector2(-100,100),new Vector2(80,65),()=>{resolutionIndex=(resolutionIndex+resolutions.Count-1)%resolutions.Count;Build();});
-            Text(size.x+" × "+size.y,panel.transform,new Vector2(170,100),new Vector2(420,60),30);
-            Button(">",new Vector2(450,100),new Vector2(80,65),()=>{resolutionIndex=(resolutionIndex+1)%resolutions.Count;Build();});
-            Button(fullscreen ? "PANTALLA COMPLETA (SENSE VORES)" : "FINESTRA",new Vector2(0,-10),new Vector2(1100,70),()=>{fullscreen=!fullscreen;Build();});
-            Button("APLICAR",new Vector2(0,-125),new Vector2(550,70),()=>DisplaySettings.Request(resolutions[resolutionIndex],fullscreen));
-            Text("F11 alterna entre finestra i pantalla completa.\nConfirma el canvi en 15 segons o es desfarà automàticament.",panel.transform,new Vector2(0,-245),new Vector2(1400,90),23);
+            Button("VIDA: "+HudLayout.Positions[HudLayout.HealthPosition],new Vector2(0,105),new Vector2(1200,75),()=>{HudLayout.HealthPosition=(HudLayout.HealthPosition+1)%4;Build();});
+            Button("MONEDES: "+HudLayout.Positions[HudLayout.CoinPosition],new Vector2(0,0),new Vector2(1200,75),()=>{HudLayout.CoinPosition=(HudLayout.CoinPosition+1)%4;Build();});
+            Text("Tria una posició per a cada indicador.\nEls canvis es veuen en la partida i es conserven en reiniciar.",panel.transform,new Vector2(0,-120),new Vector2(1350,90),23);
+            Button("POSICIONS ORIGINALS",new Vector2(0,-230),new Vector2(700,65),()=>{HudLayout.HealthPosition=0;HudLayout.CoinPosition=0;Build();});
         }
         Button("FET",new Vector2(0,-355),new Vector2(350,65),Close);
         Text(page==2 ? "La configuració de pantalla es guarda en confirmar-la." : "Els canvis es guarden automàticament.",panel.transform,new Vector2(0,-415),new Vector2(1300,35),17);

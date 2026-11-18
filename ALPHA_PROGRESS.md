@@ -1,6 +1,20 @@
 # Alpha de PC · primera passada visual i ajustos
 
-Branca `alpha/pc-foundation`, compilació interna `0.1.0-alpha-dev.1`. Encara no és una publicació de l'Alpha.
+Branca `alpha/pc-foundation`, compilació de treball **Alpha v1.0.0**. Encara no s'ha publicat com a release.
+
+## Revisió de les anotacions de Ferran
+
+La identificació visible i el paquet passen a **Alpha v1.0.0** (`1.0.0-alpha`). És la branca de desenvolupament; no s'ha publicat cap release nova.
+
+- Logo i il·lustració nous, dibuixats per codi; detalls i procedència en `ART_NOTES.md`.
+- Fons de caverna com una única imatge que segueix la càmera, sense tiled ni col·lisió.
+- Murs més foscos amb coronament clar, diferenciats del paviment.
+- Càmera en LateUpdate i interpolació de Rigidbody2D del jugador/enemics, conservant el pas i les velocitats de física.
+- V-Sync i límits d'FPS en Pantalla, incloent 240; amb V-Sync el refresc depén del monitor.
+- Pestanya Interfície: vida i monedes independents en quatre posicions, amb persistència i restabliment. Provades sobre la hotbar.
+- Finestra limitada a l'àrea útil del monitor, amb marge per decoració i barra del sistema; centrat en aplicar. Provada una petició de 2560×1440 que s'ajusta a 2346×1320 de contingut.
+
+Windows i Linux recompilats sense errors; comprovacions de mida/aspecte de finestra, art i opcions de 240 FPS superades. Prova Windows: menú, masmorra, parets, fons, reubicació del HUD i confirmació de finestra gran. Registre sense excepcions. No s'ha mesurat el rendiment sostingut a 240 FPS ni executat la compilació Linux.
 
 ## Implementat
 

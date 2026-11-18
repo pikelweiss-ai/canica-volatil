@@ -20,6 +20,7 @@ public static class AlphaVisualBuilder
     [MenuItem("Canica/Alpha/Preparar ambients i estil visual")]
     public static void BuildAssets()
     {
+        AlphaArtworkBuilder.Build();
         Directory.CreateDirectory(Dir);
         Directory.CreateDirectory("Assets/Tiles/Alpha");
         for(int i=0;i<Themes.Length;i++)
@@ -62,10 +63,11 @@ public static class AlphaVisualBuilder
         style.coinFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/MinecraftStandard SDF.asset");
         style.grass = DefaultSprite("GrassTile"); style.brick = DefaultSprite("BrickTile"); style.wood = DefaultSprite("PlanksTile"); style.tree = DefaultSprite("TreeTile");
         style.player = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/pixil-frame-0.png"); EditorUtility.SetDirty(style);
+        style.logo=AlphaArtworkBuilder.Load("Logo");style.menuArtwork=AlphaArtworkBuilder.Load("MenuExpedition");
         var paths = AssetDatabase.FindAssets("t:DungeonTheme",new[] { "Assets/Dungeon/Temes" }).Select(AssetDatabase.GUIDToAssetPath).OrderBy(p=>p).ToArray();
         for(int i=0;i<paths.Length;i++)
         {
-            var t = AssetDatabase.LoadAssetAtPath<DungeonTheme>(paths[i]); t.voidSprite = Sprite("Fons_"+(i%8));
+            var t = AssetDatabase.LoadAssetAtPath<DungeonTheme>(paths[i]); t.voidSprite = AlphaArtworkBuilder.Load("CavernBackdrop");
             string key=Themes.FirstOrDefault(k=>paths[i].Contains("_"+k+"."));
             if(key != null)
             {
@@ -88,6 +90,15 @@ public static class AlphaVisualBuilder
     }
     static Color Architecture(int x,int y,Color tone,bool wall,int variant,int theme)
     {
+        if(wall)
+        {
+            Color face=Color.Lerp(tone,Hex(theme==0 ? "382b29" : "17212b"),.55f);
+            if(y>=13) return y==15 ? Color.Lerp(tone,Hex("d6be8d"),.45f) : tone*.9f;
+            int sx=(x+((y/6)%2)*8)%16;
+            if(y==0 || y==6 || y==12 || sx==0) return face*.5f;
+            if(y==5 || y==11) return face*1.2f;
+            return sx==15 ? face*.7f : face;
+        }
         int height=wall ? 4 : 8;
         int shifted=(x+((y/height)%2)*8)%16;
         bool seam=y%height==0 || shifted==0;

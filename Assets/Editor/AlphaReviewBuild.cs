@@ -11,7 +11,7 @@ public static class AlphaReviewBuild
     public static void BuildLinux() { AlphaVisualBuilder.Validate(); AlphaSettingsChecks.Validate(); Build(BuildTarget.StandaloneLinux64,"Linux/CanicaAlphaReview.x86_64"); }
     static void Build(BuildTarget target,string output)
     {
-        PlayerSettings.bundleVersion="0.1.0-alpha-dev.1";
+        PlayerSettings.bundleVersion=GameVersion.Package;
         PlayerSettings.resizableWindow=true;
         PlayerSettings.allowFullscreenSwitch=true;
         var scenes=EditorBuildSettings.scenes.Where(s=>s.enabled).Select(s=>s.path).ToArray();

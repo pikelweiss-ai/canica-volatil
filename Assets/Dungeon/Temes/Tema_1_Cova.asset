@@ -22,7 +22,7 @@ MonoBehaviour:
   lightColor: {r: 0.8, g: 0.85, b: 1, a: 1}
   lightIntensity: 0.8
   backgroundColor: {r: 0.05, g: 0.05, b: 0.08, a: 1}
-  voidSprite: {fileID: 21300000, guid: 33ca6ef14dffba44c8c496eadc74f4d6, type: 3}
+  voidSprite: {fileID: 21300000, guid: 9e6aad185a9d5cb4b818715f9ac4109e, type: 3}
   refugeFloor: {fileID: 0}
   enemies:
   - {fileID: 4622517229540368454, guid: df2ef3f332635414bbb1d4b2639ade5a, type: 3}

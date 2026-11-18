@@ -61,7 +61,7 @@ public class MapSelectUI : MonoBehaviour
         TextMeshProUGUI title = CreateText("Titol", root, "TRIA LA TEUA EXPEDICIÓ", 38);
         Place(title.rectTransform, new Vector2(0f, 340f), new Vector2(1450f, 80f));
 
-        var version = CreateText("Versio", root, "CANICA VOLÀTIL · ALPHA · COMPILACIÓ DE TREBALL", 22);
+        var version = CreateText("Versio", root, "CANICA VOLÀTIL · "+GameVersion.Label, 22);
         Place(version.rectTransform, new Vector2(0, 280), new Vector2(1400, 45));
         int count = maps != null ? maps.Length : 0;
         float cardHeight = ImageHeight + LabelHeight + Border * 2f;

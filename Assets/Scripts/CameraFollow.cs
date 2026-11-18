@@ -16,8 +16,9 @@ public class CameraFollow : MonoBehaviour
         offset = new Vector3(0, 0, -10);
     }
 
-    void FixedUpdate()
+    void LateUpdate()
     {
+        if(target==null || Time.deltaTime<=0) return;
         Vector3 targetCamPos = target.position + offset;
 
         if (shakeDuration > 0)
@@ -29,10 +30,10 @@ public class CameraFollow : MonoBehaviour
             );
 
             targetCamPos += shakeOffset;
-            shakeDuration -= Time.fixedDeltaTime;
+            shakeDuration -= Time.deltaTime;
         }
 
-        transform.position = Vector3.SmoothDamp(transform.position, targetCamPos, ref velocity, 0.2f / smoothing);
+        transform.position = Vector3.SmoothDamp(transform.position, targetCamPos, ref velocity, 0.2f / Mathf.Max(.01f,smoothing),Mathf.Infinity,Time.deltaTime);
     }
 
     public void ShakeCamera(float duration, float magnitude)

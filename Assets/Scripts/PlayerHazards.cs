@@ -26,6 +26,7 @@ public class PlayerHazards : MonoBehaviour
         GameObject p = GameObject.FindWithTag("Player");
         if (p == null) return;
         if(p.GetComponent<GameplayMenu>()==null)p.AddComponent<GameplayMenu>();
+        if(p.GetComponent<HudLayout>()==null)p.AddComponent<HudLayout>();
         if (p.GetComponent<PlayerHazards>() == null) p.AddComponent<PlayerHazards>();
         if (p.GetComponent<PlayerCosmetics>() == null) p.AddComponent<PlayerCosmetics>();
         if (p.GetComponent<HealInventory>() == null) p.AddComponent<HealInventory>();

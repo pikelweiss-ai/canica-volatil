@@ -61,6 +61,7 @@ public class EnemyPathfindingAI : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        if(rb!=null) rb.interpolation=RigidbodyInterpolation2D.Interpolate;
         home = transform.position;
         wanderTarget = home;
 

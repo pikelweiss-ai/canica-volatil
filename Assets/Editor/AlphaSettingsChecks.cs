@@ -10,6 +10,11 @@ public static class AlphaSettingsChecks
         var sizes=DisplaySettings.Supported(1920,1080,new Vector2Int(1280,720));
         if(!sizes.Contains(new Vector2Int(1920,1080)) || !sizes.Contains(new Vector2Int(1024,768))) throw new Exception("Falten resolucions natives o 4:3");
         if(sizes.Exists(s=>s.x>1920 || s.y>1080) || new System.Collections.Generic.HashSet<Vector2Int>(sizes).Count!=sizes.Count) throw new Exception("Resolucions invalides o duplicades");
+        var fitted=DisplaySettings.FitWindow(new Vector2Int(1920,1080),new Vector2Int(1920,1040));
+        if(fitted.x>1896 || fitted.y>968 || Mathf.Abs((float)fitted.x/fitted.y-16f/9)>0.004f) throw new Exception("La finestra tapa la barra o deforma la proporcio");
+        if(DisplaySettings.FitWindow(new Vector2Int(1024,768),new Vector2Int(1920,1040))!=new Vector2Int(1024,768)) throw new Exception("Una finestra que ja cap no ha de canviar");
+        if(System.Array.IndexOf(PresentationSettings.Limits,240)<0) throw new Exception("Falta opcio de 240 FPS");
+        if(AlphaVisualStyle.Current.logo==null || AlphaVisualStyle.Current.menuArtwork==null) throw new Exception("Falten les imatges del menu");
         var root=new GameObject("Prova de tipografia",typeof(Canvas),typeof(UnityEngine.UI.CanvasScaler));
         root.GetComponent<UnityEngine.UI.CanvasScaler>().uiScaleMode=UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
         try

@@ -19,3 +19,5 @@ MonoBehaviour:
   wood: {fileID: -1990983442699129373, guid: af21043d5be8a444786f63a0397cca14, type: 3}
   tree: {fileID: -6778806299357635635, guid: a89af7a6a477ac94c905edd2734846b3, type: 3}
   player: {fileID: 21300000, guid: 7d69027968da82148b918575f8278db3, type: 3}
+  logo: {fileID: 21300000, guid: 2fb2c6fb7c4c73b49a5259ed7ca1617e, type: 3}
+  menuArtwork: {fileID: 21300000, guid: aabc2f2b99d83884d850e96fc044756c, type: 3}

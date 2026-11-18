@@ -18,6 +18,30 @@ public class DisplaySettings : MonoBehaviour
     float deadline,previousScale;
     bool previousEditing;
     const string WidthKey="Display_Width",HeightKey="Display_Height",ModeKey="Display_Mode";
+    Vector2Int lastWindow;
+    bool lastFullscreen;
+    public static Vector2Int FitWindow(Vector2Int requested,Vector2Int workArea)
+    {
+        float maxW=Mathf.Max(320,workArea.x-24),maxH=Mathf.Max(240,workArea.y-72);
+        float scale=Mathf.Min(1,maxW/Mathf.Max(1,requested.x),maxH/Mathf.Max(1,requested.y));
+        return new Vector2Int(Mathf.Max(1,Mathf.FloorToInt(requested.x*scale)),Mathf.Max(1,Mathf.FloorToInt(requested.y*scale)));
+    }
+    static Vector2Int WindowSize(Vector2Int requested)
+    {
+        var area=Screen.mainWindowDisplayInfo.workArea;
+        var available=area.width>0 && area.height>0 ? new Vector2Int(area.width,area.height) : new Vector2Int(Screen.currentResolution.width,Screen.currentResolution.height);
+        return FitWindow(requested,available);
+    }
+    IEnumerator FitAndCenter()
+    {
+        yield return null;yield return null;
+        if(Screen.fullScreen)yield break;
+        var size=WindowSize(new Vector2Int(Screen.width,Screen.height));
+        if(size.x!=Screen.width || size.y!=Screen.height)Screen.SetResolution(size.x,size.y,FullScreenMode.Windowed);
+        yield return null;
+        var display=Screen.mainWindowDisplayInfo;var area=display.workArea;
+        if(area.width>0 && area.height>0)Screen.MoveMainWindowTo(display,new Vector2Int(area.x+Mathf.Max(0,(area.width-size.x)/2),area.y+Mathf.Max(0,(area.height-size.y)/2)));
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void Init()
@@ -29,8 +53,10 @@ public class DisplaySettings : MonoBehaviour
         if(PlayerPrefs.HasKey(WidthKey) && !commandLine)
         {
             var size=Closest(PlayerPrefs.GetInt(WidthKey),PlayerPrefs.GetInt(HeightKey));
-            Screen.SetResolution(size.x,size.y,PlayerPrefs.GetInt(ModeKey,0)==1 ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed);
+            bool full=PlayerPrefs.GetInt(ModeKey,0)==1;if(!full)size=WindowSize(size);
+            Screen.SetResolution(size.x,size.y,full ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed);
         }
+        instance.StartCoroutine(instance.FitAndCenter());
     }
     public static List<Vector2Int> Options()
     {
@@ -56,11 +82,12 @@ public class DisplaySettings : MonoBehaviour
     {
         if(instance == null || Pending) return;
         instance.previousWidth=Screen.width;instance.previousHeight=Screen.height;instance.previousMode=Screen.fullScreenMode;
-        var safe=Closest(size.x,size.y);instance.requestedWidth=safe.x;instance.requestedHeight=safe.y;
+        var safe=Closest(size.x,size.y);if(!fullscreen)safe=WindowSize(safe);instance.requestedWidth=safe.x;instance.requestedHeight=safe.y;
         instance.requestedMode=fullscreen ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed;
         instance.previousScale=Time.timeScale;instance.previousEditing=GameControls.Editing;
         Time.timeScale=0;GameControls.Editing=true;
         Screen.SetResolution(safe.x,safe.y,instance.requestedMode);
+        if(!fullscreen)instance.StartCoroutine(instance.FitAndCenter());
         instance.OpenConfirmation();instance.deadline=Time.realtimeSinceStartup+15;
     }
     public static void Confirm()
@@ -76,6 +103,12 @@ public class DisplaySettings : MonoBehaviour
     }
     void Update()
     {
+        var current=new Vector2Int(Screen.width,Screen.height);
+        if(current!=lastWindow || Screen.fullScreen!=lastFullscreen)
+        {
+            lastWindow=current;lastFullscreen=Screen.fullScreen;
+            if(!Screen.fullScreen) { var fit=WindowSize(current);if(fit!=current)StartCoroutine(FitAndCenter()); }
+        }
         if(Pending)
         {
             countdown.text="Tornarem als ajustos anteriors en "+Mathf.Max(0,Mathf.CeilToInt(deadline-Time.realtimeSinceStartup))+" s";
