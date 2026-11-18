@@ -1,5 +1,7 @@
 # Canica Volàtil — Document de disseny
 
+> Direcció de l'Alpha de PC actualitzada el 18/11/2026: consultar [ALPHA_PLAN.md](ALPHA_PLAN.md), basat en la nova entrevista amb Ferran. La tenda, la col·lecció persistent i el cooperatiu per LAN/codi passen a ser prioritats. Els apartats d'aquest document són històrics quan entren en conflicte amb el pla nou.
+
 > Resultat de l'entrevista del 16/11/2026. Projecte de treball: `Canica Alpha`. L'original `Canica 1` no es toca.
 
 ## 1. Idea general
