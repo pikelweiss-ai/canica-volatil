@@ -116,7 +116,7 @@ public class PlayerAttack : MonoBehaviour
         if (!Input.GetMouseButton(0))
             mouseBlocked = false;
 
-        bool attackPressed = GameControls.Held(4) && !mouseBlocked && !(EventSystem.current != null && EventSystem.current.IsPointerOverGameObject());
+        bool attackPressed = MobileInput.Active ? !GameControls.Editing && MobileInput.Firing : GameControls.Held(4) && !mouseBlocked && !(EventSystem.current != null && EventSystem.current.IsPointerOverGameObject());
 
         if(!attackPressed || spinningWeapon!=CurrentWeapon){spinCharge=0;spinningWeapon=CurrentWeapon;}
         if(attackPressed && CurrentWeapon!=null && CurrentWeapon.spinUpTime>0)
@@ -151,7 +151,7 @@ public class PlayerAttack : MonoBehaviour
         if (cam == null) return;
 
         Vector3 mouseWorld = cam.ScreenToWorldPoint(Input.mousePosition);
-        Vector2 dir = (Vector2)mouseWorld - (Vector2)transform.position;
+        Vector2 dir = MobileInput.Active ? MobileInput.Aim : (Vector2)mouseWorld - (Vector2)transform.position;
 
         if (dir.sqrMagnitude > 0.001f)
             aimDirection = dir.normalized;

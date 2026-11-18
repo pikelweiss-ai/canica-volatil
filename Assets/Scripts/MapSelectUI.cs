@@ -73,7 +73,7 @@ public class MapSelectUI : MonoBehaviour
             CreateCard(root, maps[i], new Vector2(x, 0f), cardHeight);
         }
 
-                TextMeshProUGUI help = CreateText("Controls", root, "Configura les tecles des de Controls al menú\nRoda configurable · Dues tecles per acció · Esc per tornar", 23);
+        TextMeshProUGUI help = CreateText("Controls", root, MobileInput.Active ? "Dos joysticks: mou-te i ataca alhora\nToca les armes i les cures · Ajuda en Controls" : "Configura les tecles des de Controls al menú\nRoda configurable · Dues tecles per acció · Esc per tornar", 23);
         Place(help.rectTransform, new Vector2(0f, -260f), new Vector2(1300f, 80f));
         // Botó per a tornar al menú
         Button back = CreateButton("Tornar", root, new Color(1f, 1f, 1f, 0.9f));

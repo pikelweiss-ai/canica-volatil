@@ -104,7 +104,7 @@ public class HotbarUI : MonoBehaviour
         crt.anchorMin = crt.anchorMax = new Vector2(0.5f, 0f);
         crt.pivot = new Vector2(0.5f, 0f);
         crt.sizeDelta = new Vector2(400f, 40f);
-        crt.anchoredPosition = new Vector2(0f, 20f + SlotSize + 10f);
+        crt.anchoredPosition = new Vector2(0f, MobileInput.Active ? 245f : 20f + SlotSize + 10f);
     }
 
     Image CreateBorderBar(Transform parent, Vector2 anchorMin, Vector2 anchorMax, Vector2 offsetMin, Vector2 offsetMax)

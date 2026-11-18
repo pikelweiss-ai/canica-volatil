@@ -165,7 +165,7 @@ public class HealBarUI : MonoBehaviour
     void Build()
     {
         // La hotbar d'armes fa 4 x 90 + 3 x 10 = 390 d'ample i està centrada: ens posem a la dreta
-        float startX = 390f / 2f + 30f;
+        float startX = MobileInput.Active ? -(HealInventory.Slots * SlotSize + (HealInventory.Slots - 1) * Spacing) / 2 : 390f / 2f + 30f;
         usageLabel=Text(transform,"",16,TextAlignmentOptions.Center,Vector2.zero,Vector2.zero);
         var hint=usageLabel.rectTransform;hint.anchorMin=hint.anchorMax=new Vector2(0.5f,0);hint.sizeDelta=new Vector2(370,28);hint.anchoredPosition=new Vector2(390,105);
         for (int i = 0; i < HealInventory.Slots; i++)
@@ -176,7 +176,7 @@ public class HealBarUI : MonoBehaviour
             rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0f);
             rt.pivot = Vector2.zero;
             rt.sizeDelta = Vector2.one * SlotSize;
-            basePos[i] = new Vector2(startX + i * (SlotSize + Spacing), 20f);
+            basePos[i] = new Vector2(startX + i * (SlotSize + Spacing), MobileInput.Active ? 145f : 20f);
             rt.anchoredPosition = basePos[i];
             slot.GetComponent<Image>().color = new Color(0.35f, 0f, 0.05f, 0.45f);
             slots[i] = rt;
@@ -243,7 +243,7 @@ public class HealBarUI : MonoBehaviour
 
     public void Select(int index)
     {
-        if(usageLabel!=null) usageLabel.text=GameControls.Label(10)+" · usar cura seleccionada";
+        if(usageLabel!=null) usageLabel.text=MobileInput.Active ? "" : GameControls.Label(10)+" · usar cura seleccionada";
         for (int i=0;i<slots.Length;i++) slots[i].GetComponent<Image>().color = i==index ? new Color(0.6f,0.2f,0.3f,0.9f) : new Color(0.35f,0f,0.05f,0.45f);
     }
     // Tremola la casella (no es pot usar). Sempre torna a la seua posició original,

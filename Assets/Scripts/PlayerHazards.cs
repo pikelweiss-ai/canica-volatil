@@ -25,6 +25,7 @@ public class PlayerHazards : MonoBehaviour
     {
         GameObject p = GameObject.FindWithTag("Player");
         if (p == null) return;
+        if(MobileInput.Active && p.GetComponent<MobileHUD>()==null) p.AddComponent<MobileHUD>();
         if(p.GetComponent<GameplayMenu>()==null)p.AddComponent<GameplayMenu>();
         if (p.GetComponent<PlayerHazards>() == null) p.AddComponent<PlayerHazards>();
         if (p.GetComponent<PlayerCosmetics>() == null) p.AddComponent<PlayerCosmetics>();

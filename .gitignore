@@ -27,6 +27,9 @@
 # Builds i altres
 *.apk
 *.aab
+*.keystore
+*.jks
+/.utmp/
 *.unitypackage
 *.app
 crashlytics-buildid.txt

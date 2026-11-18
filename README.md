@@ -1,5 +1,7 @@
 # Canica Volatil
 
+**Variant Android:** [descarregar l'APK mòbil](https://github.com/pikelweiss-ai/canica-volatil/releases/tag/v1.0.0-mobile-prealpha), amb dos joysticks i controls tàctils. [Instal·lació, controls i compilació](MOBILE_ANDROID.md). Branca `mobile/android-prealpha-v1.0.0`.
+
 Joc 2D d'accio i masmorres fet amb Unity. Primera versio: **Pre-Alpha v1.0.0**.
 
 ## Descarregar i jugar
@@ -8,7 +10,7 @@ Anar a **Releases**, obrir **Pre-Alpha v1.0.0** i descarregar el paquet del sist
 - **Windows x86_64**: extraure el ZIP complet i obrir `CanicaVolatil.exe`. Mantindre l'executable, UnityPlayer.dll, MonoBleedingEdge i la carpeta de dades junts.
 - **Linux Mint x86_64**: extraure el TAR.GZ i executar `./Jugar.sh`. Si el gestor de fitxers no deixa executar-lo, obrir un terminal dins de la carpeta i fer `bash Jugar.sh`.
 
-No cal instal·lar Unity per jugar. El repositori es privat: les descarregues requereixen acces autoritzat.
+No cal instal·lar Unity per jugar. El repositori i les descarregues son publics.
 La versio Linux es nativa; no necessita Wine. La compatibilitat concreta amb Mint s'ha de verificar en una maquina Mint.
 
 ## Controls inicials

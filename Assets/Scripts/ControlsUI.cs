@@ -8,6 +8,7 @@ public class ControlsUI : MonoBehaviour
     Transform panel; TMP_FontAsset font;
     public static void Open()
     {
+        if(MobileInput.Active) { MobileHelpUI.Open(); return; }
         if (GameControls.Editing) return;
         var go = new GameObject("Controls", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
         var canvas=go.GetComponent<Canvas>(); canvas.renderMode=RenderMode.ScreenSpaceOverlay; canvas.sortingOrder=100;
