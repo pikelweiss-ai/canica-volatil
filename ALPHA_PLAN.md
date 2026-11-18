@@ -8,6 +8,8 @@ Direcció acordada a partir de l'entrevista amb Ferran del 18/11/2026. Document 
 
 Tres prioritats: sorpreses en cada expedició, combat amb identitat de canica i col·lecció que perdure entre partides. El cooperatiu per LAN i per codi és un requisit per arribar a l'Alpha.
 
+Actualització de Ferran: preparar també ambients nous, textures de blocs més treballades, recuperació de rajola/fusta/gespa/arbres originals, peces parcials per a murs i portes interactives, lava i àcid connectats com l'aigua, fons del buit per ambient, menú amb art coherent del joc i configuració més sòlida. Tipografia principal constant, amb excepcions deliberades com el comptador de monedes. La primera passada visual acompanya els fonaments de l'Alpha.
+
 El motiu per tornar serà dominar una arma, descobrir un secret, superar el rècord amb els amics i completar la col·lecció. Les recompenses es guanyen jugant, amb objectius visibles i un catàleg consultable.
 
 ## 2. Bucle principal
@@ -83,6 +85,8 @@ Inventari amb nom, raresa, mecànica, estadístiques comparables i descripció d
 
 Persistència prevista: identificadors estables d'objecte, versió del perfil, escriptura atòmica i còpia de recuperació. Cada client conservarà el seu perfil. Validar costos i recompenses del grup a l'amfitrió; una partida LAN amb perfils locals encara no ofereix una economia protegida contra trampes.
 
+Perfil local i estadístiques són objectius de l'Alpha. Comptes independents, inici de sessió i sincronització del progrés entre equips es reserven per a la Beta. Preparar un identificador de perfil i una versió de dades facilitarà eixa migració; no presentar un nom local com un compte en línia.
+
 ## 7. Jugar amb amics
 
 Objectiu de l'Alpha: expedicions d'1 a 4 jugadors. La primera prova es farà amb dos. Accés des del menú a crear partida, unir-se per LAN i unir-se amb codi per Internet.
@@ -143,3 +147,5 @@ La versió es publicarà com a Alpha quan passe aquestes proves, amb el número 
 - Hi havia quatre assets de fonts modificats al projecte principal. Es preserven; aquesta preparació es fa en un worktree separat.
 
 Aquest document actualitza la direcció de `DISSENY.md`, especialment la tenda, la col·lecció i la prioritat del cooperatiu. Les propostes de contingut i els objectius numèrics encara s'han de contrastar jugant.
+
+Preferència posterior de Ferran: font normal de Unity/TextMesh Pro en negreta i ombra; Minecraft reservada al comptador de monedes. Clic dret com a cura inicial i ajustos de pantalla completa/resolució. Estat i proves en `ALPHA_PROGRESS.md`.

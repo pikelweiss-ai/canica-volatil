@@ -14,14 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   themeName: Cova
   floorTiles:
-  - {fileID: 11400000, guid: 8fc090cc679c9c24ea6b9f5b486857eb, type: 2}
-  - {fileID: 11400000, guid: 734bc137c149b524695ca438df6f543a, type: 2}
-  wallTile: {fileID: 11400000, guid: c2f910fea3e74a04bb19ecdc5cfcf905, type: 2}
+  - {fileID: 11400000, guid: d3fffc4a3d4942345be8163d9ea65d7c, type: 2}
+  - {fileID: 11400000, guid: 37b3ec43696ddb443b441c95b8ede119, type: 2}
+  wallTile: {fileID: 11400000, guid: c7ac59db62d01ea4690e87b60cdc7673, type: 2}
   liquidTile: {fileID: 11400000, guid: 7b4ca08448bbea44ab2d2b0e25355a12, type: 2}
   liquidChance: 0.3
   lightColor: {r: 0.8, g: 0.85, b: 1, a: 1}
   lightIntensity: 0.8
   backgroundColor: {r: 0.05, g: 0.05, b: 0.08, a: 1}
+  voidSprite: {fileID: 21300000, guid: 33ca6ef14dffba44c8c496eadc74f4d6, type: 3}
+  refugeFloor: {fileID: 0}
   enemies:
   - {fileID: 4622517229540368454, guid: df2ef3f332635414bbb1d4b2639ade5a, type: 3}
   - {fileID: 2183061633328060674, guid: c6ca1a562f1818d4592b8d7046c69dff, type: 3}

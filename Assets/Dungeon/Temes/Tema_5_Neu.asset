@@ -14,14 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   themeName: Neu i gel
   floorTiles:
-  - {fileID: 11400000, guid: 39067aea4fb9d8a4e8803d2ea4a965a5, type: 2}
-  - {fileID: 11400000, guid: 37b20578b8b5cf0409827947a642721b, type: 2}
-  wallTile: {fileID: 11400000, guid: 822615c299d9b254c9a3ac40c3f5246d, type: 2}
+  - {fileID: 11400000, guid: 4a8d67bb2c9062846a9510c69a8ac794, type: 2}
+  - {fileID: 11400000, guid: 73018aec4224ed74f84123664bd39f40, type: 2}
+  wallTile: {fileID: 11400000, guid: 4e6fe73d05c29b544a6180b3a1b30c4c, type: 2}
   liquidTile: {fileID: 11400000, guid: 7b4ca08448bbea44ab2d2b0e25355a12, type: 2}
   liquidChance: 0.25
   lightColor: {r: 0.9, g: 0.95, b: 1, a: 1}
   lightIntensity: 1
   backgroundColor: {r: 0.12, g: 0.16, b: 0.22, a: 1}
+  voidSprite: {fileID: 21300000, guid: 132b0cef44f44b54b9a9bd0054f482a6, type: 3}
+  refugeFloor: {fileID: 0}
   enemies:
   - {fileID: 2696947214165211307, guid: 0b06ba3bac8249843b3ecb8ae6f2280b, type: 3}
   - {fileID: 5969025284651876321, guid: 992c3b45572bde74ba396f70f4484e21, type: 3}

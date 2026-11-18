@@ -22,7 +22,7 @@ public class MainMenuController : MonoBehaviour
         // Tornar al menú acaba la partida de masmorra que hi haguera
         RunState.Reset();
         EnsureDungeonMap();
-        CreateCustomizeButton();
+        AlphaMainMenu.Create(this);
     }
 
     // L'escena guardada pot tindre la llista vella: afegim la Masmorra al principi si no hi és
@@ -64,6 +64,7 @@ public class MainMenuController : MonoBehaviour
 
     TMP_FontAsset Font()
     {
+        if (GameTypography.Font != null) return GameTypography.Font;
         if (menuFont != null) return menuFont;
         TextMeshProUGUI anyText = FindAnyObjectByType<TextMeshProUGUI>();
         return anyText != null ? anyText.font : null;

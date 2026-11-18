@@ -14,14 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   themeName: Desert
   floorTiles:
-  - {fileID: 11400000, guid: c6cb77f9c98eae84a8572cdb4dd41b5a, type: 2}
-  - {fileID: 11400000, guid: 60d04ab3af518914ab62fff96cd72dc0, type: 2}
-  wallTile: {fileID: 11400000, guid: 07d4c5ef205198149b69cfe7d3a10462, type: 2}
+  - {fileID: 11400000, guid: 151924788fcc3e849ad630e257529972, type: 2}
+  - {fileID: 11400000, guid: 1e69c4e27cd750f4294159e1a069f50e, type: 2}
+  wallTile: {fileID: 11400000, guid: 5d961245d27f82d449c82569c7843b73, type: 2}
   liquidTile: {fileID: 11400000, guid: 7b4ca08448bbea44ab2d2b0e25355a12, type: 2}
   liquidChance: 0.1
   lightColor: {r: 1, g: 0.95, b: 0.85, a: 1}
   lightIntensity: 1.05
   backgroundColor: {r: 0.2, g: 0.14, b: 0.08, a: 1}
+  voidSprite: {fileID: 21300000, guid: 7c4ebc2fd36aaa84785684af70b8a881, type: 3}
+  refugeFloor: {fileID: 0}
   enemies:
   - {fileID: 4622517229540368454, guid: df2ef3f332635414bbb1d4b2639ade5a, type: 3}
   - {fileID: 2696947214165211307, guid: 0b06ba3bac8249843b3ecb8ae6f2280b, type: 3}

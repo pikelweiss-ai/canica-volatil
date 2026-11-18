@@ -109,6 +109,7 @@ public class DungeonGenerator : MonoBehaviour
         Paint();
         Populate();
         ApplyLook();
+        DungeonBackdrop.Attach(this);
 
         // El jugador comença al mig de la sala inicial
         Room start = Rooms[0];
@@ -412,6 +413,11 @@ public class DungeonGenerator : MonoBehaviour
                 : null;
             ground.SetTile(ToCell(p), t);
         }
+        if(Theme != null && Theme.refugeFloor != null)
+            foreach(Room room in Rooms)
+                if(room.type == RoomType.Start || room.type == RoomType.Treasure)
+                    foreach(Vector2Int p in room.rect.allPositionsWithin)
+                        if(floor.Contains(p)) ground.SetTile(ToCell(p),Theme.refugeFloor);
 
         // Parets: tot el que toca terra (també en diagonal) i no és terra
         TileBase wall = Theme != null ? Theme.wallTile : null;

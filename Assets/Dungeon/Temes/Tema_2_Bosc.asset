@@ -14,14 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   themeName: Bosc perdut
   floorTiles:
-  - {fileID: 11400000, guid: e59d6133c3d97e0429717b87173b0ec6, type: 2}
-  - {fileID: 11400000, guid: 9048431055af245419839d81b4cec1c1, type: 2}
-  wallTile: {fileID: 11400000, guid: b4a2160a4ea3d2849ad4fd1b6b353adf, type: 2}
+  - {fileID: 11400000, guid: ad1e83d042d1b324db577d2159c5fde5, type: 2}
+  wallTile: {fileID: 11400000, guid: a30b02d6a5bb970458509e95fa9a0993, type: 2}
   liquidTile: {fileID: 11400000, guid: 7b4ca08448bbea44ab2d2b0e25355a12, type: 2}
   liquidChance: 0.3
   lightColor: {r: 0.85, g: 1, b: 0.85, a: 1}
   lightIntensity: 0.9
   backgroundColor: {r: 0.03, g: 0.08, b: 0.03, a: 1}
+  voidSprite: {fileID: 21300000, guid: 5f653e9c4729b0c44a4913d0bc4d7b1b, type: 3}
+  refugeFloor: {fileID: 11400000, guid: fa86f67c1239b0049a4082aeefc5259d, type: 2}
   enemies:
   - {fileID: 2183061633328060674, guid: c6ca1a562f1818d4592b8d7046c69dff, type: 3}
   - {fileID: 5870496072010164621, guid: 0e33aff4c4463254fb3ef5fd4621cade, type: 3}

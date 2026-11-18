@@ -14,14 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   themeName: "Volc\xE0"
   floorTiles:
-  - {fileID: 11400000, guid: b50932fcb06628c47bd430e056af8a19, type: 2}
-  - {fileID: 11400000, guid: f25668813c0f26f4e83a34fa9d583dbe, type: 2}
-  wallTile: {fileID: 11400000, guid: 8751e952c78024742ba90e723fce4859, type: 2}
+  - {fileID: 11400000, guid: b96f329f4a9090344b139fd9bc757bb2, type: 2}
+  - {fileID: 11400000, guid: 119226c311e77014c9de724a62c483e3, type: 2}
+  wallTile: {fileID: 11400000, guid: c176deccb009336428061fed686660f4, type: 2}
   liquidTile: {fileID: 11400000, guid: ab82a2036ddd14d48994bd25c6f813a8, type: 2}
   liquidChance: 0.6
   lightColor: {r: 1, g: 0.75, b: 0.6, a: 1}
   lightIntensity: 0.85
   backgroundColor: {r: 0.12, g: 0.03, b: 0.02, a: 1}
+  voidSprite: {fileID: 21300000, guid: 12702ee020e067a45847fb57999d9fb7, type: 3}
+  refugeFloor: {fileID: 0}
   enemies:
   - {fileID: 2696947214165211307, guid: 0b06ba3bac8249843b3ecb8ae6f2280b, type: 3}
   - {fileID: 7566981565024920386, guid: b242a9c0731539e40b8e0b74d8b0d35d, type: 3}

@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6af1cb29f0c03474ca837b5412753974, type: 3}
+  m_Name: AlphaVisualStyle
+  m_EditorClassIdentifier: 
+  font: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  coinFont: {fileID: 11400000, guid: d8ad99c6e656a3548b9e4ff449232a64, type: 2}
+  grass: {fileID: 2492542122957469678, guid: da67e0ec3c8977f40b4b6f8cf37ae10a, type: 3}
+  brick: {fileID: -1407430656649500552, guid: 92edc0f87b6f3e14f88b0b374348145a, type: 3}
+  wood: {fileID: -1990983442699129373, guid: af21043d5be8a444786f63a0397cca14, type: 3}
+  tree: {fileID: -6778806299357635635, guid: a89af7a6a477ac94c905edd2734846b3, type: 3}
+  player: {fileID: 21300000, guid: 7d69027968da82148b918575f8278db3, type: 3}

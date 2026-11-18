@@ -14,14 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   themeName: Claveguera
   floorTiles:
-  - {fileID: 11400000, guid: ab4ddca8a9ba84248b03ad2f391fe65e, type: 2}
-  - {fileID: 11400000, guid: 3ab8b32999cef4b4e87b9b4b855e35f4, type: 2}
-  wallTile: {fileID: 11400000, guid: fe484c636799ca6488319557dffa8c06, type: 2}
+  - {fileID: 11400000, guid: e9bc5f525516aac4190065c6f3290e4c, type: 2}
+  - {fileID: 11400000, guid: 2a2b2d38899d132489bf5d9cf76d4f48, type: 2}
+  wallTile: {fileID: 11400000, guid: bcc30c4fc4d04a34cac9ee598e4c4d43, type: 2}
   liquidTile: {fileID: 11400000, guid: aef17fc4c86eb164899a8f1b04e105c1, type: 2}
   liquidChance: 0.7
   lightColor: {r: 0.8, g: 1, b: 0.75, a: 1}
   lightIntensity: 0.75
   backgroundColor: {r: 0.04, g: 0.06, b: 0.03, a: 1}
+  voidSprite: {fileID: 21300000, guid: c86803521c6ae2e4db4b70695c2f7ba3, type: 3}
+  refugeFloor: {fileID: 0}
   enemies:
   - {fileID: 2183061633328060674, guid: c6ca1a562f1818d4592b8d7046c69dff, type: 3}
   - {fileID: 5777466996196190977, guid: 372b6c8329ee5bb4dada4201aa4a9a53, type: 3}
