@@ -1,109 +1,11 @@
-# Personatges a 16 px: paleta/cos comuns, cares i siluetes deliberadament diferents.
-function Stamp-Face($grid, [string[]]$pattern, [int]$ox=3, [int]$oy=4) {
-  for($fy=0;$fy -lt $pattern.Count;$fy++) { for($fx=0;$fx -lt $pattern[$fy].Length;$fx++) {
-    $ch=$pattern[$fy][$fx]; if($ch -ne '.') {$grid[$oy+$fy][$ox+$fx]=$ch}
-  }}
-}
-$personalities=@(
-  @{ name='Vidre'; fill='h'; shade='b'; light='W'; x=4; y=3; face=@('W.......','W...bb..','.W..b...','..k..k..','..k..k..','........','...kkk..','.......W','......W.') },
-  @{ name='Ninja'; fill='d'; shade='k'; light='m'; x=2; y=4; face=@('rrrrrrrrrrrr','YYYYYYYYYYYY','YYkkYYYYkkYY','YYYkYYYYkYYY','rrrrrrrrrrrr','............','....kkkk....') },
-  @{ name='Fantasma'; fill='W'; shade='g'; light='W'; x=3; y=4; face=@('..........','..kk..kk..','...k..k...','..........','....kk....','...khhk...','....kk....','..........','g........g') },
-  @{ name='Cosmos'; fill='V'; shade='M'; light='v'; x=3; y=3; face=@('...h......','..hhh.....','...h....v.','.......vvv','..kk..kkv.','..hk..kh..','..........','....kk....','.v......h.') },
-  @{ name='Corall'; fill='r'; shade='R'; light='p'; x=3; y=3; face=@('.p.....p..','.p.p...pp.','..ppp..p..','...p......','..kk..kk..','..........','.p......p.','..k....k..','...kkkk...') },
-  @{ name='Menta'; fill='H'; shade='L'; light='H'; x=3; y=2; face=@('....LL....','...LeL....','..LeeLL...','.LeeLL....','..LLL.....','..kk..kk..','..........','...k..k...','....kk....') },
-  @{ name='Obsidiana'; fill='M'; shade='k'; light='V'; x=3; y=3; face=@('.VV.......','.VVV....V.','..VV...VV.','.......V..','..vk..kv..','..vk..kv..','..........','...kkkk...','.....VV...') },
-  @{ name='Bombolla'; fill='h'; shade='b'; light='W'; x=3; y=3; face=@('W.........','.W......W.','.......W..','..kk..kk..','..kk..kk..','..........','....kk....','....kk..b.','.......b.b','........b.') },
-  @{ name='Aurora'; fill='V'; shade='b'; light='h'; x=2; y=3; face=@('vv........v.','vvv......vv.','hvvv...vvvh.','hhvvv.vvvhh.','.hkkvvvkkh..','..kk...kk...','............','.....kk.....') },
-  @{ name='Coure'; fill='z'; shade='Z'; light='x'; x=3; y=3; face=@('ZZZZZZZZZZ','..x....x..','..........','..kk..kk..','..xk..kx..','..........','..kkkkkk..','..kZxZxk..','..kkkkkk..') },
-  @{ name='Caramel'; fill='x'; shade='y'; light='W'; x=3; y=3; face=@('yyyyyyyyyy','oyyoyyyoyo','o..o...o.o','..........','..kk..kk..','..kk..kk..','..........','...kkkk...','....oo....') },
-  @{ name='Llima'; fill='e'; shade='L'; light='H'; x=3; y=3; face=@('HHHHHHHHHH','H....H...H','.H..H...H.','..........','..kk..kk..','..........','..k...k...','...kkk....','...H..H...') },
-  @{ name='Safir'; fill='b'; shade='B'; light='h'; x=3; y=3; face=@('..hhhhhh..','.h......h.','h..b..b..h','h.kk..kk.h','.hkk..kkh.','..h....h..','...kkkk...','....hh....') },
-  @{ name='Perla'; fill='c'; shade='C'; light='W'; x=3; y=3; face=@('..W.......','.WWW......','..W....W..','......WWW.','..kk..kk..','.......W..','..........','...k..k...','....kk....') },
-  @{ name='Ciclope'; fill='v'; shade='V'; light='v'; x=3; y=4; face=@('...kkkk...','..kYYYYk..','..kYkkYk..','..kYkkYk..','...kkkk...','..........','...kkkk...') },
-  @{ name='Gat'; fill='x'; shade='z'; light='x'; x=3; y=4; face=@('..........','..kk..kk..','..kk..kk..','....oo....','kk..kk..kk','.kkk..kkk.','....kk....') },
-  @{ name='Gota'; fill='b'; shade='B'; light='h'; x=3; y=4; face=@('.h........','hh........','..kk..kk..','..kk..kk..','..........','...k..k...','....kk....') }
-)
-foreach ($spec in $personalities) {
-  $half = Skin $spec.fill $spec.shade $spec.light @() $false
-  $full = Expand-Rows @{ rows=$half; mirror=$true }
-  $grid = @($full | ForEach-Object { ,($_.ToCharArray()) })
-  Stamp-Face $grid $spec.face $spec.x $spec.y
-  if ($spec.name -eq 'Gat') {
-    $grid[0] = '...kk......kk...'.ToCharArray()
-    $grid[1] = '..kxxkkkkkkxxk..'.ToCharArray()
-    $grid[2] = '..kxoxxxxxxoxk..'.ToCharArray()
-  }
-  if ($spec.name -eq 'Gota') {
-    $grid[0] = '.......kk.......'.ToCharArray()
-    $grid[1] = '......kbbk......'.ToCharArray()
-    $grid[2] = '.....kbbbbk.....'.ToCharArray()
-    $grid[3] = '...kkhbbbbhkk...'.ToCharArray()
-  }
-  if ($spec.name -eq 'Fantasma') {
-    $grid[13] = '..kkggkkggkkgk..'.ToCharArray()
-    $grid[14] = '....kk..kk..kk..'.ToCharArray()
-    $grid[15] = '................'.ToCharArray()
-  }
-  $sprites['Skins/'+$spec.name] = @{ size=16; rows=@($grid | ForEach-Object { -join $_ }) }
-}
-# Graelles de la Pre-Alpha. L'or conserva el cos i usa dos tons daurats a la cara.
+# Skins dibuixades a 16 x 16. La Classica conserva la mida d'importacio de l'asset original.
+$P['!']='fff08a'
+$P['S']='292739'
+$P['T']='75b9dd'
 $P['0']='794407'
 $P['1']='ffe198'
-$sprites['Skins/Sindria']=@{size=16;rows=@(
-'.....kkkkkk.....',
-'...kLLrrrrLLk...',
-'..eLprrrrrrpLe..',
-'.krpprrrrrrpprk.',
-'.krrkkkrrkkkrrk.',
-'krrrrkkrrkkrrrrk',
-'krrrrkkrrkkrrrrk',
-'krrrrrrrrrrrrrrk',
-'krkrrrrrrrrrrkrk',
-'krrkkkkkkkkkkrrk',
-'krrkkkkkkkkkkrrk',
-'.kRrkkkkkkkkrRk.',
-'.kRrrkkkkkkrrRk.',
-'..LLRRRRRRRRLL..',
-'...kkLRRRRLkk...',
-'.....kkkkkk.....')}
-$sprites['Skins/Capvespre']=@{size=16;rows=@(
-'.....kkkkkk.....',
-'...kkffffffkk...',
-'..kYYWffffWYYk..',
-'.kfYYffffffYYfk.',
-'.kfffkkffkkfffk.',
-'kffffkkffkkffffk',
-'kffffkkffkkffffk',
-'kffffffffffffffk',
-'kfWffffffffffWfk',
-'kffkkkkkkkkkkffk',
-'kffkkkkkkkkkkffk',
-'.kVfkkkkkkkkfVk.',
-'.kVffkkkkkkffVk.',
-'..kVVVVVVVVVVk..',
-'...kkVVVVVVkk...',
-'.....kkkkkk.....')}
-$P['@']='9a6016' # Reflex d'or dins dels ulls i la boca.
-$sprites['Skins/Or']=@{size=16;rows=@(
-'.....kkkkkk.....',
-'...kkYY1YYYkk...',
-'..kWWY111YYWWk..',
-'.kYWWYY1YYWYWYk.',
-'.kYYY00YY00YYYk.',
-'kYYYY@0YY@0YYYYk',
-'kYYYY00YY00YYYYk',
-'kYYYYYYYYYYYYYYk',
-'kWYYYYYYYYYYYYWk',
-'kYY0000000000YYk',
-'kYY00@@@@@000YYk',
-'.kuY00000000Yuk.',
-'.kuYY000000YYuk.',
-'..kuuuuuuuuuuk..',
-'...kkuuuuuukk...',
-'.....kkkkkk.....')}
-# Segona passada de skins, amb silueta i cara editables en una graella de 16×16.
-# Glaço tiritant: ulls de la Classica, dents i facetes de gel.
-$P['9']='588ab7' # Vora del glaço, amb menys contrast.
+$P['@']='9a6016'
+$P['9']='588ab7'
 $P['2']='182d19'
 $P['3']='347837'
 $P['4']='469846'
@@ -111,76 +13,454 @@ $P['8']='60b44f'
 $P['5']='172018'
 $P['6']='294421'
 $P['7']='547830'
-$sprites['Skins/Gel']=@{size=16;rows=@(
+$sprites['Skins/Classica']=@{size=16; scale=8; path='../pixil-frame-0.png';rows=@(
   '.....kkkkkk.....',
-  '...kkIIhhhkkk...',
-  '..kWWIIhhhIWWk..',
-  '.kIWWIhIIhhWh9k.',
-  '.kIIIIhIIIhh9Jk.',
-  'kIIIIkkIIkkhI9Jk',
-  'kIIIIkkIIkkIh9Jk',
-  'kIIIIkkIIkkIh9Jk',
-  'kIIIIIIIIIIIJ9Jk',
-  'kIhIIkkkkkkIJ9Jk',
-  'kIIIkWkWkWkkJ9Jk',
-  '.kJIkkkkkkkJ9Jk.',
-  '.kJJIIIhJJJ9JJk.',
-  '..kJJIhJJ999Jk..',
-  '...kkJJJJJJkk...',
-  '.....kkkkkk.....')}
-# Zombi: graella del sprite del mal enemic, amb paleta verda.
-$sprites['Skins/Zombi']=@{size=16;rows=@(
-  '.....222222.....',
-  '...2233333322...',
-  '..234434443332..',
-  '.23348488444332.',
-  '.23466888866432.',
-  '2344676886764432',
-  '2344666886668432',
-  '2344888888888432',
-  '2348888888884432',
-  '2345685556866432',
-  '2345555556655332',
-  '.23355555665432.',
-  '.23345466674332.',
-  '..233344434432..',
-  '...2233333322...',
-  '.....222222.....'
+  '...kk!YYYYYkk...',
+  '..k!!!!YYYYYYk..',
+  '.k!!!!YYYYYYYYk.',
+  '.kY!!YYYYYYYYYk.',
+  'kYYYkkYYYkkYYYYk',
+  'kYYYkkYYYkkYYYYk',
+  'kYYYkkYYYkkYYYYk',
+  'kYYYYYYYYYYYYYYk',
+  'kYYkkkkkkkkkkYYk',
+  'kYYYkkkkkkkkYYuk',
+  '.kYYYkkkkkkYYuk.',
+  '.kYYYY!!!!YYuuk.',
+  '..kuuuuuuuuuuk..',
+  '...kkuuuuuukk...',
+  '.....kkkkkk.....'
 )}
-$sprites['Skins/Robot']=@{size=16;rows=@(
+$sprites['Skins/Vidre']=@{size=16;rows=@(
   '.....kkkkkk.....',
-  '...kkllllllkk...',
-  '..klWWgggglllk..',
-  '.klWgmmmmgmmmlk.',
-  '.klgkmmmmmmkmlk.',
-  'klgkBBBBBBBBkmlk',
-  'klgkbhhhbhhhkmlk',
-  'klgkbhbbbhbbkmlk',
-  'klgkBBBBBBBBkmlk',
-  'klgmmmmmmmmmmmlk',
-  'klgmkkllllkkmmlk',
-  '.klmkkkkkkkkmlk.',
-  '.klmmmmmmmmmdlk.',
-  '..kdmdmddmdmdk..',
-  '...kkddddddkk...',
+  '...kkWhhhhhkk...',
+  '..kWWWWhhhhhhk..',
+  '.kWWWWhhhhTThhk.',
+  '.khhWhhhhhThhhk.',
+  'khhhhhhhhhTThhhk',
+  'khhhkkhhhhkkhhhk',
+  'khhhkhhhhhhkhhhk',
+  'khhhhhhhhhhhhhhk',
+  'khhhhhhhhkhhhhhk',
+  'khhhhhkkkhhhhhTk',
+  '.khhhhhhhhhhWTk.',
+  '.khhhhhhhhhWWTk.',
+  '..kTTTTTTTWTTk..',
+  '...kkTTTTTTkk...',
   '.....kkkkkk.....'
 )}
 $sprites['Skins/Foc']=@{size=16;rows=@(
   '.......kk.......',
-  '....k.kFfk.k....',
-  '...kFkkFFfkkk...',
-  '...kFFWFFffkk...',
-  '..kFFWWFFffffk..',
-  '.kkFFWkFFkffftk.',
-  'kFFYFkkFFkkffftk',
-  'kFYYFkkFFkkffftk',
-  'kFYYYYFFFFfffttk',
-  'kffYkkkFFkkkfttk',
-  'kffYFkkkkkkffttk',
-  '.kffftFtttffttk.',
-  '.kffttttttttttk.',
-  '..kfftttttrttk..',
-  '...kktttttkkk...',
+  '....k.kFFk......',
+  '...kFkkFFfk.k...',
+  '...kFFFFFFfkkk..',
+  '..kFFFFFFFFffk..',
+  'kffFkfffffkffffk',
+  'kffFkkfffkkffffk',
+  'kfffkkfffkkffffk',
+  'kffffffffffffffk',
+  'kfffkkfffffkfffk',
+  'kffffkkkkkkffftk',
+  '.kffffkkkkffftk.',
+  '.kffffffffffttk.',
+  '..kttttttffftk..',
+  '...kkttttttkk...',
+  '.....kkkkkk.....'
+)}
+$sprites['Skins/Gel']=@{size=16;rows=@(
+  '.....kkkkkk.....',
+  '...kkWIIIIIkk...',
+  '..kWWWIIIIIWWk..',
+  '.kWWWWIIIIIWWIk.',
+  '.kIIIIIIIIIIhIk.',
+  'kIIIIkkIIkkh9IIk',
+  'kIIIIkkIIkkh9IIk',
+  'kIIIIkkIIkkI9IIk',
+  'kIIIIIIIIIII9IIk',
+  'kIIIIkkkkkkI9IIk',
+  'kIIIkWkWkWkk9IJk',
+  '.kIIIkkkkkk9IJk.',
+  '.kIIIIIIIIIIJJk.',
+  '..kJJJJJJJJJJk..',
+  '...kkJJJJJJkk...',
+  '.....kkkkkk.....'
+)}
+$sprites['Skins/Or']=@{size=16;rows=@(
+  '.....kkkkkk.....',
+  '...kk1Y1YYYkk...',
+  '..kWW1111Y1WYk..',
+  '.k1WW1Y1YYYWYYk.',
+  '.kYYYYYYYYYYYYk.',
+  'kYYYY00YY00YYYYk',
+  'kYYYY@0YY@0YYYYk',
+  'kYYYY00YY00YYYYk',
+  'kYYYYYYYYYYYYYYk',
+  'kYY0000000000YYk',
+  'kYYY00@@@@00YYuk',
+  '.kYYY000000YYuk.',
+  '.kYYYY0000YYuuk.',
+  '..kuuuuuuuuuuk..',
+  '...kkuuuuuukk...',
+  '.....kkkkkk.....'
+)}
+$sprites['Skins/Robot']=@{size=16;rows=@(
+  '.....kkkkkk.....',
+  '...kklmmmmmkk...',
+  '..kWWggggmmmmk..',
+  '.klWglmggmmmmmk.',
+  '.kmgmmmmmmmmmmk.',
+  'kmlkBBBBBBBBklmk',
+  'kmlkbhhhbhhhklmk',
+  'kmlkbhbbbhbbklmk',
+  'kmlkBBBBBBBBklmk',
+  'kmmmmmmmmmmmmmmk',
+  'kmmmkkkkkkkkmmdk',
+  '.kmmkllmmlkkmdk.',
+  '.kmmkkkkkkkkddk.',
+  '..kddmdmddmddk..',
+  '...kkddddddkk...',
+  '.....kkkkkk.....'
+)}
+$sprites['Skins/Zombi']=@{size=16;rows=@(
+  '.....222222.....',
+  '...2243333322...',
+  '..244433833332..',
+  '.24488388333332.',
+  '.23466888363332.',
+  '2333676836763332',
+  '2333666336663332',
+  '2333333333333332',
+  '2333633333633332',
+  '2335685556866332',
+  '2335555556655322',
+  '.23355556654322.',
+  '.23335466673222.',
+  '..222222222222..',
+  '...2222222222...',
+  '.....222222.....'
+)}
+$sprites['Skins/Ninja']=@{size=16;rows=@(
+  '.....kkkkkk.....',
+  '...kkdSSSSSkk...',
+  '..kdddddSSSSSk..',
+  '.kddddSSSSSSSSk.',
+  '.kSSSSrrSSSSSSk.',
+  'krrrrrrrrrrrrrrk',
+  'kryyyyyyyyyyyyrk',
+  'krykkYYYYkyyyrSk',
+  'krrykYYYYkyrSSSk',
+  'krSrrrrrrrrSSSSk',
+  'kSSSSSSSSSkkkSkk',
+  '.kSSSSSSSSSSkkk.',
+  '.kSSSSSSSSSSkkk.',
+  '..kkkkkkkkkkkk..',
+  '...kkkkkkkkkk...',
+  '.....kkkkkk.....'
+)}
+$sprites['Skins/Sindria']=@{size=16;rows=@(
+  '.....kkkkkk.....',
+  '...kkprrrrrkk...',
+  '..keLLrrrrrLek..',
+  '.kpppprrrrrpprk.',
+  '.krrkkrrrrrkkrk.',
+  'krrrrkkrrrkkrrrk',
+  'krrrrkkrrrkkrrrk',
+  'krrrrrrrrrrrrrrk',
+  'krrrrrrrrrrrrrrk',
+  'krrkkkkkkkkkkrrk',
+  'krrrkkkkkkkkrrRk',
+  '.krrrkkkkkkrrRk.',
+  '.krrrrrrrrrrRRk.',
+  '..kLLRRRRRRLLk..',
+  '...kkRRRRRRkk...',
+  '.....kkkkkk.....'
+)}
+$sprites['Skins/Fantasma']=@{size=16;rows=@(
+  '.....kkkkkk.....',
+  '...kkWccccckk...',
+  '..kWWWWcccccck..',
+  '.kWWWWcccccccck.',
+  '.kcWWccccccccck.',
+  'kccckkccckkcgcck',
+  'kcccckccckccgcck',
+  'kccccccccccgccck',
+  'kcccccckkcccccck',
+  'kccccckhhkccccck',
+  'kcccccckkcccccgk',
+  '.kcccccccccccgk.',
+  '.kccccccccccggk.',
+  '..kggkkggkkggk..',
+  '...kk..kk..kk...',
+  '................'
+)}
+$sprites['Skins/Cosmos']=@{size=16;rows=@(
+  '.....kkkkkk.....',
+  '...kkVMMMMMkk...',
+  '..kVVVMMMMMMMk..',
+  '.kVVhVMMMMMvMMk.',
+  '.kMhhhMMMMvvvMk.',
+  'kMMMhMMMMMMvMMMk',
+  'kMMMVVVMMMMMMMMk',
+  'kMMVVkMVVkMMMMMk',
+  'kMMVMMMMMMMhMMMk',
+  'kMMVMMMMMMMMhMMk',
+  'kMMVVMMVVkkMMMSk',
+  '.kMMVVVVkMMkMSk.',
+  '.kMMMMMMMMMMSSk.',
+  '..kSSSSSSSSSSk..',
+  '...kkSSSSSSkk...',
+  '.....kkkkkk.....'
+)}
+$sprites['Skins/Corall']=@{size=16;rows=@(
+  '.....kkkkkk.....',
+  '...kkprrrrrkk...',
+  '..kppprrrrrrrk..',
+  '.kpppprrrprrrrk.',
+  '.krpprprrpprrrk.',
+  'krrrppprrprrrrrk',
+  'krrrrpppprrrrrrk',
+  'krrrrkkrrkkrrrrk',
+  'krrrrkrrrrkrrrrk',
+  'krrrrrrrrrrrrrrk',
+  'krrrrkrrrrkrrrRk',
+  '.krrrrkkkkrrrRk.',
+  '.krrrrrrrrRRRRk.',
+  '..kRRRRRRRRRRk..',
+  '...kkRRRRRRkk...',
+  '.....kkkkkk.....'
+)}
+$sprites['Skins/Menta']=@{size=16;rows=@(
+  '.....kkkkkk.....',
+  '...kkeHHHHHkk...',
+  '..keeLHHHHHHHk..',
+  '.keeeLLHHHHHHHk.',
+  '.kHHHLeLHHHHHHk.',
+  'kHHHHLeeLHHHHHHk',
+  'kHHHHHLeLLHHHHHk',
+  'kHHHHkkLLkkHHHHk',
+  'kHHHHHkHHkHHHHHk',
+  'kHHHHHHHHHHHHHHk',
+  'kHHHHHHHkkHHHHLk',
+  '.kHHHkkkHHHHHLk.',
+  '.kHHHHHHHHLLLLk.',
+  '..kLLLLLLLLLLk..',
+  '...kkLLLLLLkk...',
+  '.....kkkkkk.....'
+)}
+$sprites['Skins/Obsidiana']=@{size=16;rows=@(
+  '.....kkkkkk.....',
+  '...kkdSSSSSkk...',
+  '..kdddSSSSSSSk..',
+  '.kddddSSSSSSSSk.',
+  '.kSSSdSSVSSSVSk.',
+  'kSSSSSVVVSSVSSSk',
+  'kSSSSSSVSSVSSSSk',
+  'kSSSkkSSSVkkSSSk',
+  'kSSSSkSSSSkSSSSk',
+  'kSSSSSSSSSSSSSSk',
+  'kSSSSSSkkkkSSSkk',
+  '.kSVSSkSSSkSSkk.',
+  '.kSVVSSSSSSSkkk.',
+  '..kkkkkkkkkkkk..',
+  '...kkkkkkkkkk...',
+  '.....kkkkkk.....'
+)}
+$sprites['Skins/Bombolla']=@{size=16;rows=@(
+  '.....kkkkkk.....',
+  '...kkhTTTTTkk...',
+  '..khhWWWWTTTTk..',
+  '.khWWWTTTTTTTTk.',
+  '.kTWWTThTTTTWTk.',
+  'kTTTTTTTTTTWTTTk',
+  'kTTTkkTTTTkkTTTk',
+  'kTTTkkTTTTkkTTTk',
+  'kTTTTTTTTTTTTTTk',
+  'kTTTTTTkkTTTTTTk',
+  'kTTTTTkTTkTWTTbk',
+  '.kTTTTTkkTWhWbk.',
+  '.kTTTTTTTTTWbbk.',
+  '..kbbbbbbbbbbk..',
+  '...kkbbbbbbkk...',
+  '.....kkkkkk.....'
+)}
+$sprites['Skins/Capvespre']=@{size=16;rows=@(
+  '.....kkkkkk.....',
+  '...kkFfffffkk...',
+  '..kFFWfffffffk..',
+  '.kFFFFffffffffk.',
+  '.kfffkkffkkWffk.',
+  'kffffkkffkWffffk',
+  'kffffkkffkkffffk',
+  'kffffffffffffffk',
+  'kffffffffffffffk',
+  'kffkkkkkkkkkkffk',
+  'kfffkkkkkkkkffVk',
+  '.kvffkkkkkkfvVk.',
+  '.kvvfffffffvvVk.',
+  '..kVVVVVVVVVVk..',
+  '...kkVVVVVVkk...',
+  '.....kkkkkk.....'
+)}
+$sprites['Skins/Aurora']=@{size=16;rows=@(
+  '.....kkkkkk.....',
+  '...kkvSSSSSkk...',
+  '..kvvvSSSSSSSk..',
+  '.kvvvvSSSSSSSSk.',
+  '.kSSvvSSSSSSvvk.',
+  'kSSvhvSSSSSvhvSk',
+  'kSvhHhvSSSvhHvSk',
+  'kShHhHhvvvhHhvSk',
+  'kSShhkkhhkkhhSSk',
+  'kSSSSkhhhhkSSSSk',
+  'kSSSSSSSSSSSSSVk',
+  '.kSSSSkSSkSSSVk.',
+  '.kSSSSSkkSSSVVk.',
+  '..kVVVVVVVVVVk..',
+  '...kkVVVVVVkk...',
+  '.....kkkkkk.....'
+)}
+$sprites['Skins/Coure']=@{size=16;rows=@(
+  '.....kkkkkk.....',
+  '...kkxzzzzzkk...',
+  '..kxxxxxxzzzzk..',
+  '.kxxZZZZZzzzzzk.',
+  '.kzxZzzzzzzzzzk.',
+  'kzzzzkzzzzkzzzzk',
+  'kzzzkkzzzzkkzzzk',
+  'kzzzHxzzzzxHzzzk',
+  'kzzzzzzzzzzzzzzk',
+  'kzzzkkkkkkkkzzzk',
+  'kzzzkZxZxZZkzzZk',
+  '.kzzkkkkkkkkzZk.',
+  '.kzzzzzzzzHzZZk.',
+  '..kZZZZZZZHHZk..',
+  '...kkZZZZZZkk...',
+  '.....kkkkkk.....'
+)}
+$sprites['Skins/Caramel']=@{size=16;rows=@(
+  '.....kkkkkk.....',
+  '...kkcxxxxxkk...',
+  '..koyyyyyyyyok..',
+  '.kcccooyyoyooxk.',
+  '.kxxoxooxoxxoxk.',
+  'kxxxoxxoxoxxxxxk',
+  'kxxxxxxxxoxxxxxk',
+  'kxxxxkkxxkkxxxxk',
+  'kxxxxxkxxkxxxxxk',
+  'kxxxxxxxxxxxxxxk',
+  'kxxxxkkkkkkxxxyk',
+  '.kxxxxopooxxxyk.',
+  '.kxxxxxkkxxxyyk.',
+  '..kyyyyyyyyyyk..',
+  '...kkyyyyyykk...',
+  '.....kkkkkk.....'
+)}
+$sprites['Skins/Llima']=@{size=16;rows=@(
+  '.....kkkkkk.....',
+  '...kkHeeeeekk...',
+  '..kHHHHHHHHeek..',
+  '.kHHHHeeHHHeeek.',
+  '.keHeeeeeHHeeek.',
+  'keeeHHHHHHHeeeek',
+  'keeekkeeeekkeeek',
+  'keeeekeeeekeeeek',
+  'keeeeeeeeeeeeeek',
+  'keeekeeeeeekeeek',
+  'keeeekkkkkkeeeLk',
+  '.keeeekcckeeeLk.',
+  '.keeeeekkeLLLLk.',
+  '..kLLLLLLLLLLk..',
+  '...kkLLLLLLkk...',
+  '.....kkkkkk.....'
+)}
+$sprites['Skins/Safir']=@{size=16;rows=@(
+  '.....kkkkkk.....',
+  '...kkTbbbbbkk...',
+  '..kTTTTTTTTTbk..',
+  '.kTTTTTbbbTTbbk.',
+  '.kbbbbTbbbbTbbk.',
+  'kbbbbbTbbbTBbbbk',
+  'kbbbkkbbbbkkbbbk',
+  'kbbbkBbbbbBkbbbk',
+  'kbbbbbbbbbbbbbbk',
+  'kbbbbbkkkkkbbbbk',
+  'kbbTbkbbbBkbbbBk',
+  '.kbTTbkkkkbbbBk.',
+  '.kbbTTbbbbbbBBk.',
+  '..kBBBBBBBBBBk..',
+  '...kkBBBBBBkk...',
+  '.....kkkkkk.....'
+)}
+$sprites['Skins/Perla']=@{size=16;rows=@(
+  '.....kkkkkk.....',
+  '...kkgccccckk...',
+  '..kggWccccccck..',
+  '.kggWWWccccccck.',
+  '.kcWWWWWccpccck.',
+  'kcccWWWccpppccck',
+  'kccccWccccpcccck',
+  'kccckkcccckkccck',
+  'kccckcccccckccck',
+  'kcccccccccccccck',
+  'kccccccckkccccCk',
+  '.kcccckkcckccCk.',
+  '.kcccccccgggCCk.',
+  '..kCCCCCCCggCk..',
+  '...kkCCCCCCkk...',
+  '.....kkkkkk.....'
+)}
+$sprites['Skins/Ciclope']=@{size=16;rows=@(
+  '.....kkkkkk.....',
+  '...kkhvvvvvkk...',
+  '..khhhhhvvvvvk..',
+  '.khhvvvvvvvvvvk.',
+  '.kvvvvkkkkvVVvk.',
+  'kvvvvkYYYYkVVvvk',
+  'kvvvvkYkkYkvvvvk',
+  'kvvvvkYkkYkvvvvk',
+  'kvvvvvkkkkvvvvvk',
+  'kvvvvvvvvvvvvvvk',
+  'kvvvvvkkkkvvVvVk',
+  '.kvvvvvvvvvvvVk.',
+  '.kvvvvvvvvvvVVk.',
+  '..kVVVVVVVVVVk..',
+  '...kkVVVVVVkk...',
+  '.....kkkkkk.....'
+)}
+$sprites['Skins/Gat']=@{size=16;rows=@(
+  '...kk......kk...',
+  '..kxxkkkkkkxxk..',
+  '..koooxxxxoook..',
+  '.kccocxxxzzoxxk.',
+  '.kxxxxxxxzzxxxk.',
+  'kxxxxkkxxkkxxxxk',
+  'kxxxxkkxxkkxxxxk',
+  'kxxxxxxooxxxxxxk',
+  'kxxkkxxkkxxkkxxk',
+  'kxxxkkkxxkkkxxxk',
+  'kxxxxxxkkxxxxxzk',
+  '.kxxxxxxxxxxxzk.',
+  '.kxxxxxxxxxxzzk.',
+  '..kzzzzzzzzzzk..',
+  '...kkzzzzzzkk...',
+  '.....kkkkkk.....'
+)}
+$sprites['Skins/Gota']=@{size=16;rows=@(
+  '.......k........',
+  '.......Tk.......',
+  '......kThk......',
+  '....kkTTThkk....',
+  '.kTTWWTTTTTTTTk.',
+  'kTTTWWTTTTTTTTTk',
+  'kTTTWTTTTTTTTTTk',
+  'kTTTTkkTTkkTTTTk',
+  'kTTTTkkTTkkTTTTk',
+  'kTTTTTTTTTTTTTTk',
+  'kTTTTTTTTkTThTBk',
+  '.kTTTkkkkTThhBk.',
+  '.kTTTTTTTTTTBBk.',
+  '..kBBBBBBBBBBk..',
+  '...kkBBBBBBkk...',
   '.....kkkkkk.....'
 )}
 $sprites['Barrets/Astronauta']=@{size=16;rows=@(
