@@ -11,9 +11,10 @@ public class CoinDrop : MonoBehaviour
     private float speed;
     private float hoverOnOther; // online: temps esperant damunt d'un company
 
-    public static CoinDrop Spawn(Vector3 pos)
+    public static CoinDrop Spawn(Vector3 pos) => Spawn(pos, pos + (Vector3)(Random.insideUnitCircle * 0.8f));
+
+    public static CoinDrop Spawn(Vector3 pos, Vector3 to)
     {
-        Vector3 to = pos + (Vector3)(Random.insideUnitCircle * 0.8f);
         CoinDrop c = SpawnAt(pos, to);
         NetShared.Spawned(c, NetShared.Kind.Coin, "", pos, to); // Online: tots la veuen
         return c;

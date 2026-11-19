@@ -10,6 +10,61 @@ public partial class NetBot
 {
     const BindingFlags PrivateInstance = BindingFlags.Instance | BindingFlags.NonPublic;
 
+    IEnumerator CheckChestLootAtWall()
+    {
+        var dungeon = DungeonGenerator.Instance;
+        var room = dungeon.Rooms[0].rect;
+        var corner = new Vector3Int(room.xMax - 1, room.yMax - 1, 0);
+        Vector3 position = dungeon.ground.GetCellCenterWorld(corner);
+        Vector3 opener = position + Vector3.left;
+        if (!TileNav.IsBlocked(corner + Vector3Int.right) || !TileNav.IsBlocked(corner + Vector3Int.up) ||
+            !TileNav.CircleFree(position, .25f) || !TileNav.CircleFree(opener, .25f))
+        {
+            Fail("falta una cantonada lliure per al cofre de prova");
+            yield break;
+        }
+
+        var fixture = new GameObject("Cofre arran de paret");
+        fixture.transform.position = position;
+        var visual = new GameObject("Sprite", typeof(SpriteRenderer));
+        visual.transform.SetParent(fixture.transform, false);
+        var chest = fixture.AddComponent<Chest>();
+        chest.rarity = ChestRarity.Epic;
+        chest.lootTable = new[] { NetCoop.Weapon("Escopeta") };
+        yield return null;
+
+        SetBotPosition(dungeon, opener);
+        var before = new HashSet<MonoBehaviour>(FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None));
+        chest.NetGrantOpen();
+        var loot = Array.FindAll(FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None), item =>
+            !before.Contains(item) && (item is ItemPickup || item is HealPickup || item is CoinDrop));
+        // Ens apartem abans que la canica active l'imant o reculla el botí.
+        SetBotPosition(dungeon, RecoveryPosition(dungeon, 0));
+        yield return new WaitForSeconds(.7f);
+        if (loot.Length != 6 || Array.Exists(loot, item => item == null ||
+            !TileNav.CircleFree(item.transform.position, .25f) ||
+            !TileNav.LineOfSight(opener, item.transform.position, .25f)))
+        {
+            Fail("el botí del cofre inclou un objecte inaccessible");
+            yield break;
+        }
+
+        var bag = dungeon.player.GetComponent<HealInventory>();
+        Array.Clear(bag.items, 0, bag.items.Length);
+        Array.Clear(bag.counts, 0, bag.counts.Length);
+        foreach (var item in loot)
+        {
+            if (!(item is HealPickup heal) || heal == null) continue;
+            SetBotPosition(dungeon, heal.transform.position);
+            yield return WaitFor(() => heal == null, 3, "cura del cofre de cantonada recollida");
+            if (failed) yield break;
+        }
+
+        TileNav.RemoveBlocker(position);
+        Destroy(fixture);
+        Ok("cofre de cantonada: arma, dues cures i tres monedes accessibles");
+    }
+
     IEnumerator CheckHeldAttack()
     {
         var player = DungeonGenerator.Instance.player;

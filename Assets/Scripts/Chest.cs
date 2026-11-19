@@ -319,30 +319,48 @@ public class Chest : MonoBehaviour
         {
             HealItem heal = HealItem.Random(rarity);
             if (heal != null)
-                HealPickup.Spawn(heal, from, to + new Vector3(i == 0 ? 0.7f : -0.7f, 0.1f, 0f));
+                HealPickup.Spawn(heal, from, SafeLootOffset(to, new Vector3(i == 0 ? 0.7f : -0.7f, 0.1f, 0f)));
         }
         for (int i = 0; i < (int)rarity + 1; i++)
-            CoinDrop.Spawn(transform.position + (Vector3)lootDropOffset * 0.5f);
+            CoinDrop.Spawn(from, SafeLootOffset(to, Random.insideUnitCircle * 0.8f));
     }
 
 
     Vector3 LootPosition()
     {
-        Vector3 fallback = transform.position + (Vector3)lootDropOffset;
-        // Provar els costats abans de tirar el premi als peus del jugador.
+        // Busquem terra lliure al mateix costat de les parets que la canica.
         for (int i = 0; i < 8; i++)
         {
             float a = i * Mathf.PI / 4f;
             Vector3 candidate = transform.position + new Vector3(Mathf.Cos(a), Mathf.Sin(a), 0f) * 1.15f;
             if (player != null && Vector2.Distance(candidate, player.position) < 0.85f) continue;
-            if (TileNav.Ready() && TileNav.IsBlockedWorld(candidate)) continue;
-            bool blocked = false;
-            foreach (Collider2D hit in Physics2D.OverlapCircleAll(candidate, 0.25f))
-                if (!hit.isTrigger) { blocked = true; break; }
-            if (!blocked) return candidate;
+            if (CanLandLoot(candidate)) return candidate;
         }
-        return fallback;
+
+        Vector3 fallback = transform.position + (Vector3)lootDropOffset;
+        if (CanLandLoot(fallback)) return fallback;
+        if (player != null) return player.position;
+        return TileNav.DropDestination(transform.position, fallback);
     }
+
+    Vector3 SafeLootOffset(Vector3 landing, Vector3 offset)
+    {
+        Vector3 candidate = landing + offset;
+        if (CanLandLoot(candidate)) return candidate;
+        return CanLandLoot(landing - offset) ? landing - offset : landing;
+    }
+
+    bool CanLandLoot(Vector3 candidate)
+    {
+        const float clearance = 0.25f;
+        if (TileNav.Ready() && (!TileNav.CircleFree(candidate, clearance) ||
+            (player != null && !TileNav.LineOfSight(player.position, candidate, clearance)))) return false;
+
+        foreach (Collider2D hit in Physics2D.OverlapCircleAll(candidate, clearance))
+            if (!hit.isTrigger) return false;
+        return true;
+    }
+
     // ---------- Indicador: cercle blanc + E negra + anell de temps ----------
 
     void CreatePrompt()

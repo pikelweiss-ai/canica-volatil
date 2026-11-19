@@ -901,6 +901,8 @@ public partial class NetBot : MonoBehaviour
         if (failed) yield break;
         yield return CheckHeldAttack();
         if (failed) yield break;
+        yield return CheckChestLootAtWall();
+        if (failed) yield break;
         yield return CheckProgression();
         if (!failed) Pass();
     }
