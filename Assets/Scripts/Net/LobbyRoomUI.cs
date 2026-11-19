@@ -138,7 +138,8 @@ public class LobbyRoomUI : MonoBehaviour
         string direct = s.DirectAddress;
         // Si es veu la fila IP DIRECTA, no repetim l'adreça local; sí que es mostra el servidor d'Internet
         bool labelIsLocal = s.NetworkLabel != null && s.NetworkLabel.StartsWith("XARXA LOCAL");
-        string netLine = direct != null && labelIsLocal ? "" : "\n<size=90%>" + NetSession.Safe(s.NetworkLabel) + "</size>";
+        // La fila de baix ja diu si la sala és a Internet (EN LÍNIA) o la IP directa: no ho repetim (i no es tapa)
+        string netLine = (direct != null && labelIsLocal) || (NetSession.IsHost && s.IsCloudRoom) ? "" : "\n<size=90%>" + NetSession.Safe(s.NetworkLabel) + "</size>";
         roomSub.text = RoomModes.Label(room.mode) + (room.isPublic ? " · PÚBLICA" : " · PRIVADA") + (room.hasPassword ? " · CONTRASENYA" : "") + netLine;
         codeText.text = room.code;
         bool cloud = NetSession.IsHost && s.IsCloudRoom;

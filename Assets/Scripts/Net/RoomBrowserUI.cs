@@ -115,7 +115,7 @@ public class RoomBrowserUI : MonoBehaviour
         codeInput.onSubmit.AddListener(_ => JoinCode());
         codeInput.onValueChanged.AddListener(v => { var up = v.ToUpperInvariant(); if (up != v) codeInput.SetTextWithoutNotify(up); });
         UIKit.Button(root, "ENTRAR", new Vector2(580, 172), new Vector2(380, 54), JoinCode, UIKit.Style.Normal, 24);
-        UIKit.Text(root, "Codi de 6 lletres: val per Internet i per la teua xarxa", new Vector2(580, 132), new Vector2(380, 26), 15, TextAlignmentOptions.MidlineLeft, UIKit.Dim);
+        UIKit.Text(root, "Codi de 6 lletres · Internet o xarxa local", new Vector2(580, 132), new Vector2(380, 26), 15, TextAlignmentOptions.MidlineLeft, UIKit.Dim);
 
         UIKit.Button(root, "CREAR SALA", new Vector2(580, 62), new Vector2(380, 78), OpenCreate, UIKit.Style.Primary, 30);
 
