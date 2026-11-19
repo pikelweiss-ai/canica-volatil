@@ -16,8 +16,6 @@ La branca és `alpha/bugfixes` i usa protocol 8. La suite Windows ha passat 4/4 
 
 Per provar la via directa, crea una sala **Xarxa local** i, a l’altre joc, introduïx `IP:port` al camp **Unir-se amb codi**. El port habitual és TCP 7777. Usa el que haja obert realment el joc si el 7777 estava ocupat.
 
-[Traspàs per a Claude](TRASPAS_CODEX_ONLINE.md).
-
 ## Què pots fer
 
 | Pantalla | Què hi ha |
@@ -107,8 +105,6 @@ L'**amfitrió mana** i els altres en veuen còpies (`Assets/Scripts/Net/NetCoop.
 Verificació: `Tools/Net/test-online.ps1` passa **4/4** amb el Windows recompilat. Les proves cooperatives comproven les quatre cures rebudes en fred, resolució de totes les armes, cura d'un cofre obert pel client visible a l'amfitrió i cura d'un boss mort per l'amfitrió visible al client (probabilitats forçades només pel bot). Comproven també les tres caselles d'entrada obertes i totes les altres portes tancades, tant a host com a client. Logs: `%TEMP%/canica-online-fixes`. Windows i Linux: zero errors; Linux encara no executat. Pegat Windows comprovat (ja aplicat, exit 183).
 
 Encara pendent de prova específica: retirada de tots durant l'espera, entrada iniciada pel client, reconexió/resincronització durant l'espera i dos PCs reals. Els bots comproven els Tilemap de portes i els objectes de cura; no substitueixen la revisió visual de Ferran.
-
-Detalls i per on continuar: `TRASPAS_CODEX_ONLINE.md`.
 
 ## Pendent (no està fet encara)
 
