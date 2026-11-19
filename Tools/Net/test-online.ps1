@@ -8,7 +8,7 @@ param(
 $ErrorActionPreference = "Stop"
 $Exe = (Resolve-Path $Exe).Path
 New-Item -ItemType Directory -Force $Out | Out-Null
-$common = @("-batchmode", "-nographics")
+$common = @("-batchmode", "-nographics", "-canicaLoopback")
 
 function Start-Bot([string]$name, [string[]]$botArgs) {
     $log = Join-Path $Out "$name.log"

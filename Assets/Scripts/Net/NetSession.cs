@@ -64,8 +64,10 @@ public class NetSession : MonoBehaviour
     public static string ServerOverride, NameOverride;
     public static string ServerAddress
     {
-        get => ServerOverride ?? PlayerPrefs.GetString("Net_Server", "");
-        set { if (ServerOverride != null) { ServerOverride = (value ?? "").Trim(); return; } PlayerPrefs.SetString("Net_Server", (value ?? "").Trim()); PlayerPrefs.Save(); }
+        get => ServerOverride ?? (NetProtocol.LoopbackOnly
+            ? "127.0.0.1:" + NetProtocol.RelayPort
+            : PlayerPrefs.GetString("Net_Server", ""));
+        set { if (ServerOverride != null || NetProtocol.LoopbackOnly) { ServerOverride = (value ?? "").Trim(); return; } PlayerPrefs.SetString("Net_Server", (value ?? "").Trim()); PlayerPrefs.Save(); }
     }
     public static string PlayerName
     {
@@ -240,7 +242,7 @@ public class NetSession : MonoBehaviour
         // Port TCP per a la LAN / IP directa
         for (int p = NetProtocol.GamePort; p <= NetProtocol.GamePort + 10 && listener == null; p++)
         {
-            try { var l = new TcpListener(IPAddress.Any, p); l.Start(); listener = l; gamePort = p; }
+            try { var l = new TcpListener(NetProtocol.ListenAddress, p); l.Start(); listener = l; gamePort = p; }
             catch { }
         }
         if (listener == null && relayLink == null) { done("No s'ha pogut obrir cap port (7777-7787). Tens una altra sala oberta?"); return; }

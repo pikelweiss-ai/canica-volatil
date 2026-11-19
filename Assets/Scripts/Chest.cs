@@ -5,7 +5,7 @@ using UnityEngine.Events;
 using UnityEngine.Tilemaps;
 using TMPro;
 
-public enum ChestRarity { Comu, Rar, Epic, Llegendari }
+public enum ChestRarity { Comu, Rar, Epic, Llegendari, PocComu } // PocComu és una qualitat d'arma.
 
 // Cofre que s'obri amb la E:
 // 1) Vibra/es sacseja durant 'openTime' segons (amb soroll de colps de fusta)

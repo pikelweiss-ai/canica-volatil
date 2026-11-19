@@ -31,7 +31,7 @@ public static class LanDiscovery
             {
                 udp = new UdpClient();
                 udp.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-                udp.Client.Bind(new IPEndPoint(IPAddress.Any, NetProtocol.DiscoveryPort));
+                udp.Client.Bind(new IPEndPoint(NetProtocol.ListenAddress, NetProtocol.DiscoveryPort));
             }
             catch (Exception e)
             {
@@ -83,7 +83,7 @@ public static class LanDiscovery
     public static List<RoomInfo> Query(string code, int waitMs)
     {
         var found = new Dictionary<string, RoomInfo>();
-        var udp = new UdpClient(0) { EnableBroadcast = true };
+        var udp = new UdpClient(new IPEndPoint(NetProtocol.ListenAddress, 0)) { EnableBroadcast = !NetProtocol.LoopbackOnly };
         try
         {
             byte[] ask = code == null ? AskList : Encoding.ASCII.GetBytes(AskCodePrefix + code);

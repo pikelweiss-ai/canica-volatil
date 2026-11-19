@@ -34,7 +34,7 @@ public static class ChestPrefabCreator
         Directory.CreateDirectory(TileFolder);
         var tiles = new Dictionary<ChestRarity, ChestTile>();
 
-        foreach (ChestRarity rarity in System.Enum.GetValues(typeof(ChestRarity)))
+        foreach (ChestRarity rarity in new[] { ChestRarity.Comu, ChestRarity.Rar, ChestRarity.Epic, ChestRarity.Llegendari })
         {
             string name = rarity.ToString();
             Sprite closed = AssetDatabase.LoadAssetAtPath<Sprite>(SpriteFolder + "/Cofre_" + name + ".png");
@@ -116,7 +116,7 @@ public static class ChestPrefabCreator
             WeaponData w = AssetDatabase.LoadAssetAtPath<WeaponData>(AssetDatabase.GUIDToAssetPath(guid));
             if (w == null) continue;
             all.Add(w);
-            if (w.rarity == rarity) same.Add(w);
+            if (w.rarity == rarity || (rarity == ChestRarity.Comu && w.rarity == ChestRarity.PocComu)) same.Add(w);
         }
         return (same.Count > 0 ? same : all).ToArray();
     }
@@ -154,7 +154,7 @@ public static class ChestPrefabCreator
 
         // En obrir una escena, Unity descarrega els assets que no s'usen: tornem a carregar els tiles
         tiles.Clear();
-        foreach (ChestRarity rarity in System.Enum.GetValues(typeof(ChestRarity)))
+        foreach (ChestRarity rarity in new[] { ChestRarity.Comu, ChestRarity.Rar, ChestRarity.Epic, ChestRarity.Llegendari })
         {
             ChestTile t = AssetDatabase.LoadAssetAtPath<ChestTile>(TileFolder + "/TileCofre_" + rarity + ".asset");
             if (t != null) tiles[rarity] = t;
@@ -209,7 +209,7 @@ public static class ChestPrefabCreator
         }
 
         var placed = new List<Vector3Int>();
-        foreach (ChestRarity rarity in System.Enum.GetValues(typeof(ChestRarity)))
+        foreach (ChestRarity rarity in new[] { ChestRarity.Comu, ChestRarity.Rar, ChestRarity.Epic, ChestRarity.Llegendari })
         {
             if (!tiles.ContainsKey(rarity)) continue;
             int count = ChestsPerRarity[(int)rarity];

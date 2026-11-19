@@ -39,6 +39,12 @@ Sense servidor configurat, es pot jugar igualment en **xarxa local** o **per IP/
 
 La primera vegada que crees una sala, Windows pot preguntar pel **tallafocs**: cal permetre-ho en xarxes privades perquè els altres et troben.
 
+## Prova online al mateix ordinador
+
+Executa `Tools/Net/start-local.ps1` per iniciar el relay a `127.0.0.1:7780`. Amb `-OpenGame`, també s'obri el joc amb este servidor com a adreça per defecte. En el navegador de sales, entra en **INTERNET · PÚBLIQUES** i crea una sala d'Internet.
+
+El paràmetre `-canicaLoopback` limita els ports del servidor, de les sales i del descobriment LAN a `127.0.0.1`. Les proves automàtiques l'utilitzen per poder fer amfitrió, client i relay al mateix PC.
+
 ## Proves automàtiques
 
 ```

@@ -35,7 +35,7 @@ public class RelayServer
 
     public void Start()
     {
-        listener = new TcpListener(IPAddress.Any, port);
+        listener = new TcpListener(NetProtocol.ListenAddress, port);
         listener.Start();
         running = true;
         acceptThread = new Thread(AcceptLoop) { IsBackground = true, Name = "Relay accept" };

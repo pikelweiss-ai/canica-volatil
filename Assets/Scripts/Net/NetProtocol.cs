@@ -100,8 +100,12 @@ public static class NetProtocol
         return r;
     }
 
+    public static readonly bool LoopbackOnly = Array.IndexOf(Environment.GetCommandLineArgs(), "-canicaLoopback") >= 0;
+    public static IPAddress ListenAddress => LoopbackOnly ? IPAddress.Loopback : IPAddress.Any;
+
     public static List<IPAddress> BroadcastTargets()
     {
+        if (LoopbackOnly) return new List<IPAddress> { IPAddress.Loopback };
         var list = new List<IPAddress> { IPAddress.Broadcast, IPAddress.Loopback };
         try
         {
@@ -126,6 +130,7 @@ public static class NetProtocol
     // IP de la xarxa real (wifi/cable amb porta d'enllaç), no la d'adaptadors virtuals (VirtualBox, Hyper-V...)
     public static string LocalIPv4()
     {
+        if (LoopbackOnly) return IPAddress.Loopback.ToString();
         string best = "127.0.0.1"; int bestScore = int.MinValue;
         try
         {

@@ -104,6 +104,8 @@ public static class AlphaContentBuilder
         if(faces.Count<10)throw new Exception("Les cares encara s'assemblen massa");
         var helmet=db.hats.First(h=>h.fullHelmet).sprite;
         if(helmet.texture.GetPixel((int)helmet.rect.x+7,(int)helmet.rect.y+7).a>.1f)throw new Exception("El casc tapa la cara");
+        var ak = AssetDatabase.LoadAssetAtPath<WeaponData>("Assets/Weapons/AK47.asset");
+        if (ak == null || ak.rarity != ChestRarity.PocComu) throw new Exception("L'AK ha de tindre qualitat verda");
         var first=AssetDatabase.LoadAssetAtPath<DungeonTheme>("Assets/Dungeon/Temes/Tema_1_Cova.asset");
         if(first.enemies.Any(e=>e.name=="Esporer"||e.name=="Escarabat"))throw new Exception("La dificultat inicial no s'ha de canviar");
         foreach(string id in new[] {"DiscCometa","LlancaTempesta","VaretaEspores","ProjectorPolsos","BallestaCristall"})if(AssetDatabase.LoadAssetAtPath<WeaponData>("Assets/Weapons/"+id+".asset")==null)throw new Exception("Falta arma "+id);

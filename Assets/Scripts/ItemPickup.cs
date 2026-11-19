@@ -156,6 +156,7 @@ public static class ItemGraphics
     {
         switch (rarity)
         {
+            case ChestRarity.PocComu:    return new Color(0.32f, 0.78f, 0.36f);
             case ChestRarity.Rar:        return new Color(0.29f, 0.50f, 0.88f);
             case ChestRarity.Epic:       return new Color(0.64f, 0.35f, 0.88f);
             case ChestRarity.Llegendari: return new Color(0.96f, 0.77f, 0.26f);
