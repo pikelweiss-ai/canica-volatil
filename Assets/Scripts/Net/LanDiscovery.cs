@@ -31,7 +31,7 @@ public static class LanDiscovery
             {
                 udp = new UdpClient();
                 udp.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-                udp.Client.Bind(new IPEndPoint(NetProtocol.ListenAddress, NetProtocol.DiscoveryPort));
+                udp.Client.Bind(new IPEndPoint(NetProtocol.ListenAddress, NetProtocol.LanDiscoveryPort));
             }
             catch (Exception e)
             {
@@ -89,7 +89,7 @@ public static class LanDiscovery
             byte[] ask = code == null ? AskList : Encoding.ASCII.GetBytes(AskCodePrefix + code);
             var sent = System.Diagnostics.Stopwatch.StartNew();
             foreach (var target in NetProtocol.BroadcastTargets())
-                try { udp.Send(ask, ask.Length, new IPEndPoint(target, NetProtocol.DiscoveryPort)); } catch { }
+                try { udp.Send(ask, ask.Length, new IPEndPoint(target, NetProtocol.LanDiscoveryPort)); } catch { }
             udp.Client.ReceiveTimeout = 100;
             while (sent.ElapsedMilliseconds < waitMs)
             {

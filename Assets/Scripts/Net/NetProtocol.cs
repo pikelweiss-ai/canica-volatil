@@ -102,6 +102,16 @@ public static class NetProtocol
 
     public static readonly bool LoopbackOnly = Array.IndexOf(Environment.GetCommandLineArgs(), "-canicaLoopback") >= 0;
     public static IPAddress ListenAddress => LoopbackOnly ? IPAddress.Loopback : IPAddress.Any;
+    public static readonly int LanDiscoveryPort = ReadDiscoveryPort();
+
+    static int ReadDiscoveryPort()
+    {
+        if (!LoopbackOnly) return DiscoveryPort;
+        string[] args = Environment.GetCommandLineArgs();
+        int flag = Array.IndexOf(args, "-canicaDiscoveryPort");
+        return flag >= 0 && flag + 1 < args.Length && int.TryParse(args[flag + 1], out int port) && port >= 1024 && port <= 65535
+            ? port : DiscoveryPort;
+    }
 
     public static List<IPAddress> BroadcastTargets()
     {

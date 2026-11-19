@@ -80,6 +80,11 @@ public static class NetShared
             return false;
         }
         if (ni.pending) return true;
+        // Amb latència, dos objectes poden vore la mateixa casella buida en el mateix frame.
+        // La segona arma o cura torna a comprovar l'espai després de rebre la concessió.
+        if (ni.kind != Kind.Coin)
+            foreach (var request in items.Values)
+                if (request != null && request.kind == ni.kind && request.pending) return true;
         ni.pending = true; ni.until = Time.unscaledTime + 3f; ni.collect = collect;
         foreach (var r in pickup.GetComponentsInChildren<SpriteRenderer>()) r.enabled = false; // s'amaga mentre esperem
         int cid = ni.id;

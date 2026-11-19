@@ -109,15 +109,23 @@ public class PlayerAttack : MonoBehaviour
         if (GameControls.Down(6))
             DropCurrentWeapon();
 
-        // Si el clic comença damunt de la UI (hotbar, bossa...), no dispara fins que solts el botó.
-        // Si ja estaves disparant i passes per damunt de la UI, continua disparant.
-        if (Input.GetMouseButtonDown(0))
-            mouseBlocked = ClickTargetsUI();
-        if (!Input.GetMouseButton(0))
-            mouseBlocked = false;
+        bool attackPressed = MobileInput.Active
+            ? !GameControls.Blocked && MobileInput.Firing
+            : ReadDesktopAttack(Input.GetMouseButtonDown(0), Input.GetMouseButton(0), Input.mousePosition,
+                GameControls.Key(4) == KeyCode.Mouse0 || GameControls.Key(4, 1) == KeyCode.Mouse0, GameControls.AttackHeld(true));
+        TickAttack(attackPressed);
+    }
 
-        bool attackPressed = MobileInput.Active ? !GameControls.Blocked && MobileInput.Firing : GameControls.AttackHeld(mouseBlocked);
+    bool ReadDesktopAttack(bool pressed, bool held, Vector2 pointer, bool mouseBound, bool otherBindingHeld)
+    {
+        // Només l'inici del clic decideix si la UI se'l queda.
+        if (pressed) mouseBlocked = ClickTargetsUI(pointer);
+        if (!held) mouseBlocked = false;
+        return !GameControls.Blocked && (otherBindingHeld || (mouseBound && held && !mouseBlocked));
+    }
 
+    void TickAttack(bool attackPressed)
+    {
         if(!attackPressed || spinningWeapon!=CurrentWeapon){spinCharge=0;spinningWeapon=CurrentWeapon;}
         if(attackPressed && CurrentWeapon!=null && CurrentWeapon.spinUpTime>0)
         {
@@ -145,11 +153,11 @@ public class PlayerAttack : MonoBehaviour
 
     readonly System.Collections.Generic.List<RaycastResult> clickHits = new();
 
-    bool ClickTargetsUI()
+    bool ClickTargetsUI(Vector2 pointer)
     {
         EventSystem events = EventSystem.current;
         if (events == null) return false;
-        events.RaycastAll(new PointerEventData(events) { position = Input.mousePosition }, clickHits);
+        events.RaycastAll(new PointerEventData(events) { position = pointer }, clickHits);
         foreach (var hit in clickHits)
         {
             if (!(hit.module is UnityEngine.UI.GraphicRaycaster)) continue;

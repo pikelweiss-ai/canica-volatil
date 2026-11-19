@@ -8,7 +8,9 @@ param(
 $ErrorActionPreference = "Stop"
 $Exe = (Resolve-Path $Exe).Path
 New-Item -ItemType Directory -Force $Out | Out-Null
-$common = @("-batchmode", "-nographics", "-canicaLoopback")
+$portProbe = [System.Net.Sockets.UdpClient]::new([System.Net.IPEndPoint]::new([System.Net.IPAddress]::Loopback, 0))
+try { $testDiscoveryPort = $portProbe.Client.LocalEndPoint.Port } finally { $portProbe.Dispose() }
+$common = @("-batchmode", "-nographics", "-canicaLoopback", "-canicaDiscoveryPort", $testDiscoveryPort)
 
 function Start-Bot([string]$name, [string[]]$botArgs) {
     $log = Join-Path $Out "$name.log"

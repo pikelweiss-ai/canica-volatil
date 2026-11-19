@@ -11,7 +11,7 @@ using UnityEngine.SceneManagement;
 //   Joc.exe -batchmode -nographics -canicaBot join -botJoin code-file:codi.txt -botPassword abc
 //   (Internet) afegir -botServer 127.0.0.1:7780 i -botNet internet / -botJoin internet-list
 // Escriu "NETBOT OK: ..." per cada pas i "NETBOT PASS" o "NETBOT FAIL: ..." al final (codi d'eixida 0/1).
-public class NetBot : MonoBehaviour
+public partial class NetBot : MonoBehaviour
 {
     string role, net, join, password, codeFile, mode, botName, shots, roomName;
     int maxPlayers = 4;
@@ -50,7 +50,7 @@ public class NetBot : MonoBehaviour
 
     void Start()
     {
-        StartCoroutine(role == "solo" ? SoloCombat() : role == "host" ? Host() : Join());
+        StartCoroutine(role == "solo" ? SoloCombat() : role == "trails" ? TrailGallery() : role == "host" ? Host() : Join());
         StartCoroutine(Watchdog());
     }
 
@@ -423,11 +423,19 @@ public class NetBot : MonoBehaviour
         var av = FindFirstObjectByType<RemoteAvatar>();
         if (av == null) { Fail("no hi ha avatar del company"); yield break; }
         int clientId = av.playerId;
+        var existingClientDrops = new System.Collections.Generic.HashSet<int>(
+            Array.ConvertAll(InventoryDrops(clientId), drop => drop.id));
         NetCoop.DamagePlayer(av.transform, 1);
         Ok("dany enviat al company");
         // 7) El company cau i espera
         yield return WaitFor(() => NetCoop.DownedCount > 0, 25, "el company ha caigut i espera");
-        yield return WaitFor(() => { foreach (var ip in FindObjectsByType<ItemPickup>(FindObjectsSortMode.None)) { var ni = ip.GetComponent<NetItem>(); if (ni != null && ni.id / 1000000 == av.playerId) return true; } return false; }, 10, "les armes del company caigut son al terra ací");
+        NetItem[] clientDeathDrops = null;
+        yield return WaitFor(() =>
+        {
+            clientDeathDrops = Array.FindAll(InventoryDrops(clientId), drop => !existingClientDrops.Contains(drop.id));
+            return HasBothDropKinds(clientDeathDrops);
+        }, 10, "l'amfitrió veu les armes i cures del client caigut");
+        if (failed) yield break;
         // 8) Acabem la sala: tots els enemics morts -> portes obertes i el company torna
         float until = Time.realtimeSinceStartup + 40;
         while (!combat.cleared && Time.realtimeSinceStartup < until)
@@ -443,6 +451,9 @@ public class NetBot : MonoBehaviour
         yield return WaitFor(() => NetSession.Instance.Players.TryGetValue(av.playerId, out var revived) &&
             revived.maxHealth > 0 && revived.health == revived.maxHealth && revived.lastPos > Time.realtimeSinceStartupAsDouble - 1,
             5, "l'amfitrio veu la vida plena del company");
+        yield return WaitFor(() => Array.TrueForAll(clientDeathDrops, drop => drop == null),
+            12, "els objectes recuperats pel client desapareixen també a l'amfitrió");
+        if (failed) yield break;
         // El company torna a caure i nosaltres passem de pis: ell ha de reapareixer al pis seguent
         yield return WaitFor(() => NetCoop.DownedCount > 0, 20, "el company ha caigut altra vegada");
         if (failed) yield break;
@@ -451,6 +462,8 @@ public class NetBot : MonoBehaviour
         yield return WaitFor(() => Avatars >= 1, 20, "el company ha reaparegut al pis 2");
         EnemyHealth.AnyDied -= onDied;
         keepAlive = false;
+        yield return HostDeathRecovery(clientId);
+        if (failed) yield break;
         yield return HostProgression(clientId);
     }
 
@@ -652,6 +665,8 @@ public class NetBot : MonoBehaviour
         if (a2 != null && System.Array.Exists(a2.hotbarSlots, w => w != null)) { Fail("ha reaparegut amb armes"); yield break; }
         if (!p2.IsFull) { Fail("vida incompleta al reapareixer al pis 2"); yield break; }
         Ok("reaparegut al pis 2 sense armes, vida " + p2.currentHealth + "/" + p2.maxHealth);
+        yield return ObserveHostRecovery();
+        if (failed) yield break;
         yield return JoinProgression();
     }
 
@@ -881,6 +896,8 @@ public class NetBot : MonoBehaviour
             Ok("vida del boss individual al pis " + RunState.Floor + ": " + expected);
         }
         yield return CheckTrailReset();
+        if (failed) yield break;
+        yield return CheckHeldAttack();
         if (failed) yield break;
         yield return CheckProgression();
         if (!failed) Pass();
