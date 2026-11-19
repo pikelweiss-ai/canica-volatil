@@ -1,50 +1,42 @@
-# Alpha v1.1.0
+# Alpha v1.1.1
 
-Segona Alpha de Canica Volàtil: arreglos de la sessió de proves de l'Alpha v1.0.0, un mode **Creatiu** al mapa lliure i l'online en proves. Paquets per a Windows, Ubuntu/Linux i Android.
+**Online per Internet sense complicacions.** Crea una sala pública i els teus amics la veuen a la llista des de qualsevol casa, wifi o dades mòbils, i hi entren amb un clic o amb el codi de 6 lletres. **Sense escriure cap IP, sense obrir ports al router, sense VPN i sense instal·lar res més.** Funciona igual en Windows, Ubuntu/Linux i Android, i es pot jugar entre ells.
 
-> **L'online s'està provant.** Funciona en xarxa local i amb el servidor de sales al mateix PC (proves automàtiques 4/4), però encara falta la prova de veritat entre dos cases. Si jugues online, que tots tinguen la v1.1.0 (protocol 8): no és compatible amb la v1.0.0.
+## Com es juga online
+
+1. **JUGAR → Online.** S'obri directament la pestanya **INTERNET · PÚBLIQUES**.
+2. **Crear sala** amb xarxa **INTERNET**, que és l'opció per defecte. En uns segons, al lobby es veu **EN LÍNIA**.
+3. Els amics obrin **JUGAR → Online** i la sala ja els apareix a la llista (s'actualitza sola). Doble clic i dins. Si és **privada**, han d'entrar amb el **codi** de 6 lletres.
+
+La pestanya **XARXA LOCAL** continua per a jugar a la mateixa wifi, amb menys retard.
+
+## Què cal fer en cada sistema
+
+- **Windows:** res. Per a les sales d'Internet no cal tocar el tallafocs, perquè el joc només fa connexions d'eixida. Només si crees una sala de **XARXA LOCAL**, Windows pot preguntar pel tallafocs la primera vegada: accepta **Xarxes privades**.
+- **Ubuntu / Linux:** res. Extraure i `./Jugar.sh`.
+- **Android:** res. Instal·lar l'APK. Només usa el permís d'Internet, que Android dona sol.
+
+## Com funciona per dins
+
+- **Túnel:** l'amfitrió obri una connexió d'eixida cap a un túnel públic gratuït (`bore.pub`), que li dona un port públic. Els jugadors entren per eixe port, i la **IP de casa de l'amfitrió no la veu ningú**.
+- **Llista de sales:** el joc anuncia la sala cada 20 segons en un directori públic gratuït (`ntfy.sh`), i quan tanca s'esborra de la llista. Les privades no surten a la llista: es troben només amb el codi.
+- **Partida:** dins va pel protocol de sempre, el **8**. Tots han de tindre la **v1.1.1** per a veure les sales sense IP.
+- **Servidor propi (opcional):** el camp **SERVIDOR PROPI**, avall de la pestanya Internet, continua per a qui en vulga un. Si el deixes buit, és automàtic.
 
 ## Descarregar
 
 - **Windows x86_64 — ZIP:** extraure la carpeta completa i executar `CanicaVolatil.exe`.
-- **Ubuntu / Linux x86_64 — TAR.GZ:** extraure i executar `./Jugar.sh`, o `bash Jugar.sh`. Binari Linux natiu, sense Wine.
-- **Android 8+ — APK:** ARM64 i ARMv7, horitzontal, dos joysticks. Signada amb clau debug de l'Alpha; no és una publicació de Google Play.
-- **SHA256SUMS.txt:** sumes dels tres paquets.
+- **Ubuntu / Linux x86_64 — TAR.GZ:** extraure i executar `./Jugar.sh`, o `bash Jugar.sh`.
+- **Android 8+ — APK:** ARM64 i ARMv7, signada amb la clau debug de l'Alpha; no és de Google Play.
+- **SHA256SUMS.txt** i **BUILD_INFO.json**.
 
-No cal Unity per jugar. Els «Source code» automàtics són per al desenvolupament.
+## També inclou (de la v1.1.0)
 
-## Novetat: mode Creatiu (mapa lliure)
-
-Al mapa lliure hi ha un botó amb una creu daurada davall del menú ☰ (o la tecla **C**):
-
-- **Armes:** agafa qualsevol arma del joc.
-- **Menjar:** poma, bena, poció i farmaciola.
-- **Enemics:** crea qualsevol enemic o boss on cliques al mapa (clic dret o **Q** per a parar).
-- **Cofres:** posa cofres de les quatre rareses i obri'ls amb la **E**.
-- **Treure enemics / Treure objectes:** neteja el que has creat i el que hi ha solt pel terra.
-
-No es guarda res: en eixir de la partida s'oblida tot. El mapa lliure ja no porta cofres de fàbrica i les monedes que hi agafes no se sumen al total. Online, només l'amfitrió de la sala té el Creatiu i els altres veuen el que crea.
-
-## Millores i correccions
-
-- Armes i cures recuperables quan caus en cooperatiu; no es perd una arma en agafar-ne dos amb una sola plaça lliure.
-- Moviment correcte en la primera masmorra i en sales LAN després de reiniciar.
-- Armes, cures i monedes que ja no cauen damunt de les parets.
-- Projectils que ixen bé arran de paret; caixes i TNT que es trenquen durant el combat.
-- Barrets ben ajustats, esteles regulars, avisos del boss que desapareixen quan mor i arma que no queda flotant quan cau el jugador.
-- Patró fix en escopeta, vareta d'espores i shurikens; zoom per a les armes de molt d'abast.
-- Xat amb tecla configurable (p. ex. **T**) i opció de no obrir-lo amb el ratolí.
-- Bosses amb més vida segons els jugadors i més difícils a cada planta.
-- A partir del pis 3, sala d'elit; des del pis 4, cambra de ressonància, amb el Projector de polsos i la Ballesta de cristall com a premi.
-- Skins redibuixades, i Síndria, Or i Capvespre recuperades.
-- Al lobby, l'amfitrió veu i copia la seua **IP directa** (IP:port) per a jugar sense servidor.
-
-## Online i compatibilitat
-
-Protocol **8**, mateix codi i catàlegs en els tres paquets. Cal actualitzar tots els jugadors i el relay. LAN: crear sala i entrar des de la llista, amb el codi o amb IP:port. Per Internet es pot usar la IP directa (amb el port reenviat al router o una VPN tipus Tailscale) o un servidor de sales configurat per tots. Aquesta release no desplega un servidor públic. Guia: [ONLINE.md](https://github.com/pikelweiss-ai/canica-volatil/blob/v1.1.0-alpha/ONLINE.md).
+Mode **Creatiu** al mapa lliure (armes, menjar, enemics, cofres i botons per a treure'ls), arreglos de la llista de bugs de l'Alpha v1.0.0, bosses més durs, sala d'elit i cambra de ressonància.
 
 ## Verificació i límits
 
-Compilacions Windows, Linux i Android amb zero errors. Proves online 4/4 en Windows al mateix PC (LAN llista, LAN codi, Internet llista i Internet codi). La primera versió del mode Creatiu (armes, enemics i cofres) l'ha provada Ferran en solitari a Windows.
-
-**Pendent de prova real:** online entre dos cases i entre dos ordinadors, el Creatiu en una sala amb dos PCs, Ubuntu/Linux Mint, l'APK en un telèfon i una partida Android + Windows + Linux. Sense migració d'amfitrió: si ix, es tanca la sala.
+- Proves automàtiques **6/6** en Windows, entre elles dos casos nous: Internet sense IP (llista amb contrasenya i masmorra cooperativa) i entrar amb el codi. Són proves de debò a través del túnel i el directori públics.
+- **Ping:** el túnel gratuït és lluny (uns 100 ms més per a qui entra). En cooperatiu va bé, perquè cadascú es mou al seu PC. Per a jugar amb el mínim retard, usa la XARXA LOCAL.
+- **Serveis externs:** l'online sense IP depén de `bore.pub` i `ntfy.sh`. Si algun dia no responen, el joc ho avisa i la XARXA LOCAL continua funcionant.
+- **Pendent de prova real:** una partida entre dues cases amb persones, l'APK en un telèfon real i Linux Mint.
