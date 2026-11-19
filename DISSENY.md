@@ -33,6 +33,7 @@ Més modes: *"ja vorem"*.
 - **Al principi:** sales amb **codi** (un crea la sala i els altres entren amb el codi).
 - **En un futur llunyà:** matchmaking automàtic.
 - Proposta tècnica (per confirmar): **Netcode for GameObjects** + **Unity Relay/Lobby**. Relay ja funciona amb *join codes*, així que encaixa amb el sistema de codi de sala.
+- **Fet (v1.1.1):** sales amb codi i llista pública per Internet sense IP, amb el sistema propi (`System.Net.Sockets`) + túnel `bore.pub` + directori `ntfy.sh`, sense Netcode ni Unity Relay. Vegeu ONLINE.md.
 
 ## 5. Masmorra
 - Sales **fetes a mà** amb la Tile Palette, que es **combinen en ordre aleatori** en cada partida.

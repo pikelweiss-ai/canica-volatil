@@ -1,13 +1,13 @@
 # Alpha Android i joc entre plataformes
 
-Windows, Linux i Android es compilen des d'aquest mateix projecte Alpha, amb el mateix cataleg d'armes i cures. Esta branca de proves usa el protocol **8**. Tots els jugadors i el relay han d'usar la mateixa revisio. La versio Alpha v1.0.0 publicada usa el protocol 5.
+Windows, Linux i Android es compilen des d'aquest mateix projecte Alpha, amb el mateix cataleg d'armes i cures. **Alpha v1.1.1, protocol 8.** Tots els jugadors han d'usar la mateixa versio (la v1.0.0 usa el protocol 5 i no es compatible).
 
 ## Jugar
 
-1. Android: instal·lar `Builds/AlphaReview/Android/CanicaVolatil-Alpha-v1.0.0-Android.apk`. Android 8 o posterior, ARM64/ARMv7, orientacio horitzontal. APK de revisio signada amb clau debug, no publicacio de Play Store.
+1. Android: instal·lar `CanicaVolatil-Alpha-v1.1.1-Android.apk` de la release (o `Builds/AlphaReview/Android/` si compiles tu). Android 8 o posterior, ARM64/ARMv7, orientacio horitzontal. APK signada amb clau debug, no publicacio de Play Store.
 2. PC: executar el paquet nou de Windows o Linux de `Builds/AlphaReview`.
-3. Mateixa Wi-Fi/xarxa: JUGAR > ONLINE > XARXA LOCAL. Un jugador crea la sala; els altres entren per llista o IP:port. Una Wi-Fi de convidats amb aillament de dispositius pot impedir la connexio local.
-4. Internet: configurar el mateix servidor de sales en tots els dispositius. El relay es el joc nou executat amb `-batchmode -nographics -canicaServer 7780`; al servidor, port TCP 7780 accessible. No s'ha desplegat cap servidor remot nou en aquesta tanda.
+3. **Internet (sense IP):** JUGAR > ONLINE > pestanya INTERNET. Un jugador fa CREAR SALA (Internet ja ve triat); els altres la trien de la llista o entren amb el codi de 6 lletres. Sense ports, VPN ni servidor. Funciona amb wifi o dades mobils, des de cases diferents; Android, Windows i Linux usen el mateix protocol i poden jugar junts (Linux encara sense provar en una maquina real).
+4. Mateixa Wi-Fi/xarxa (menys retard): pestanya XARXA LOCAL. Una Wi-Fi de convidats amb aillament de dispositius pot impedir la connexio local. El servidor de sales propi (`-batchmode -nographics -canicaServer 7780`) continua com a opcio avançada.
 
 Joystick esquerre per moure, dret per apuntar/atacar; tocar armes/cures; OBRIR mantingut; TIRAR ARMA; MAPA; pausa/ajuda per les tres barres. Al lobby hi ha joystick de moviment, botons de llest/començar i xat tactil. En caure, botons < i > per triar company.
 
@@ -27,7 +27,7 @@ Cada paquet te `compatibility.json`: protocol, versio, hash SHA256 del codi comp
 
 Comprovar-ho amb `./Tools/Build/check-crossplay.ps1`. En Linux, extraure la carpeta completa i executar `bash Jugar.sh`; el llancador dona permis d'execucio al binari.
 
-Android inclou permis de xarxa i suport MulticastLock per a descobriment LAN Wi-Fi; no necessita serveis Unity ni subscripcio de Relay. La connexio es perd si el sistema suspén el proces: mantindre el joc en primer pla mentre s'hostatja una sala.
+Android usa nomes permisos de xarxa normals (Internet, estat de la xarxa i la Wi-Fi, MulticastLock per a la LAN), que el sistema concedix sense preguntar. No necessita serveis Unity ni subscripcio de Relay: l'online sense IP va pel tunel bore.pub i el directori ntfy.sh. La connexio es perd si el sistema suspén el proces: mantindre el joc en primer pla mentre s'hostatja una sala.
 
 ## Proves
 
@@ -40,4 +40,4 @@ La segona variant combina un bot PC i un bot amb els controls/arrancada mobils a
 
 Els tests cooperatius inclouen projectils reals/visuals travessant companys, cures de cofre/boss, portes, cofres protegits fins que s'acaba el combat, caixes protegides en espera i trencables durant el combat, recollida de monedes i recuperacio de cures i armes en reapareixer, amb vida plena. L'estat final de les compilacions i les proves consta en ALPHA_PROGRESS.md.
 
-No hi ha telefon connectat ni Linux executable en aquest entorn: falta confirmar una partida Android + Windows + Linux amb dispositius reals, multitàctil fisic i descobriment Wi-Fi. Publicacio Alpha v1.0.0 autoritzada per Ferran; descarregues en https://github.com/pikelweiss-ai/canica-volatil/releases/tag/v1.0.0-alpha .
+Prova real (19/11/2026): Ferran i un amic han jugat per Internet sense IP des de dues cases diferents. Encara falta executar el binari en Linux Mint/Ubuntu real i una partida amb els tres sistemes alhora. Descarregues: https://github.com/pikelweiss-ai/canica-volatil/releases/tag/v1.1.1-alpha .

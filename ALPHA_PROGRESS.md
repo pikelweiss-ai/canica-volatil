@@ -4,7 +4,8 @@ Estat vigent a la branca `alpha/bugfixes` (19/11/2026):
 
 - L’última prova de Windows, `Builds/AlphaReview/Windows-cares-classiques/CanicaAlphaReview.exe`, ha compilat amb zero errors. Les 11 skins marcades recuperen les textures anteriors. Capvespre coincidix amb la textura aprovada. Altres 11 porten la cara de la Clàssica. Coure i Caramel conserven la cara, i Gota té una silueta més perfilada. Catàleg a `Builds/CaresClassiquesQA/Cataleg.png`.
 - El cel original del mapa lliure cobrix la càmera amb el zoom de la Ballesta en formats ample i estret. Prova automatitzada superada.
-- Protocol 8. La suite Windows de connexió ha passat 4/4 amb client tàctil simulat a `Builds/SkinsReworkQA/Online`. La connexió entre cases encara està pendent de prova. Vegeu [ONLINE.md](ONLINE.md).
+- **Alpha v1.1.1 publicada (Latest).** Protocol 8. Online per Internet **sense IP** (túnel `bore.pub` + directori `ntfy.sh`, `Assets/Scripts/Net/NetCloud.cs`). `test-online.ps1` passa 6/6, inclosos els dos casos sense IP pels serveis reals. **Prova real entre dues cases superada** (Ferran i un amic). Pendent: rework de la connexió (retard del túnel) i Linux real. Vegeu [ONLINE.md](ONLINE.md).
+- Mode Creatiu del mapa lliure (FIX-009): armes, menjar, enemics, cofres, i botons de treure enemics i objectes. Vegeu [DISSENY.md](DISSENY.md).
 
 Les seccions següents documenten revisions anteriors.
 
@@ -115,3 +116,12 @@ La publicacio usa v1.0.0-alpha i conserva Pre-Alpha PC/Android. No s'ha executat
 
 Verificacio del paquet Windows reanomenat: host i client cooperatius complets PASS (Builds/AlphaPackageSmoke). Les tres sumes SHA256 de distribucio, CRC ZIP i permisos TAR verificats. Sense excepcions als logs.
 
+
+## 19 novembre 2026 — Alpha v1.1.0 i v1.1.1 (Claude)
+
+- **v1.1.0** (`v1.1.0-alpha`): mode Creatiu al mapa lliure, arreglos de la llista de bugs i online en proves. `main` avançat amb fast-forward. Pegat Unity 1.3.3 a Windows i Android. Empaquetador sense logs ni temporals, sumes amb LF i TAR amb Python quan no hi ha Node.
+- **v1.1.1** (`v1.1.1-alpha`, Latest): crear i entrar a sales d'Internet sense escriure cap IP.
+  - L'amfitrió obri un túnel d'eixida a `bore.pub` i anuncia la sala a `ntfy.sh` cada 20 s (en tancar, `closed`). Els clients la trien de la llista o la busquen pel codi, amb 5 intents perquè el directori tarda uns segons a servir els anuncis nous.
+  - Sense ports, tallafocs, VPN ni servidor. La IP de l'amfitrió no es publica. Protocol 8 sense canvis.
+  - Proves: `test-online.ps1` 6/6, smoke amb l'executable empaquetat i captures reals (`Builds/OnlineShots/v111-sense-ip`). **Partida real entre dues cases superada.**
+- Pendent: rework de la connexió (ping estimat d'uns 300 ms pel túnel) i Linux real. Arreglo del lobby d'Internet (text tapat) en local, commit `295dbf9`, per a la pròxima versió.

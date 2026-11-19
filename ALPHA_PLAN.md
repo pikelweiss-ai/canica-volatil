@@ -91,7 +91,7 @@ Perfil local i estadístiques són objectius de l'Alpha. Comptes independents, i
 
 Objectiu de l'Alpha: expedicions d'1 a 4 jugadors. La primera prova es farà amb dos. Accés des del menú a crear partida, unir-se per LAN i unir-se amb codi per Internet.
 
-LAN i codi són dues vies diferents: LAN usa connexió directa a l'amfitrió; el codi d'Internet necessita un servei de connexió/relay i configuració del projecte. Cal validar l'SDK compatible, l'autenticació i les condicions del servei abans de tancar la implementació. La proposta tècnica anterior de Netcode for GameObjects + Transport + Relay continua com a candidata.
+LAN i codi són dues vies diferents: LAN usa connexió directa a l'amfitrió; el codi d'Internet necessita un servei de connexió/relay i configuració del projecte. Cal validar l'SDK compatible, l'autenticació i les condicions del servei abans de tancar la implementació. La proposta tècnica anterior de Netcode for GameObjects + Transport + Relay continua com a candidata. **Actualització v1.1.1:** el codi d'Internet ja funciona sense Unity Relay ni comptes: túnel `bore.pub` + directori `ntfy.sh` (vegeu ONLINE.md). Netcode/Relay queda descartat de moment.
 
 L'amfitrió resoldrà generació, enemics, impactes, compres i botins. Els clients enviaran intencions de moviment i atac. La llavor ajudarà a reproduir el mapa; els objectes i els resultats es sincronitzaran explícitament.
 

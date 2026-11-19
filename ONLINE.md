@@ -24,6 +24,18 @@ Per dins (`Assets/Scripts/Net/NetCloud.cs`):
 - **Si el camp SERVIDOR PROPI té una adreça**, s’usa el servidor de sales clàssic de més avall en lloc del túnel i el directori.
 - **Proves:** `-canicaCloudTag <nom>` (tema propi), `-canicaNoLan` (força el túnel al mateix PC), `-canicaTunnel` i `-canicaDirectory` (canviar de servei). `Tools/Net/test-online.ps1` inclou els casos 5 i 6: llista sense IP amb contrasenya i masmorra cooperativa, i entrar amb el codi.
 
+### Estat de la v1.1.1 (19/11/2026)
+
+| Prova | Resultat |
+|---|---|
+| `test-online.ps1` (Windows, mateix PC) | **6/6**: LAN llista, LAN codi, servidor propi llista i codi, **sense IP llista** (contrasenya + masmorra cooperativa sencera) i **sense IP codi**. Els dos últims passen pels serveis públics reals. |
+| Executable empaquetat (`CanicaVolatil.exe` de la release) | Amfitrió i jugador sense IP: PASS. |
+| Pantalles reals amb gràfics (`Builds/OnlineShots/v111-sense-ip`) | Llista INTERNET amb sales «sense IP» (client en previsualització mòbil) i lobby **EN LÍNIA** amb el jugador dins. |
+| **Partida real entre dues cases** | **Superada.** Ferran i un amic han jugat per Internet sense escriure cap IP: «funciona a la perfecció». |
+| Linux real (Ubuntu/Mint) | Pendent. |
+
+**Pendent de millorar (rework de connexió):** el túnel gratuït `bore.pub` és lluny, i el ping estimat ronda els 300 ms. Opcions: connexió directa amb UPnP quan el router ho permeta, túnel o servidor més pròxim, i interpolació/predicció al client. `ntfy.sh` limita les peticions per IP: molts jugadors darrere de la mateixa IP (una classe) podrien topar-hi.
+
 ## Estat de la prova anterior (v1.1.0)
 
 La branca és `alpha/bugfixes` i usa protocol 8. La suite Windows ha passat 4/4 al mateix PC: llista i codi LAN, i llista i codi amb relay local. També hi ha una prova anterior de masmorra per IP directa en loopback (protocol 8). Queda validar la connexió directa entre dos dispositius i després entre dos xarxes domèstiques. El relay accessible per Internet queda pendent de desplegament i prova remota.
@@ -36,7 +48,9 @@ La branca és `alpha/bugfixes` i usa protocol 8. La suite Windows ha passat 4/4 
 
 Per provar la via directa, crea una sala **Xarxa local** i, a l’altre joc, introduïx `IP:port` al camp **Unir-se amb codi**. El port habitual és TCP 7777. Usa el que haja obert realment el joc si el 7777 estava ocupat.
 
-## Prova de connexió directa entre dos cases (19/11/2026)
+## Prova de connexió directa entre dos cases (19/11/2026, abans de la v1.1.1)
+
+> Amb la v1.1.1 ja no cal: la partida entre dues cases s’ha fet per Internet sense IP. Esta secció es queda per a qui vulga la via de la IP directa.
 
 **Menú.** Al lobby, l'amfitrió veu una fila **IP DIRECTA** amb la IP local i el port TCP que ha obert de veritat el joc (7777 o el següent lliure), i el botó **COPIAR IP**. Eixa adreça val per a la mateixa xarxa. Per a un amic d'una altra casa cal donar-li la **IP pública** de l'amfitrió amb el mateix port, i el router ha de reenviar eixe port TCP cap al PC.
 
@@ -119,7 +133,7 @@ Captures de les pantalles sense obrir finestres (`Builds/OnlineShots/`):
 powershell -ExecutionPolicy Bypass -File Tools\Net\shots-online.ps1
 ```
 
-Queda pendent provar dos equips físics, la connexió directa des de dos xarxes diferents, el relay remot i el joc en Linux físic.
+Dos equips físics de cases diferents: **superat** amb la v1.1.1 (Internet sense IP). Queden pendents la connexió per IP directa entre xarxes diferents, un relay remot propi i el joc en Linux físic.
 
 ## Cooperatiu (masmorra i mapa lliure)
 
@@ -156,5 +170,6 @@ Encara pendent de prova específica: retirada de tots durant l'espera, entrada i
 
 - Les trampes de punxes són de cada jugador.
 - Linux compilat però encara no executat en Linux Mint real.
+- Millorar la connexió: el túnel gratuït afig retard (uns 300 ms estimats). Rework previst.
 - Si l'amfitrió ix, la sala es tanca (no hi ha migració d'amfitrió).
 - Comptes i perfils al núvol: previst per a la Beta.

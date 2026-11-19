@@ -39,4 +39,5 @@ Mode **Creatiu** al mapa lliure (armes, menjar, enemics, cofres i botons per a t
 - Proves automàtiques **6/6** en Windows, entre elles dos casos nous: Internet sense IP (llista amb contrasenya i masmorra cooperativa) i entrar amb el codi. Són proves de debò a través del túnel i el directori públics.
 - **Ping:** el túnel gratuït és lluny (uns 100 ms més per a qui entra). En cooperatiu va bé, perquè cadascú es mou al seu PC. Per a jugar amb el mínim retard, usa la XARXA LOCAL.
 - **Serveis externs:** l'online sense IP depén de `bore.pub` i `ntfy.sh`. Si algun dia no responen, el joc ho avisa i la XARXA LOCAL continua funcionant.
-- **Pendent de prova real:** una partida entre dues cases amb persones, l'APK en un telèfon real i Linux Mint.
+- **Prova real superada:** Ferran i un amic han jugat per Internet des de dues cases diferents, sense escriure cap IP.
+- **Pendent:** millorar la connexió (rework) i provar Linux Mint/Ubuntu en una màquina real.
