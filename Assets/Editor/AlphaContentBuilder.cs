@@ -36,6 +36,18 @@ public static class AlphaContentBuilder
         lance.melee=true;lance.meleeArc=55;lance.meleeDashDistance=1.8f;lance.cooldown=.85f;lance.damage=3;lance.range=2.5f;EditorUtility.SetDirty(lance);
         var spores=Weapon("VaretaEspores","Vareta d'espores","Vareta",ChestRarity.Rar);
         spores.damage=1;spores.pellets=3;spores.fixedSpread=true;spores.spreadAngle=20;spores.cooldown=1.1f;spores.homing=2;spores.projectileSpeed=6;spores.range=7;spores.projectileColor=new Color(.6f,1,.4f);EditorUtility.SetDirty(spores);
+        var pulse = Weapon("ProjectorPolsos", "Projector de polsos", "Llancagranades", ChestRarity.Rar);
+        pulse.damage = 1; pulse.cooldown = 1.25f; pulse.range = 5f; pulse.projectileSpeed = 8f;
+        pulse.explosionRadius = 1.25f; pulse.explosionDamage = 2;
+        pulse.projectileSprite = null; pulse.projectileColor = new Color(.42f, .94f, .86f);
+        EditorUtility.SetDirty(pulse);
+
+        var crystal = Weapon("BallestaCristall", "Ballesta de cristall", "Ballesta", ChestRarity.Epic);
+        crystal.damage = 2; crystal.cooldown = .75f; crystal.range = 9f; crystal.pierce = 3;
+        crystal.pellets = 3; crystal.spreadAngle = 9f; crystal.fixedSpread = true;
+        crystal.projectileSprite = null; crystal.projectileColor = new Color(.66f, .48f, 1f);
+        EditorUtility.SetDirty(crystal);
+
         foreach(string path in Directory.GetFiles("Assets/Prefabs/Cofres","*.prefab"))
         {
             var root=PrefabUtility.LoadPrefabContents(path);
@@ -55,7 +67,7 @@ public static class AlphaContentBuilder
             if(path.Contains("Desert")||path.Contains("Cripta")||path.Contains("Volca")){var p=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Enemics/Escarabat.prefab");if(!list.Contains(p))list.Add(p);}
             theme.enemies=list.ToArray();EditorUtility.SetDirty(theme);
         }
-        AssetDatabase.SaveAssets();Validate();Debug.Log("ALPHA_CONTENT: cares, 4 barrets, 6 esteles, 3 armes, 2 enemics i 2 objectes preparats.");
+        AssetDatabase.SaveAssets();Validate();Debug.Log("ALPHA_CONTENT: cares, 4 barrets, 6 esteles, 5 armes, 2 enemics i 2 objectes preparats.");
     }
     static WeaponData Weapon(string id,string name,string template,ChestRarity rarity)
     {
@@ -94,6 +106,6 @@ public static class AlphaContentBuilder
         if(helmet.texture.GetPixel((int)helmet.rect.x+7,(int)helmet.rect.y+7).a>.1f)throw new Exception("El casc tapa la cara");
         var first=AssetDatabase.LoadAssetAtPath<DungeonTheme>("Assets/Dungeon/Temes/Tema_1_Cova.asset");
         if(first.enemies.Any(e=>e.name=="Esporer"||e.name=="Escarabat"))throw new Exception("La dificultat inicial no s'ha de canviar");
-        foreach(string id in new[] {"DiscCometa","LlancaTempesta","VaretaEspores"})if(AssetDatabase.LoadAssetAtPath<WeaponData>("Assets/Weapons/"+id+".asset")==null)throw new Exception("Falta arma "+id);
+        foreach(string id in new[] {"DiscCometa","LlancaTempesta","VaretaEspores","ProjectorPolsos","BallestaCristall"})if(AssetDatabase.LoadAssetAtPath<WeaponData>("Assets/Weapons/"+id+".asset")==null)throw new Exception("Falta arma "+id);
     }
 }

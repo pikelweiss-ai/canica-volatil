@@ -6,9 +6,9 @@ function Stamp-Face($grid, [string[]]$pattern, [int]$ox=3, [int]$oy=4) {
 }
 $personalities=@(
  @('Vidre','b','B','W','sly'), @('Foc','f','t','F','angry'), @('Gel','I','J','W','sleep'),
- @('Or','Y','u','W','monocle'), @('Zombi','e','L','H','zombie'), @('Sindria','r','R','p','seeds'),
+ @('Zombi','e','L','H','zombie'),
  @('Cosmos','V','M','h','cyclops'), @('Corall','p','R','W','wink'), @('Menta','H','L','W','happy'),
- @('Obsidiana','M','k','v','glow'), @('Bombolla','h','b','W','surprise'), @('Capvespre','f','V','Y','sly'),
+ @('Obsidiana','M','k','v','glow'), @('Bombolla','h','b','W','surprise'),
  @('Aurora','b','V','H','stars'), @('Coure','z','Z','x','robot'), @('Caramel','p','v','W','heart'),
  @('Llima','H','K','Y','tooth'), @('Safir','B','M','h','angry'), @('Perla','c','g','W','sleep'),
  @('Fantasma','W','g','W','ghost'), @('Ciclope','v','V','h','cyclops'), @('Gat','z','Z','x','cat'), @('Gota','b','B','h','happy')
@@ -21,9 +21,7 @@ foreach($spec in $personalities) {
     'sly' { Stamp-Face $grid @('.kk....kk.','..k....k..','..........','..........','...kkkk...','......k...') }
     'angry' { Stamp-Face $grid @('.kk....kk.','..k....k..','..........','..........','...kkkk...','..k....k..') }
     'sleep' { Stamp-Face $grid @('..........','.kkk..kkk.','..........','..........','....kk....') }
-    'monocle' { Stamp-Face $grid @('.WWW...k..','.WkW...k..','.WWW......','..........','..kkkkk...','....kk....') }
     'zombie' { Stamp-Face $grid @('.k.k...kk.','..k....kk.','.k.k......','..........','..kkkkkk..','...W..W...') }
-    'seeds' { Stamp-Face $grid @('..k....k..','..k....k..','..........','..........','...kkkk...','....WW....') }
     'cyclops' { Stamp-Face $grid @('..WWWWW...','.WWbbbWW..','.WWbkbWW..','..WWWWW...','..........','...kkk....') }
     'wink' { Stamp-Face $grid @('..k.......','..k...kkk.','..........','..........','..k....k..','...kkkk...') }
     'happy' { Stamp-Face $grid @('..kk..kk..','.k..kk..k.','..........','..........','...k..k...','....kk....') }
@@ -42,6 +40,60 @@ foreach($spec in $personalities) {
   if($spec[0] -eq 'Gota') { $grid[0]='.......kk.......'.ToCharArray();$grid[1]='......kbbk......'.ToCharArray();$grid[2]='.....kbbbbk.....'.ToCharArray() }
   $sprites['Skins/'+$spec[0]]=@{size=16;rows=@($grid | ForEach-Object {-join $_})}
 }
+# Graelles de la Pre-Alpha. L'or conserva el cos i usa dos tons daurats a la cara.
+$P['0']='794407'
+$P['1']='ffe198'
+$sprites['Skins/Sindria']=@{size=16;rows=@(
+'.....kkkkkk.....',
+'...kLLrrrrLLk...',
+'..eLprrrrrrpLe..',
+'.krpprrrrrrpprk.',
+'.krrkkkrrkkkrrk.',
+'krrrrkkrrkkrrrrk',
+'krrrrkkrrkkrrrrk',
+'krrrrrrrrrrrrrrk',
+'krkrrrrrrrrrrkrk',
+'krrkkkkkkkkkkrrk',
+'krrkkkkkkkkkkrrk',
+'.kRrkkkkkkkkrRk.',
+'.kRrrkkkkkkrrRk.',
+'..LLRRRRRRRRLL..',
+'...kkLRRRRLkk...',
+'.....kkkkkk.....')}
+$sprites['Skins/Capvespre']=@{size=16;rows=@(
+'.....kkkkkk.....',
+'...kkffffffkk...',
+'..kYYWffffWYYk..',
+'.kfYYffffffYYfk.',
+'.kfffkkffkkfffk.',
+'kffffkkffkkffffk',
+'kffffkkffkkffffk',
+'kffffffffffffffk',
+'kfWffffffffffWfk',
+'kffkkkkkkkkkkffk',
+'kffkkkkkkkkkkffk',
+'.kVfkkkkkkkkfVk.',
+'.kVffkkkkkkffVk.',
+'..kVVVVVVVVVVk..',
+'...kkVVVVVVkk...',
+'.....kkkkkk.....')}
+$sprites['Skins/Or']=@{size=16;rows=@(
+'.....kkkkkk.....',
+'...kkYYYYYYkk...',
+'..kWWWYYYYWWWk..',
+'.kYWWYWYYWYWWYk.',
+'.kYYY00YY00YYYk.',
+'kYYYY10YY01YYYYk',
+'kYYYY00YY00YYYYk',
+'kYYYYYYYYYYYYYYk',
+'kWYYYYYYYYYYYYWk',
+'kYY0000000000YYk',
+'kYY0011111100YYk',
+'.kuY00000000Yuk.',
+'.kuYY000000YYuk.',
+'..kuuuuuuuuuuk..',
+'...kkuuuuuukk...',
+'.....kkkkkk.....')}
 $sprites['Barrets/Astronauta']=@{size=16;rows=@(
 '.....kkkkkk.....','...kkWWWWWWkk...','..kWWWggggWWWk..','.kWWWh......WWk.','kWWWh........WWk','kWWh..........Wk','kWW...........Wk','kW............Wk','kW............Wk','kW............Wk','kWW..........WWk','.kWW........WWk.','..kWWWWWWWWWWk..','...kgbggbbbgk...','....kkkkkkkk....','................')}
 $sprites['Barrets/Bruixa']=@{size=16;rows=@('........k.......','.......kVk......','.......kVvk.....','......kVVvk.....','......kVVVvk....','.....kVVVVvk....','.....kVVVVVvk...','....kVVVVVVvk...','....krrrrrrrk...','...kkkkkkkkkk...','..kVVVVVVVVVVk..','.kkkkkkkkkkkkkk.','................','................','................','................')}
@@ -56,3 +108,24 @@ $sprites['Enemics/Escarabat']=@{size=16;rows=@('......kkkk......','....kkggggkk.
 $sprites['Enemics/Esporer']=@{size=16;rows=@('.....kkkkkk.....','...kkHHHHHHkk...','..kHHWHeeHWHHk..','.kHHHHHeeHHHHHk.','kHHWHeeeeeHWHeHk','kHHHHHeeeeHHHHHk','.kkkkkkkkkkkkkk.','....kcckkcck....','....kckkkkck....','....kcckkcck....','.....kcccck.....','....keeeeeek....','...kkeeeeeekk...','....kkkkkkkk....','................','................')}
 $sprites['Masmorra/ArbustBaies']=@{size=16;mirror=$true;rows=@('........','........','.....kkk','...kkLee','..kLeeer','.kLeeere','.kLeeeee','kLeeeree','kLeeeeee','.kLeeeee','..kkLeee','...kkkkk','.....kww','.....kkk','........','........')}
 $sprites['Masmorra/BoletLluminós']=@{size=16;mirror=$true;rows=@('........','.....kkk','...kkhHH','..khHHWH','.khHHHHH','khHHWHHH','kHHHHHHH','.kkkkkkk','.....kcc','.....kcc','.....kcW','....kccc','...kkccc','....kkkk','........','........')}
+$sprites['Armes/ProjectorPolsos']=@{size=32;rows=@(
+  '..........kkkkkkkk..........',
+  '.......kkkBBBBBBBBkkk.......',
+  '....kkkBhhhhhhhhhhBBBkkk....',
+  '...kBBBhWWWhhhhhhBBBBBBkk...',
+  '..kkkkkkkkkkkkkkkkkkkkkkkk..',
+  '......kBBk....kkkhhhkkk.....',
+  '......kBBk.......kkk........',
+  '.....kkkkk..................'
+)}
+$sprites['Armes/BallestaCristall']=@{size=32;rows=@(
+  '.................kk.........',
+  '..............kkkvk.........',
+  '............kkvvVk..........',
+  '....kkkkkkkkhvhVkkkkkkkk....',
+  '...kvVVVVVVVWhvvWWWhvvvk....',
+  '....kkkkkkkkhvhVkkkkkkkk....',
+  '............kkvvVk..........',
+  '..............kkkvk.........',
+  '.................kk.........'
+)}

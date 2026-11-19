@@ -384,6 +384,7 @@ public class NetBot : MonoBehaviour
         // 6) Dany al company
         var av = FindFirstObjectByType<RemoteAvatar>();
         if (av == null) { Fail("no hi ha avatar del company"); yield break; }
+        int clientId = av.playerId;
         NetCoop.DamagePlayer(av.transform, 1);
         Ok("dany enviat al company");
         // 7) El company cau i espera
@@ -412,7 +413,7 @@ public class NetBot : MonoBehaviour
         yield return WaitFor(() => Avatars >= 1, 20, "el company ha reaparegut al pis 2");
         EnemyHealth.AnyDied -= onDied;
         keepAlive = false;
-        yield return new WaitForSecondsRealtime(3);
+        yield return HostProgression(clientId);
     }
 
     IEnumerator JoinCoop()
@@ -602,6 +603,7 @@ public class NetBot : MonoBehaviour
         if (a2 != null && System.Array.Exists(a2.hotbarSlots, w => w != null)) { Fail("ha reaparegut amb armes"); yield break; }
         if (!p2.IsFull) { Fail("vida incompleta al reapareixer al pis 2"); yield break; }
         Ok("reaparegut al pis 2 sense armes, vida " + p2.currentHealth + "/" + p2.maxHealth);
+        yield return JoinProgression();
     }
 
     // Prova de regressió en una masmorra individual real.
@@ -820,7 +822,184 @@ public class NetBot : MonoBehaviour
             Destroy(bossHealth.gameObject);
             Ok("vida del boss individual al pis " + RunState.Floor + ": " + expected);
         }
-        Pass();
+        yield return CheckProgression();
+        if (!failed) Pass();
+    }
+
+    void EnterProgressionRoom(DungeonGenerator dungeon)
+    {
+        var center = dungeon.ProgressionRoom.Center;
+        var cell = new Vector3Int(center.x - 3, center.y, 0);
+        Vector3 safe = dungeon.ground.GetCellCenterWorld(cell);
+        dungeon.player.GetComponent<Rigidbody2D>().position = safe;
+        dungeon.player.position = safe;
+    }
+
+    static void SilenceRoomEnemies(DungeonGenerator.Room room)
+    {
+        foreach (var enemy in room.alive)
+            if (enemy != null && enemy.enabled)
+                foreach (var script in enemy.GetComponents<MonoBehaviour>())
+                    if (script != enemy) script.enabled = false;
+    }
+
+    static Chest ProgressionReward(DungeonGenerator dungeon)
+    {
+        var center = dungeon.ProgressionRoom.Center;
+        Vector3 reward = dungeon.ground.GetCellCenterWorld(new Vector3Int(center.x + 2, center.y, 0));
+        return System.Array.Find(FindObjectsByType<Chest>(FindObjectsSortMode.None),
+            item => Vector2.Distance(item.transform.position, reward) < .2f);
+    }
+
+    IEnumerator HostProgression(int clientId)
+    {
+        for (int floor = 3; floor <= 4; floor++)
+        {
+            var previous = DungeonGenerator.Instance;
+            previous.NextFloor();
+            yield return WaitFor(() => DungeonGenerator.Instance != null && DungeonGenerator.Instance != previous &&
+                RunState.Floor == floor && Avatars >= 1, 15, "sala cooperativa al pis " + floor);
+            if (failed) yield break;
+        }
+
+        var dungeon = DungeonGenerator.Instance;
+        if (dungeon.ProgressionRoom == null) { Fail("falta la cambra al host"); yield break; }
+        EnterProgressionRoom(dungeon);
+        var room = dungeon.ProgressionRoom;
+        yield return WaitFor(() => room.active, 8, "els dos jugadors activen la cambra");
+        if (failed) yield break;
+        float end = Time.realtimeSinceStartup + 17f;
+        var session = NetSession.Instance;
+        while (Time.realtimeSinceStartup < end)
+        {
+            SilenceRoomEnemies(room);
+            if (session.Players.TryGetValue(clientId, out var client) && client.scene == NetSession.SceneToken() &&
+                client.maxHealth > 0 && client.health == client.maxHealth - 1) break;
+            yield return null;
+        }
+        if (Time.realtimeSinceStartup >= end) { Fail("el host no veu el dany del pols al client"); yield break; }
+        Ok("el host veu el cor perdut pel client dins del pols");
+
+        end = Time.realtimeSinceStartup + 22f;
+        while (!room.cleared && Time.realtimeSinceStartup < end)
+        {
+            SilenceRoomEnemies(room);
+            foreach (var enemy in room.alive.ToArray())
+                if (enemy != null && enemy.enabled && !enemy.IsDead) enemy.TakeHit(9999, Vector2.zero);
+            yield return new WaitForSeconds(.2f);
+        }
+        if (!room.cleared) { Fail("cambra cooperativa sense acabar"); yield break; }
+        yield return new WaitForSecondsRealtime(1.5f);
+    }
+
+    IEnumerator JoinProgression()
+    {
+        yield return WaitFor(() =>
+        {
+            var current = DungeonGenerator.Instance;
+            return RunState.Floor == 4 && current != null && current.themes.Length >= 4 && current.Theme == current.themes[3];
+        }, 25, "client amb el pis de ressonància carregat");
+        if (failed) yield break;
+        yield return null;
+        yield return null;
+        var dungeon = DungeonGenerator.Instance;
+        if (dungeon.ProgressionRoom == null) { Fail("falta la cambra al client"); yield break; }
+        EnterProgressionRoom(dungeon);
+        GameObject mark = null;
+        yield return WaitFor(() => (mark = GameObject.Find("Avis atac")) != null, 14, "el client rep el cercle del pols");
+        if (failed) yield break;
+        var health = dungeon.player.GetComponent<PlayerHealth>();
+        var received = NetCoop.HurtsReceived;
+        dungeon.player.GetComponent<Rigidbody2D>().position = mark.transform.position;
+        dungeon.player.position = mark.transform.position;
+        yield return WaitFor(() => NetCoop.HurtsReceived > received && health.currentHealth == health.maxHealth - 1,
+            4, "el client rep un cor de dany del pols");
+        if (failed) yield break;
+
+        yield return WaitFor(() => dungeon.ProgressionRoom.cleared && ProgressionReward(dungeon) != null,
+            24, "el client rep el cofre de la cambra");
+        if (failed) yield break;
+        var reward = ProgressionReward(dungeon);
+        if (reward.lootTable.Length != 1 || reward.lootTable[0] != NetCoop.Weapon("ProjectorPolsos"))
+            Fail("la recompensa del client difereix de la del host");
+    }
+
+    IEnumerator CheckProgression()
+    {
+        for (int floor = 2; floor <= 5; floor++)
+        {
+            var previous = DungeonGenerator.Instance;
+            RunState.Reset();
+            RunState.Active = true;
+            RunState.Floor = floor;
+            SceneManager.LoadScene("Dungeon");
+            yield return WaitFor(() => DungeonGenerator.Instance != null && DungeonGenerator.Instance != previous, 10, "pis de prova " + floor);
+            if (failed) yield break;
+            yield return null;
+
+            var dungeon = DungeonGenerator.Instance;
+            var room = dungeon.ProgressionRoom;
+            if ((room != null) != (floor >= 3))
+            {
+                Fail("la sala especial apareix al pis incorrecte");
+                yield break;
+            }
+            if (room == null || floor == 3) continue;
+
+            var health = dungeon.player.GetComponent<PlayerHealth>();
+            var body = dungeon.player.GetComponent<Rigidbody2D>();
+            EnterProgressionRoom(dungeon);
+            Vector3 safe = dungeon.player.position;
+            yield return WaitFor(() => room.active && room.alive.Exists(enemy => enemy != null && enemy.enabled), 8, "cambra amb enemics activa");
+            if (failed) yield break;
+
+            var previousTheme = dungeon.themes[floor - 2];
+            bool elite = room.alive.Exists(enemy => enemy != null && System.Array.Exists(previousTheme.enemies, prefab =>
+                prefab != null && enemy.name.StartsWith(prefab.name + "(") &&
+                Mathf.Abs(enemy.transform.localScale.x) >= Mathf.Abs(prefab.transform.localScale.x) * 1.24f));
+            if (!elite) { Fail("falta el reforç d'elit del tema anterior"); yield break; }
+
+            // Aïllem el pols del dany de les IA en esta prova.
+            float end = Time.realtimeSinceStartup + 14f;
+            GameObject mark = null;
+            while (mark == null && Time.realtimeSinceStartup < end)
+            {
+                SilenceRoomEnemies(room);
+                mark = GameObject.Find("Avis atac");
+                yield return null;
+            }
+            if (mark == null) { Fail("falta l'avís de ressonància"); yield break; }
+            Vector3 pulse = mark.transform.position;
+            if (Vector2.Distance(pulse, safe) <= 1.75f) { Fail("el refugi de prova està massa prop del pols"); yield break; }
+
+            health.Heal(health.maxHealth);
+            yield return new WaitForSeconds(1.3f);
+            if (!health.IsFull) { Fail("un pols ha fet mal fora de l'àrea marcada"); yield break; }
+
+            yield return WaitFor(() => (mark = GameObject.Find("Avis atac")) != null, 9, "segon cercle d'avís");
+            if (failed) yield break;
+            body.position = mark.transform.position;
+            dungeon.player.position = mark.transform.position;
+            yield return WaitFor(() => health.currentHealth == health.maxHealth - 1, 3, "un cor de dany dins del pols");
+            if (failed) yield break;
+
+            end = Time.realtimeSinceStartup + 24f;
+            while (!room.cleared && Time.realtimeSinceStartup < end)
+            {
+                health.Heal(health.maxHealth);
+                foreach (var enemy in room.alive.ToArray())
+                    if (enemy != null && enemy.enabled && !enemy.IsDead) enemy.TakeHit(9999, Vector2.zero);
+                yield return new WaitForSeconds(.2f);
+            }
+            var chest = ProgressionReward(dungeon);
+            var weapon = NetCoop.Weapon(floor == 4 ? "ProjectorPolsos" : "BallestaCristall");
+            if (!room.cleared || chest == null || weapon == null || chest.lootTable.Length != 1 || chest.lootTable[0] != weapon)
+            {
+                Fail("falta la recompensa de la cambra al pis " + floor);
+                yield break;
+            }
+            Ok("elit, senyal, dany i recompensa comprovats al pis " + floor);
+        }
     }
 
     // ---------- Captures (nomes amb -botShots <carpeta>, sense -nographics) ----------

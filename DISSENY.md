@@ -39,6 +39,9 @@ Més modes: *"ja vorem"*.
 - Temes de mapa: **Desert**, **Neu / gel**, **Cova / masmorra**, **Volcà / lava**.
   - Idees de mecàniques per tema (per confirmar): el gel rellisca, la neu alenteix, la lava fa mal i la cova és fosca amb llum 2D.
 - Al final de cada masmorra o tema hi ha un **boss**.
+- A partir del pis 3 hi ha una sala especial amb columnes i passadissos en creu. La primera onada porta un enemic del tema anterior un 25% més gran i amb un 50% més de vida que el seu equivalent del pis.
+- A partir del pis 4, la sala es converteix en una **cambra de ressonància**. Els cercles apareixen abans de cada pols. Si t'apartes del cercle, evites perdre un cor.
+- El cofre de la cambra dona el **Projector de polsos** al pis 4 i la **Ballesta de cristall** al pis 5. A partir del sisé, la ballesta entra en el sorteig del cofre èpic de la cambra.
 
 ## 6. Enemics
 | Tipus | Comportament |

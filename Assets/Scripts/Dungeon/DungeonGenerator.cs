@@ -71,6 +71,7 @@ public class DungeonGenerator : MonoBehaviour
 
     public List<Room> Rooms { get; } = new List<Room>();
     public Room CurrentRoom { get; private set; }
+    public Room ProgressionRoom { get; private set; }
     public DungeonTheme Theme { get; private set; }
 
     static readonly Vector2Int[] Dirs = { Vector2Int.right, Vector2Int.left, Vector2Int.up, Vector2Int.down };
@@ -209,6 +210,13 @@ public class DungeonGenerator : MonoBehaviour
         var leaves = Rooms.FindAll(r => r.type == RoomType.Combat && r.links.Count == 1);
         if (leaves.Count > 0) leaves[rng.Next(leaves.Count)].type = RoomType.Treasure;
 
+        if (RunState.Floor >= 3)
+        {
+            foreach (Room r in Rooms)
+                if (r.type == RoomType.Combat && (ProgressionRoom == null || dist[r] > dist[ProgressionRoom]))
+                    ProgressionRoom = r;
+        }
+
         // Mida de cada sala (senars, perquè tinguen un centre exacte)
         foreach (Room r in Rooms)
         {
@@ -294,6 +302,18 @@ public class DungeonGenerator : MonoBehaviour
     {
         Vector2Int c = r.Center;
         int qx = r.rect.width / 4, qy = r.rect.height / 4;
+
+        if (r == ProgressionRoom)
+        {
+            // Columnes als quadrants i corredors oberts en creu.
+            foreach (int x in new[] { -1, 1 })
+                foreach (int y in new[] { -1, 1 })
+                {
+                    Vector2Int pillar = c + new Vector2Int(x * qx, y * qy);
+                    if (FreeForDecor(r, pillar)) solid.Add(pillar);
+                }
+            return;
+        }
 
         switch (rng.Next(7))
         {
@@ -465,7 +485,7 @@ public class DungeonGenerator : MonoBehaviour
                 // Cofre a la sala inicial de cada pis (al pis 1 és la primera arma)
                 SpawnChest(RunState.Floor >= 3 && rng.NextDouble() < 0.4 ? ChestRarity.Rar : ChestRarity.Comu, r.Center + new Vector2Int(3, 3));
             }
-            else if (r.type == RoomType.Combat && rng.NextDouble() < 0.45)
+            else if (r.type == RoomType.Combat && r != ProgressionRoom && rng.NextDouble() < 0.45)
             {
                 // Cofres escampats per les sales de combat
                 for (int tries = 0; tries < 30; tries++)
@@ -499,7 +519,23 @@ public class DungeonGenerator : MonoBehaviour
     void SpawnChest(ChestRarity rarity, Vector2Int cell)
     {
         if (chestPrefabs == null || chestPrefabs.Length <= (int)rarity) return;
-        Spawn(chestPrefabs[(int)rarity], cell);
+        var spawned = Spawn(chestPrefabs[(int)rarity], cell);
+        if (spawned == null || ProgressionRoom == null || RunState.Floor < 4 ||
+            cell != ProgressionRoom.Center + new Vector2Int(2, 0)) return;
+
+        var chest = spawned.GetComponent<Chest>();
+        var weapon = NetCoop.Weapon(RunState.Floor >= 5 ? "BallestaCristall" : "ProjectorPolsos");
+        if (chest == null || weapon == null) return;
+
+        if (RunState.Floor == 4 || RunState.Floor == 5)
+        {
+            chest.lootTable = new[] { weapon };
+            return;
+        }
+
+        var options = new List<WeaponData>(chest.lootTable ?? System.Array.Empty<WeaponData>());
+        if (!options.Contains(weapon)) options.Add(weapon);
+        chest.lootTable = options.ToArray();
     }
 
     void ApplyLook()
@@ -638,6 +674,7 @@ public class DungeonGenerator : MonoBehaviour
         {
             r.active = true;
             SetDoors(r, true);
+            ShowProgressionBanner(r);
             if (r.type == RoomType.Boss)
             {
                 GameObject boss = Theme != null && Theme.boss != null ? Theme.boss : bossPrefab;
@@ -719,23 +756,31 @@ public class DungeonGenerator : MonoBehaviour
         }
         else
         {
+            ShowProgressionBanner(r);
+            if (r == ProgressionRoom && RunState.Floor >= 4) StartCoroutine(ResonancePulses(r));
             int waves = 1 + (rng.NextDouble() < 0.5 ? 1 : 0) + (RunState.Floor >= 3 ? 1 : 0);
             for (int w = 0; w < waves; w++)
             {
                 // Pis 1: 3-4 enemics per onada; cada pis en suma un
                 int count = 2 + RunState.Floor + rng.Next(0, 2);
                 for (int i = 0; i < count; i++)
-                    StartCoroutine(SpawnEnemy(PickEnemy(), RandomSpawnCell(r), r, 0f));
+                {
+                    bool elite = r == ProgressionRoom && w == 0 && i == 0;
+                    StartCoroutine(SpawnEnemy(elite ? PickElite() : PickEnemy(), RandomSpawnCell(r), r, elite ? 1.25f : 0f));
+                }
                 yield return new WaitForSeconds(0.9f);
                 yield return WaitClear(r);
                 if (w < waves - 1) yield return new WaitForSeconds(0.6f);
             }
             // Recompensa per netejar la sala
-            if (rng.NextDouble() < 0.5)
+            if (r == ProgressionRoom || rng.NextDouble() < 0.5)
             {
-                ChestRarity reward = RandomRarity();
-                SpawnChest(reward, r.Center + new Vector2Int(2, 2));
-                NetCoop.ChestSpawned((int)reward, r.Center + new Vector2Int(2, 2));
+                ChestRarity reward = r == ProgressionRoom
+                    ? (RunState.Floor >= 5 ? ChestRarity.Epic : ChestRarity.Rar)
+                    : RandomRarity();
+                Vector2Int offset = r == ProgressionRoom ? new Vector2Int(2, 0) : new Vector2Int(2, 2);
+                SpawnChest(reward, r.Center + offset);
+                NetCoop.ChestSpawned((int)reward, r.Center + offset);
             }
         }
 
@@ -743,6 +788,54 @@ public class DungeonGenerator : MonoBehaviour
         SetDoors(r, false);
         ui.RefreshMap();
         NetCoop.RoomChanged(Rooms.IndexOf(r), 2);
+    }
+
+    void ShowProgressionBanner(Room r)
+    {
+        if (r == ProgressionRoom)
+            ui.ShowBanner(RunState.Floor >= 4 ? "CAMBRA DE RESSONÀNCIA" : "GUÀRDIA D'ELIT", 2f);
+    }
+
+    IEnumerator ResonancePulses(Room r)
+    {
+        const float radius = 1.45f;
+        const float warning = 1.15f;
+        int next = 0;
+        while (r.active && !r.cleared && !gameOver)
+        {
+            yield return new WaitForSeconds(4.5f);
+            if (r.cleared || gameOver) yield break;
+            if (!r.alive.Exists(enemy => enemy != null && !enemy.IsDead && enemy.enabled)) continue;
+
+            Vector2Int cell = r.Center + Dirs[next] * 2;
+            next = (next + 1) % Dirs.Length;
+            Vector2 pos = ground.GetCellCenterWorld(ToCell(cell));
+            if (!TileNav.CircleFree(pos, radius)) continue;
+
+            NetShared.Telegraph(pos, radius * 2f, warning);
+            yield return NetShared.ShowTelegraph(pos, radius * 2f, warning);
+            if (r.cleared || gameOver || !r.alive.Exists(enemy => enemy != null && !enemy.IsDead && enemy.enabled)) continue;
+
+            Fx.ExplodeVisual(pos, radius);
+            NetCoop.Exploded(pos, radius, 1);
+            if (player != null && player.gameObject.activeInHierarchy && Vector2.Distance(player.position, pos) <= radius + .3f)
+                NetCoop.DamagePlayer(player, 1);
+        }
+    }
+
+    GameObject PickElite()
+    {
+        if (themes != null && themes.Length > 1)
+        {
+            var previous = themes[(RunState.Floor - 2) % themes.Length];
+            var candidates = previous != null ? previous.enemies : null;
+            if (candidates != null && candidates.Length > 0)
+            {
+                var candidate = candidates[rng.Next(candidates.Length)];
+                if (candidate != null) return candidate;
+            }
+        }
+        return PickEnemy();
     }
 
     IEnumerator WaitClear(Room r)
@@ -825,7 +918,11 @@ public class DungeonGenerator : MonoBehaviour
                 float partyMultiplier = 1f + 0.55f * (NetCoop.PlayerCount - 1);
                 h.maxHealth = Mathf.RoundToInt((h.maxHealth + 45 * (RunState.Floor - 1)) * partyMultiplier);
             }
-            else h.maxHealth = Mathf.RoundToInt(h.maxHealth * mult);
+            else
+            {
+                if (scaleBonus > 0f) mult *= 1.5f;
+                h.maxHealth = Mathf.RoundToInt(h.maxHealth * mult);
+            }
             h.currentHealth = h.maxHealth;
             r.alive.Add(h);
         }

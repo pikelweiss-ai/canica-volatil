@@ -227,7 +227,7 @@ public static class NetShared
         S.SendAll(NetProtocol.Frame(Msg.Telegraph, w => { w.Write(Token); w.Write(pos.x); w.Write(pos.y); w.Write(scale); w.Write(seconds); }));
     }
 
-    static IEnumerator ShowTelegraph(Vector2 pos, float scale, float seconds)
+    public static IEnumerator ShowTelegraph(Vector2 pos, float scale, float seconds)
     {
         var m = Fx.MakeSprite("Avis atac", pos, Fx.Disc, new Color(1f, 0.2f, 0.2f, 0.35f), "Shadows", 5);
         m.transform.localScale = Vector3.one * scale;

@@ -1,6 +1,6 @@
 # Sales online — Canica Volàtil Alpha
 
-**Protocol d'esta branca de proves: 6.** Windows, Linux, Android i el servidor de sales han d'usar la mateixa revisió. L'Alpha v1.0.0 publicada usa protocol 5. Les instruccions de compilació estan a MOBILE_ALPHA.md.
+**Protocol d'esta branca de proves: 7.** Windows, Linux, Android i el servidor de sales han d'usar la mateixa revisió. L'Alpha v1.0.0 publicada usa protocol 5. Les instruccions de compilació estan a MOBILE_ALPHA.md.
 
 On està: **JUGAR → targeta "Online"**. Obri el navegador de sales.
 
@@ -72,6 +72,7 @@ L'**amfitrió mana** i els altres en veuen còpies (`Assets/Scripts/Net/NetCoop.
 - **Monedes animades del mapa** (lobby, mapa lliure): només les agafa un jugador.
 - **Radar**: els companys surten com a punts blau cel. El botí dels enemics el crea l'amfitrió; el de cofres i caixes, qui els obri o trenca.
 - **Caixes i barrils (TNT)**: les caixes i les TNT estan protegides mentre falten companys per entrar i es poden trencar des que comença el combat. Els clients demanen cada colp a l'amfitrió, que valida l'estat de la sala, resta vida i replica el trencament. El dany de l'explosió el rep cada jugador al seu PC i als enemics només una vegada. Regla compartida per Android, Windows i Linux.
+- **Sales de progressió**: l'amfitrió controla els polsos i el dany a la cambra de ressonància. Els clients reben l'avís de cada pols, l'efecte i el cofre final amb el mateix botí.
 - **Boss**: barra de vida i avisos d'atac (cercles rojos) també als clients; color i mida dels enemics (càrregues, kamikazes inflant-se) es copien.
 - **Bales i atacs**: cada tret, tall o puny es veu als altres PCs (bala "cosmètica": no fa mal, ja l'ha comptat qui ha disparat). Tret real i còpia visual ignoren els colliders dels companys, inclòs el jugador local del receptor: tots veuen com el travessa.
 - **Avatars dels companys**: skin, barret, estela (totes les formes), ombra, l'arma a la mà apuntant on apunten, i el nom.
