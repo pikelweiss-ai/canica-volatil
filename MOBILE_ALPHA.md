@@ -1,6 +1,6 @@
 # Alpha Android i joc entre plataformes
 
-Windows, Linux i Android es compilen des d'aquest mateix projecte Alpha, amb el mateix cataleg d'armes/cures i protocol de xarxa **5**. L'APK antiga de la Pre-Alpha no es pot unir a aquesta Alpha: tots els jugadors i el relay necessiten els paquets nous.
+Windows, Linux i Android es compilen des d'aquest mateix projecte Alpha, amb el mateix cataleg d'armes i cures. Esta branca de proves usa el protocol **6**. Tots els jugadors i el relay han d'usar la mateixa revisio. La versio Alpha v1.0.0 publicada usa el protocol 5.
 
 ## Jugar
 
@@ -38,6 +38,6 @@ Android inclou permis de xarxa i suport MulticastLock per a descobriment LAN Wi-
 
 La segona variant combina un bot PC i un bot amb els controls/arrancada mobils activats en Windows. Comprova xarxa i rutes de joc compartides; NO executa Android ni Linux. `MobileInputChecks.Validate` comprova dos dits independents, velocitat analogica, cancel·lacio i pausa.
 
-Els tests cooperatius inclouen projectils reals/visuals travessant companys, cures de cofre/boss, portes, cofres/caixes bloquejats en sales pendents i en combat, destruccio autoritzada per host, caigudes i canvi de pis. L'estat final de les compilacions i les proves consta en ALPHA_PROGRESS.md.
+Els tests cooperatius inclouen projectils reals/visuals travessant companys, cures de cofre/boss, portes, cofres protegits fins que s'acaba el combat, caixes protegides en espera i trencables durant el combat, recollida de monedes i recuperacio de cures i armes en reapareixer, amb vida plena. L'estat final de les compilacions i les proves consta en ALPHA_PROGRESS.md.
 
 No hi ha telefon connectat ni Linux executable en aquest entorn: falta confirmar una partida Android + Windows + Linux amb dispositius reals, multitàctil fisic i descobriment Wi-Fi. Publicacio Alpha v1.0.0 autoritzada per Ferran; descarregues en https://github.com/pikelweiss-ai/canica-volatil/releases/tag/v1.0.0-alpha .

@@ -1,6 +1,6 @@
 # Sales online — Canica Volàtil Alpha
 
-**Protocol vigent: 5.** Windows, Linux i Android comparteixen projecte i protocol; APK antiga de Pre-Alpha incompatible. Guia i compilació: MOBILE_ALPHA.md. Els apartats històrics que esmenten protocol 4 corresponen a la revisió anterior.
+**Protocol d'esta branca de proves: 6.** Windows, Linux, Android i el servidor de sales han d'usar la mateixa revisió. L'Alpha v1.0.0 publicada usa protocol 5. Les instruccions de compilació estan a MOBILE_ALPHA.md.
 
 On està: **JUGAR → targeta "Online"**. Obri el navegador de sales.
 
@@ -12,7 +12,7 @@ On està: **JUGAR → targeta "Online"**. Obri el navegador de sales.
 | **Unir-se amb codi** | Codi de 6 lletres (ex. `K7QX2M`) o una IP directa (`192.168.1.20:7777`). Busca primer a la xarxa local i després al servidor d'Internet. |
 | **Crear sala** | Nom, mode (**Masmorra** o **Mapa lliure**), jugadors màxims (2–8), **pública** (surt a la llista) o **privada** (només amb codi), contrasenya opcional, xarxa **local** o **Internet**. |
 | **Lobby** | Els jugadors apareixen al mapa del Lobby i es mouen mentre esperen. Panell amb la llista (AMFITRIÓ / LLEST / esperant, ping), codi amb botó COPIAR, xat amb bafarades damunt dels jugadors. Els jugadors premen **ESTIC LLEST** (o `R`). L'amfitrió tria el mode i prem **COMENÇAR** quan tots estan llestos → compte enrere de 3 s (s'atura si algú es desmarca). L'amfitrió pot expulsar (X). |
-| **Partida** | Tots carreguen el mateix mode. A la masmorra tots tenen **la mateixa masmorra** (mateixa llavor per pis). Es veuen els altres jugadors (amb skin, barret i nom), llista de la sala a la dreta, xat (Intro). L'amfitrió té **TORNAR TOTS AL LOBBY**. |
+| **Partida** | Tots carreguen el mateix mode. A la masmorra tots tenen **la mateixa masmorra** (mateixa llavor per pis). Es veuen els altres jugadors (amb skin, barret i nom), llista de la sala amb la vida actual i màxima a la dreta i xat. Intro obri el xat per defecte. En Controls es pot canviar la tecla i l'obertura amb clic. L'amfitrió té **TORNAR TOTS AL LOBBY**. |
 
 Missatges clars quan: la sala està plena, ja ha començat, contrasenya incorrecta, versió diferent, l'amfitrió tanca la sala o et expulsa, es perd la connexió (es torna al navegador de sales amb l'avís).
 
@@ -67,11 +67,11 @@ L'**amfitrió mana** i els altres en veuen còpies (`Assets/Scripts/Net/NetCoop.
 - **Sales**: quan entra el primer jugador viu, es tanquen totes les portes menys la d'entrada (les tres caselles). Quan hi són tots, es tanca també l'entrada i comença el combat. Si tots retrocedeixen, es cancel·la l'espera i es reobrin les portes. L'amfitrió decideix l'estat i el replica als clients, també quan acaben de carregar. Els jugadors caiguts no bloquegen l'inici.
 - **Cofres**: en sales de combat/boss només es poden obrir després de netejar la sala, ni mentre falten jugadors ni durant les onades. L'amfitrió també valida les peticions dels clients. El primer que n'obri un se l'emporta; per a la resta queda obert i no es pot tornar a obrir. Els cofres de recompensa i el portal apareixen per a tots. Sala inicial i tresor conserven la interacció normal.
 - **Portal**: quan algú el creua, **tota la colla** passa de pis alhora.
-- **Caure i espectar**: si caus, **les teues armes i cures queden al terra** (les monedes no) i la càmera segueix un company (A/D o clic per canviar si n'hi ha diversos). Tornes sense res: amb 2 cors quan netegen la sala, als 4 segons si has caigut fora de combat (TNT, punxes), o amb la vida plena **al pis següent** si els companys maten el boss i passen. Si cauen tots, es torna a començar el pis 1 (la mateixa masmorra).
+- **Caure i espectar**: si caus, **les teues armes i cures queden al terra** (les monedes no) i la càmera segueix un company (A/D o clic per canviar si n'hi ha diversos). Tornes amb tota la vida quan netegen la sala, als 4 segons si has caigut fora de combat (TNT, punxes) o al pis següent si els companys passen. Les armes i cures deixades al terra es poden recuperar mentre continuen allí. Si cauen tots, es torna a començar el pis 1 (la mateixa masmorra).
 - **Monedes, cures i armes del terra**: les veu tothom; se les queda el primer que les agafa (l'amfitrió fa d'àrbitre). L'imant de les monedes va cap al jugador més pròxim (no sempre cap a l'amfitrió).
 - **Monedes animades del mapa** (lobby, mapa lliure): només les agafa un jugador.
 - **Radar**: els companys surten com a punts blau cel. El botí dels enemics el crea l'amfitrió; el de cofres i caixes, qui els obri o trenca.
-- **Caixes i barrils (TNT)**: les caixes normals mantenen el bloqueig de sala dels cofres. Les TNT es poden detonar durant el combat, però estan protegides mentre falten companys per entrar. Els clients demanen cada colp a l'amfitrió, que valida la regla segons si l'objecte és explosiu, resta vida i replica el trencament. El dany de l'explosió el rep cada jugador al seu PC i als enemics només una vegada. Regla compartida per Android, Windows i Linux.
+- **Caixes i barrils (TNT)**: les caixes i les TNT estan protegides mentre falten companys per entrar i es poden trencar des que comença el combat. Els clients demanen cada colp a l'amfitrió, que valida l'estat de la sala, resta vida i replica el trencament. El dany de l'explosió el rep cada jugador al seu PC i als enemics només una vegada. Regla compartida per Android, Windows i Linux.
 - **Boss**: barra de vida i avisos d'atac (cercles rojos) també als clients; color i mida dels enemics (càrregues, kamikazes inflant-se) es copien.
 - **Bales i atacs**: cada tret, tall o puny es veu als altres PCs (bala "cosmètica": no fa mal, ja l'ha comptat qui ha disparat). Tret real i còpia visual ignoren els colliders dels companys, inclòs el jugador local del receptor: tots veuen com el travessa.
 - **Avatars dels companys**: skin, barret, estela (totes les formes), ombra, l'arma a la mà apuntant on apunten, i el nom.
