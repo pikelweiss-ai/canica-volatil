@@ -517,6 +517,13 @@ public class PlayerAttack : MonoBehaviour
         ItemPickup.Spawn(weapon, from, TileNav.DropDestination(from, to), true);
     }
 
+    void OnDisable()
+    {
+        if (handSprite == null) return;
+        handSprite.enabled = false;
+        transform.localScale = originalScale;
+    }
+
     void OnDestroy()
     {
         if (handSprite != null) Destroy(handSprite.gameObject);

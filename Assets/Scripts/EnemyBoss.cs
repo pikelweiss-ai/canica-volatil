@@ -33,6 +33,7 @@ public class EnemyBoss : MonoBehaviour
     private float timer = 1.5f;
     private bool enraged;
     private int lastAttack = -1;
+    private readonly System.Collections.Generic.List<SpriteRenderer> attackMarks = new();
 
     // Barra de vida
     private GameObject barRoot;
@@ -132,9 +133,7 @@ public class EnemyBoss : MonoBehaviour
         if (TileNav.Ground != null) target = TileNav.Center(TileNav.NearestFree(TileNav.Cell(target)));
 
         // Ombra roja on caurà
-        SpriteRenderer mark = Fx.MakeSprite("Avis bot", target, Fx.Disc, new Color(1f, 0.2f, 0.2f, 0.35f), "Shadows", 5);
-        mark.transform.localScale = Vector3.one * 2.4f;
-        NetShared.Telegraph(target, 2.4f, 1.3f); // Online: els companys tambe veuen on caura
+        SpriteRenderer mark = MarkAttack("Avis bot", target, 2.4f, 1.3f);
         yield return Telegraph(0.6f);
 
         Vector2 from = transform.position;
@@ -151,7 +150,7 @@ public class EnemyBoss : MonoBehaviour
         }
         transform.position = target;
         transform.localScale = baseScale;
-        Destroy(mark.gameObject);
+        RemoveMark(mark);
 
         // Aterratge: colp a prop + ona de bales
         Fx.Shake(0.35f, 0.35f);
@@ -244,16 +243,13 @@ public class EnemyBoss : MonoBehaviour
         for (int i = 0; i < n; i++)
         {
             Vector2 p = (Vector2)ai.Player.position + (i == 0 ? Vector2.zero : Random.insideUnitCircle * 3f);
-            SpriteRenderer m = Fx.MakeSprite("Roca avis", p, Fx.Disc, new Color(1f, 0.2f, 0.2f, 0.35f), "Shadows", 5);
-            m.transform.localScale = Vector3.one * 1.2f;
-            NetShared.Telegraph(p, 1.2f, 0.9f);
-            marks.Add(m);
+            marks.Add(MarkAttack("Roca avis", p, 1.2f, 0.9f));
         }
         yield return new WaitForSeconds(0.9f);
         foreach (SpriteRenderer m in marks)
         {
             Vector2 p = m.transform.position;
-            Destroy(m.gameObject);
+            RemoveMark(m);
             Fx.Burst(p, new Color(0.55f, 0.55f, 0.6f), 6, 2.5f);
             if (ai.Player != null && Vector2.Distance(ai.Player.position, p) < 0.65f)
                 NetCoop.DamagePlayer(ai.Player, 1);
@@ -313,8 +309,32 @@ public class EnemyBoss : MonoBehaviour
                          useBulletColor ? bulletColor : (Color?)null);
     }
 
+    SpriteRenderer MarkAttack(string label, Vector2 position, float size, float seconds)
+    {
+        var mark = Fx.MakeSprite(label, position, Fx.Disc, new Color(1f, 0.2f, 0.2f, 0.35f), "Shadows", 5);
+        mark.transform.localScale = Vector3.one * size;
+        attackMarks.Add(mark);
+        NetShared.Telegraph(position, size, seconds, health.netId);
+        return mark;
+    }
+
+    void RemoveMark(SpriteRenderer mark)
+    {
+        attackMarks.Remove(mark);
+        if (mark != null) Destroy(mark.gameObject);
+    }
+
+    void ClearAttackMarks()
+    {
+        foreach (var mark in attackMarks)
+            if (mark != null) Destroy(mark.gameObject);
+        attackMarks.Clear();
+    }
+
     void OnDied(EnemyHealth h)
     {
+        StopAllCoroutines();
+        ClearAttackMarks();
         if (barRoot != null) Destroy(barRoot);
         Fx.Shake(0.6f, 0.4f);
         for (int i = 0; i < 12; i++) CoinDrop.Spawn(transform.position);
@@ -322,6 +342,7 @@ public class EnemyBoss : MonoBehaviour
 
     void OnDestroy()
     {
+        ClearAttackMarks();
         if (barRoot != null) Destroy(barRoot);
     }
 

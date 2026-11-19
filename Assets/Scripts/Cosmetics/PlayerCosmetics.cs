@@ -8,6 +8,9 @@ public class PlayerCosmetics : MonoBehaviour
     private SpriteRenderer hat;
     private TrailRenderer trail;
     private bool rainbow;
+    private RemoteAvatar remote;
+    private Material trailMaterial;
+    private Vector3 previousTrailPosition;
 
     // Online: per a un company, les seues tries en lloc de les d'aquest PC (-1 = les d'aquest PC)
     [System.NonSerialized] public int skinOverride = -1, hatOverride = -1, trailOverride = -1;
@@ -17,6 +20,7 @@ public class PlayerCosmetics : MonoBehaviour
     {
         CosmeticsDatabase db = CosmeticsDatabase.Instance;
         body = GetComponent<SpriteRenderer>();
+        remote = GetComponent<RemoteAvatar>();
         if (db == null || body == null) return;
 
         // Skin (si és l'original, el sprite està buit i no es canvia res)
@@ -78,7 +82,12 @@ public class PlayerCosmetics : MonoBehaviour
         trail.endWidth = 0f;
         trail.minVertexDistance = 0.05f;
         Shader sh = Shader.Find("Sprites/Default");
-        if (sh != null) trail.material = new Material(sh);
+        if (sh != null)
+        {
+            trailMaterial = new Material(sh);
+            trail.sharedMaterial = trailMaterial;
+        }
+        previousTrailPosition = transform.position;
         trail.sortingLayerID = body.sortingLayerID;
         trail.sortingOrder = body.sortingOrder - 1;
         SetTrailColor(c);
@@ -100,7 +109,26 @@ public class PlayerCosmetics : MonoBehaviour
         // Mentre el jugador parpelleja (invulnerable), el barret també
         if (hat != null && body != null) hat.enabled = body.enabled;
     }
-    void OnDestroy(){if(trail!=null && trail.sharedMaterial!=null)Destroy(trail.sharedMaterial);}
+    void LateUpdate()
+    {
+        if (trail == null) return;
+        Vector3 position = transform.position;
+        bool down = remote != null && remote.Down;
+        if (down || (position - previousTrailPosition).sqrMagnitude >= 9f) trail.Clear();
+        trail.emitting = !down;
+        previousTrailPosition = position;
+    }
+
+    void OnDisable()
+    {
+        if (trail != null) trail.Clear();
+        previousTrailPosition = transform.position;
+    }
+
+    void OnDestroy()
+    {
+        if (trailMaterial != null) Destroy(trailMaterial);
+    }
 }
 
 // Mesura la base opaca; els marges transparents no compten com a barret.

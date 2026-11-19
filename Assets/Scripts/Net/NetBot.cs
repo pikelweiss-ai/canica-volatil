@@ -315,6 +315,39 @@ public class NetBot : MonoBehaviour
         spawned(room.alive.Count == 1 ? room.alive[0] : null);
     }
 
+    static SpriteRenderer MakeBossWarning(EnemyHealth health, Vector2 position)
+    {
+        var boss = health.GetComponent<EnemyBoss>();
+        var markAttack = typeof(EnemyBoss).GetMethod("MarkAttack",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        return (SpriteRenderer)markAttack.Invoke(boss, new object[] { "Avís de prova del boss", position, 2.4f, 10f });
+    }
+
+    IEnumerator CheckTrailReset()
+    {
+        var fixture = new GameObject("Prova d'estela", typeof(SpriteRenderer));
+        fixture.transform.position = new Vector3(600, 600);
+        var emitter = fixture.AddComponent<TrailParticleEmitter>();
+        emitter.Init(TrailShape.Zigzag, Color.cyan, fixture.GetComponent<SpriteRenderer>());
+        yield return null;
+
+        fixture.transform.position += Vector3.right * .15f;
+        yield return null;
+        yield return null;
+
+        var particle = System.Array.Find(FindObjectsByType<SpriteRenderer>(FindObjectsSortMode.None),
+            sprite => sprite.name == "Particula" && sprite.transform.position.x > 600.1f && sprite.transform.position.x < 600.2f);
+        var root = particle != null ? particle.transform.parent : null;
+        bool drawn = particle != null;
+        fixture.transform.position += Vector3.right * 10f;
+        yield return null;
+        yield return null;
+        bool cleared = root != null && root.GetComponentsInChildren<SpriteRenderer>().Length == 0;
+        Destroy(fixture);
+        if (!drawn || !cleared) Fail("l'estela deixa una marca fora del punt o no es neteja al teletransport");
+        else Ok("estela mostrejada per distància i neta després d'un teletransport");
+    }
+
     IEnumerator HostCoop()
     {
         var g = DungeonGenerator.Instance;
@@ -371,7 +404,12 @@ public class NetBot : MonoBehaviour
         Ok("boss amb dos jugadors: " + bossHealth.currentHealth + "/" + bossHealth.maxHealth);
         bossHealth.healDropChance = 1;
         yield return null;
+        var warning = MakeBossWarning(bossHealth, bossHealth.transform.position);
+        yield return new WaitForSecondsRealtime(.8f);
         bossHealth.TakeHit(99999, Vector2.zero);
+        yield return null;
+        if (warning != null) { Fail("queda un avís del boss després de morir al host"); yield break; }
+        Ok("avís del boss retirat al host");
         Ok("boss mort amb cura garantida per provar el boti compartit");
         // 5) Caixa trencada pel company i moneda compartida
         yield return WaitFor(() => NetShared.RemoteBreaks > 0, 20, "caixa trencada pel company, trencada tambe ací");
@@ -472,6 +510,24 @@ public class NetBot : MonoBehaviour
         if (failed) yield break;
         Ok("copies d'enemics: " + NetCoop.EnemyCount);
         if (!CheckRoomLocked(g, waiting)) yield break;
+        // El client trenca una caixa dins de la sala encara activa i recull la moneda.
+        var fixture = GameObject.Find("Caixa de prova en combat");
+        var crate = fixture != null ? fixture.GetComponent<Breakable>() : null;
+        if (crate == null || DungeonGenerator.CanInteractAt(crate.transform.position) ||
+            !DungeonGenerator.CanDamageBreakableAt(crate.transform.position))
+        {
+            Fail("falta la caixa de la sala activa");
+            yield break;
+        }
+        var cratePosition = crate.transform.position;
+        int coinsBeforeCrate = RunState.Coins;
+        crate.Hit(1000);
+        yield return WaitFor(() => crate == null, 5, "caixa trencada pel client en combat");
+        if (failed) yield break;
+        g.player.GetComponent<Rigidbody2D>().position = cratePosition;
+        g.player.position = cratePosition;
+        yield return WaitFor(() => RunState.Coins > coinsBeforeCrate, 8, "moneda de la caixa recollida en combat");
+        if (failed) yield break;
         EnemyHealth victim = null;
         foreach (var h in NetCoop.Enemies) if (h != null && !h.IsDead) { victim = h; break; }
         if (victim == null || !victim.netProxy) { Fail("la copia no esta marcada com a copia"); yield break; }
@@ -503,30 +559,18 @@ public class NetBot : MonoBehaviour
         nearest.healChance = 1; // prova determinista del boti del cofre
         if (!NetCoop.InterceptChestOpen(nearest)) { Fail("el client ha obert el cofre sense preguntar"); yield break; }
         yield return WaitFor(() => nearest.IsOpen, 10, "l'amfitrio ha donat el cofre al client");
+        GameObject bossWarning = null;
+        yield return WaitFor(() => (bossWarning = GameObject.Find("Avis atac")) != null,
+            12, "avís del boss rebut pel client");
+        if (failed) yield break;
+        yield return WaitFor(() => bossWarning == null, 3, "avís del boss retirat al client quan mor");
+        if (failed) yield break;
         yield return WaitFor(() =>
         {
             foreach (var hp in FindObjectsByType<HealPickup>(FindObjectsSortMode.None))
                 if (hp.transform.position.x > 1090 && hp.GetComponent<NetItem>() != null) return true;
             return false;
         }, 15, "cura del boss de l'amfitrio visible al client");
-        // El client trenca una caixa dins de la sala encara activa i recull la moneda.
-        var fixture = GameObject.Find("Caixa de prova en combat");
-        var crate = fixture != null ? fixture.GetComponent<Breakable>() : null;
-        if (crate == null || DungeonGenerator.CanInteractAt(crate.transform.position) ||
-            !DungeonGenerator.CanDamageBreakableAt(crate.transform.position))
-        {
-            Fail("falta la caixa de la sala activa");
-            yield break;
-        }
-        var cratePosition = crate.transform.position;
-        int coinsBeforeCrate = RunState.Coins;
-        crate.Hit(1000);
-        yield return WaitFor(() => crate == null, 5, "caixa trencada pel client en combat");
-        if (failed) yield break;
-        g.player.GetComponent<Rigidbody2D>().position = cratePosition;
-        g.player.position = cratePosition;
-        yield return WaitFor(() => RunState.Coins > coinsBeforeCrate, 8, "moneda de la caixa recollida en combat");
-        if (failed) yield break;
         // Moneda: apareix als peus, l'agafem i l'amfitrio ens la dona
         int coins = RunState.Coins;
         CoinDrop.Spawn(g.player.position);
@@ -542,8 +586,13 @@ public class NetBot : MonoBehaviour
         if (bag != null) bag.Add(HealItem.All[0]);
         var preexistingDrops = new System.Collections.Generic.HashSet<int>();
         foreach (var item in FindObjectsByType<NetItem>(FindObjectsSortMode.None)) preexistingDrops.Add(item.id);
+        yield return null;
+        var hand = GameObject.Find("Arma a la mà")?.GetComponent<SpriteRenderer>();
+        if (hand == null || !hand.enabled) { Fail("falta l'arma visible de prova"); yield break; }
         health.TakeDamage(999);
         yield return WaitFor(() => Spectate.Active, 5, "caigut: espectant el company");
+        if (hand.enabled) { Fail("l'arma de la mà queda flotant quan cau el jugador"); yield break; }
+        Ok("es retira l'arma de la mà quan cau el jugador");
         var myAttack = g.player.GetComponent<PlayerAttack>();
         if (myAttack != null && myAttack.CurrentWeapon == null && !System.Array.Exists(myAttack.hotbarSlots, w => w != null)) Ok("en caure, les armes han quedat al terra"); else Fail("encara te armes despres de caure");
         var cam = Camera.main != null ? Camera.main.GetComponent<CameraFollow>() : null;
@@ -819,9 +868,20 @@ public class NetBot : MonoBehaviour
                 yield break;
             }
             previousBossHealth = bossHealth.maxHealth;
-            Destroy(bossHealth.gameObject);
+            if (i == 0)
+            {
+                yield return null;
+                var warning = MakeBossWarning(bossHealth, bossHealth.transform.position);
+                bossHealth.TakeDamage(99999);
+                yield return null;
+                if (warning != null) { Fail("queda un avís del boss després de morir en solitari"); yield break; }
+                Ok("avís del boss retirat en solitari");
+            }
+            else Destroy(bossHealth.gameObject);
             Ok("vida del boss individual al pis " + RunState.Floor + ": " + expected);
         }
+        yield return CheckTrailReset();
+        if (failed) yield break;
         yield return CheckProgression();
         if (!failed) Pass();
     }

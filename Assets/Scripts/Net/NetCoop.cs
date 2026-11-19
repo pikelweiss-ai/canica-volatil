@@ -695,6 +695,7 @@ public static class NetCoop
     // Per a les proves automatiques
     public static int EnemyCount { get { int n = 0; foreach (var h in enemies.Values) if (h != null && !h.IsDead) n++; return n; } }
     public static IEnumerable<EnemyHealth> Enemies => enemies.Values;
+    public static EnemyHealth FindEnemy(int id) => enemies.TryGetValue(id, out var enemy) ? enemy : null;
     public static bool IsChestOpenedForAll(int key) => openedChests.Contains(key);
     public static int RoomEvents, HurtsReceived;
     public static int DownedCount => downed.Count;

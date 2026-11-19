@@ -1,6 +1,6 @@
 # Alpha Android i joc entre plataformes
 
-Windows, Linux i Android es compilen des d'aquest mateix projecte Alpha, amb el mateix cataleg d'armes i cures. Esta branca de proves usa el protocol **7**. Tots els jugadors i el relay han d'usar la mateixa revisio. La versio Alpha v1.0.0 publicada usa el protocol 5.
+Windows, Linux i Android es compilen des d'aquest mateix projecte Alpha, amb el mateix cataleg d'armes i cures. Esta branca de proves usa el protocol **8**. Tots els jugadors i el relay han d'usar la mateixa revisio. La versio Alpha v1.0.0 publicada usa el protocol 5.
 
 ## Jugar
 

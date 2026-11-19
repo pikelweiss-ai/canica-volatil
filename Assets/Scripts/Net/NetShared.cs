@@ -221,17 +221,20 @@ public static class NetShared
     // =====================================================================
     //  AVISOS D'ATAC (boss)
     // =====================================================================
-    public static void Telegraph(Vector2 pos, float scale, float seconds)
+    public static void Telegraph(Vector2 pos, float scale, float seconds, int enemyId = 0)
     {
         if (!NetCoop.IsHost) return;
-        S.SendAll(NetProtocol.Frame(Msg.Telegraph, w => { w.Write(Token); w.Write(pos.x); w.Write(pos.y); w.Write(scale); w.Write(seconds); }));
+        S.SendAll(NetProtocol.Frame(Msg.Telegraph, w => { w.Write(Token); w.Write(pos.x); w.Write(pos.y); w.Write(scale); w.Write(seconds); w.Write(enemyId); }));
     }
 
-    public static IEnumerator ShowTelegraph(Vector2 pos, float scale, float seconds)
+    public static IEnumerator ShowTelegraph(Vector2 pos, float scale, float seconds, EnemyHealth owner = null)
     {
         var m = Fx.MakeSprite("Avis atac", pos, Fx.Disc, new Color(1f, 0.2f, 0.2f, 0.35f), "Shadows", 5);
         m.transform.localScale = Vector3.one * scale;
-        yield return new WaitForSeconds(seconds);
+        bool hasOwner = owner != null;
+        float expires = Time.time + seconds;
+        while (m != null && Time.time < expires && (!hasOwner || (owner != null && !owner.IsDead)))
+            yield return null;
         if (m != null) Object.Destroy(m.gameObject);
     }
 
@@ -335,7 +338,11 @@ public static class NetShared
             case Msg.Telegraph:
             {
                 int token = r.ReadInt32(); var p = new Vector2(r.ReadSingle(), r.ReadSingle()); float scale = r.ReadSingle(), secs = r.ReadSingle();
-                if (token == Token) S.StartCoroutine(ShowTelegraph(p, scale, secs));
+                int enemyId = r.ReadInt32();
+                if (token != Token) break;
+                var owner = enemyId != 0 ? NetCoop.FindEnemy(enemyId) : null;
+                if (enemyId == 0 || (owner != null && !owner.IsDead))
+                    S.StartCoroutine(ShowTelegraph(p, scale, secs, owner));
                 break;
             }
         }

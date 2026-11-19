@@ -1,52 +1,161 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// Particules cosmetiques per distancia recorreguda, amb reutilitzacio i sense collisio.
+// Partícules cosmètiques per distància recorreguda.
 public class TrailParticleEmitter : MonoBehaviour
 {
-    class Particle { public GameObject go;public SpriteRenderer renderer;public Vector3 position,velocity;public float age,life,scale,angle; }
-    readonly List<Particle> active=new List<Particle>();
-    readonly Queue<Particle> pool=new Queue<Particle>();
-    static readonly Dictionary<TrailShape,Sprite> sprites=new Dictionary<TrailShape,Sprite>();
-    TrailShape shape;Color color;SpriteRenderer owner;
-    Vector3 previous;float carry;int side;
+    sealed class Particle
+    {
+        public SpriteRenderer renderer;
+        public Vector3 position, velocity;
+        public float age, life, scale, angle;
+    }
+
+    readonly List<Particle> active = new();
+    readonly Queue<Particle> pool = new();
+    static readonly Dictionary<TrailShape, Sprite> sprites = new();
+    TrailShape shape;
+    Color color;
+    SpriteRenderer owner;
+    RemoteAvatar remote;
+    Vector3 previous;
+    float carry;
+    int side;
     GameObject root;
-    public void Init(TrailShape kind,Color tint,SpriteRenderer body){shape=kind;color=tint;owner=body;previous=transform.position;root=new GameObject("Particules de l'estela");}
+
+    public void Init(TrailShape kind, Color tint, SpriteRenderer body)
+    {
+        shape = kind;
+        color = tint;
+        owner = body;
+        remote = GetComponent<RemoteAvatar>();
+        previous = transform.position;
+        root = new GameObject("Particules de l'estela");
+    }
+
+    void OnEnable() => previous = transform.position;
+
+    void OnDisable() => ResetTrail();
+
+    void ResetTrail()
+    {
+        foreach (var particle in active) Recycle(particle);
+        active.Clear();
+        carry = 0f;
+        side = 0;
+    }
+
     void LateUpdate()
     {
-        float dt=Time.deltaTime;if(root==null || dt<=0)return;
-        Vector3 delta=transform.position-previous;float distance=delta.magnitude;
-        if(distance<3)
+        if (root == null) return;
+        Vector3 position = transform.position;
+        Vector3 delta = position - previous;
+        previous = position;
+        float distance = delta.magnitude;
+        if (distance >= 3f || (remote != null && remote.Down))
         {
-            carry+=distance;float spacing=shape==TrailShape.Footsteps?.22f:.14f;
-            int count=Mathf.Min(8,Mathf.FloorToInt(carry/spacing));carry-=count*spacing;
-            for(int i=0;i<count;i++)Emit(Vector3.Lerp(previous,transform.position,(i+1f)/(count+1)),delta.normalized);
+            ResetTrail();
+            return;
         }
-        else carry=0;
-        previous=transform.position;
-        for(int i=active.Count-1;i>=0;i--)
+
+        float dt = Time.deltaTime;
+        if (dt <= 0f) return;
+        for (int i = active.Count - 1; i >= 0; i--)
         {
-            var p=active[i];p.age+=dt;
-            if(p.age>=p.life){p.go.SetActive(false);pool.Enqueue(p);active.RemoveAt(i);continue;}
-            float t=p.age/p.life;p.position+=p.velocity*dt;p.go.transform.position=p.position;
-            p.go.transform.localScale=Vector3.one*p.scale*(shape==TrailShape.Rings?Mathf.Lerp(.5f,2,t):1-t*.5f);
-            p.go.transform.rotation=Quaternion.Euler(0,0,p.angle+(shape==TrailShape.Stars?t*120:0));
-            Color c=CosmeticsDatabase.IsRainbow(color)?Color.HSVToRGB((Time.time*.5f+t*.2f)%1, .8f,1):color;c.a=(1-t)*.75f;p.renderer.color=c;
+            var particle = active[i];
+            particle.age += dt;
+            if (particle.age >= particle.life)
+            {
+                Recycle(particle);
+                active.RemoveAt(i);
+                continue;
+            }
+            particle.position += particle.velocity * dt;
+            Draw(particle);
         }
+
+        if (distance <= 0.0001f) return;
+        float spacing = shape switch
+        {
+            TrailShape.Footsteps => .22f,
+            TrailShape.Zigzag => .12f,
+            TrailShape.Sparks => .16f,
+            _ => .14f
+        };
+        Vector3 direction = delta / distance;
+        float next = spacing - carry;
+        for (int emitted = 0; next <= distance && emitted < 20; emitted++, next += spacing)
+            Emit(position - direction * (distance - next), direction);
+        carry = Mathf.Repeat(carry + distance, spacing);
     }
-    void Emit(Vector3 position,Vector3 direction)
+
+    void Recycle(Particle particle)
     {
-        if(active.Count>=64)return;Particle p;
-        if(pool.Count>0)p=pool.Dequeue();
-        else {p=new Particle();p.go=new GameObject("Particula",typeof(SpriteRenderer));p.go.transform.SetParent(root.transform,false);p.renderer=p.go.GetComponent<SpriteRenderer>();}
-        side=1-side;Vector3 cross=new Vector3(-direction.y,direction.x,0);
-        p.position=position+cross*(side==0?-.10f:.10f);p.velocity=Vector3.zero;
-        if(shape==TrailShape.Sparks)p.velocity=-direction*.65f+cross*(side==0?-.5f:.5f);
-        p.age=0;p.life=shape==TrailShape.Footsteps?.65f:.4f;p.scale=shape==TrailShape.Dots?.22f:.4f;
-        p.angle=shape==TrailShape.Footsteps?Mathf.Atan2(direction.y,direction.x)*Mathf.Rad2Deg-90:side*35;
-        p.renderer.sprite=SpriteFor(shape);p.renderer.sortingLayerID=owner.sortingLayerID;p.renderer.sortingOrder=owner.sortingOrder-1;
-        p.go.SetActive(true);active.Add(p);
+        if (particle.renderer == null) return;
+        particle.renderer.gameObject.SetActive(false);
+        pool.Enqueue(particle);
     }
+
+    void Emit(Vector3 position, Vector3 direction)
+    {
+        if (active.Count >= 64) return;
+        Particle particle;
+        if (pool.Count > 0) particle = pool.Dequeue();
+        else
+        {
+            var go = new GameObject("Particula", typeof(SpriteRenderer));
+            go.transform.SetParent(root.transform, false);
+            particle = new Particle { renderer = go.GetComponent<SpriteRenderer>() };
+        }
+
+        side = 1 - side;
+        float sign = side == 0 ? -1f : 1f;
+        var cross = new Vector3(-direction.y, direction.x, 0f);
+        particle.position = position;
+        particle.velocity = Vector3.zero;
+        particle.age = 0f;
+        particle.life = shape == TrailShape.Footsteps ? .6f : .36f;
+        particle.scale = shape switch
+        {
+            TrailShape.Dots => .24f,
+            TrailShape.Sparks => .32f,
+            TrailShape.Zigzag => .43f,
+            _ => .38f
+        };
+        float heading = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        particle.angle = shape switch
+        {
+            TrailShape.Footsteps or TrailShape.Zigzag => heading - 90f,
+            TrailShape.Sparks => heading - 45f + sign * 18f,
+            TrailShape.Stars => sign * 15f,
+            _ => 0f
+        };
+
+        if (shape == TrailShape.Footsteps) particle.position += cross * sign * .1f;
+        if (shape == TrailShape.Sparks) particle.velocity = -direction * .55f + cross * sign * .22f;
+        particle.renderer.sprite = SpriteFor(shape);
+        particle.renderer.sortingLayerID = owner.sortingLayerID;
+        particle.renderer.sortingOrder = owner.sortingOrder - 1;
+        Draw(particle);
+        particle.renderer.gameObject.SetActive(true);
+        active.Add(particle);
+    }
+
+    void Draw(Particle particle)
+    {
+        float progress = particle.age / particle.life;
+        var visual = particle.renderer.transform;
+        visual.position = particle.position;
+        float growth = shape == TrailShape.Rings ? Mathf.Lerp(.75f, 1.6f, progress) : 1f - progress * .35f;
+        visual.localScale = Vector3.one * (particle.scale * growth);
+        visual.rotation = Quaternion.Euler(0f, 0f, particle.angle + (shape == TrailShape.Stars ? progress * 100f : 0f));
+        Color tint = CosmeticsDatabase.IsRainbow(color)
+            ? Color.HSVToRGB(Mathf.Repeat(Time.time * .5f + progress * .2f, 1f), .8f, 1f)
+            : color;
+        tint.a = (1f - progress) * Mathf.Min(.75f, color.a);
+        particle.renderer.color = tint;
+    }
+
     public static Sprite SpriteFor(TrailShape shape)
     {
         if(sprites.TryGetValue(shape,out var sprite))return sprite;
@@ -58,7 +167,7 @@ public class TrailParticleEmitter : MonoBehaviour
             {
                 case TrailShape.Rings:on=d>2.4f&&d<3.8f;break;
                 case TrailShape.Stars:on=(x>=3&&x<=4)||(y>=3&&y<=4)||(Mathf.Abs(x-3.5f)+Mathf.Abs(y-3.5f)<3);break;
-                case TrailShape.Zigzag:on=(y>4&&x==4)||(y==4&&x>=2&&x<=4)||(y<4&&x==2);break;
+                case TrailShape.Zigzag:on=(y>=5&&x==4)||(y==4&&x>=2&&x<=4)||(y<=3&&x==2);break;
                 case TrailShape.Footsteps:on=(y>=3&&x>=2&&x<=4)||(y==1&&x>=2&&x<=3);break;
                 case TrailShape.Sparks:on=Mathf.Abs(x-y)<=1&&x>0&&x<7;break;
                 default:on=d<2.5f;break;
