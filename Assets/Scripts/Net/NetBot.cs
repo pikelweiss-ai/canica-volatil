@@ -246,10 +246,11 @@ public class NetBot : MonoBehaviour
         var combat = FirstCombat(g);
         if (combat == null) return;
         var center = new Vector3Int(combat.Center.x, combat.Center.y, 0);
-        Vector3 position = g.ground.GetCellCenterWorld(TileNav.NearestFree(center + new Vector3Int(2, 2, 0)));
+        Vector3 position = g.ground.GetCellCenterWorld(center + Vector3Int.up * 2);
         var fixture = Instantiate(g.cratePrefab, position, Quaternion.identity);
         fixture.name = "Caixa de prova en combat";
         var crate = fixture.GetComponent<Breakable>();
+        crate.health = 1000;
         crate.coinChance = 1f;
         crate.healChance = 0f;
     }
@@ -518,7 +519,7 @@ public class NetBot : MonoBehaviour
         }
         var cratePosition = crate.transform.position;
         int coinsBeforeCrate = RunState.Coins;
-        crate.Hit(999);
+        crate.Hit(1000);
         yield return WaitFor(() => crate == null, 5, "caixa trencada pel client en combat");
         if (failed) yield break;
         g.player.GetComponent<Rigidbody2D>().position = cratePosition;
