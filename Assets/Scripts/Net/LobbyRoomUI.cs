@@ -10,7 +10,8 @@ public class LobbyRoomUI : MonoBehaviour
 {
     NetSession s;
     TextMeshProUGUI roomTitle, roomSub, codeText, playersTitle, countdown, hint;
-    RectTransform playerList, hostBox;
+    RectTransform playerList, hostBox, addressRow;
+    TextMeshProUGUI addressText;
     UIKit.UIButton mainButton, modeDungeon, modeFree;
     float nextRefresh;
     int lastCountdown = -1;
@@ -36,14 +37,21 @@ public class LobbyRoomUI : MonoBehaviour
     {
         var root = transform;
         // Targeta de la sala (dalt al centre)
-        var card = UIKit.Box(root, new Vector2(-40, 368), new Vector2(760, 120), new Color(.04f, .08f, .11f, .9f), "Sala");
-        UIKit.Box(card, new Vector2(0, 57), new Vector2(760, 6), UIKit.Gold);
-        roomTitle = UIKit.Text(card, "", new Vector2(-165, 24), new Vector2(400, 44), 28, TextAlignmentOptions.MidlineLeft, UIKit.Gold);
-        roomSub = UIKit.Text(card, "", new Vector2(-165, -22), new Vector2(400, 50), 15, TextAlignmentOptions.TopLeft, UIKit.Muted);
-        UIKit.Text(card, "CODI", new Vector2(150, 34), new Vector2(120, 26), 16, TextAlignmentOptions.MidlineLeft, UIKit.Muted);
-        codeText = UIKit.Text(card, "", new Vector2(190, -8), new Vector2(180, 56), 36, TextAlignmentOptions.MidlineLeft, UIKit.TextColor);
+        var card = UIKit.Box(root, new Vector2(-40, 360), new Vector2(760, 150), new Color(.04f, .08f, .11f, .9f), "Sala");
+        UIKit.Box(card, new Vector2(0, 72), new Vector2(760, 6), UIKit.Gold);
+        roomTitle = UIKit.Text(card, "", new Vector2(-165, 40), new Vector2(400, 44), 28, TextAlignmentOptions.MidlineLeft, UIKit.Gold);
+        roomSub = UIKit.Text(card, "", new Vector2(-165, -6), new Vector2(400, 50), 15, TextAlignmentOptions.TopLeft, UIKit.Muted);
+        UIKit.Text(card, "CODI", new Vector2(150, 50), new Vector2(120, 26), 16, TextAlignmentOptions.MidlineLeft, UIKit.Muted);
+        codeText = UIKit.Text(card, "", new Vector2(190, 10), new Vector2(180, 56), 36, TextAlignmentOptions.MidlineLeft, UIKit.TextColor);
         codeText.characterSpacing = 3;
-        UIKit.Button(card, "COPIAR", new Vector2(327, -8), new Vector2(90, 44), CopyCode, UIKit.Style.Normal, 17);
+        UIKit.Button(card, "COPIAR", new Vector2(327, 10), new Vector2(90, 44), CopyCode, UIKit.Style.Normal, 17);
+
+        // Fila de connexió directa (només amfitrió): IP local i port TCP real que ha obert el joc
+        addressRow = UIKit.Empty(card, "Adreça directa");
+        UIKit.Box(addressRow, new Vector2(0, -52), new Vector2(740, 36), new Color(.02f, .04f, .06f, .8f), "Fons adreça").GetComponent<Image>().raycastTarget = false;
+        addressText = UIKit.Text(addressRow, "", new Vector2(-75, -52), new Vector2(570, 32), 15, TextAlignmentOptions.MidlineLeft, UIKit.TextColor);
+        addressText.textWrappingMode = TextWrappingModes.NoWrap;
+        UIKit.Button(addressRow, "COPIAR IP", new Vector2(292, -52), new Vector2(130, 30), CopyAddress, UIKit.Style.Normal, 15);
 
         countdown = UIKit.Text(root, "", new Vector2(-40, 150), new Vector2(700, 220), 170, TextAlignmentOptions.Center, UIKit.Gold);
         countdown.outlineWidth = 0.22f; countdown.outlineColor = new Color32(10, 18, 26, 255);
@@ -63,8 +71,8 @@ public class LobbyRoomUI : MonoBehaviour
         mainButton = UIKit.Button(panel, "", new Vector2(0, -250), new Vector2(340, 60), MainAction, UIKit.Style.Primary, 23);
         UIKit.Button(panel, "EIXIR DE LA SALA", new Vector2(0, -308), new Vector2(340, 40), LeaveRoom, UIKit.Style.Danger, 17);
 
-        UIKit.Box(root, new Vector2(-40, 290), new Vector2(760, 30), new Color(.02f, .04f, .06f, .7f), "Ajuda").GetComponent<Image>().raycastTarget = false;
-        hint = UIKit.Text(root, MobileInput.Active ? "Joystick per moure't · Toca el xat i ESTIC LLEST" : "WASD per moure't · " + GameControls.Label(GameControls.OpenChat) + " per xatejar · R per estar llest", new Vector2(-40, 290), new Vector2(740, 26), 16, TextAlignmentOptions.Center, UIKit.Muted);
+        UIKit.Box(root, new Vector2(-40, 264), new Vector2(760, 30), new Color(.02f, .04f, .06f, .7f), "Ajuda").GetComponent<Image>().raycastTarget = false;
+        hint = UIKit.Text(root, MobileInput.Active ? "Joystick per moure't · Toca el xat i ESTIC LLEST" : "WASD per moure't · " + GameControls.Label(GameControls.OpenChat) + " per xatejar · R per estar llest", new Vector2(-40, 264), new Vector2(740, 26), 16, TextAlignmentOptions.Center, UIKit.Muted);
 
         ChatBox.Create(root, MobileInput.Active?new Vector2(-560,65):new Vector2(-560,-235), MobileInput.Active?new Vector2(460,240):new Vector2(460,300), false);
     }
@@ -73,6 +81,14 @@ public class LobbyRoomUI : MonoBehaviour
     {
         GUIUtility.systemCopyBuffer = s.Room.code;
         NetToast.Show("Codi " + s.Room.code + " copiat. Passa'l als teus amics!", 2.5f);
+    }
+
+    void CopyAddress()
+    {
+        string addr = s.DirectAddress;
+        if (string.IsNullOrEmpty(addr)) return;
+        GUIUtility.systemCopyBuffer = addr;
+        NetToast.Show("Adreça " + addr + " copiada. Des d'una altra casa cal la IP pública i el port TCP " + s.DirectPort + " reenviat al router.", 4f);
     }
 
     void MainAction()
@@ -118,8 +134,15 @@ public class LobbyRoomUI : MonoBehaviour
         if (this == null || s == null || !NetSession.Active || roomTitle == null) return;
         var room = s.Room;
         roomTitle.text = NetSession.Safe(room.name);
-        roomSub.text = RoomModes.Label(room.mode) + (room.isPublic ? " · PÚBLICA" : " · PRIVADA") + (room.hasPassword ? " · CONTRASENYA" : "") + "\n<size=90%>" + NetSession.Safe(s.NetworkLabel) + "</size>";
+        string direct = s.DirectAddress;
+        // Si es veu la fila IP DIRECTA, no repetim l'adreça local; sí que es mostra el servidor d'Internet
+        bool labelIsLocal = s.NetworkLabel != null && s.NetworkLabel.StartsWith("XARXA LOCAL");
+        string netLine = direct != null && labelIsLocal ? "" : "\n<size=90%>" + NetSession.Safe(s.NetworkLabel) + "</size>";
+        roomSub.text = RoomModes.Label(room.mode) + (room.isPublic ? " · PÚBLICA" : " · PRIVADA") + (room.hasPassword ? " · CONTRASENYA" : "") + netLine;
         codeText.text = room.code;
+        addressRow.gameObject.SetActive(direct != null);
+        if (direct != null)
+            addressText.text = "IP DIRECTA  <color=#EBB347>" + direct + "</color>  <size=85%><color=#8AA4A8>· de fora: IP pública, port TCP " + s.DirectPort + " obert</color></size>";
         playersTitle.text = "JUGADORS  <color=#8AA4A8>" + s.Players.Count + " / " + room.maxPlayers + "</color>";
 
         UIKit.Clear(playerList);

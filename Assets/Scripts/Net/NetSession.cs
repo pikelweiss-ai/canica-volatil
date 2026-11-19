@@ -52,6 +52,9 @@ public class NetSession : MonoBehaviour
     public float CountdownLeft => Room.phase == RoomPhase.Countdown ? Mathf.Max(0, countdownEnd - Time.realtimeSinceStartup) : 0;
     public readonly List<ChatLine> Chat = new List<ChatLine>();
     public string NetworkLabel = "";
+    // Adreça real (IP local:port TCP obert) per a la connexió directa. Només a l'amfitrió i si el port s'ha obert.
+    public string DirectAddress => role == Role.Host && listener != null ? NetProtocol.LocalIPv4() + ":" + gamePort : null;
+    public int DirectPort => role == Role.Host && listener != null ? gamePort : 0;
     public event Action Changed;
     public event Action<ChatLine> ChatReceived;
     public NetPlayer Local => Players.TryGetValue(LocalId, out var p) ? p : null;

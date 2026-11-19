@@ -16,6 +16,32 @@ La branca és `alpha/bugfixes` i usa protocol 8. La suite Windows ha passat 4/4 
 
 Per provar la via directa, crea una sala **Xarxa local** i, a l’altre joc, introduïx `IP:port` al camp **Unir-se amb codi**. El port habitual és TCP 7777. Usa el que haja obert realment el joc si el 7777 estava ocupat.
 
+## Prova de connexió directa entre dos cases (19/11/2026)
+
+**Menú.** Al lobby, l'amfitrió veu una fila **IP DIRECTA** amb la IP local i el port TCP que ha obert de veritat el joc (7777 o el següent lliure), i el botó **COPIAR IP**. Eixa adreça val per a la mateixa xarxa. Per a un amic d'una altra casa cal donar-li la **IP pública** de l'amfitrió amb el mateix port, i el router ha de reenviar eixe port TCP cap al PC.
+
+**Diagnòstic del PC de Ferran (sense tocar res):**
+
+| Comprovació | Resultat |
+|---|---|
+| IP local / porta d'enllaç | `192.168.1.29` per Wi-Fi, router `192.168.1.1` |
+| Perfil de xarxa de Windows | Privada |
+| Tallafocs | Ja hi ha regla d'entrada TCP i UDP (perfil privat) per a `Builds/BugfixWorkspace/Builds/AlphaReview/Windows/CanicaAlphaReview.exe`. No cal tocar-lo per a esta build. |
+| CGNAT | Probablement **no**: el salt següent al router és una IP pública (`90.69.55.x`), no `100.64.x.x` ni privada. Es confirma comparant la IP WAN del router amb la IP pública. |
+| Reenviament de port | **Pendent i sense fer.** Cal TCP 7777 → `192.168.1.29` (i millor una reserva DHCP per a eixa IP). S'ha de parlar amb Ferran abans de tocar el router. |
+
+**Passos per a la prova real** (amfitrió a casa, l'altre PC en una altra xarxa, p. ex. el portàtil amb la dada mòbil compartida del telèfon):
+
+1. Els dos equips amb la mateixa compilació (protocol 8).
+2. Amfitrió: **Crear sala** → xarxa **local** → al lobby, apuntar el port de la fila IP DIRECTA.
+3. Router: reenviament TCP d'eixe port cap a la IP local de l'amfitrió.
+4. Client: **Unir-se amb codi** → `IP-pública:port`.
+5. Comprovar: entra al lobby, xat i LLEST; l'amfitrió comença la masmorra; es veuen moviments, bales i dany; un cofre i un enemic mort es veuen als dos; l'amfitrió prem **EIXIR DE LA SALA** i el client torna al navegador amb l'avís de sala tancada.
+
+**Provat amb equips reals:** encara res entre dos ordinadors. Només el diagnòstic de xarxa de l'amfitrió i la compilació amb la fila nova.
+
+**Proves al mateix PC amb la fila nova (protocol 8, Windows):** compilació sense errors. Primera passada de `test-online.ps1`: 2/4. LAN codi va fallar per una violació d'accés compartit a `codi-lan.txt` (cursa del script de prova). Internet llista va fallar esperant el cor de dany del pols de la cambra de ressonància. Les dues passades següents han donat **4/4**. Captura del lobby a `Builds/OnlineShots/4-lobby-amfitrio.png`.
+
 ## Què pots fer
 
 | Pantalla | Què hi ha |
