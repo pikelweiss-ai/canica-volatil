@@ -68,7 +68,7 @@ public class RoomBrowserUI : MonoBehaviour
 
         UIKit.Button(root, "< TORNAR", new Vector2(-695, 397), new Vector2(170, 50), Close, UIKit.Style.Ghost, 22);
         UIKit.Text(root, "SALES ONLINE", new Vector2(-330, 403), new Vector2(520, 60), 44, TextAlignmentOptions.MidlineLeft, UIKit.Gold);
-        UIKit.Text(root, "Juga amb amics per codi, en la teua xarxa o per Internet", new Vector2(-280, 362), new Vector2(620, 30), 19, TextAlignmentOptions.MidlineLeft, UIKit.Muted);
+        UIKit.Text(root, "Crea una sala o tria'n una: per Internet, sense IPs ni ports", new Vector2(-280, 362), new Vector2(620, 30), 19, TextAlignmentOptions.MidlineLeft, UIKit.Muted);
 
         // Nom del jugador i la seua canica
         UIKit.Text(root, "EL TEU NOM", new Vector2(445, 420), new Vector2(300, 26), 16, TextAlignmentOptions.MidlineLeft, UIKit.Muted);
@@ -103,11 +103,11 @@ public class RoomBrowserUI : MonoBehaviour
         // Peu: ajuda o servidor de sales
         footerHint = UIKit.Text(root, "", new Vector2(-225, -345), new Vector2(1110, 40), 18, TextAlignmentOptions.MidlineLeft, UIKit.Dim);
         serverRow = UIKit.Empty(root, "Servidor");
-        UIKit.Text(serverRow, "SERVIDOR DE SALES", new Vector2(-660, -395), new Vector2(240, 40), 17, TextAlignmentOptions.MidlineLeft, UIKit.Muted);
-        serverInput = UIKit.Input(serverRow, new Vector2(-355, -395), new Vector2(380, 46), "ip-o-domini:7780", 64, false, 20);
+        UIKit.Text(serverRow, "SERVIDOR PROPI (opcional)", new Vector2(-660, -395), new Vector2(240, 40), 15, TextAlignmentOptions.MidlineLeft, UIKit.Dim);
+        serverInput = UIKit.Input(serverRow, new Vector2(-355, -395), new Vector2(380, 46), "buit = automàtic (recomanat)", 64, false, 20);
         serverInput.text = NetSession.ServerAddress;
         UIKit.Button(serverRow, "DESA", new Vector2(-90, -395), new Vector2(120, 46), SaveServer, UIKit.Style.Normal, 18);
-        UIKit.Text(serverRow, "Servidor propi: CanicaAlphaReview -batchmode -nographics -canicaServer", new Vector2(250, -395), new Vector2(560, 40), 15, TextAlignmentOptions.MidlineLeft, UIKit.Dim);
+        UIKit.Text(serverRow, "Deixa-ho buit i el joc troba les sales sol. Només per a servidors propis (CanicaVolatil -batchmode -nographics -canicaServer 7780).", new Vector2(250, -395), new Vector2(560, 44), 14, TextAlignmentOptions.MidlineLeft, UIKit.Dim);
 
         // Columna dreta: codi, crear, detall
         UIKit.Text(root, "UNIR-SE AMB CODI", new Vector2(580, 290), new Vector2(380, 34), 22, TextAlignmentOptions.MidlineLeft, UIKit.TextColor);
@@ -115,7 +115,7 @@ public class RoomBrowserUI : MonoBehaviour
         codeInput.onSubmit.AddListener(_ => JoinCode());
         codeInput.onValueChanged.AddListener(v => { var up = v.ToUpperInvariant(); if (up != v) codeInput.SetTextWithoutNotify(up); });
         UIKit.Button(root, "ENTRAR", new Vector2(580, 172), new Vector2(380, 54), JoinCode, UIKit.Style.Normal, 24);
-        UIKit.Text(root, "Codi de 6 lletres o una IP: 192.168.1.20:7777", new Vector2(580, 132), new Vector2(380, 26), 15, TextAlignmentOptions.MidlineLeft, UIKit.Dim);
+        UIKit.Text(root, "Codi de 6 lletres: val per Internet i per la teua xarxa", new Vector2(580, 132), new Vector2(380, 26), 15, TextAlignmentOptions.MidlineLeft, UIKit.Dim);
 
         UIKit.Button(root, "CREAR SALA", new Vector2(580, 62), new Vector2(380, 78), OpenCreate, UIKit.Style.Primary, 30);
 
@@ -127,7 +127,7 @@ public class RoomBrowserUI : MonoBehaviour
 
         modalRoot = UIKit.Empty(root, "Finestres");
 
-        SetTab(string.IsNullOrEmpty(NetSession.ServerAddress) ? Tab.Lan : Tab.Internet);
+        SetTab(Tab.Internet); // Internet funciona sense configurar res
         StyleFilters();
         ShowDetail();
     }
@@ -170,7 +170,7 @@ public class RoomBrowserUI : MonoBehaviour
         }
         if (tab == Tab.Internet && !loadingNet)
         {
-            loadingNet = true; nextNet = Time.unscaledTime + 6f;
+            loadingNet = true; nextNet = Time.unscaledTime + 8f;
             NetSession.ListInternet((rooms, error) => { if (this == null) return; loadingNet = false; netRooms.Clear(); netRooms.AddRange(rooms); netError = error; lastNetTime = Time.unscaledTime; Rebuild(); });
         }
         UpdateStatus();
@@ -180,7 +180,7 @@ public class RoomBrowserUI : MonoBehaviour
     {
         if (busy) return;
         if (tab == Tab.Lan && Time.unscaledTime >= nextLan) Refresh();
-        if (tab == Tab.Internet && Time.unscaledTime >= nextNet && !string.IsNullOrEmpty(NetSession.ServerAddress)) Refresh();
+        if (tab == Tab.Internet && Time.unscaledTime >= nextNet) Refresh();
         UpdateStatus();
         if (Input.GetKeyDown(KeyCode.Escape))
         {
@@ -229,18 +229,17 @@ public class RoomBrowserUI : MonoBehaviour
         var rooms = Visible();
         footerHint.text = tab == Tab.Lan
             ? "Sales de la teua xarxa (wifi o cable). Les privades no surten: entra amb el seu codi."
-            : "Sales públiques del servidor. Les privades només s'hi entra amb codi.";
+            : NetCloud.InUse ? "Sales públiques de tot arreu. Crea'n una i els teus amics la veuran ací, sense IPs ni ports. Les privades: amb el codi." : "Sales públiques del servidor " + NetSession.ServerAddress + ". Les privades només s'hi entra amb codi.";
 
         if (rooms.Count == 0)
         {
             var row = UIKit.ListRow(listContent, 200, new Color(0, 0, 0, 0));
             string msg;
-            if (tab == Tab.Internet && string.IsNullOrEmpty(NetSession.ServerAddress))
-                msg = "<color=#EBB347>Encara no hi ha cap servidor de sales configurat.</color>\nEscriu-ne l'adreça avall i prem DESA.\nMentrestant pots jugar en XARXA LOCAL o amb codi.";
-            else if (tab == Tab.Internet && netError != null) msg = "<color=#D9544D>" + NetSession.Safe(netError) + "</color>\nComprova l'adreça del servidor i que estiga arrancat.";
+            if (tab == Tab.Internet && netError != null)
+                msg = "<color=#D9544D>" + NetSession.Safe(netError) + "</color>\n" + (NetCloud.InUse ? "Comprova la connexió a Internet. Mentrestant pots jugar en XARXA LOCAL." : "Comprova l'adreça del servidor i que estiga arrancat.");
             else if ((tab == Tab.Lan ? loadingLan && lastLanTime < 0 : loadingNet && lastNetTime < 0)) msg = "Buscant sales...";
             else if ((tab == Tab.Lan ? lanRooms.Count : netRooms.Count) > 0) msg = "Cap sala coincideix amb la cerca o els filtres.";
-            else msg = tab == Tab.Lan ? "No hi ha cap sala a la teua xarxa local.\nCrea'n una amb <color=#EBB347>CREAR SALA</color> o demana el codi a qui la tinga." : "No hi ha cap sala pública ara mateix.\nSigues el primer: <color=#EBB347>CREAR SALA</color>.";
+            else msg = tab == Tab.Lan ? "No hi ha cap sala a la teua xarxa local.\nCrea'n una amb <color=#EBB347>CREAR SALA</color> o demana el codi a qui la tinga." : "No hi ha cap sala pública ara mateix.\nSigues el primer: <color=#EBB347>CREAR SALA</color> i els teus amics la veuran ací.\n<size=80%><color=#5C7478>La llista s'actualitza sola cada pocs segons.</color></size>";
             var t = UIKit.Text(row, msg, Vector2.zero, Vector2.zero, 21, TextAlignmentOptions.Center, UIKit.Muted);
             UIKit.Stretch(t.rectTransform, 20, 10, 20, 10);
             ShowDetail();
@@ -299,7 +298,7 @@ public class RoomBrowserUI : MonoBehaviour
             "<color=#8AA4A8>Mode</color>  " + RoomModes.Short(s.mode) + "\n" +
             "<color=#8AA4A8>Jugadors</color>  " + s.players + " de " + s.maxPlayers + "\n" +
             "<color=#8AA4A8>Accés</color>  " + (s.hasPassword ? "<color=#EBB347>amb contrasenya</color>" : "obert") + "\n" +
-            "<color=#8AA4A8>Xarxa</color>  " + (s.viaRelay ? "Internet" : "LAN · " + s.address);
+            "<color=#8AA4A8>Xarxa</color>  " + (s.viaCloud ? "Internet · sense IP" : s.viaRelay ? "Internet · servidor" : "LAN · " + s.address);
         bool ok = s.phase == RoomPhase.Lobby && !s.Full && s.version == NetProtocol.Version;
         joinSelected.SetInteractable(ok);
         joinSelected.SetLabel(ok ? "ENTRAR A LA SALA" : s.Full ? "SALA PLENA" : s.version != NetProtocol.Version ? "ALTRA VERSIÓ" : "JA HAN COMENÇAT");
@@ -372,7 +371,7 @@ public class RoomBrowserUI : MonoBehaviour
     void OpenCreate()
     {
         CommitName();
-        var s = new NetSession.HostSettings { name = "Sala de " + NetSession.PlayerName, internet = tab == Tab.Internet && !string.IsNullOrEmpty(NetSession.ServerAddress) };
+        var s = new NetSession.HostSettings { name = "Sala de " + NetSession.PlayerName, internet = tab == Tab.Internet };
         var panel = Modal(820, 770);
         UIKit.Text(panel, "CREAR SALA", new Vector2(0, 335), new Vector2(700, 56), 38, TextAlignmentOptions.Center, UIKit.Gold);
 
@@ -420,12 +419,12 @@ public class RoomBrowserUI : MonoBehaviour
 
         y -= 80; Label("XARXA", y);
         UIKit.UIButton netA = null, netB = null; TextMeshProUGUI netHelp = null;
-        bool serverOk = !string.IsNullOrEmpty(NetSession.ServerAddress);
+        bool serverOk = true; // sense servidor propi, Internet va pel túnel automàtic
         System.Action paintNet = () =>
         {
             netA.SetStyle(!s.internet ? UIKit.Style.Primary : UIKit.Style.Normal);
             netB.SetStyle(s.internet ? UIKit.Style.Primary : UIKit.Style.Normal);
-            netHelp.text = s.internet ? "Via servidor " + NetSession.ServerAddress + ": no cal obrir ports." : serverOk ? "Wifi o cable de casa/classe. També per IP o VPN." : "Wifi o cable de casa/classe. Internet: configura un servidor.";
+            netHelp.text = s.internet ? (NetCloud.InUse ? "Per a tot el món: sense IPs, sense obrir ports, sense VPN." : "Via servidor " + NetSession.ServerAddress + ": no cal obrir ports.") : "Només la teua wifi o cable (casa, classe). Més ràpid.";
         };
         netA = UIKit.Button(panel, "XARXA LOCAL", new Vector2(-10, y), new Vector2(235, 52), () => { s.internet = false; paintNet(); }, UIKit.Style.Normal, 21);
         netB = UIKit.Button(panel, "INTERNET", new Vector2(235, y), new Vector2(235, 52), () =>

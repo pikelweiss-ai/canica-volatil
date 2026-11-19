@@ -82,11 +82,12 @@ public partial class NetBot : MonoBehaviour
         string error = "pending";
         var settings = new NetSession.HostSettings { name = roomName, mode = mode == "dungeon" ? RoomMode.Dungeon : RoomMode.FreeMap, maxPlayers = maxPlayers, isPublic = true, password = password, internet = net == "internet" };
         NetSession.HostRoom(settings, e => error = e);
-        yield return WaitFor(() => error != "pending", 10, "sala creada");
+        yield return WaitFor(() => error != "pending", 15, "sala creada");
         if (failed) yield break;
         if (error != null) { Fail("no s'ha pogut crear: " + error); yield break; }
         var s = NetSession.Instance;
         Ok("codi " + s.Room.code + " · " + s.NetworkLabel);
+        if (s.IsCloudRoom) { yield return WaitFor(() => s.CloudStatus != null && s.CloudStatus.StartsWith("A Internet"), 20, "sala anunciada a Internet sense IP"); if (failed) yield break; }
         if (codeFile != null) File.WriteAllText(codeFile, s.Room.code);
         yield return WaitFor(() => Scene == "Lobby", 10, "lobby carregat");
 

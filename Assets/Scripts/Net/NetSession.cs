@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
@@ -55,6 +56,9 @@ public class NetSession : MonoBehaviour
     // Adreça real (IP local:port TCP obert) per a la connexió directa. Només a l'amfitrió i si el port s'ha obert.
     public string DirectAddress => role == Role.Host && listener != null ? NetProtocol.LocalIPv4() + ":" + gamePort : null;
     public int DirectPort => role == Role.Host && listener != null ? gamePort : 0;
+    // Sala d'Internet sense IP (túnel + directori). null si no ho és.
+    public bool IsCloudRoom => role == Role.Host ? cloudTunnel != null : role == Role.Client && cloudClient;
+    public string CloudStatus { get; private set; }
     public event Action Changed;
     public event Action<ChatLine> ChatReceived;
     public NetPlayer Local => Players.TryGetValue(LocalId, out var p) ? p : null;
@@ -98,6 +102,12 @@ public class NetSession : MonoBehaviour
     readonly System.Random rng = new System.Random();
     Action<JoinResult> pendingJoin;
     string pendingCode, pendingPassword;
+    // Internet sense IP
+    BoreTunnel cloudTunnel;
+    bool cloudClient, cloudPublishing, cloudOk;
+    float nextCloud, lastCloud;
+    string cloudSig;
+    int cloudGen;
 
     static NetSession Ensure()
     {
@@ -135,6 +145,7 @@ public class NetSession : MonoBehaviour
     public static void ListLan(Action<List<RoomInfo>> done)
     {
         Ensure();
+        if (NetCloud.NoLan) { done(new List<RoomInfo>()); return; }
         new Thread(() =>
         {
             List<RoomInfo> rooms;
@@ -145,7 +156,8 @@ public class NetSession : MonoBehaviour
 
     public static void ListInternet(Action<List<RoomInfo>, string> done)
     {
-        Ensure();
+        var self = Ensure();
+        if (NetCloud.InUse) { self.StartCoroutine(CloudList(done)); return; } // sense servidor propi: directori públic
         string server = ServerAddress;
         if (!NetProtocol.TryParseEndpoint(server, NetProtocol.RelayPort, out var host, out var port))
         {
@@ -180,6 +192,38 @@ public class NetSession : MonoBehaviour
         }) { IsBackground = true }.Start();
     }
 
+    // Llista de sales públiques d'Internet (directori + ping estimat: jo -> túnel -> amfitrió)
+    static IEnumerator CloudList(Action<List<RoomInfo>, string> done)
+    {
+        var rtt = new int[] { -2 };
+        new Thread(() => rtt[0] = NetCloud.MeasureTunnelRtt()) { IsBackground = true }.Start();
+        List<RoomInfo> rooms = null; string error = null;
+        yield return NetCloud.Fetch(NetCloud.PublicTopic, (r, e) => { rooms = r; error = e; });
+        float until = Time.realtimeSinceStartup + 3f;
+        while (rtt[0] == -2 && Time.realtimeSinceStartup < until) yield return null;
+        int mine = rtt[0];
+        rooms = rooms.FindAll(r => r.isPublic);
+        foreach (var r in rooms) r.pingMs = mine < 0 ? -1 : r.pingMs >= 0 ? r.pingMs + mine : mine * 2;
+        if (error == null && mine == -1) error = "No es pot arribar al servei de connexió (" + NetCloud.TunnelHost + "). Comprova la connexió a Internet.";
+        done(rooms, error);
+    }
+
+    // Busca una sala d'Internet pel codi: primer entre les públiques i després en el canal del codi (privades)
+    static IEnumerator CloudFind(string code, Action<RoomInfo, string> done)
+    {
+        RoomInfo found = null; string error = null;
+        // El directori tarda uns segons a servir un anunci acabat de publicar: ho tornem a provar abans de rendir-nos
+        for (int attempt = 0; attempt < 5 && found == null; attempt++)
+        {
+            if (attempt > 0) yield return new WaitForSecondsRealtime(2f);
+            error = null;
+            yield return NetCloud.Fetch(NetCloud.PublicTopic, (r, e) => { error = e; found = r.Find(x => x.code == code); });
+            if (found == null)
+                yield return NetCloud.Fetch(NetCloud.CodeTopic(code), (r, e) => { error = error ?? e; found = r.Find(x => x.code == code); });
+        }
+        done(found, found == null ? error : null);
+    }
+
     static byte[] Wait(INetLink link, int ms)
     {
         var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -207,6 +251,30 @@ public class NetSession : MonoBehaviour
         {
             info.code = NetProtocol.NewCode(self.rng);
             self.StartHost(s, info, null, done);
+            return;
+        }
+        if (NetCloud.InUse)
+        {
+            // Internet sense IP: obrim el túnel i, quan tinga port públic, creem la sala com sempre
+            info.code = NetProtocol.NewCode(self.rng);
+            BoreTunnel tunnel = null;
+            tunnel = new BoreTunnel(c => self.accepted.Enqueue(c));
+            tunnel.Start();
+            new Thread(() =>
+            {
+                bool ok = tunnel.WaitReady(9000);
+                RunOnMain(() =>
+                {
+                    if (!ok)
+                    {
+                        string why = tunnel.Error;
+                        tunnel.Stop();
+                        done("No s'ha pogut obrir la sala a Internet" + (string.IsNullOrEmpty(why) ? "" : " (" + why + ")") + ". Comprova que tens connexió i torna-ho a provar. Mentrestant pots jugar en XARXA LOCAL.");
+                        return;
+                    }
+                    self.StartHost(s, info, null, done, tunnel);
+                });
+            }) { IsBackground = true }.Start();
             return;
         }
         if (!NetProtocol.TryParseEndpoint(ServerAddress, NetProtocol.RelayPort, out var host, out var port))
@@ -239,16 +307,17 @@ public class NetSession : MonoBehaviour
         }) { IsBackground = true }.Start();
     }
 
-    void StartHost(HostSettings s, RoomInfo info, TcpLink relayLink, Action<string> done)
+    void StartHost(HostSettings s, RoomInfo info, TcpLink relayLink, Action<string> done, BoreTunnel tunnel = null)
     {
         ResetState();
+        cloudTunnel = tunnel; cloudSig = null; cloudOk = false; cloudPublishing = false; nextCloud = 0; lastCloud = -99;
         // Port TCP per a la LAN / IP directa
         for (int p = NetProtocol.GamePort; p <= NetProtocol.GamePort + 10 && listener == null; p++)
         {
             try { var l = new TcpListener(NetProtocol.ListenAddress, p); l.Start(); listener = l; gamePort = p; }
             catch { }
         }
-        if (listener == null && relayLink == null) { done("No s'ha pogut obrir cap port (7777-7787). Tens una altra sala oberta?"); return; }
+        if (listener == null && relayLink == null && tunnel == null) { done("No s'ha pogut obrir cap port (7777-7787). Tens una altra sala oberta?"); return; }
         if (listener != null)
         {
             listening = true;
@@ -264,9 +333,12 @@ public class NetSession : MonoBehaviour
         Players[1].ready = true;
         responder = new LanDiscovery.Responder { gamePort = gamePort };
         responder.Update(Clone(info));
-        if (listener != null) responder.Start();
-        NetworkLabel = relay != null ? "INTERNET · servidor " + ServerAddress : "XARXA LOCAL · " + NetProtocol.LocalIPv4() + ":" + gamePort;
-        AddSystem("Has creat la sala. Comparteix el codi " + info.code + " amb els teus amics.");
+        if (listener != null && !NetCloud.NoLan) responder.Start();
+        NetworkLabel = cloudTunnel != null ? "INTERNET · sala pública, sense IP" : relay != null ? "INTERNET · servidor " + ServerAddress : "XARXA LOCAL · " + NetProtocol.LocalIPv4() + ":" + gamePort;
+        CloudStatus = cloudTunnel != null ? "Publicant la sala a Internet..." : null;
+        AddSystem(cloudTunnel != null
+            ? "Sala oberta a Internet. Els teus amics la veuran a INTERNET · PÚBLIQUES o hi entraran amb el codi " + info.code + ". No cal cap IP ni obrir ports."
+            : "Has creat la sala. Comparteix el codi " + info.code + " amb els teus amics.");
         done(null);
         SceneManager.LoadScene("Lobby");
     }
@@ -349,13 +421,19 @@ public class NetSession : MonoBehaviour
         new Thread(() =>
         {
             List<RoomInfo> found;
-            try { found = LanDiscovery.Query(code, 600); } catch { found = new List<RoomInfo>(); }
+            try { found = NetCloud.NoLan ? new List<RoomInfo>() : LanDiscovery.Query(code, 600); } catch { found = new List<RoomInfo>(); }
             RunOnMain(() =>
             {
                 if (gen != instance.joinGen) return; // cancel·lat
                 if (found.Count > 0) { Join(found[0], password, done); return; }
                 if (NetProtocol.TryParseEndpoint(ServerAddress, NetProtocol.RelayPort, out _, out _)) { Join(new RoomInfo { code = code, viaRelay = true }, password, done); return; }
-                done(new JoinResult { error = "No hi ha cap sala " + code + " a la teua xarxa local. Per a sales d'Internet, configura el servidor de sales." });
+                // Sense servidor propi: busquem el codi al directori d'Internet
+                instance.StartCoroutine(CloudFind(code, (room, error) =>
+                {
+                    if (gen != instance.joinGen) return;
+                    if (room != null) { Join(room, password, done); return; }
+                    done(new JoinResult { error = error ?? "No hi ha cap sala amb el codi " + code + " ni a la teua xarxa ni a Internet. Comprova el codi (o que la sala continue oberta)." });
+                }));
             });
         }) { IsBackground = true }.Start();
     }
@@ -368,7 +446,8 @@ public class NetSession : MonoBehaviour
         Room = Clone(target);
         lastTarget = target;
         lastFromHost = Time.realtimeSinceStartup;
-        NetworkLabel = target.viaRelay ? "INTERNET · servidor " + ServerAddress : "XARXA LOCAL · " + target.address + ":" + target.port;
+        cloudClient = target.viaCloud;
+        NetworkLabel = target.viaCloud ? "INTERNET · sala pública" : target.viaRelay ? "INTERNET · servidor " + ServerAddress : "XARXA LOCAL · " + target.address + ":" + target.port;
         var me = MakeLocalPlayer(0, false);
         string hash = NetProtocol.HashPassword(target.code ?? "", pendingPassword);
         link.Send(NetProtocol.Frame(Msg.Hello, w =>
@@ -479,6 +558,17 @@ public class NetSession : MonoBehaviour
 
     void ResetState()
     {
+        if (cloudTunnel != null)
+        {
+            // Avisa el directori que la sala tanca (així desapareix de la llista al moment)
+            if (cloudSig != null && role == Role.Host && Room != null && !string.IsNullOrEmpty(Room.code))
+            {
+                var closed = NetCloud.FromRoom(Clone(Room), Mathf.Max(1024, cloudTunnel.PublicPort), -1, true);
+                StartCoroutine(NetCloud.Publish(Room.isPublic ? NetCloud.PublicTopic : NetCloud.CodeTopic(Room.code), closed));
+            }
+            cloudTunnel.Stop(); cloudTunnel = null;
+        }
+        cloudClient = false; CloudStatus = null; cloudSig = null;
         listening = false;
         try { listener?.Stop(); } catch { }
         listener = null;
@@ -622,6 +712,37 @@ public class NetSession : MonoBehaviour
             responder?.Update(copy);
             relay?.Send(NetProtocol.Frame(Msg.RelayUpdate, w => copy.Write(w)));
         }
+        if (cloudTunnel != null) CloudHostTick(now);
+    }
+
+    // Anuncia la sala al directori: cada 20 s per a seguir a la llista, i abans si canvia alguna cosa
+    // (jugadors, fase, port nou del túnel). Mai més d'un anunci cada 4 s, per respectar el servei gratuït.
+    void CloudHostTick(float now)
+    {
+        int port = cloudTunnel.PublicPort;
+        if (port <= 0)
+        {
+            CloudStatus = "Reconnectant amb Internet...";
+            return;
+        }
+        string sig = port + "|" + Room.players + "|" + (int)Room.phase + "|" + Room.maxPlayers + "|" + Room.isPublic + "|" + Room.name;
+        bool changed = sig != cloudSig;
+        if (!cloudPublishing && (now >= nextCloud || (changed && now - lastCloud >= 4f)))
+        {
+            cloudSig = sig; lastCloud = now; nextCloud = now + 20f; cloudPublishing = true;
+            int gen = ++cloudGen;
+            var a = NetCloud.FromRoom(Clone(Room), port, cloudTunnel.Rtt, false);
+            string topic = Room.isPublic ? NetCloud.PublicTopic : NetCloud.CodeTopic(Room.code);
+            StartCoroutine(NetCloud.Publish(topic, a, ok =>
+            {
+                if (gen != cloudGen || cloudTunnel == null) return;
+                cloudPublishing = false; cloudOk = ok;
+                if (!ok) { nextCloud = Time.realtimeSinceStartup + 6f; cloudSig = null; }
+            }));
+        }
+        CloudStatus = cloudOk
+            ? (Room.isPublic ? "A Internet: surt a la llista de sales públiques" : "A Internet: privada, només amb el codi")
+            : "Publicant la sala a Internet...";
     }
 
     void HandleRelay(byte[] frame, float now)

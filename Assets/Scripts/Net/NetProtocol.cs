@@ -226,6 +226,7 @@ public class RoomInfo
     [NonSerialized] public string address;
     [NonSerialized] public int port;
     [NonSerialized] public bool viaRelay;
+    [NonSerialized] public bool viaCloud; // Internet sense IP: address/port són el túnel públic
     [NonSerialized] public int pingMs = -1;
 
     public void Write(BinaryWriter w)

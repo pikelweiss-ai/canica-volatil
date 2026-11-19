@@ -1,10 +1,30 @@
 # Sales online — Canica Volàtil Alpha
 
-**Protocol: 8 (Alpha v1.1.0).** Windows, Linux, Android i el servidor de sales han d’usar la mateixa versió. L’Alpha v1.0.0 usa protocol 5 i no és compatible. Les instruccions de compilació estan a MOBILE_ALPHA.md.
+**Protocol: 8 (Alpha v1.1.1).** Windows, Linux i Android han d’usar la mateixa versió. L’Alpha v1.0.0 usa protocol 5 i no és compatible. Les instruccions de compilació estan a MOBILE_ALPHA.md.
 
-On està: **JUGAR → targeta "Online"**. Obri el navegador de sales.
+On està: **JUGAR → targeta "Online"**. Obri el navegador de sales directament a **INTERNET · PÚBLIQUES**.
 
-## Estat actual de la prova
+## Internet sense IP (v1.1.1) — la forma normal de jugar
+
+Crear una sala d’Internet i entrar-hi **no demana cap IP, cap port obert, cap VPN ni cap servidor propi**.
+
+1. **Amfitrió:** **Crear sala** → xarxa **INTERNET** (per defecte). Al lobby, la fila de dalt passa de *CONNECTANT* a **EN LÍNIA**.
+2. **Amics:** la sala els surt a **INTERNET · PÚBLIQUES**. Doble clic per a entrar. Les privades s’hi entra amb el **codi**.
+
+Per dins (`Assets/Scripts/Net/NetCloud.cs`):
+
+| Peça | Què fa | Servei |
+|---|---|---|
+| Túnel | L’amfitrió obri una connexió d’**eixida** al port 7835 de `bore.pub` (protocol obert de *bore*). El servei li assigna un port públic. Cada jugador que s’hi connecta arriba com una connexió TCP més a l’amfitrió (cua `accepted` de `NetSession`). | `bore.pub`, gratuït, sense compte |
+| Directori | L’amfitrió publica un anunci JSON (codi, nom, mode, jugadors, fase, `bore.pub:port`) cada 20 s, o abans si canvia alguna cosa, però mai més d’un cada 4 s. Quan tanca, publica `closed`. Les públiques van al tema `canica-volatil-v8-sales`. Les privades van a un tema derivat del SHA-256 del codi. | `ntfy.sh`, gratuït, sense compte |
+| Llista | El navegador llig els anuncis dels últims 75 s, es queda l’últim de cada codi i amaga els tancats o els que fa més de 50 s que no s’anuncien. Només accepta adreces `bore.pub:port`, perquè un anunci fals no puga portar ningú a un altre lloc. | — |
+| Ping | Temps fins al túnel del jugador + el de l’amfitrió (aproximat). | — |
+
+- **Tallafocs:** no cal per a Internet (tot són connexions d’eixida). La IP de l’amfitrió no es publica.
+- **Si el camp SERVIDOR PROPI té una adreça**, s’usa el servidor de sales clàssic de més avall en lloc del túnel i el directori.
+- **Proves:** `-canicaCloudTag <nom>` (tema propi), `-canicaNoLan` (força el túnel al mateix PC), `-canicaTunnel` i `-canicaDirectory` (canviar de servei). `Tools/Net/test-online.ps1` inclou els casos 5 i 6: llista sense IP amb contrasenya i masmorra cooperativa, i entrar amb el codi.
+
+## Estat de la prova anterior (v1.1.0)
 
 La branca és `alpha/bugfixes` i usa protocol 8. La suite Windows ha passat 4/4 al mateix PC: llista i codi LAN, i llista i codi amb relay local. També hi ha una prova anterior de masmorra per IP directa en loopback (protocol 8). Queda validar la connexió directa entre dos dispositius i després entre dos xarxes domèstiques. El relay accessible per Internet queda pendent de desplegament i prova remota.
 

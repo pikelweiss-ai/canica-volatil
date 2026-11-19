@@ -12,7 +12,7 @@ public class LobbyRoomUI : MonoBehaviour
     TextMeshProUGUI roomTitle, roomSub, codeText, playersTitle, countdown, hint;
     RectTransform playerList, hostBox, addressRow;
     TextMeshProUGUI addressText;
-    UIKit.UIButton mainButton, modeDungeon, modeFree;
+    UIKit.UIButton mainButton, modeDungeon, modeFree, copyAddressButton;
     float nextRefresh;
     int lastCountdown = -1;
 
@@ -51,7 +51,7 @@ public class LobbyRoomUI : MonoBehaviour
         UIKit.Box(addressRow, new Vector2(0, -52), new Vector2(740, 36), new Color(.02f, .04f, .06f, .8f), "Fons adreça").GetComponent<Image>().raycastTarget = false;
         addressText = UIKit.Text(addressRow, "", new Vector2(-75, -52), new Vector2(570, 32), 15, TextAlignmentOptions.MidlineLeft, UIKit.TextColor);
         addressText.textWrappingMode = TextWrappingModes.NoWrap;
-        UIKit.Button(addressRow, "COPIAR IP", new Vector2(292, -52), new Vector2(130, 30), CopyAddress, UIKit.Style.Normal, 15);
+        copyAddressButton = UIKit.Button(addressRow, "COPIAR IP", new Vector2(292, -52), new Vector2(130, 30), CopyAddress, UIKit.Style.Normal, 15);
 
         countdown = UIKit.Text(root, "", new Vector2(-40, 150), new Vector2(700, 220), 170, TextAlignmentOptions.Center, UIKit.Gold);
         countdown.outlineWidth = 0.22f; countdown.outlineColor = new Color32(10, 18, 26, 255);
@@ -85,6 +85,7 @@ public class LobbyRoomUI : MonoBehaviour
 
     void CopyAddress()
     {
+        if (s.IsCloudRoom) { CopyCode(); return; } // a Internet no cal cap IP: n'hi ha prou amb el codi
         string addr = s.DirectAddress;
         if (string.IsNullOrEmpty(addr)) return;
         GUIUtility.systemCopyBuffer = addr;
@@ -140,8 +141,16 @@ public class LobbyRoomUI : MonoBehaviour
         string netLine = direct != null && labelIsLocal ? "" : "\n<size=90%>" + NetSession.Safe(s.NetworkLabel) + "</size>";
         roomSub.text = RoomModes.Label(room.mode) + (room.isPublic ? " · PÚBLICA" : " · PRIVADA") + (room.hasPassword ? " · CONTRASENYA" : "") + netLine;
         codeText.text = room.code;
-        addressRow.gameObject.SetActive(direct != null);
-        if (direct != null)
+        bool cloud = NetSession.IsHost && s.IsCloudRoom;
+        addressRow.gameObject.SetActive(direct != null || cloud);
+        if (cloud)
+        {
+            bool ok = s.CloudStatus != null && s.CloudStatus.StartsWith("A Internet");
+            addressText.text = (ok ? "<color=#5CC772>EN LÍNIA</color>  " : "<color=#EBB347>CONNECTANT</color>  ") + NetSession.Safe(s.CloudStatus ?? "") +
+                "  <size=85%><color=#8AA4A8>· sense IP ni ports</color></size>";
+            if (copyAddressButton != null) copyAddressButton.SetLabel("COPIAR CODI");
+        }
+        else if (direct != null)
             addressText.text = "IP DIRECTA  <color=#EBB347>" + direct + "</color>  <size=85%><color=#8AA4A8>· de fora: IP pública, port TCP " + s.DirectPort + " obert</color></size>";
         playersTitle.text = "JUGADORS  <color=#8AA4A8>" + s.Players.Count + " / " + room.maxPlayers + "</color>";
 

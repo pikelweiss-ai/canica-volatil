@@ -67,6 +67,20 @@ $results["Internet codi"] = Wait-Bots @($h, $j) 260
 Select-String -Path $srvLog -Pattern "SERVIDOR SALES" | ForEach-Object { Write-Host "  [server] $($_.Line)" -ForegroundColor Gray }
 $srv.Kill()
 
+Write-Host "`n== 5. Internet SENSE IP: tunel + directori, llista + contrasenya + masmorra ==" -ForegroundColor Cyan
+$tag = "prova" + (Get-Random -Minimum 100000 -Maximum 999999)
+$cloud = @("-canicaCloudTag", $tag, "-canicaNoLan")
+$h = Start-Bot "cloud-host" (@("-canicaBot", "host", "-botNet", "internet", "-botPassword", "nuvol", "-botMode", "dungeon", "-botCoop") + $cloud)
+Start-Sleep 6
+$j = Start-Bot "cloud-join" (@("-canicaBot", "join", "-botJoin", "internet-list", "-botPassword", "nuvol", "-botCoop") + $cloud)
+$results["Sense IP llista"] = Wait-Bots @($h, $j) 300
+
+Write-Host "`n== 6. Internet SENSE IP: entrar per codi ==" -ForegroundColor Cyan
+$code = Join-Path $Out "codi-nuvol.txt"; if (Test-Path $code) { Remove-Item $code }
+$h = Start-Bot "cloudcode-host" (@("-canicaBot", "host", "-botNet", "internet", "-botMode", "free", "-botCodeFile", "`"$code`"") + $cloud)
+$j = Start-Bot "cloudcode-join" (@("-canicaBot", "join", "-botJoin", "`"code-file:$code`"") + $cloud)
+$results["Sense IP codi"] = Wait-Bots @($h, $j) 300
+
 Write-Host "`n== RESULTAT ==" -ForegroundColor Cyan
 $all = $true
 foreach ($k in $results.Keys) { $v = $results[$k]; if (-not $v) { $all = $false }; Write-Host ("  {0,-18} {1}" -f $k, $(if ($v) { "PASSA" } else { "FALLA" })) -ForegroundColor $(if ($v) { "Green" } else { "Red" }) }
