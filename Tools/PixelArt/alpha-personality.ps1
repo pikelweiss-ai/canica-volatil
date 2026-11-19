@@ -77,18 +77,19 @@ $sprites['Skins/Capvespre']=@{size=16;rows=@(
 '..kVVVVVVVVVVk..',
 '...kkVVVVVVkk...',
 '.....kkkkkk.....')}
+$P['@']='9a6016' # Reflex d'or dins dels ulls i la boca.
 $sprites['Skins/Or']=@{size=16;rows=@(
 '.....kkkkkk.....',
 '...kkYY1YYYkk...',
 '..kWWY111YYWWk..',
 '.kYWWYY1YYWYWYk.',
 '.kYYY00YY00YYYk.',
-'kYYYY10YY10YYYYk',
+'kYYYY@0YY@0YYYYk',
 'kYYYY00YY00YYYYk',
 'kYYYYYYYYYYYYYYk',
 'kWYYYYYYYYYYYYWk',
 'kYY0000000000YYk',
-'kYY0011111000YYk',
+'kYY00@@@@@000YYk',
 '.kuY00000000Yuk.',
 '.kuYY000000YYuk.',
 '..kuuuuuuuuuuk..',
