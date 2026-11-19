@@ -109,6 +109,7 @@ public static class HatFit
     static readonly System.Collections.Generic.Dictionary<Sprite,float> tops=new System.Collections.Generic.Dictionary<Sprite,float>();
     public static float Top(Sprite sprite)
     {
+        if (sprite == null || !sprite.texture.isReadable) return 1f;
         if(tops.TryGetValue(sprite,out float top))return top;Rect r=sprite.rect;
         for(int y=(int)r.height-1;y>=0;y--)for(int x=0;x<(int)r.width;x++)
             if(sprite.texture.GetPixel((int)r.x+x,(int)r.y+y).a>0.1f){top=(y+1)/r.height;tops[sprite]=top;return top;}
@@ -117,6 +118,7 @@ public static class HatFit
     static readonly System.Collections.Generic.Dictionary<Sprite,float> cache=new System.Collections.Generic.Dictionary<Sprite,float>();
     public static float Bottom(Sprite sprite)
     {
+        if (sprite == null || !sprite.texture.isReadable) return 0f;
         if(cache.TryGetValue(sprite,out float bottom))return bottom;
         Rect rect=sprite.rect;
         for(int y=0;y<(int)rect.height;y++) for(int x=0;x<(int)rect.width;x++)

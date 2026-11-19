@@ -34,7 +34,7 @@ public class MobileHUD : MonoBehaviour
     void Update()
     {
         RefreshSafeArea();
-        bool blocked = Time.timeScale == 0 || GameControls.Editing;
+        bool blocked = Time.timeScale == 0 || GameControls.Blocked;
         if (blocked && !suspended) CancelTouches();
         suspended = blocked;
     }
@@ -86,7 +86,7 @@ public class MobileStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IPo
     public bool aim;
     public RectTransform knob;
     int pointer = int.MinValue;
-    public void OnPointerDown(PointerEventData e) { if(pointer != int.MinValue || Time.timeScale == 0 || GameControls.Editing) return; pointer = e.pointerId; OnDrag(e); }
+    public void OnPointerDown(PointerEventData e) { if(pointer != int.MinValue || Time.timeScale == 0 || GameControls.Blocked) return; pointer = e.pointerId; OnDrag(e); }
     public void OnDrag(PointerEventData e)
     {
         if(e.pointerId != pointer) return;
@@ -104,7 +104,7 @@ public class MobileAction : MonoBehaviour, IPointerDownHandler, IPointerUpHandle
 {
     public int action;
     int pointer = int.MinValue;
-    public void OnPointerDown(PointerEventData e) { if(pointer != int.MinValue || Time.timeScale == 0 || GameControls.Editing) return; pointer = e.pointerId; MobileInput.Press(action); }
+    public void OnPointerDown(PointerEventData e) { if(pointer != int.MinValue || Time.timeScale == 0 || GameControls.Blocked) return; pointer = e.pointerId; MobileInput.Press(action); }
     public void OnPointerUp(PointerEventData e) { if(pointer == e.pointerId) { pointer = int.MinValue; MobileInput.Release(action); } }
     public void Cancel() { pointer = int.MinValue; MobileInput.Release(action); }
     void OnDisable() { Cancel(); }

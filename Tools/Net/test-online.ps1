@@ -25,7 +25,11 @@ function Wait-Bots($bots, [int]$seconds = 150) {
         $lines = Select-String -Path $b.Log -Pattern "NETBOT" | ForEach-Object { $_.Line }
         $pass = $lines -match "NETBOT PASS"
         foreach ($l in $lines) { Write-Host "  [$($b.Name)] $l" -ForegroundColor $(if ($l -match "FAIL") { "Red" } elseif ($l -match "PASS") { "Green" } else { "Gray" }) }
-        if (-not $pass) { $ok = $false }
+        $exception = Select-String -Path $b.Log -Pattern '^[\w.]+Exception:' -List
+        if ($exception) {
+            Write-Host "  [$($b.Name)] Excepció al joc: $($exception.Line)" -ForegroundColor Red
+        }
+        if (-not $pass -or $exception) { $ok = $false }
     }
     return $ok
 }

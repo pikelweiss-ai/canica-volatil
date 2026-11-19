@@ -51,12 +51,6 @@ public class HealPickup : MonoBehaviour
         visual.localScale = Vector3.one * 0.75f;
     }
 
-    void Start()
-    {
-        GameObject p = GameObject.FindWithTag("Player");
-        if (p != null) player = p.transform;
-    }
-
     IEnumerator PopOut(Vector3 from, Vector3 to)
     {
         float t = 0f;
@@ -78,7 +72,13 @@ public class HealPickup : MonoBehaviour
         if (!ready) return;
         visual.localPosition = Vector3.up * (0.3f + Mathf.Sin((Time.time + bob) * 3f) * 0.06f);
 
-        if (player == null) return;
+        if (player == null || !player.gameObject.activeInHierarchy)
+        {
+            GameObject local = GameObject.FindWithTag("Player");
+            if (local == null) return;
+            player = local.transform;
+            bag = local.GetComponent<HealInventory>();
+        }
         float dist = Vector2.Distance(player.position, transform.position);
         if (waitForPlayerToLeave) { if (dist > pickupRange + 0.3f) waitForPlayerToLeave = false; return; }
         if (dist > pickupRange) return;

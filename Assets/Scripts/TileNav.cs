@@ -109,6 +109,26 @@ public static class TileNav
         return true;
     }
 
+    public static Vector3 DropDestination(Vector3 from, Vector3 to)
+    {
+        if (!Ready()) return to;
+        if (IsBlockedWorld(from))
+        {
+            Vector2 free = Center(NearestFree(Cell(from)));
+            return new Vector3(free.x, free.y, from.z);
+        }
+
+        int steps = Mathf.Max(1, Mathf.CeilToInt(Vector2.Distance(from, to) / 0.06f));
+        Vector3 safe = from;
+        for (int i = 1; i <= steps; i++)
+        {
+            Vector3 candidate = Vector3.Lerp(from, to, i / (float)steps);
+            if (!CircleFree(candidate, 0.12f)) break;
+            safe = candidate;
+        }
+        return safe;
+    }
+
     // Cerca la casella lliure més pròxima (en espiral)
     public static Vector3Int NearestFree(Vector3Int cell, int maxRadius = 6)
     {

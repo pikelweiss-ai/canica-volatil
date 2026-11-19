@@ -11,7 +11,7 @@ using System.Text;
 // El mateix format serveix per a parlar amb l'amfitrio (LAN/IP) i amb el servidor de sales (Internet).
 public static class NetProtocol
 {
-    public const int Version = 5; // 5: objectes de sala protegits i colps autoritaris a caixes
+    public const int Version = 6; // 6: vida actual i màxima dels jugadors en els snapshots
     public const int GamePort = 7777;      // TCP: l'amfitrio escolta ací (prova 7777..7787)
     public const int DiscoveryPort = 7778; // UDP: descobriment de sales en LAN
     public const int RelayPort = 7780;     // TCP: servidor de sales d'Internet
@@ -245,7 +245,22 @@ public class NetPlayer
     public short aim;       // graus d'apuntat
     public string weapon;   // nom de l'arma a la ma ("" = puny)
     public bool down;       // caigut a la masmorra
+    public int health, maxHealth;
     public double lastPos;
+
+    public void WritePosition(BinaryWriter w)
+    {
+        w.Write(scene); w.Write(x); w.Write(y); w.Write(aim); w.Write(weapon ?? "");
+        w.Write(down); w.Write(health); w.Write(maxHealth);
+    }
+
+    public void ReadPosition(BinaryReader r, double receivedAt)
+    {
+        scene = r.ReadInt32(); x = r.ReadSingle(); y = r.ReadSingle();
+        aim = r.ReadInt16(); weapon = r.ReadString(); down = r.ReadBoolean();
+        health = r.ReadInt32(); maxHealth = r.ReadInt32();
+        lastPos = receivedAt;
+    }
 
     public void Write(BinaryWriter w)
     {

@@ -292,6 +292,7 @@ public static class NetCoop
     }
 
     // Jugadors que no han caigut (nomes ho sap l'amfitrio)
+    public static int PlayerCount => Online ? Mathf.Max(1, S.Players.Count) : 1;
     public static int AliveCount => S == null ? 1 : Mathf.Max(1, S.Players.Count - downed.Count);
 
     static void CheckAllDown()
@@ -313,7 +314,7 @@ public static class NetCoop
     {
         if (downedLocal == null) return;
         Spectate.Stop();
-        downedLocal.Revive(2);
+        downedLocal.Revive();
         downedLocal = null;
         NetToast.Show("Has tornat! Ànims!", 2f);
     }
@@ -411,6 +412,9 @@ public static class NetCoop
     public static void SampleLocal(PlayerMovement pm, NetPlayer me)
     {
         if (pm == null) return;
+        var health = pm.GetComponent<PlayerHealth>();
+        me.health = health != null ? health.currentHealth : 0;
+        me.maxHealth = health != null ? health.maxHealth : 0;
         var attack = pm.GetComponent<PlayerAttack>();
         if (attack == null) return;
         var a = attack.AimDirection;

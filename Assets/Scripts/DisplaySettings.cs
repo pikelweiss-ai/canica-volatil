@@ -148,7 +148,7 @@ public class DisplaySettings : MonoBehaviour
             else if(Time.realtimeSinceStartup>=deadline) Revert();
             else if(Input.GetKeyDown(KeyCode.Return)) Confirm();
         }
-        else if(Input.GetKeyDown(KeyCode.F11) && !GameControls.Editing && !switching) Request(new Vector2Int(Screen.width,Screen.height),!IsFullscreen); // Durant una transicio, Screen.fullScreen encara no es fiable
+        else if(Input.GetKeyDown(KeyCode.F11) && !GameControls.Blocked && !switching) Request(new Vector2Int(Screen.width,Screen.height),!IsFullscreen); // Durant una transicio, Screen.fullScreen encara no es fiable
     }
     void CloseConfirmation()
     {

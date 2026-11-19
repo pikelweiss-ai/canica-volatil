@@ -32,7 +32,8 @@ public class ControlsUI : MonoBehaviour
             for(int slot=0;slot<2;slot++) { int s=slot; Button((capture==a && captureSlot==slot)?"...":GameControls.Key(a,slot).ToString(),80+slot*420,y,390,()=>{capture=a;captureSlot=s;captureAfter=Time.unscaledTime+0.2f;Build();}); }
         }
         string[] modes={"Roda: armes","Roda: cures","Roda: armes / Maj + roda: cures","Roda desactivada"};
-        Button(modes[GameControls.Wheel],0,-265,1300,()=>{GameControls.Wheel=(GameControls.Wheel+1)%4;Build();});
+        Button(modes[GameControls.Wheel],-330,-265,640,()=>{GameControls.Wheel=(GameControls.Wheel+1)%4;Build();});
+        Button(GameControls.ChatMouse ? "Obrir el xat amb clic: sí" : "Obrir el xat amb clic: no",330,-265,640,()=>{GameControls.ChatMouse=!GameControls.ChatMouse;Build();});
         Button("Anterior / següent",-470,-355,420,()=>{page=1-page;capture=-1;Build();});
         Button("Restablir",0,-355,380,()=>{GameControls.Reset();capture=-1;Build();});
         Button("Fet",470,-355,380,Close);

@@ -114,14 +114,9 @@ public class PlayerHealth : MonoBehaviour
     }
 
     // Online: torna a la partida (quan els companys netegen la sala)
-    public void Revive(int health)
+    public void Revive()
     {
-        gameObject.SetActive(true);
-        currentHealth = Mathf.Clamp(health, 1, maxHealth);
-        invulnerableUntil = Time.time + 2f;
-        StopCoroutine(nameof(Blink));
-        StartCoroutine(nameof(Blink));
-        UpdateHealthUI();
+        RestoreFullHealth(2f);
         Fx.Burst(transform.position, new Color(0.5f, 1f, 0.6f), 12, 3f);
     }
 
@@ -130,10 +125,17 @@ public class PlayerHealth : MonoBehaviour
         if (spawnPoint != null)
             transform.position = spawnPoint.position;
 
+        RestoreFullHealth(1.5f);
+    }
+
+    void RestoreFullHealth(float protection)
+    {
         currentHealth = maxHealth;
-        invulnerableUntil = Time.time + 1.5f;
-        StartCoroutine(nameof(Blink));
+        invulnerableUntil = Time.time + protection;
         UpdateHealthUI();
+        gameObject.SetActive(true);
+        StopCoroutine(nameof(Blink));
+        StartCoroutine(nameof(Blink));
     }
 
     void UpdateHealthUI()

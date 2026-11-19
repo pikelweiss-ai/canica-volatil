@@ -277,7 +277,7 @@ public static class NetShared
                 foreach (var b in Object.FindObjectsByType<Breakable>(FindObjectsSortMode.None))
                     if (BreakableKey(b) == key)
                     {
-                        if (DungeonGenerator.CanDamageBreakableAt(b.transform.position, b.explodes)) { b.Hit(Mathf.Clamp(damage, 0, 10000)); if(b.health <= 0) RemoteBreaks++; }
+                        if (DungeonGenerator.CanDamageBreakableAt(b.transform.position)) { b.Hit(Mathf.Clamp(damage, 0, 10000)); if(b.health <= 0) RemoteBreaks++; }
                         break;
                     }
                 break;

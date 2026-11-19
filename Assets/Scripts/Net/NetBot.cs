@@ -48,7 +48,11 @@ public class NetBot : MonoBehaviour
         AudioListener.volume = 0;
     }
 
-    void Start() { StartCoroutine(role == "host" ? Host() : Join()); StartCoroutine(Watchdog()); }
+    void Start()
+    {
+        StartCoroutine(role == "solo" ? SoloCombat() : role == "host" ? Host() : Join());
+        StartCoroutine(Watchdog());
+    }
 
     static void Log(string s) => Debug.Log("NETBOT " + s);
     void Ok(string s) => Log("OK: " + s);
@@ -239,8 +243,15 @@ public class NetBot : MonoBehaviour
 
     void SpawnTestCrate(DungeonGenerator g)
     {
-        var c=g.Rooms[0].Center;
-        Instantiate(g.cratePrefab,g.ground.GetCellCenterWorld(new Vector3Int(c.x+2,c.y+2,0)),Quaternion.identity);
+        var combat = FirstCombat(g);
+        if (combat == null) return;
+        var center = new Vector3Int(combat.Center.x, combat.Center.y, 0);
+        Vector3 position = g.ground.GetCellCenterWorld(TileNav.NearestFree(center + new Vector3Int(2, 2, 0)));
+        var fixture = Instantiate(g.cratePrefab, position, Quaternion.identity);
+        fixture.name = "Caixa de prova en combat";
+        var crate = fixture.GetComponent<Breakable>();
+        crate.coinChance = 1f;
+        crate.healChance = 0f;
     }
 
     IEnumerator CheckProjectiles(DungeonGenerator g)
@@ -270,21 +281,38 @@ public class NetBot : MonoBehaviour
         var chest=FindFirstObjectByType<Chest>(); var old=chest.transform.position; chest.transform.position=pos;
         bool stopped=NetCoop.InterceptChestOpen(chest); chest.transform.position=old;
         if(!stopped || chest.IsOpen) { Fail("s'ha pogut obrir cofre en sala bloquejada"); return false; }
-        var crate=FindFirstObjectByType<Breakable>(); old=crate.transform.position; crate.transform.position=pos;
-        int hp=crate.health; crate.Hit(999); crate.transform.position=old;
-        if(crate.health!=hp) { Fail("s'ha pogut fer mal a una caixa en sala bloquejada"); return false; }
-        if(DungeonGenerator.CanDamageBreakableAt(pos,true)!=room.active) { Fail("TNT: ha d'estar bloquejada en espera i disponible en combat"); return false; }
+        var crate=FindFirstObjectByType<Breakable>(); old=crate.transform.position;
+        int hp=crate.health;
+        if(DungeonGenerator.CanDamageBreakableAt(pos)!=room.active) { Fail("les caixes han d'estar protegides en espera i disponibles en combat"); return false; }
         if(NetCoop.IsHost)
         {
-            bool explosive=crate.explodes; crate.explodes=true; crate.health=10; crate.transform.position=pos;
-            crate.Hit(1); bool damaged=crate.health==9;
-            crate.health=hp; crate.explodes=explosive; crate.transform.position=old;
-            if(damaged!=room.active){Fail("TNT: colp real incorrecte en espera/combat");return false;}
+            bool explosive = crate.explodes;
+            foreach (bool usesExplosive in new[] { false, true })
+            {
+                crate.explodes = usesExplosive;
+                crate.health = 10;
+                crate.transform.position = pos;
+                crate.Hit(1);
+                bool damaged = crate.health == 9;
+                crate.health = hp;
+                crate.explodes = explosive;
+                crate.transform.position = old;
+                if (damaged != room.active) { Fail("colp a caixa o TNT incorrecte en espera/combat"); return false; }
+            }
         }
-        Ok(room.active?"TNT rep colps durant el combat":"TNT protegida mentre falten companys");
-        Ok("cofre i caixa bloquejats en sala pendent/combat"); return true;
+        Ok(room.active ? "caixa i TNT reben colps durant el combat" : "caixa i TNT protegides mentre falten companys");
+        Ok("cofre bloquejat en sala pendent/combat"); return true;
     }
     IEnumerator KeepAlive(PlayerHealth h) { while (keepAlive) { if (h != null && h.gameObject.activeInHierarchy) h.Heal(5); yield return new WaitForSecondsRealtime(0.3f); } }
+
+    // Arranca la mateixa rutina de generació que usa una sala de boss, lluny dels jugadors.
+    IEnumerator SpawnTestBoss(DungeonGenerator dungeon, GameObject prefab, Action<EnemyHealth> spawned)
+    {
+        var method = typeof(DungeonGenerator).GetMethod("SpawnEnemy", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        var room = new DungeonGenerator.Room { type = DungeonGenerator.RoomType.Boss };
+        yield return (IEnumerator)method.Invoke(dungeon, new object[] { prefab, new Vector2Int(1100, 1100), room, 1.2f });
+        spawned(room.alive.Count == 1 ? room.alive[0] : null);
+    }
 
     IEnumerator HostCoop()
     {
@@ -331,8 +359,15 @@ public class NetBot : MonoBehaviour
         yield return WaitFor(() => NetShared.RemoteHealsSeen > 0, 10, "cura del cofre del client visible a l'amfitrio");
         // Bot real de boss: forcem la probabilitat, no substituim la ruta de botí.
         var bossPrefab = g.Theme != null && g.Theme.boss != null ? g.Theme.boss : g.bossPrefab;
-        var testBoss = Instantiate(bossPrefab, new Vector3(1100, 1100), Quaternion.identity);
-        var bossHealth = testBoss.GetComponent<EnemyHealth>();
+        EnemyHealth bossHealth = null;
+        yield return SpawnTestBoss(g, bossPrefab, h => bossHealth = h);
+        int baseBossHealth = bossPrefab.GetComponent<EnemyHealth>().maxHealth;
+        if (bossHealth == null || bossHealth.maxHealth != Mathf.RoundToInt(baseBossHealth * 1.55f))
+        {
+            Fail("vida del boss amb dos jugadors incorrecta");
+            yield break;
+        }
+        Ok("boss amb dos jugadors: " + bossHealth.currentHealth + "/" + bossHealth.maxHealth);
         bossHealth.healDropChance = 1;
         yield return null;
         bossHealth.TakeHit(99999, Vector2.zero);
@@ -365,6 +400,9 @@ public class NetBot : MonoBehaviour
         if(!DungeonGenerator.CanInteractAt(g.ground.GetCellCenterWorld(new Vector3Int(combat.Center.x,combat.Center.y,0)))) { Fail("la sala netejada no desbloqueja objectes"); yield break; }
         Ok("sala netejada desbloqueja objectes");
         yield return WaitFor(() => NetCoop.DownedCount == 0, 5, "el company ha tornat");
+        yield return WaitFor(() => NetSession.Instance.Players.TryGetValue(av.playerId, out var revived) &&
+            revived.maxHealth > 0 && revived.health == revived.maxHealth && revived.lastPos > Time.realtimeSinceStartupAsDouble - 1,
+            5, "l'amfitrio veu la vida plena del company");
         // El company torna a caure i nosaltres passem de pis: ell ha de reapareixer al pis seguent
         yield return WaitFor(() => NetCoop.DownedCount > 0, 20, "el company ha caigut altra vegada");
         if (failed) yield break;
@@ -469,16 +507,24 @@ public class NetBot : MonoBehaviour
                 if (hp.transform.position.x > 1090 && hp.GetComponent<NetItem>() != null) return true;
             return false;
         }, 15, "cura del boss de l'amfitrio visible al client");
-        // Caixa (no explosiva)
-        Breakable crate = null; best = float.MaxValue;
-        foreach (var b in FindObjectsByType<Breakable>(FindObjectsSortMode.None))
+        // El client trenca una caixa dins de la sala encara activa i recull la moneda.
+        var fixture = GameObject.Find("Caixa de prova en combat");
+        var crate = fixture != null ? fixture.GetComponent<Breakable>() : null;
+        if (crate == null || DungeonGenerator.CanInteractAt(crate.transform.position) ||
+            !DungeonGenerator.CanDamageBreakableAt(crate.transform.position))
         {
-            float d = Vector2.Distance(b.transform.position, g.player.position);
-            if (!b.explodes && DungeonGenerator.CanInteractAt(b.transform.position) && d < best) { best = d; crate = b; }
+            Fail("falta la caixa de la sala activa");
+            yield break;
         }
-        if (crate == null) { Fail("cap caixa"); yield break; }
+        var cratePosition = crate.transform.position;
+        int coinsBeforeCrate = RunState.Coins;
         crate.Hit(999);
-        Ok("caixa trencada");
+        yield return WaitFor(() => crate == null, 5, "caixa trencada pel client en combat");
+        if (failed) yield break;
+        g.player.GetComponent<Rigidbody2D>().position = cratePosition;
+        g.player.position = cratePosition;
+        yield return WaitFor(() => RunState.Coins > coinsBeforeCrate, 8, "moneda de la caixa recollida en combat");
+        if (failed) yield break;
         // Moneda: apareix als peus, l'agafem i l'amfitrio ens la dona
         int coins = RunState.Coins;
         CoinDrop.Spawn(g.player.position);
@@ -488,7 +534,12 @@ public class NetBot : MonoBehaviour
         // Caiem: mode espectador
         keepAlive = false;
         yield return new WaitForSecondsRealtime(1.3f); // fora la invulnerabilitat del colp
-        var att = g.player.GetComponent<PlayerAttack>(); if (att != null) att.AddWeapon(gun); // una arma per a veure que la solta
+        var att = g.player.GetComponent<PlayerAttack>();
+        var bag = g.player.GetComponent<HealInventory>();
+        if (att != null) att.AddWeapon(gun);
+        if (bag != null) bag.Add(HealItem.All[0]);
+        var preexistingDrops = new System.Collections.Generic.HashSet<int>();
+        foreach (var item in FindObjectsByType<NetItem>(FindObjectsSortMode.None)) preexistingDrops.Add(item.id);
         health.TakeDamage(999);
         yield return WaitFor(() => Spectate.Active, 5, "caigut: espectant el company");
         var myAttack = g.player.GetComponent<PlayerAttack>();
@@ -500,7 +551,42 @@ public class NetBot : MonoBehaviour
         yield return Shot("9-espectant");
         yield return WaitFor(() => NetCoop.RoomEvents >= 2, 45, "sala començada i acabada per l'amfitrio");
         yield return WaitFor(() => health != null && health.gameObject.activeInHierarchy && !Spectate.Active, 10, "tornat a la partida en netejar la sala");
+        if (failed) yield break;
+        if (!health.IsFull || System.Array.Exists(health.hearts, heart => heart != null && heart.sprite != health.cor_ple))
+        {
+            Fail("vida incompleta al tornar a la sala");
+            yield break;
+        }
+        Ok("vida plena al tornar a la sala");
         if (cam != null && cam.target == health.transform) Ok("la camera torna al jugador");
+        int localOwner = NetSession.Instance.LocalId;
+        yield return new WaitForSecondsRealtime(0.8f);
+        var drops = new System.Collections.Generic.List<NetItem>();
+        foreach (var item in FindObjectsByType<NetItem>(FindObjectsSortMode.None))
+        {
+            if (item.id / 1000000 != localOwner || preexistingDrops.Contains(item.id)) continue;
+            if (item.GetComponent<ItemPickup>() != null || item.GetComponent<HealPickup>() != null)
+                drops.Add(item);
+        }
+        foreach (var drop in drops)
+        {
+            if (drop == null) continue;
+            var rb = g.player.GetComponent<Rigidbody2D>();
+            rb.position = drop.transform.position;
+            g.player.position = drop.transform.position;
+            string description = drop.kind + " " + drop.data;
+            yield return WaitFor(() => drop == null, 5, "objecte propi recuperat: " + description);
+            if (drop != null)
+                Log("drop=" + drop.transform.position + " jugador=" + g.player.position + " pendent=" + drop.pending);
+            if (failed) yield break;
+        }
+        if (att == null || !System.Array.Exists(att.hotbarSlots, w => w != null) ||
+            bag == null || !System.Array.Exists(bag.items, item => item != null))
+        {
+            Fail("el jugador reviscut no ha recuperat armes i cures");
+            yield break;
+        }
+        Ok("armes i cures recuperades pel jugador que les havia soltat");
         // Tornem a caure i l'amfitrio passa de pis: hem de reapareixer al pis 2 sense armes i amb tota la vida
         var att2 = g.player.GetComponent<PlayerAttack>(); if (att2 != null) att2.AddWeapon(gun);
         yield return new WaitForSecondsRealtime(2.4f); // fora la invulnerabilitat de tornar
@@ -513,7 +599,227 @@ public class NetBot : MonoBehaviour
         var a2 = p2 != null ? p2.GetComponent<PlayerAttack>() : null;
         if (p2 == null || !p2.gameObject.activeInHierarchy) { Fail("no ha reaparegut al pis 2"); yield break; }
         if (a2 != null && System.Array.Exists(a2.hotbarSlots, w => w != null)) { Fail("ha reaparegut amb armes"); yield break; }
+        if (!p2.IsFull) { Fail("vida incompleta al reapareixer al pis 2"); yield break; }
         Ok("reaparegut al pis 2 sense armes, vida " + p2.currentHealth + "/" + p2.maxHealth);
+    }
+
+    // Prova de regressió en una masmorra individual real.
+    IEnumerator SoloCombat()
+    {
+        RunState.Reset();
+        SceneManager.LoadScene("Dungeon");
+        yield return WaitFor(() => Scene == "Dungeon" && DungeonGenerator.Instance != null, 12, "masmorra individual carregada");
+        if (failed) yield break;
+        yield return null;
+
+        var player = DungeonGenerator.Instance.player;
+        var attack = player.GetComponent<PlayerAttack>();
+        var shoot = typeof(PlayerAttack).GetMethod("Shoot", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        foreach (string id in new[] { "Escopeta", "VaretaEspores", "Shuriken", "AK47", "Minigun", "SMG" })
+        {
+            WeaponData weapon = NetCoop.Weapon(id);
+            if (weapon == null) { Fail("arma absent: " + id); yield break; }
+            var samples = new System.Collections.Generic.HashSet<string>();
+            for (int trial = 0; trial < 5; trial++)
+            {
+                shoot.Invoke(attack, new object[] { weapon });
+                var shots = FindObjectsByType<Projectile>(FindObjectsSortMode.None);
+                var angles = System.Array.ConvertAll(shots, shot => shot.transform.eulerAngles.z);
+                System.Array.Sort(angles);
+                if (angles.Length != weapon.pellets) { Fail("nombre de bales incorrecte: " + id); yield break; }
+                samples.Add(string.Join(",", angles));
+                foreach (var shot in shots) Destroy(shot.gameObject);
+                yield return null;
+            }
+            bool fixedPattern = id == "Escopeta" || id == "VaretaEspores" || id == "Shuriken";
+            if ((samples.Count == 1) != fixedPattern) { Fail("dispersio incorrecta: " + id); yield break; }
+            Ok("dispersio " + (fixedPattern ? "fixa: " : "aleatoria: ") + id);
+        }
+
+        Vector2 origin = new Vector2(600, 600);
+        var wall = new GameObject("Paret de prova");
+        wall.transform.position = origin + Vector2.right * .45f;
+        var collider = wall.AddComponent<BoxCollider2D>();
+        collider.size = new Vector2(.06f, 1f);
+        Physics2D.SyncTransforms();
+        if (Projectile.SafeMuzzle(origin, origin + Vector2.right, .05f, player) != origin)
+        {
+            Fail("la boca de l'arma salta la paret");
+            yield break;
+        }
+        var fast = ScriptableObject.CreateInstance<WeaponData>();
+        fast.projectileSpeed = 120;
+        fast.projectileSize = .10f;
+        fast.range = 6f;
+        var shotThroughWall = Projectile.Spawn(origin, Vector2.right, fast, player, 0, 0);
+        yield return new WaitForFixedUpdate();
+        yield return null;
+        if (shotThroughWall != null) { Fail("el projectil rapid travessa la paret"); yield break; }
+        Destroy(wall);
+        Destroy(fast);
+        Ok("el cano i el projectil rapid respecten la paret");
+
+        var camera = Camera.main;
+        float normalSize = camera.orthographicSize;
+        foreach (string id in new[] { "Sniper", "Laser", "Vareta", "Ballesta" })
+        {
+            var weapon = NetCoop.Weapon(id);
+            attack.hotbarSlots[0] = weapon;
+            attack.SelectSlot(0);
+            yield return WaitFor(() => camera.orthographicSize * Mathf.Min(1f, camera.aspect) >= weapon.range, 2, "tot el rang de " + id);
+            if (failed) yield break;
+        }
+        attack.hotbarSlots[0] = null;
+        yield return WaitFor(() => Mathf.Approximately(camera.orthographicSize, normalSize), 2, "zoom normal amb el puny");
+        if (failed) yield break;
+
+        // Una caiguda voluntària contra una paret de la masmorra.
+        var dungeon = DungeonGenerator.Instance;
+        bool wallFound = false;
+        Vector3 dropFrom = Vector3.zero, desired = Vector3.zero;
+        Vector2 wallDirection = Vector2.zero;
+        foreach (var cell in dungeon.ground.cellBounds.allPositionsWithin)
+        {
+            if (TileNav.IsBlocked(cell)) continue;
+            foreach (var direction in new[] { Vector3Int.right, Vector3Int.left, Vector3Int.up, Vector3Int.down })
+            {
+                if (!dungeon.walls.HasTile(cell + direction) || TileNav.IsBlocked(cell - direction)) continue;
+                dropFrom = dungeon.ground.GetCellCenterWorld(cell);
+                wallDirection = (Vector3)direction;
+                desired = dungeon.ground.GetCellCenterWorld(cell + direction);
+                wallFound = true;
+                break;
+            }
+            if (wallFound) break;
+        }
+        if (!wallFound || !TileNav.CircleFree(TileNav.DropDestination(dropFrom, desired), 0.12f))
+        {
+            Fail("un objecte pot caure dins d'una paret");
+            yield break;
+        }
+        var dropGun = NetCoop.Weapon("Escopeta");
+        attack.hotbarSlots[0] = dropGun;
+        player.GetComponent<Rigidbody2D>().position = dropFrom;
+        player.position = dropFrom;
+        typeof(PlayerAttack).GetField("aimDirection", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+            .SetValue(attack, wallDirection);
+        attack.DropSlot(0);
+        yield return new WaitForSeconds(0.9f);
+        var dropped = FindFirstObjectByType<ItemPickup>();
+        if (dropped == null || dropped.weapon != dropGun || !TileNav.CircleFree(dropped.transform.position, 0.12f))
+        {
+            Fail("l'arma solta no ha quedat al terra davant la paret");
+            yield break;
+        }
+        Vector2 resting = dropped.transform.position;
+        var body = player.GetComponent<Rigidbody2D>();
+        var away = (Vector2)dropFrom - wallDirection * 1.2f;
+        body.position = away;
+        player.position = away;
+        yield return null;
+        body.position = resting;
+        player.position = resting;
+        yield return WaitFor(() => dropped == null, 2, "arma solta al costat de la paret recuperada");
+        if (failed) yield break;
+        attack.hotbarSlots[0] = null;
+
+        var movementController = player.GetComponent<PlayerMovement>();
+        var moveInput = typeof(PlayerMovement).GetField("movement", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        var movementStep = typeof(PlayerMovement).GetMethod("FixedUpdate", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        Vector2 slideDirection = Vector2.Perpendicular(wallDirection);
+        Vector3Int stepCell = new Vector3Int(Mathf.RoundToInt(slideDirection.x), Mathf.RoundToInt(slideDirection.y), 0);
+        if (TileNav.IsBlocked(TileNav.Cell(dropFrom) + stepCell)) slideDirection = -slideDirection;
+        foreach (bool dash in new[] { false, true })
+        {
+            movementController.enabled = false;
+            body.position = dropFrom;
+            player.position = dropFrom;
+            if (dash) movementController.Dash(wallDirection, 1.8f);
+            Vector2 direction = (wallDirection + slideDirection).normalized;
+            for (int i = 0; i < 13; i++)
+            {
+                moveInput.SetValue(movementController, direction);
+                movementStep.Invoke(movementController, null);
+                yield return new WaitForFixedUpdate();
+            }
+            float travel = Vector2.Dot(body.position - (Vector2)dropFrom, slideDirection);
+            movementController.enabled = true;
+            if (travel < .3f || dungeon.walls.HasTile(TileNav.Cell(body.position)))
+            {
+                Fail("la canica no llisca al mur " + (dash ? "després de l'impuls" : "caminant"));
+                yield break;
+            }
+            Ok(dash ? "l'impuls bloquejat permet continuar movent-se" : "el jugador llisca al mur");
+        }
+
+        var arena = dungeon.Rooms[0];
+        var emptyRoomType = arena.type;
+        arena.type = DungeonGenerator.RoomType.Combat;
+        arena.active = true;
+        Vector3 cratePos = dungeon.ground.GetCellCenterWorld(new Vector3Int(arena.Center.x, arena.Center.y, 0));
+        player.position = cratePos + Vector3.right;
+        body.position = player.position;
+        var crate = Instantiate(dungeon.cratePrefab, cratePos, Quaternion.identity).GetComponent<Breakable>();
+        crate.coinChance = 1f;
+        crate.healChance = 0f;
+        yield return null;
+        int coins = RunState.Coins;
+        crate.Hit(999);
+        yield return WaitFor(() => crate == null && RunState.Coins > coins && arena.active, 5, "caixa trencada i moneda recollida en combat individual");
+        if (failed) yield break;
+        arena.active = false;
+        arena.type = emptyRoomType;
+
+        var db = CosmeticsDatabase.Instance;
+        for (int skin = 0; skin < db.skins.Length; skin++)
+        {
+            var fixtures = new System.Collections.Generic.List<GameObject>();
+            for (int hat = 1; hat < db.hats.Length; hat++)
+            {
+                var fixture = new GameObject("Prova de barret");
+                fixture.SetActive(false);
+                fixture.AddComponent<SpriteRenderer>().sprite = db.playerSprite;
+                var cosmetics = fixture.AddComponent<PlayerCosmetics>();
+                cosmetics.skinOverride = skin;
+                cosmetics.hatOverride = hat;
+                cosmetics.trailOverride = 1;
+                fixture.SetActive(true);
+                fixtures.Add(fixture);
+            }
+            yield return null;
+            for (int i = 0; i < fixtures.Count; i++)
+            {
+                var fixture = fixtures[i];
+                var hat = db.hats[i + 1];
+                Transform fitted = fixture.transform.Find("Barret");
+                if (fitted == null || (!hat.fullHelmet && fitted.localPosition.y <= 0f) ||
+                    (fixture.GetComponent<TrailRenderer>() == null && fixture.GetComponent<TrailParticleEmitter>() == null))
+                {
+                    Fail("barret o rastre mal aplicat: " + db.skins[skin].name + " / " + hat.name);
+                    yield break;
+                }
+                Destroy(fixture);
+            }
+        }
+        Ok("totes les combinacions de skins i barrets s'apliquen amb rastre");
+        int previousBossHealth = 0;
+        for (int i = 0; i < dungeon.themes.Length; i++)
+        {
+            RunState.Floor = i + 1;
+            var prefab = dungeon.themes[i].boss;
+            EnemyHealth bossHealth = null;
+            yield return SpawnTestBoss(dungeon, prefab, h => bossHealth = h);
+            int expected = prefab.GetComponent<EnemyHealth>().maxHealth + 45 * i;
+            if (bossHealth == null || bossHealth.currentHealth != expected || bossHealth.maxHealth <= previousBossHealth)
+            {
+                Fail("vida de boss individual incorrecta al pis " + RunState.Floor);
+                yield break;
+            }
+            previousBossHealth = bossHealth.maxHealth;
+            Destroy(bossHealth.gameObject);
+            Ok("vida del boss individual al pis " + RunState.Floor + ": " + expected);
+        }
+        Pass();
     }
 
     // ---------- Captures (nomes amb -botShots <carpeta>, sense -nographics) ----------

@@ -677,13 +677,13 @@ public class DungeonGenerator : MonoBehaviour
         return r == null || r.cleared || (r.type != RoomType.Combat && r.type != RoomType.Boss);
     }
 
-    public static bool CanDamageBreakableAt(Vector3 position, bool explosive)
+    public static bool CanDamageBreakableAt(Vector3 position)
     {
         if (CanInteractAt(position)) return true;
         var g = Instance;
         Room r = g.RoomAt(g.ground.WorldToCell(position), 0);
-        // Les TNT formen part del combat; no es poden detonar abans que entre tothom.
-        return explosive && r != null && r.active;
+        // Les caixes i TNT es poden trencar quan comença el combat.
+        return r != null && r.active;
     }
 
     Room RoomAt(Vector3Int cell, int inset)
@@ -820,7 +820,12 @@ public class DungeonGenerator : MonoBehaviour
         if (h != null)
         {
             float mult = 1f + 0.3f * (RunState.Floor - 1);
-            h.maxHealth = Mathf.RoundToInt(h.maxHealth * mult);
+            if (r.type == RoomType.Boss)
+            {
+                float partyMultiplier = 1f + 0.55f * (NetCoop.PlayerCount - 1);
+                h.maxHealth = Mathf.RoundToInt((h.maxHealth + 45 * (RunState.Floor - 1)) * partyMultiplier);
+            }
+            else h.maxHealth = Mathf.RoundToInt(h.maxHealth * mult);
             h.currentHealth = h.maxHealth;
             r.alive.Add(h);
         }

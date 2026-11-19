@@ -173,7 +173,8 @@ public class EnemyBoss : MonoBehaviour
     {
         if (minionPrefab == null) { yield return Ring(); yield break; }
         yield return Telegraph(0.6f);
-        for (int i = 0; i < 3; i++)
+        int count = 3 + Mathf.Clamp((RunState.Floor - 1) / 2, 0, 5);
+        for (int i = 0; i < count; i++)
         {
             Vector2 pos = (Vector2)transform.position + Random.insideUnitCircle.normalized * 1.6f;
             if (TileNav.Ground != null) pos = TileNav.Center(TileNav.NearestFree(TileNav.Cell(pos)));

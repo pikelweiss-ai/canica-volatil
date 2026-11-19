@@ -225,16 +225,17 @@ public class ShadowFollower : MonoBehaviour
 public static class TypingGuard
 {
     static TMP_InputField active;
-    static bool previous;
-    public static bool Typing => active != null && active.isFocused;
+    static int endedFrame = -1;
+    public static bool Typing => active != null && active.isActiveAndEnabled && active.isFocused;
+    public static bool CapturedInput => Typing || endedFrame == Time.frameCount;
     public static void Begin(TMP_InputField f)
     {
-        if (active == null) previous = GameControls.Editing;
-        active = f; GameControls.Editing = true;
+        active = f;
     }
     public static void End(TMP_InputField f)
     {
         if (active != f) return;
-        active = null; GameControls.Editing = previous;
+        active = null;
+        endedFrame = Time.frameCount;
     }
 }

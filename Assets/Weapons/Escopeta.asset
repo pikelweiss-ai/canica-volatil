@@ -26,6 +26,7 @@ MonoBehaviour:
   range: 4
   projectileSize: 0.12
   projectileColor: {r: 1, g: 0.85, b: 0.3, a: 1}
+  fixedSpread: 1
   spreadAngle: 22
   pellets: 7
   rangeRandom: 0.3

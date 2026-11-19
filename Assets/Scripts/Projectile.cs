@@ -49,6 +49,26 @@ public class Projectile : MonoBehaviour
         }
     }
 
+    static readonly System.Collections.Generic.List<RaycastHit2D> hits = new();
+    static readonly ContactFilter2D AllContacts = new ContactFilter2D().NoFilter();
+
+    static bool CanHit(Collider2D hit, Transform shooter)
+    {
+        if (shooter != null && hit.transform.IsChildOf(shooter)) return false;
+        if (NetCoop.Online && (hit.GetComponentInParent<PlayerHealth>() != null || hit.GetComponentInParent<RemoteAvatar>() != null))
+            return false;
+        return !hit.isTrigger || hit.GetComponentInParent<EnemyHealth>() != null || hit.GetComponentInParent<Breakable>() != null;
+    }
+
+    public static Vector2 SafeMuzzle(Vector2 center, Vector2 muzzle, float radius, Transform shooter)
+    {
+        Vector2 offset = muzzle - center;
+        Physics2D.CircleCast(center, radius, offset.normalized, AllContacts, hits, offset.magnitude);
+        foreach (var hit in hits)
+            if (CanHit(hit.collider, shooter)) return center;
+        return muzzle;
+    }
+
     void FixedUpdate()
     {
         float dt = Time.fixedDeltaTime;
@@ -86,19 +106,13 @@ public class Projectile : MonoBehaviour
         float step = speed * dt;
         bool reachesEnd = travelled + step >= maxDistance;
         if (reachesEnd) step = Mathf.Max(0f, maxDistance - travelled);
-        transform.position += (Vector3)(direction * step);
-        travelled += step;
-
-        foreach (Collider2D hit in Physics2D.OverlapCircleAll(transform.position, radius))
+        Vector2 start = transform.position;
+        Physics2D.CircleCast(start, radius, direction, AllContacts, hits, step);
+        foreach (var contact in hits)
         {
-            // No ens fem mal a nosaltres mateixos
-            if (owner != null && hit.transform.IsChildOf(owner))
-                continue;
-
-            // Cooperatiu: tant el tret real com la copia visual travessen els companys.
-            // Al receptor el jugador local te collider solid, no es una paret.
-            if (NetCoop.Online && (hit.GetComponentInParent<PlayerHealth>() != null || hit.GetComponentInParent<RemoteAvatar>() != null))
-                continue;
+            Collider2D hit = contact.collider;
+            if (!CanHit(hit, owner)) continue;
+            transform.position = start + direction * contact.distance;
 
             EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
             if (enemy != null)
@@ -129,6 +143,9 @@ public class Projectile : MonoBehaviour
                 return;
             }
         }
+
+        transform.position = start + direction * step;
+        travelled += step;
 
         // Arriba al final de l'aim (la pedra cau a terra; el bumerang torna)
         if (reachesEnd)

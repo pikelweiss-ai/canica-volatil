@@ -32,6 +32,7 @@ public class WeaponData : ScriptableObject
 
     [Header("Dispersió (0 = tret recte; l'aim es fa en V)")]
     [Range(0f, 45f)]
+    public bool fixedSpread;
     public float spreadAngle = 0f;      // Angle màxim (cap a cada costat) que es desvia cada bala
     [Min(1)]
     public int pellets = 1;             // Bales per tret (escopeta: 5-8)

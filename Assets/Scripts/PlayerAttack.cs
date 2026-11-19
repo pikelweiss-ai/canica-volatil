@@ -112,11 +112,11 @@ public class PlayerAttack : MonoBehaviour
         // Si el clic comença damunt de la UI (hotbar, bossa...), no dispara fins que solts el botó.
         // Si ja estaves disparant i passes per damunt de la UI, continua disparant.
         if (Input.GetMouseButtonDown(0))
-            mouseBlocked = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+            mouseBlocked = ClickTargetsUI();
         if (!Input.GetMouseButton(0))
             mouseBlocked = false;
 
-        bool attackPressed = MobileInput.Active ? !GameControls.Editing && MobileInput.Firing : GameControls.Held(4) && !mouseBlocked && !(EventSystem.current != null && EventSystem.current.IsPointerOverGameObject());
+        bool attackPressed = MobileInput.Active ? !GameControls.Blocked && MobileInput.Firing : GameControls.AttackHeld(mouseBlocked);
 
         if(!attackPressed || spinningWeapon!=CurrentWeapon){spinCharge=0;spinningWeapon=CurrentWeapon;}
         if(attackPressed && CurrentWeapon!=null && CurrentWeapon.spinUpTime>0)
@@ -141,6 +141,23 @@ public class PlayerAttack : MonoBehaviour
             }
             nextAttackTime = Time.time + lastCooldownDuration;
         }
+    }
+
+    readonly System.Collections.Generic.List<RaycastResult> clickHits = new();
+
+    bool ClickTargetsUI()
+    {
+        EventSystem events = EventSystem.current;
+        if (events == null) return false;
+        events.RaycastAll(new PointerEventData(events) { position = Input.mousePosition }, clickHits);
+        foreach (var hit in clickHits)
+        {
+            if (!(hit.module is UnityEngine.UI.GraphicRaycaster)) continue;
+            GameObject target = hit.gameObject;
+            return ExecuteEvents.GetEventHandler<IPointerDownHandler>(target) != null
+                || ExecuteEvents.GetEventHandler<IPointerClickHandler>(target) != null;
+        }
+        return false;
     }
 
     // ---------- Apuntar ----------
@@ -321,8 +338,9 @@ public class PlayerAttack : MonoBehaviour
     void Shoot(WeaponData weapon)
     {
         if (weapon.melee) { Swing(weapon); return; }
-        // El projectil ix de la punta de l'arma (el canó)
-        Vector2 spawnPos = (Vector2)transform.position + aimDirection * MuzzleDistance(weapon);
+        Vector2 center = transform.position;
+        Vector2 muzzle = center + aimDirection * Mathf.Max(0f, MuzzleDistance(weapon) - 0.2f) + Vector2.down * 0.08f;
+        Vector2 spawnPos = Projectile.SafeMuzzle(center, muzzle, weapon.projectileSize * 0.5f, transform);
         int layer = playerSprite != null ? playerSprite.sortingLayerID : 0;
         int order = playerSprite != null ? playerSprite.sortingOrder + 1 : 0;
 
@@ -331,15 +349,16 @@ public class PlayerAttack : MonoBehaviour
 
         for (int i = 0; i < pellets; i++)
         {
-            // Cada bala es desvia un angle a l'atzar dins de la V
-            float angle = Random.Range(-weapon.spreadAngle, weapon.spreadAngle);
+            float angle = weapon.fixedSpread && pellets > 1
+                ? Mathf.Lerp(-weapon.spreadAngle, weapon.spreadAngle, i / (float)(pellets - 1))
+                : Random.Range(-weapon.spreadAngle, weapon.spreadAngle);
             Vector2 dir = Rotate(aimDirection, angle);
 
             // Acaba a la vora del final de l'aim: com més desviada, un poc més lluny
             // (range / cos) perquè toque la línia del final de la V i no s'acurte.
             // rangeRandom fa que algunes es queden més curtes (perdigons).
             float dist = range / Mathf.Cos(angle * Mathf.Deg2Rad);
-            dist *= 1f - Random.Range(0f, weapon.rangeRandom);
+            if (!weapon.fixedSpread) dist *= 1f - Random.Range(0f, weapon.rangeRandom);
 
             Vector2 end = (Vector2)transform.position + dir * dist;
             Projectile.Spawn(spawnPos, dir, weapon, transform, layer, order, end);
@@ -475,7 +494,9 @@ public class PlayerAttack : MonoBehaviour
             if (weapon == null) continue;
             hotbarSlots[i] = null;
             float a = (i / (float)hotbarSlots.Length) * Mathf.PI * 2f + Random.Range(-0.3f, 0.3f);
-            ItemPickup.Spawn(weapon, transform.position, transform.position + new Vector3(Mathf.Cos(a), Mathf.Sin(a)) * 1.1f);
+            Vector3 from = transform.position;
+            Vector3 to = from + new Vector3(Mathf.Cos(a), Mathf.Sin(a)) * 1.1f;
+            ItemPickup.Spawn(weapon, from, TileNav.DropDestination(from, to));
         }
         if (hotbarUI != null) hotbarUI.Refresh(hotbarSlots, selectedSlot);
         RunState.Weapons = (WeaponData[])hotbarSlots.Clone();
@@ -493,7 +514,7 @@ public class PlayerAttack : MonoBehaviour
 
         Vector3 from = transform.position;
         Vector3 to = transform.position + (Vector3)(aimDirection * 1f);
-        ItemPickup.Spawn(weapon, from, to, true);
+        ItemPickup.Spawn(weapon, from, TileNav.DropDestination(from, to), true);
     }
 
     void OnDestroy()

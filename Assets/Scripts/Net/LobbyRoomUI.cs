@@ -64,7 +64,7 @@ public class LobbyRoomUI : MonoBehaviour
         UIKit.Button(panel, "EIXIR DE LA SALA", new Vector2(0, -308), new Vector2(340, 40), LeaveRoom, UIKit.Style.Danger, 17);
 
         UIKit.Box(root, new Vector2(-40, 290), new Vector2(760, 30), new Color(.02f, .04f, .06f, .7f), "Ajuda").GetComponent<Image>().raycastTarget = false;
-        hint = UIKit.Text(root, MobileInput.Active ? "Joystick per moure't · Toca el xat i ESTIC LLEST" : "WASD per moure't · Intro per xatejar · R per estar llest", new Vector2(-40, 290), new Vector2(740, 26), 16, TextAlignmentOptions.Center, UIKit.Muted);
+        hint = UIKit.Text(root, MobileInput.Active ? "Joystick per moure't · Toca el xat i ESTIC LLEST" : "WASD per moure't · " + GameControls.Label(GameControls.OpenChat) + " per xatejar · R per estar llest", new Vector2(-40, 290), new Vector2(740, 26), 16, TextAlignmentOptions.Center, UIKit.Muted);
 
         ChatBox.Create(root, MobileInput.Active?new Vector2(-560,65):new Vector2(-560,-235), MobileInput.Active?new Vector2(460,240):new Vector2(460,300), false);
     }
@@ -100,7 +100,7 @@ public class LobbyRoomUI : MonoBehaviour
     void Update()
     {
         if (s == null || !NetSession.Active) return;
-        if (!TypingGuard.Typing && Input.GetKeyDown(KeyCode.R)) MainAction();
+        if (!GameControls.Blocked && Input.GetKeyDown(KeyCode.R)) MainAction();
         if (Time.unscaledTime >= nextRefresh) { nextRefresh = Time.unscaledTime + 1f; Refresh(); }
         int c = s.Room.phase == RoomPhase.Countdown ? Mathf.CeilToInt(s.CountdownLeft) : -1;
         if (c != lastCountdown)
@@ -157,7 +157,7 @@ public class LobbyRoomUI : MonoBehaviour
             if (room.phase == RoomPhase.Countdown) { mainButton.SetStyle(UIKit.Style.Normal); mainButton.SetLabel("ATURAR"); mainButton.SetInteractable(true); }
             else if (s.EveryoneReady) { mainButton.SetStyle(UIKit.Style.Primary); mainButton.SetLabel(s.Players.Count == 1 ? "COMENÇAR (SOLO)" : "COMENÇAR PARTIDA"); mainButton.SetInteractable(true); }
             else { mainButton.SetStyle(UIKit.Style.Normal); mainButton.SetLabel("ESPERANT " + s.ReadyCount + "/" + s.Players.Count + " LLESTOS"); mainButton.SetInteractable(false); }
-            hint.text = MobileInput.Active ? "Joystick per moure't · Toca COMENÇAR · Codi " + room.code : "WASD per moure't · Intro per xatejar · R per començar · Comparteix el codi " + room.code;
+            hint.text = MobileInput.Active ? "Joystick per moure't · Toca COMENÇAR · Codi " + room.code : "WASD per moure't · " + GameControls.Label(GameControls.OpenChat) + " per xatejar · R per començar · Comparteix el codi " + room.code;
         }
         else
         {
@@ -166,7 +166,7 @@ public class LobbyRoomUI : MonoBehaviour
             mainButton.SetStyle(ready ? UIKit.Style.Normal : UIKit.Style.Success);
             mainButton.SetLabel(room.phase == RoomPhase.Countdown ? "COMENÇANT..." : ready ? "JA NO ESTIC LLEST" : "ESTIC LLEST");
             mainButton.SetInteractable(true);
-            hint.text = MobileInput.Active ? "Joystick per moure't · Toca ESTIC LLEST · Espera l'amfitrió" : "WASD per moure't · Intro per xatejar · R per estar llest · Espera que l'amfitrió comence";
+            hint.text = MobileInput.Active ? "Joystick per moure't · Toca ESTIC LLEST · Espera l'amfitrió" : "WASD per moure't · " + GameControls.Label(GameControls.OpenChat) + " per xatejar · R per estar llest · Espera que l'amfitrió comence";
         }
     }
 }
@@ -180,6 +180,8 @@ public class ChatBox : MonoBehaviour
     bool fade;
     float lastActivity;
     int submitFrame = -1;
+    bool? mouseEnabled;
+    string openHint;
     NetSession s;
 
     public static ChatBox Create(Transform parent, Vector2 pos, Vector2 size, bool fadeWhenIdle)
@@ -247,7 +249,20 @@ public class ChatBox : MonoBehaviour
 
     void Update()
     {
-        if (Time.frameCount != submitFrame && !TypingGuard.Typing && (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) && !DisplaySettings.Pending)
+        bool mouse = MobileInput.Active || GameControls.ChatMouse;
+        if (mouseEnabled != mouse)
+        {
+            mouseEnabled = mouse;
+            input.targetGraphic.raycastTarget = mouse;
+            input.navigation = new Navigation { mode = Navigation.Mode.None };
+        }
+        string hint = MobileInput.Active ? "Toca per xatejar" : "Prem " + GameControls.Label(GameControls.OpenChat) + " per xatejar";
+        if (openHint != hint && input.placeholder is TMP_Text placeholder)
+        {
+            openHint = hint;
+            placeholder.text = hint;
+        }
+        if (Time.frameCount != submitFrame && GameControls.Down(GameControls.OpenChat) && !DisplaySettings.Pending)
         {
             input.Select(); input.ActivateInputField();
             lastActivity = Time.unscaledTime;
@@ -310,6 +325,8 @@ public class InGameNetUI : MonoBehaviour
             bool here = p.id == s.LocalId || p.scene == token;
             sb.Append(here ? "" : "<color=#5C7478>").Append(NetSession.Safe(p.name));
             if (p.id == s.LocalId) sb.Append(" (tu)");
+            if (here && p.maxHealth > 0 && Time.realtimeSinceStartupAsDouble - p.lastPos < 1)
+                sb.Append(" · ").Append(p.health).Append('/').Append(p.maxHealth);
             if (!here) sb.Append(p.scene >= 0 && p.scene % 1000 > 0 ? " · pis " + (p.scene % 1000) : " · lluny");
             if (!here) sb.Append("</color>");
             sb.Append('\n');

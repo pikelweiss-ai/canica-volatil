@@ -11,14 +11,32 @@ public class CameraFollow : MonoBehaviour
     private float shakeDuration = 0f;
     private float shakeMagnitude = 0.15f;
 
+    Camera view;
+    float normalSize;
+    PlayerAttack attack;
+
     void Start()
     {
         offset = new Vector3(0, 0, -10);
+        view = GetComponent<Camera>();
+        if (view != null) normalSize = view.orthographicSize;
     }
 
     void LateUpdate()
     {
         if(target==null || Time.deltaTime<=0) return;
+        if (attack == null || attack.transform != target) attack = target.GetComponent<PlayerAttack>();
+        var weapon = attack != null && target.gameObject.activeInHierarchy ? attack.CurrentWeapon : null;
+        if (view != null && view.orthographic)
+        {
+            float size = normalSize;
+            if (weapon != null && !weapon.melee && weapon.range >= 9f)
+            {
+                float range = weapon.range / Mathf.Cos(weapon.spreadAngle * Mathf.Deg2Rad) + 1f;
+                size = Mathf.Max(normalSize, range / Mathf.Min(1f, view.aspect));
+            }
+            view.orthographicSize = Mathf.MoveTowards(view.orthographicSize, size, 18f * Time.deltaTime);
+        }
         Vector3 targetCamPos = target.position + offset;
 
         if (shakeDuration > 0)

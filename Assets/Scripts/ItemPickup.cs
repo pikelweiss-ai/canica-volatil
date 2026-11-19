@@ -76,7 +76,7 @@ public class ItemPickup : MonoBehaviour
             itemVisual.localScale = Vector3.one * dropScale;
     }
 
-    void Start()
+    bool FindPlayer()
     {
         GameObject p = GameObject.FindWithTag("Player");
         if (p != null)
@@ -84,6 +84,7 @@ public class ItemPickup : MonoBehaviour
             player = p.transform;
             playerAttack = p.GetComponent<PlayerAttack>();
         }
+        return player != null && player.gameObject.activeInHierarchy && playerAttack != null;
     }
 
     // Surt del cofre fent un arc
@@ -115,7 +116,8 @@ public class ItemPickup : MonoBehaviour
         itemVisual.localPosition = Vector3.up * (floatHeight + s * bobHeight);
         shadow.localScale = shadowScale * (1f - 0.12f * (s + 1f) * 0.5f);
 
-        if (player == null || playerAttack == null) return;
+        if (player == null || !player.gameObject.activeInHierarchy || playerAttack == null)
+            if (!FindPlayer()) return;
         float distance = Vector2.Distance(player.position, transform.position);
 
         if (waitForPlayerToLeave)

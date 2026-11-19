@@ -67,7 +67,7 @@ public class HealInventory : MonoBehaviour
             for (int k = 0; k < counts[slot]; k++)
             {
                 Vector3 to = transform.position + (Vector3)(Random.insideUnitCircle.normalized * Random.Range(0.6f, 1.3f));
-                HealPickup.Spawn(item, transform.position, to);
+                HealPickup.Spawn(item, transform.position, TileNav.DropDestination(transform.position, to));
             }
             items[slot] = null; counts[slot] = 0;
         }
@@ -84,7 +84,7 @@ public class HealInventory : MonoBehaviour
         for (int k = 0; k < counts[slot]; k++)
         {
             Vector3 to = transform.position + dir * 1f + (Vector3)(Random.insideUnitCircle * 0.25f);
-            HealPickup.Spawn(item, transform.position, to, true);
+            HealPickup.Spawn(item, transform.position, TileNav.DropDestination(transform.position, to), true);
         }
         items[slot] = null;
         counts[slot] = 0;

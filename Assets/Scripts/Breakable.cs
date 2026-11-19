@@ -28,7 +28,7 @@ public class Breakable : MonoBehaviour
 
     public void Hit(int damage)
     {
-        if (broken || !DungeonGenerator.CanDamageBreakableAt(transform.position, explodes)) return;
+        if (broken || !DungeonGenerator.CanDamageBreakableAt(transform.position)) return;
         // El client demana el colp; nomes l'amfitrio canvia vida i decideix el trencament.
         if (NetShared.RequestBreakableHit(this, damage)) return;
         health -= damage;

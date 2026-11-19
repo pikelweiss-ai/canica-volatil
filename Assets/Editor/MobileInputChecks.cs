@@ -26,7 +26,12 @@ public static class MobileInputChecks
             a.position = Position(left,Vector2.one * 200); left.OnDrag(a); Require(Mathf.Abs(MobileInput.Movement.magnitude - 1) < .001f,"Diagonal limitada");
             left.Cancel(); right.Cancel(); Require(MobileInput.Movement == Vector2.zero && !MobileInput.Firing,"Cancel·lacio sense accions enganxades");
             Time.timeScale = 0; right.OnPointerDown(b); Require(!MobileInput.Firing,"Pausa bloqueja disparar");
-            Debug.Log("MOBILE_INPUT_CHECKS: PASS (7 comprovacions)");
+            for (int action = 0; action < GameControls.Actions.Length; action++)
+            {
+                MobileInput.Press(action);
+                MobileInput.Release(action);
+            }
+            Debug.Log("MOBILE_INPUT_CHECKS: PASS (joysticks, pausa i totes les accions)");
         }
         finally { UnityEngine.Object.DestroyImmediate(root); UnityEngine.Object.DestroyImmediate(events); MobileInput.Clear(); Time.timeScale = timeScale; GameControls.Editing = editing; }
     }

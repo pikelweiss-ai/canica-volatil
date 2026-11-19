@@ -597,7 +597,7 @@ public class NetSession : MonoBehaviour
                 double tnow = Time.realtimeSinceStartupAsDouble; bool Fresh(NetPlayer q) => q.scene >= 0 && tnow - q.lastPos < 1.0; // sense posicions recents (caigut, carregant) no s'envia
                 int count = 0; foreach (var pl in Players.Values) if (Fresh(pl)) count++;
                 w.Write((byte)count);
-                foreach (var pl in Players.Values) if (Fresh(pl)) { w.Write(pl.id); w.Write(pl.scene); w.Write(pl.x); w.Write(pl.y); w.Write(pl.aim); w.Write(pl.weapon ?? ""); w.Write(pl.down); }
+                foreach (var pl in Players.Values) if (Fresh(pl)) { w.Write(pl.id); pl.WritePosition(w); }
             });
             SendAll(snap);
         }
@@ -656,7 +656,7 @@ public class NetSession : MonoBehaviour
             int version = r.ReadInt32(); string package = r.ReadString(); string name = CleanName(r.ReadString());
             int skin = r.ReadInt16(), hat = r.ReadInt16(), trail = r.ReadInt16(); string hash = r.ReadString();
             string reject = null; int kind = 0;
-            if (version != NetProtocol.Version) { reject = "Versió diferent: la sala és " + GameVersion.Label + " i tu tens " + package + "."; kind = 3; }
+            if (version != NetProtocol.Version) { reject = "Versió diferent: la sala és " + GameVersion.Label + " i tu tens " + package + " (protocols " + NetProtocol.Version + " i " + version + ")."; kind = 3; }
             else if (Room.phase != RoomPhase.Lobby) { reject = "La partida ja ha començat. Espera que tornen al lobby."; kind = 4; }
             else if (Players.Count >= Room.maxPlayers) { reject = "La sala està plena (" + Room.maxPlayers + "/" + Room.maxPlayers + ")."; kind = 2; }
             else if (passwordHash.Length > 0 && hash != passwordHash) { reject = hash.Length == 0 ? "Aquesta sala té contrasenya." : "Contrasenya incorrecta."; kind = 1; }
@@ -682,7 +682,7 @@ public class NetSession : MonoBehaviour
         {
             case Msg.Ready: p.player.ready = r.ReadBoolean(); roomDirty = true; break;
             case Msg.Chat: HostChat(p.player.id, r.ReadString()); break;
-            case Msg.Pos: p.player.scene = r.ReadInt32(); p.player.x = r.ReadSingle(); p.player.y = r.ReadSingle(); p.player.aim = r.ReadInt16(); p.player.weapon = r.ReadString(); p.player.down = r.ReadBoolean(); p.player.lastPos = Time.realtimeSinceStartupAsDouble; break;
+            case Msg.Pos: p.player.ReadPosition(r, Time.realtimeSinceStartupAsDouble); break;
             case Msg.Pong: { long t = r.ReadInt64(); p.player.ping = (int)Math.Max(0, (DateTime.UtcNow.Ticks - t) / TimeSpan.TicksPerMillisecond); break; }
             case Msg.Leave: AddSystem(p.player.name + " ha eixit de la sala.", true); RemovePeer(p, false); break;
             default: NetCoop.OnHost(p.player, type, r); break;
@@ -807,7 +807,7 @@ public class NetSession : MonoBehaviour
             nextPos = now + 0.05f;
             var me = Local;
             if (SampleLocal(LocalId) && me != null)
-                hostLink.Send(NetProtocol.Frame(Msg.Pos, w => { w.Write(me.scene); w.Write(me.x); w.Write(me.y); w.Write(me.aim); w.Write(me.weapon ?? ""); w.Write(me.down); }));
+                hostLink.Send(NetProtocol.Frame(Msg.Pos, me.WritePosition));
         }
     }
 
@@ -846,7 +846,7 @@ public class NetSession : MonoBehaviour
                 for (int i = 0; i < n; i++)
                 {
                     var pl = NetPlayer.Read(r); seen.Add(pl.id);
-                    if (Players.TryGetValue(pl.id, out var old)) { pl.scene = old.scene; pl.x = old.x; pl.y = old.y; pl.aim = old.aim; pl.weapon = old.weapon; pl.down = old.down; pl.lastPos = old.lastPos; }
+                    if (Players.TryGetValue(pl.id, out var old)) { pl.scene = old.scene; pl.x = old.x; pl.y = old.y; pl.aim = old.aim; pl.weapon = old.weapon; pl.down = old.down; pl.health = old.health; pl.maxHealth = old.maxHealth; pl.lastPos = old.lastPos; }
                     Players[pl.id] = pl;
                 }
                 var gone = new List<int>(); foreach (var id in Players.Keys) if (!seen.Contains(id)) gone.Add(id);
@@ -864,11 +864,12 @@ public class NetSession : MonoBehaviour
             {
                 int n = r.ReadByte();
                 double t = Time.realtimeSinceStartupAsDouble;
+                NetPlayer skipped = null;
                 for (int i = 0; i < n; i++)
                 {
-                    int id = r.ReadInt32(); int scene = r.ReadInt32(); float x = r.ReadSingle(), y = r.ReadSingle(); short aim = r.ReadInt16(); string weapon = r.ReadString(); bool down = r.ReadBoolean();
-                    if (id == LocalId) continue;
-                    if (Players.TryGetValue(id, out var pl)) { pl.scene = scene; pl.x = x; pl.y = y; pl.aim = aim; pl.weapon = weapon; pl.down = down; pl.lastPos = t; }
+                    int id = r.ReadInt32();
+                    if (id != LocalId && Players.TryGetValue(id, out var pl)) pl.ReadPosition(r, t);
+                    else (skipped ??= new NetPlayer()).ReadPosition(r, t);
                 }
                 break;
             }

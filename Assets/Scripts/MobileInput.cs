@@ -6,8 +6,8 @@ public static class MobileInput
     public static bool Active => Application.isMobilePlatform || System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "--mobile-preview") >= 0;
     public static Vector2 Movement, Aim = Vector2.right;
     public static bool Firing;
-    static readonly bool[] held = new bool[19];
-    static readonly bool[] pressed = new bool[19];
+    static readonly bool[] held = new bool[GameControls.Actions.Length];
+    static readonly bool[] pressed = new bool[GameControls.Actions.Length];
     public static bool Held(int action) => Active && (action == 4 ? Firing : held[action]);
     // La cua evita perdre el toc si EventSystem s'executa despres del jugador.
     public static bool Down(int action) { if(!Active || !pressed[action]) return false; pressed[action] = false; return true; }
