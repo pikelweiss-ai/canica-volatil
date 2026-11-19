@@ -20,15 +20,15 @@ Per provar la via directa, crea una sala **Xarxa local** i, a l’altre joc, int
 
 **Menú.** Al lobby, l'amfitrió veu una fila **IP DIRECTA** amb la IP local i el port TCP que ha obert de veritat el joc (7777 o el següent lliure), i el botó **COPIAR IP**. Eixa adreça val per a la mateixa xarxa. Per a un amic d'una altra casa cal donar-li la **IP pública** de l'amfitrió amb el mateix port, i el router ha de reenviar eixe port TCP cap al PC.
 
-**Diagnòstic del PC de Ferran (sense tocar res):**
+**Què cal comprovar al PC de l'amfitrió:**
 
-| Comprovació | Resultat |
+| Comprovació | Què mirar |
 |---|---|
-| IP local / porta d'enllaç | `192.168.1.29` per Wi-Fi, router `192.168.1.1` |
-| Perfil de xarxa de Windows | Privada |
-| Tallafocs | Ja hi ha regla d'entrada TCP i UDP (perfil privat) per a `Builds/BugfixWorkspace/Builds/AlphaReview/Windows/CanicaAlphaReview.exe`. No cal tocar-lo per a esta build. |
-| CGNAT | Probablement **no**: el salt següent al router és una IP pública (`90.69.55.x`), no `100.64.x.x` ni privada. Es confirma comparant la IP WAN del router amb la IP pública. |
-| Reenviament de port | **Pendent i sense fer.** Cal TCP 7777 → `192.168.1.29` (i millor una reserva DHCP per a eixa IP). S'ha de parlar amb Ferran abans de tocar el router. |
+| IP local / porta d'enllaç | La IP local del PC (la mostra la fila IP DIRECTA) i la del router. |
+| Perfil de xarxa de Windows | Ha de ser **Privada**. |
+| Tallafocs | Cal una regla d'entrada TCP i UDP (perfil privat) per a l'executable del joc. Windows la demana la primera vegada que crees una sala. |
+| CGNAT | Si la IP WAN del router és `100.64.x.x` o privada, hi ha CGNAT i el reenviament de port no basta (millor una VPN tipus Tailscale). |
+| Reenviament de port | TCP 7777 (o el port que mostre el lobby) cap a la IP local de l'amfitrió, millor amb una reserva DHCP per a eixa IP. |
 
 **Passos per a la prova real** (amfitrió a casa, l'altre PC en una altra xarxa, p. ex. el portàtil amb la dada mòbil compartida del telèfon):
 
