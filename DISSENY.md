@@ -97,3 +97,11 @@ Més modes: *"ja vorem"*.
 - Codi: `Assets/Scripts/CreativeMode.cs`. Mentre col·loques, `PlayerAttack` no dispara i `HealInventory` no gasta cura amb el clic dret.
 - El mapa lliure ja **no porta cofres de fàbrica**: els posa qui juga des del Creatiu. S'han llevat amb **Canica → Cofres → Buidar els cofres del mapa lliure** (`ChestPrefabCreator.ClearFreeMapChests`).
 - Les **monedes del mapa lliure no se sumen al total** (`CoinBank`): només compten dins de la partida.
+
+## 12. Consell de jugadors i full de ruta (20/11/2026)
+Onze perfils (balanç, tester, casuals, pro, jugadors que venen de Brawl Stars i Soul Knight, dos personatges de reacció, retenció i jocs oberts) han revisat les dades reals i les conclusions de Ferran. Resultat complet a [CONSELL.md](CONSELL.md) i informes a `Docs/Consell/2026-11-20`.
+- **v1.1.2 · Estabilitat:** cooldown per casella, fills del boss dins de la sala, loot apartat del portal, monedes i cofres autoritaris online.
+- **v1.2 · Arsenal:** passada de balanç de la taula del consell, sprite/color/so per arma, durabilitat i calor com a estat de cada instància.
+- **Progressió barata:** resum de partida i rècord, monedes per a cosmètics, repte setmanal amb llavor fixa.
+- **v1.3 · Varietat:** amulets (1 de 3 per pis), minibosses, enemic virus, estats elementals; després etapes temàtiques (bosc maligne primer).
+- **Joc obert:** encara no; primer guardar mapes del Creatiu en local.
