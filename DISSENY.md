@@ -88,9 +88,11 @@ Més modes: *"ja vorem"*.
 - Què passa amb les monedes si no hi ha botiga
 
 ## 11. Mode Creatiu del mapa lliure (FIX-009, 19/11/2026)
-- Al **mapa lliure** (`GameScene`) hi ha un botó amb quatre blocs de colors **just davall del ☰**. També s'obri i es tanca amb la tecla **C**.
-- Pestanyes: **ARMES** (totes les del catàleg `NetContent`; van a la hotbar o, si està plena, al terra), **ENEMICS** (tots els de `Assets/Prefabs/Enemics`, bosses inclosos) i **COFRES** (els quatre de `Assets/Prefabs/Cofres`).
-- Enemics i cofres: clic a la fila i després clic al mapa. Es queda en mode col·locar per posar-ne uns quants seguits; **clic dret o Q** per a parar. Un fantasma roig vol dir que eixa casella està ocupada. Al mòbil apareixen dos blocs davant de la canica. **TREURE ENEMICS** elimina els que has creat.
+- Al **mapa lliure** (`GameScene`) hi ha un botó amb una **creu daurada** (un "+" de píxels) **just davall del ☰**. També s'obri i es tanca amb la tecla **C**.
+- Pestanyes: **ARMES** (totes les del catàleg `NetContent`; van a la hotbar o, si està plena, al terra), **MENJAR** (les quatre cures de `Resources/Items`; van a la bossa de cures o, si està plena, al terra), **ENEMICS** (tots els de `Assets/Prefabs/Enemics`, bosses inclosos) i **COFRES** (els quatre de `Assets/Prefabs/Cofres`).
+- Enemics i cofres: clic a la fila i després clic al mapa. Es queda en mode col·locar per posar-ne uns quants seguits; **clic dret o Q** per a parar. Un fantasma roig vol dir que eixa casella està ocupada. Al mòbil apareixen dos blocs davant de la canica. **TREURE ENEMICS** elimina els que has creat i **TREURE OBJECTES** lleva les armes, el menjar i les monedes caigudes que hi ha soltes pel terra (online, als altres els desapareixen com si algú les haguera agafat, amb `PickupTaken`).
 - **No es guarda res**: tot són objectes de l'escena. No toca `RunState`, el perfil ni `PlayerPrefs`. En eixir de la partida s'oblida tot.
 - **Online** (sala de mapa lliure): només el té l'**amfitrió**. Els enemics arriben als clients amb `EnemySpawn` i els cofres amb `ChestSpawn` (posició ×4 com a cel·la), els mateixos missatges d'abans, així que el **protocol continua sent 8**. El catàleg `NetContent` porta ara també `enemies` i `chests`, generats per `NetContentBuilder`. Tots els PCs de la sala han d'usar esta compilació perquè el client trobe els prefabs.
 - Codi: `Assets/Scripts/CreativeMode.cs`. Mentre col·loques, `PlayerAttack` no dispara i `HealInventory` no gasta cura amb el clic dret.
+- El mapa lliure ja **no porta cofres de fàbrica**: els posa qui juga des del Creatiu. S'han llevat amb **Canica → Cofres → Buidar els cofres del mapa lliure** (`ChestPrefabCreator.ClearFreeMapChests`).
+- Les **monedes del mapa lliure no se sumen al total** (`CoinBank`): només compten dins de la partida.

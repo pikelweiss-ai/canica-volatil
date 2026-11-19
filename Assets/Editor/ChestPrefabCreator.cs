@@ -281,6 +281,25 @@ public static class ChestPrefabCreator
         return enemies.Length;
     }
 
+    // Mapa lliure sense cofres de fàbrica: ara els posa qui juga des del mode Creatiu.
+    // Es pot executar sense finestra: -executeMethod ChestPrefabCreator.ClearFreeMapChests
+    [MenuItem("Canica/Cofres/Buidar els cofres del mapa lliure")]
+    public static void ClearFreeMapChests()
+    {
+        string originalScene = EditorSceneManager.GetActiveScene().path;
+        var scene = EditorSceneManager.OpenScene(TestScene, OpenSceneMode.Single);
+        Tilemap chests = FindTilemap(ChestTilemapName);
+        int before = chests != null ? chests.GetUsedTilesCount() : 0;
+        if (chests != null) chests.ClearAllTiles();
+        int loose = 0;
+        foreach (var c in Object.FindObjectsByType<Chest>(FindObjectsInactive.Include, FindObjectsSortMode.None)) { Object.DestroyImmediate(c.gameObject); loose++; }
+        EditorSceneManager.MarkSceneDirty(scene);
+        EditorSceneManager.SaveScene(scene);
+        Debug.Log("[Cofres] Mapa lliure buidat: " + before + " tipus de tile de cofre i " + loose + " cofres solts fora");
+        if (!Application.isBatchMode && !string.IsNullOrEmpty(originalScene) && originalScene != TestScene)
+            EditorSceneManager.OpenScene(originalScene, OpenSceneMode.Single);
+    }
+
     static Tilemap FindTilemap(string name)
     {
         GameObject go = GameObject.Find(name);

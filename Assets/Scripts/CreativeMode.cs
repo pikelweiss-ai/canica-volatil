@@ -19,8 +19,8 @@ public class CreativeMode : MonoBehaviour
     // PlayerAttack i HealInventory no fan res mentre col·loques (si no, el clic també dispararia)
     public static bool Placing => Instance != null && (Instance.placing != null || Time.frameCount <= Instance.placedFrame + 1);
 
-    enum Tab { Armes, Enemics, Cofres }
-    class Entry { public string name, info; public Sprite icon; public Color tint = Color.white; public WeaponData weapon; public GameObject prefab; public bool chest; }
+    enum Tab { Armes, Menjar, Enemics, Cofres }
+    class Entry { public string name, info; public Sprite icon; public Color tint = Color.white; public WeaponData weapon; public HealItem heal; public GameObject prefab; public bool chest; }
 
     Tab tab = Tab.Armes;
     GameObject canvas, panel, ghost;
@@ -62,20 +62,28 @@ public class CreativeMode : MonoBehaviour
         var sc = canvas.GetComponent<CanvasScaler>();
         sc.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight; sc.matchWidthOrHeight = 0.5f; // igual que el botó ☰
 
-        // Botó quadrat davall del ☰ amb quatre blocs de colors (com un inventari creatiu)
+        // Botó quadrat davall del ☰ amb una creu daurada de píxels: "afegir coses"
         Vector2 size = MobileInput.Active ? new Vector2(85, 70) : new Vector2(54, 48);
         var b = UIKit.Box(canvas.transform, Vector2.zero, size, new Color(0.04f, 0.09f, 0.14f, 0.8f), "Boto creatiu");
         b.anchorMin = b.anchorMax = b.pivot = Vector2.one; toggleButton = b;
         b.gameObject.AddComponent<Button>().onClick.AddListener(Toggle);
-        Color[] blocks = { UIKit.Gold, UIKit.Green, UIKit.Red, new Color(.35f, .6f, .95f) };
-        for (int i = 0; i < 4; i++)
-        {
-            var d = UIKit.Box(b, new Vector2(i % 2 == 0 ? -7 : 7, i < 2 ? 7 : -7), new Vector2(11, 11), blocks[i], "Bloc");
-            d.GetComponent<Image>().raycastTarget = false;
-        }
+        float k = size.y / 48f; // al mòbil el botó és més gran
+        // Ombra fosca desplaçada + creu daurada + una espurna blanca (estil píxel)
+        IconPiece(b, new Vector2(2, -2) * k, new Vector2(8, 26) * k, UIKit.Shadow);
+        IconPiece(b, new Vector2(2, -2) * k, new Vector2(26, 8) * k, UIKit.Shadow);
+        IconPiece(b, Vector2.zero, new Vector2(8, 26) * k, UIKit.Gold);
+        IconPiece(b, Vector2.zero, new Vector2(26, 8) * k, UIKit.Gold);
+        IconPiece(b, new Vector2(-2, 2) * k, new Vector2(4, 4) * k, new Color(1f, .93f, .7f)); // brillantor del centre
+        IconPiece(b, new Vector2(15, 14) * k, new Vector2(4, 4) * k, Color.white);              // espurna
         PlaceButton();
         BuildPanel();
         panel.SetActive(false);
+    }
+
+    static void IconPiece(Transform parent, Vector2 pos, Vector2 size, Color color)
+    {
+        var d = UIKit.Box(parent, pos, size, color, "Icona");
+        d.GetComponent<Image>().raycastTarget = false;
     }
 
     void BuildPanel()
@@ -87,19 +95,18 @@ public class CreativeMode : MonoBehaviour
         UIKit.Text(p, "MODE CREATIU", new Vector2(0, 280), new Vector2(420, 40), 28, TextAlignmentOptions.Center, UIKit.Gold);
         UIKit.Text(p, "Res es guarda: en eixir de la partida s'oblida tot.", new Vector2(0, 250), new Vector2(420, 26), 15, TextAlignmentOptions.Center, UIKit.Muted);
         UIKit.Button(p, "X", new Vector2(195, 282), new Vector2(36, 34), Toggle, UIKit.Style.Ghost, 18, false);
-        tabButtons = new UIKit.UIButton[3];
-        string[] names = { "ARMES", "ENEMICS", "COFRES" };
-        for (int i = 0; i < 3; i++)
+        string[] names = { "ARMES", "MENJAR", "ENEMICS", "COFRES" };
+        tabButtons = new UIKit.UIButton[names.Length];
+        for (int i = 0; i < names.Length; i++)
         {
             int t = i;
-            tabButtons[i] = UIKit.Button(p, names[i], new Vector2(-142 + i * 142, 205), new Vector2(134, 40), () => { tab = (Tab)t; Fill(); }, UIKit.Style.Normal, 18);
+            tabButtons[i] = UIKit.Button(p, names[i], new Vector2(-159 + i * 106, 205), new Vector2(100, 40), () => { tab = (Tab)t; Fill(); }, UIKit.Style.Normal, 16);
         }
         list = UIKit.ScrollList(p, new Vector2(0, -35), new Vector2(420, 420), out _, 4);
         hint = UIKit.Text(p, "", new Vector2(0, -268), new Vector2(420, 40), 15, TextAlignmentOptions.Center, UIKit.Muted);
-        var clear = UIKit.Button(p, "TREURE ENEMICS", new Vector2(-105, -287), new Vector2(200, 34), ClearEnemies, UIKit.Style.Danger, 15, false);
-        clear.rect.anchoredPosition = new Vector2(-105, -287);
-        var close = UIKit.Button(p, "TANCAR (C)", new Vector2(105, -287), new Vector2(200, 34), Toggle, UIKit.Style.Normal, 15, false);
-        close.rect.anchoredPosition = new Vector2(105, -287);
+        UIKit.Button(p, "TREURE ENEMICS", new Vector2(-143, -287), new Vector2(134, 34), ClearEnemies, UIKit.Style.Danger, 13, false);
+        UIKit.Button(p, "TREURE OBJECTES", new Vector2(0, -287), new Vector2(134, 34), ClearItems, UIKit.Style.Danger, 13, false);
+        UIKit.Button(p, "TANCAR (C)", new Vector2(143, -287), new Vector2(134, 34), Toggle, UIKit.Style.Normal, 13, false);
         Fill();
     }
 
@@ -111,6 +118,9 @@ public class CreativeMode : MonoBehaviour
         if (tab == Tab.Armes && catalog.weapons != null)
             foreach (var w in catalog.weapons)
                 if (w != null) e.Add(new Entry { name = w.weaponName, info = RarityName(w.rarity) + " · " + w.damage + " de dany", icon = w.icon, tint = ItemGraphics.RarityColor(w.rarity), weapon = w });
+        if (tab == Tab.Menjar)
+            foreach (var hi in HealItem.All)
+                if (hi != null) e.Add(new Entry { name = hi.itemName, info = "+" + hi.healAmount + (hi.healAmount == 1 ? " cor" : " cors"), icon = hi.icon, tint = ItemGraphics.RarityColor(hi.rarity), heal = hi });
         if (tab == Tab.Enemics && catalog.enemies != null)
             foreach (var go in catalog.enemies)
             {
@@ -154,13 +164,14 @@ public class CreativeMode : MonoBehaviour
     {
         if (hint == null) return;
         if (placing != null) hint.text = "<color=#EBB347>" + placing.name + "</color>: clic al mapa per a posar-ne\nClic dret o Q per a parar";
-        else hint.text = tab == Tab.Armes ? "Clica una arma i va a la teua hotbar" : MobileInput.Active ? "Toca'l i apareix davant teu" : "Clica'l i després clica on el vols al mapa";
+        else hint.text = tab == Tab.Armes ? "Clica una arma i va a la teua hotbar" : tab == Tab.Menjar ? "Clica'l i va a la bossa de cures (tecles 5-8)" :MobileInput.Active ? "Toca'l i apareix davant teu" : "Clica'l i després clica on el vols al mapa";
     }
 
     // ---------- Accions ----------
     void Pick(Entry e)
     {
         if (e.weapon != null) { GiveWeapon(e.weapon); return; }
+        if (e.heal != null) { GiveHeal(e.heal); return; }
         if (MobileInput.Active)
         {
             // En el mòbil no hi ha ratolí: apareix dos blocs davant de la canica
@@ -188,6 +199,21 @@ public class CreativeMode : MonoBehaviour
             Vector3 from = player.transform.position;
             ItemPickup.Spawn(w, from, TileNav.DropDestination(from, from + Vector3.down * 0.9f));
             Fx.Text(from, "Hotbar plena: al terra", UIKit.Muted);
+        }
+    }
+
+    void GiveHeal(HealItem item)
+    {
+        var player = GameObject.FindWithTag("Player");
+        var bag = player != null ? player.GetComponent<HealInventory>() : null;
+        if (bag == null) return;
+        if (bag.Add(item)) Fx.Text(player.transform.position, item.itemName, ItemGraphics.RarityColor(item.rarity));
+        else
+        {
+            // Bossa plena (4 caselles de 5): cau al terra com quan la deixes tu
+            Vector3 from = player.transform.position;
+            HealPickup.Spawn(item, from, TileNav.DropDestination(from, from + Vector3.down * 0.9f));
+            Fx.Text(from, "Bossa plena: al terra", UIKit.Muted);
         }
     }
 
@@ -225,6 +251,18 @@ public class CreativeMode : MonoBehaviour
             return chest;
         }
         return null;
+    }
+
+    // Lleva tot el que hi ha solt pel terra: armes, menjar i monedes caigudes.
+    // Les monedes animades del mapa (MonedaMapa) no, que són part del mapa.
+    void ClearItems()
+    {
+        int n = 0;
+        foreach (var it in FindObjectsByType<ItemPickup>(FindObjectsSortMode.None)) { Fx.Burst(it.transform.position, new Color(.7f, .9f, 1f), 4, 1.5f); NetShared.HostRemove(it); n++; }
+        foreach (var it in FindObjectsByType<HealPickup>(FindObjectsSortMode.None)) { Fx.Burst(it.transform.position, new Color(.7f, .9f, 1f), 4, 1.5f); NetShared.HostRemove(it); n++; }
+        foreach (var it in FindObjectsByType<CoinDrop>(FindObjectsSortMode.None)) { NetShared.HostRemove(it); n++; }
+        var player = GameObject.FindWithTag("Player");
+        if (player != null) Fx.Text(player.transform.position, n > 0 ? n + " objectes fora" : "No n'hi ha", UIKit.Muted);
     }
 
     void ClearEnemies()

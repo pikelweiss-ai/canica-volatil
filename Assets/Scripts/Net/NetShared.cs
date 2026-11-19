@@ -92,6 +92,20 @@ public static class NetShared
         return true;
     }
 
+    // Mode Creatiu: l'amfitrio lleva un objecte del terra. Als altres els arriba com si algu l'haguera agafat.
+    public static void HostRemove(Component pickup)
+    {
+        if (pickup == null) return;
+        var ni = pickup.GetComponent<NetItem>();
+        if (NetCoop.IsHost && ni != null && taken.Add(ni.id))
+        {
+            int id = ni.id;
+            S.SendAll(NetProtocol.Frame(Msg.PickupTaken, w => w.Write(id)));
+            items.Remove(id);
+        }
+        Object.Destroy(pickup.gameObject);
+    }
+
     static void SpawnRemote(int id, Kind kind, string data, Vector3 from, Vector3 to)
     {
         if (items.ContainsKey(id)) return;

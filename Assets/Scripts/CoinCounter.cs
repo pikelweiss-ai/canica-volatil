@@ -47,6 +47,8 @@ public static class CoinBank
     public static int Total => PlayerPrefs.GetInt(Key, 0);
     public static void Add(int n)
     {
+        // Mapa lliure (amb el mode Creatiu): les monedes només compten dins de la partida, no al teu total
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == CreativeMode.Scene) return;
         PlayerPrefs.SetInt(Key, Total + n);
     }
 }
