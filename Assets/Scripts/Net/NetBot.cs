@@ -109,6 +109,7 @@ public partial class NetBot : MonoBehaviour
         yield return null; Ok("llavor " + s.Seed + " · " + NetBotLayout.Fingerprint());
         yield return WaitFor(() => Avatars >= expect - 1, 20, "avatar remot visible en partida");
         if (coop && Scene == "Dungeon") { yield return HostCoop(); if (failed) yield break; }
+        if (Scene == "GameScene") { yield return CheckFreeSky(); if (failed) yield break; }
         yield return new WaitForSecondsRealtime(0.5f);
         yield return Shot("6-partida-amfitrio");
         if (failed) yield break;

@@ -14,17 +14,31 @@ public class CameraFollow : MonoBehaviour
     Camera view;
     float normalSize;
     PlayerAttack attack;
+    SpriteRenderer sky;
+    Vector3 skyScale;
+    Vector2 skySize;
 
     void Start()
     {
         offset = new Vector3(0, 0, -10);
         view = GetComponent<Camera>();
         if (view != null) normalSize = view.orthographicSize;
+        var background = transform.Find("Background");
+        if (background != null && background.TryGetComponent(out sky) && sky.sprite != null)
+        {
+            skyScale = background.localScale;
+            skySize = sky.bounds.size;
+        }
+        FitSky();
     }
 
     void LateUpdate()
     {
-        if(target==null || Time.deltaTime<=0) return;
+        if (target == null || Time.deltaTime <= 0)
+        {
+            FitSky();
+            return;
+        }
         if (attack == null || attack.transform != target) attack = target.GetComponent<PlayerAttack>();
         var weapon = attack != null && target.gameObject.activeInHierarchy ? attack.CurrentWeapon : null;
         if (view != null && view.orthographic)
@@ -52,6 +66,18 @@ public class CameraFollow : MonoBehaviour
         }
 
         transform.position = Vector3.SmoothDamp(transform.position, targetCamPos, ref velocity, 0.2f / Mathf.Max(.01f,smoothing),Mathf.Infinity,Time.deltaTime);
+        FitSky();
+    }
+
+    void FitSky()
+    {
+        if (view == null || !view.orthographic || sky == null || !sky.enabled || !sky.gameObject.activeInHierarchy ||
+            skySize.x <= 0f || skySize.y <= 0f) return;
+
+        float height = 2f * view.orthographicSize;
+        float cover = Mathf.Max(height * view.aspect / skySize.x, height / skySize.y);
+        float scale = Mathf.Max(1f, cover * 1.03f);
+        sky.transform.localScale = new Vector3(skyScale.x * scale, skyScale.y * scale, skyScale.z);
     }
 
     public void ShakeCamera(float duration, float magnitude)

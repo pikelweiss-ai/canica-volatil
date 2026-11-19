@@ -65,6 +65,53 @@ public partial class NetBot
         Ok("cofre de cantonada: arma, dues cures i tres monedes accessibles");
     }
 
+    IEnumerator CheckFreeSky()
+    {
+        var camera = Camera.main;
+        var background = camera != null ? camera.transform.Find("Background") : null;
+        var sky = background != null ? background.GetComponent<SpriteRenderer>() : null;
+        var player = GameObject.FindWithTag("Player");
+        var attack = player != null ? player.GetComponent<PlayerAttack>() : null;
+        var crossbow = NetCoop.Weapon("Ballesta");
+        if (sky == null || !sky.enabled || !sky.gameObject.activeInHierarchy || attack == null || crossbow == null)
+        {
+            Fail("falta el fons o la Ballesta en el mapa lliure");
+            yield break;
+        }
+
+        var saved = attack.hotbarSlots[0];
+        try
+        {
+            attack.hotbarSlots[0] = crossbow;
+            attack.SelectSlot(0);
+            foreach (float aspect in new[] { 2.4f, .75f })
+            {
+                camera.aspect = aspect;
+                float range = crossbow.range / Mathf.Cos(crossbow.spreadAngle * Mathf.Deg2Rad) + 1f;
+                yield return WaitFor(() => camera.orthographicSize * Mathf.Min(1f, aspect) >= range - .01f,
+                    4, "zoom de la Ballesta amb proporció " + aspect);
+                if (failed) yield break;
+                yield return null;
+                var bounds = sky.bounds;
+                var center = camera.transform.position;
+                float halfWidth = aspect * camera.orthographicSize;
+                if (bounds.min.x > center.x - halfWidth || bounds.max.x < center.x + halfWidth ||
+                    bounds.min.y > center.y - camera.orthographicSize || bounds.max.y < center.y + camera.orthographicSize)
+                {
+                    Fail("es veu la vora del cel en el mapa lliure");
+                    yield break;
+                }
+            }
+            Ok("el cel del mapa lliure cobreix tota la Ballesta en pantalles amples i estretes");
+        }
+        finally
+        {
+            camera.ResetAspect();
+            attack.hotbarSlots[0] = saved;
+            attack.SelectSlot(0);
+        }
+    }
+
     IEnumerator CheckHeldAttack()
     {
         var player = DungeonGenerator.Instance.player;
