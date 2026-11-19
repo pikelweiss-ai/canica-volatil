@@ -95,6 +95,24 @@ $sprites['Skins/Or']=@{size=16;rows=@(
 '...kkuuuuuukk...',
 '.....kkkkkk.....')}
 # Segona passada de skins, amb silueta i cara editables en una graella de 16×16.
+# Glaço tiritant: ulls de la Classica i reflex en un cantó de gel.
+$sprites['Skins/Gel']=@{size=16;rows=@(
+  '.....kkkkkk.....',
+  '...kkIIIIIIkk...',
+  '..kWWIIIIIIWWk..',
+  '.kIWWIIIIIIWWhk.',
+  '.kIIIIIIIIIIhhk.',
+  'kIIIIkkIIkkIIhhk',
+  'kIIIIkkIIkkIhhJk',
+  'kIIIIkkIIkkIhIJk',
+  'kIIIIIIIIIIIIJJk',
+  'kIIIIIkkIkkIIJJk',
+  'kIIIIkIIkIIkIJJk',
+  '.kJIIIIIIIIIJJk.',
+  '.kJJIIIIIIIJJJk.',
+  '..kJJJJJJJJJJk..',
+  '...kkJJJJJJkk...',
+  '.....kkkkkk.....')}
 $sprites['Skins/Zombi']=@{size=16;rows=@(
   '.....kk..kk.....',
   '...kkHeekLLkk...',
