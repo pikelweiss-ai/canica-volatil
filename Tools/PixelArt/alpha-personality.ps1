@@ -96,40 +96,49 @@ $sprites['Skins/Or']=@{size=16;rows=@(
 '.....kkkkkk.....')}
 # Segona passada de skins, amb silueta i cara editables en una graella de 16×16.
 # Glaço tiritant: ulls de la Classica, dents i facetes de gel.
+$P['9']='588ab7' # Vora del glaço, amb menys contrast.
+$P['2']='182d19'
+$P['3']='347837'
+$P['4']='469846'
+$P['8']='60b44f'
+$P['5']='172018'
+$P['6']='294421'
+$P['7']='547830'
 $sprites['Skins/Gel']=@{size=16;rows=@(
   '.....kkkkkk.....',
   '...kkIIhhhkkk...',
   '..kWWIIhhhIWWk..',
-  '.kIWWIhIIhhWhBk.',
-  '.kIIIIhIIIhhBJk.',
-  'kIIIIkkIIkkhIBJk',
-  'kIIIIkkIIkkIhBJk',
-  'kIIIIkkIIkkIhBJk',
-  'kIIIIIIIIIIIJBJk',
-  'kIhIIkkkkkkIJBJk',
-  'kIIIkWkWkWkkJBJk',
-  '.kJIkkkkkkkJBJk.',
-  '.kJJIIIhJJJBJJk.',
-  '..kJJIhJJBBBJk..',
+  '.kIWWIhIIhhWh9k.',
+  '.kIIIIhIIIhh9Jk.',
+  'kIIIIkkIIkkhI9Jk',
+  'kIIIIkkIIkkIh9Jk',
+  'kIIIIkkIIkkIh9Jk',
+  'kIIIIIIIIIIIJ9Jk',
+  'kIhIIkkkkkkIJ9Jk',
+  'kIIIkWkWkWkkJ9Jk',
+  '.kJIkkkkkkkJ9Jk.',
+  '.kJJIIIhJJJ9JJk.',
+  '..kJJIhJJ999Jk..',
   '...kkJJJJJJkk...',
   '.....kkkkkk.....')}
+# Zombi: graella del sprite del mal enemic, amb paleta verda.
 $sprites['Skins/Zombi']=@{size=16;rows=@(
-  '.....kk..kk.....',
-  '...kkHeekLLkk...',
-  '..kHHeeeeeLLLk..',
-  '.kHeeLkeeeLLLk..',
-  '.kHeekkekkeLLLk.',
-  'kHHeeWkekWeeLLLk',
-  'kHeeeHkeHkeeLLLk',
-  'kHeeLkeeeeeeLLLk',
-  'kHeeeekkkkeeeeek',
-  'kHeeekccckkkeeek',
-  'kLeeekckkceeeeLk',
-  '.kLLekkkkkeeeLk.',
-  '.kLLeeeeLeeeLLk.',
-  '..kLLLLLLLLLLk..',
-  '...kkLLLLLLkk...',
-  '.....kkkkkk.....'
+  '.....222222.....',
+  '...2233333322...',
+  '..234434443332..',
+  '.23348488444332.',
+  '.23466888866432.',
+  '2344676886764432',
+  '2344666886668432',
+  '2344888888888432',
+  '2348888888884432',
+  '2345685556866432',
+  '2345555556655332',
+  '.23355555665432.',
+  '.23345466674332.',
+  '..233344434432..',
+  '...2233333322...',
+  '.....222222.....'
 )}
 $sprites['Skins/Robot']=@{size=16;rows=@(
   '.....kkkkkk.....',
