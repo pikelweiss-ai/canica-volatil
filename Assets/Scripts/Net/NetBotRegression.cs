@@ -278,11 +278,21 @@ public partial class NetBot
             }
 
             yield return null;
-            float started = Time.time;
-            while (Time.time - started < .63f)
+            IEnumerator Move(Vector3 from, Vector3 to)
             {
-                float elapsed = Mathf.Min(.63f, Time.time - started);
-                Vector3 motion = new Vector3(elapsed * 5.2f, Mathf.Min(.27f, elapsed * .65f));
+                const float duration = .63f;
+                float started = Time.time;
+                float progress = 0f;
+                while (progress < 1f)
+                {
+                    progress = Mathf.Clamp01((Time.time - started) / duration);
+                    PlaceAvatars(Vector3.Lerp(from, to, progress));
+                    yield return null;
+                }
+            }
+
+            void PlaceAvatars(Vector3 motion)
+            {
                 for (int i = 0; i < avatars.Length; i++)
                 {
                     Vector3 target = origins[i] + motion;
@@ -296,9 +306,10 @@ public partial class NetBot
                     }
                     else avatars[i].position = target;
                 }
-                yield return null;
             }
 
+            Vector3 diagonalEnd = new Vector3(3.25f, .27f);
+            yield return Move(Vector3.zero, diagonalEnd);
             for (int i = 0; i < avatars.Length; i++)
             {
                 bool expected = db.trails[i].color.a > 0f;
@@ -314,7 +325,18 @@ public partial class NetBot
             yield return new WaitForSeconds(.8f);
             for (int i = 0; i < avatars.Length; i++)
                 if (TrailVisible(avatars[i])) { Fail(prefix + ": estela congelada en parar: " + db.trails[i].name); yield break; }
-            Ok(prefix + ": " + db.trails.Length + " presets en moviment i parada");
+            yield return Move(diagonalEnd, new Vector3(.1f, diagonalEnd.y));
+            for (int i = 0; i < avatars.Length; i++)
+            {
+                bool expected = db.trails[i].color.a > 0f;
+                if (TrailVisible(avatars[i]) != expected)
+                {
+                    Fail(prefix + ": estela absent o incorrecta en tornar a moure's en recta: " + db.trails[i].name);
+                    yield break;
+                }
+            }
+            yield return Shot(prefix + "-recta");
+            Ok(prefix + ": " + db.trails.Length + " presets en diagonal, parada i arrancada en recta");
             Destroy(objects);
             yield return null;
         }

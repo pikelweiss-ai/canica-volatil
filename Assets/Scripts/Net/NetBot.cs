@@ -282,24 +282,26 @@ public partial class NetBot : MonoBehaviour
         var chest=FindFirstObjectByType<Chest>(); var old=chest.transform.position; chest.transform.position=pos;
         bool stopped=NetCoop.InterceptChestOpen(chest); chest.transform.position=old;
         if(!stopped || chest.IsOpen) { Fail("s'ha pogut obrir cofre en sala bloquejada"); return false; }
-        var crate=FindFirstObjectByType<Breakable>(); old=crate.transform.position;
-        int hp=crate.health;
         if(DungeonGenerator.CanDamageBreakableAt(pos)!=room.active) { Fail("les caixes han d'estar protegides en espera i disponibles en combat"); return false; }
         if(NetCoop.IsHost)
         {
-            bool explosive = crate.explodes;
+            // Una caixa de la sala podria estar trencada i pendent de Destroy al final del frame.
+            var probe = new GameObject("Prova de dany a caixes");
+            probe.transform.position = pos;
+            var crate = probe.AddComponent<Breakable>();
             foreach (bool usesExplosive in new[] { false, true })
             {
                 crate.explodes = usesExplosive;
                 crate.health = 10;
-                crate.transform.position = pos;
                 crate.Hit(1);
-                bool damaged = crate.health == 9;
-                crate.health = hp;
-                crate.explodes = explosive;
-                crate.transform.position = old;
-                if (damaged != room.active) { Fail("colp a caixa o TNT incorrecte en espera/combat"); return false; }
+                if (crate.health != (room.active ? 9 : 10))
+                {
+                    Destroy(probe);
+                    Fail("colp a caixa o TNT incorrecte en espera/combat");
+                    return false;
+                }
             }
+            Destroy(probe);
         }
         Ok(room.active ? "caixa i TNT reben colps durant el combat" : "caixa i TNT protegides mentre falten companys");
         Ok("cofre bloquejat en sala pendent/combat"); return true;
