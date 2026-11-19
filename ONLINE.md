@@ -4,6 +4,20 @@
 
 On està: **JUGAR → targeta "Online"**. Obri el navegador de sales.
 
+## Estat actual de la prova
+
+La branca és `alpha/bugfixes` i usa protocol 8. La suite Windows ha passat 4/4 al mateix PC: llista i codi LAN, i llista i codi amb relay local. També hi ha una prova anterior de masmorra per IP directa en loopback (protocol 8). Queda validar la connexió directa entre dos dispositius i després entre dos xarxes domèstiques. El relay accessible per Internet queda pendent de desplegament i prova remota.
+
+| Via | Què comparteix l’amfitrió | Què cal |
+|---|---|---|
+| LAN | Codi LAN o adreça i port | Mateixa xarxa local. El codi es resol per descobriment UDP. |
+| IP directa | Adreça i port TCP real de la sala | L’altre jugador ha de poder arribar al PC de l’amfitrió. Per Internet, normalment cal configurar el reenviament de port. Amb CGNAT, eixa configuració del router pot ser insuficient. |
+| Internet amb codi curt | Codi de sis caràcters | Els dos jugadors han de configurar el mateix relay accessible. El PC de qui crea la sala porta la simulació. |
+
+Per provar la via directa, crea una sala **Xarxa local** i, a l’altre joc, introduïx `IP:port` al camp **Unir-se amb codi**. El port habitual és TCP 7777. Usa el que haja obert realment el joc si el 7777 estava ocupat.
+
+[Traspàs per a Claude](TRASPAS_CODEX_ONLINE.md).
+
 ## Què pots fer
 
 | Pantalla | Què hi ha |
@@ -53,7 +67,7 @@ powershell -ExecutionPolicy Bypass -File Tools\Net\test-online.ps1
 
 Arranca instàncies sense finestra (`-canicaBot host|join`, `NetBot.cs`) i prova: llista LAN + contrasenya (sense, dolenta i bona) + mapa lliure; codi LAN + masmorra; servidor d'Internet + llista + contrasenya; codi per Internet. Cada cas comprova xat, llest, avatar visible al lobby i en partida, que amfitrió i jugador tenen la mateixa llavor i la mateixa masmorra (empremta de sales), tornar al lobby i tancar sala. Els casos de masmorra (`-botCoop`) comproven a més: enemics creats per l'amfitrió i còpies al client sense IA, un enemic mort pel colp del client, bala del company visible, cofre obert pel client i bloquejat per a l'amfitrió, dany enviat al company (5 -> 4 cors) i sala acabada per a tots.
 
-Resultat 18/11/2026 (build Windows, mateix PC): **els 4 escenaris passen**, sense excepcions als logs.
+Regressió del 19/11/2026, protocol 8, Windows al mateix PC: **4/4** amb client tàctil simulat. Logs a `Builds/SkinsReworkQA/Online/result.txt`. La prova directa anterior és a `Builds/TrailsBossTests/DirectAndRelay`.
 
 Captures de les pantalles sense obrir finestres (`Builds/OnlineShots/`):
 
@@ -61,7 +75,7 @@ Captures de les pantalles sense obrir finestres (`Builds/OnlineShots/`):
 powershell -ExecutionPolicy Bypass -File Tools\Net\shots-online.ps1
 ```
 
-Encara NO provat: dos PCs reals en la mateixa wifi, Linux, i el servidor en una màquina d'Internet (AWS).
+Queda pendent provar dos equips físics, la connexió directa des de dos xarxes diferents, el relay remot i el joc en Linux físic.
 
 ## Cooperatiu (masmorra i mapa lliure)
 

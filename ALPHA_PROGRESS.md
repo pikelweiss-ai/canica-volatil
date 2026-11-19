@@ -1,6 +1,12 @@
 # Alpha de PC · primera passada visual i ajustos
 
-Estat vigent de xarxa: vegeu l'última secció i ONLINE.md; els pendents i bugs de les seccions anteriors són històrics.
+Estat vigent a la branca `alpha/bugfixes` (19/11/2026):
+
+- L’última prova de Windows, `Builds/AlphaReview/Windows-cares-classiques/CanicaAlphaReview.exe`, ha compilat amb zero errors. Les 11 skins marcades recuperen les textures anteriors. Capvespre coincidix amb la textura aprovada. Altres 11 porten la cara de la Clàssica. Coure i Caramel conserven la cara, i Gota té una silueta més perfilada. Catàleg a `Builds/CaresClassiquesQA/Cataleg.png`.
+- El cel original del mapa lliure cobrix la càmera amb el zoom de la Ballesta en formats ample i estret. Prova automatitzada superada.
+- Protocol 8. La suite Windows de connexió ha passat 4/4 amb client tàctil simulat a `Builds/SkinsReworkQA/Online`. La connexió entre cases encara està pendent de prova. Vegeu [ONLINE.md](ONLINE.md) i el [traspàs per a Claude](TRASPAS_CODEX_ONLINE.md).
+
+Les seccions següents documenten revisions anteriors.
 
 Branca `alpha/pc-foundation`, compilació de treball **Alpha v1.0.0**. Encara no s'ha publicat com a release.
 
