@@ -316,18 +316,7 @@ foreach ($name in $sprites.Keys) {
   if ($name -notlike $Only) { continue }
   $s = $sprites[$name]
   $bmp = New-Sprite (Expand-Rows $s) $s.size $s.size
-  if ($s.scale) {
-    $scaled = New-Object Drawing.Bitmap ($bmp.Width * $s.scale), ($bmp.Height * $s.scale)
-    for ($y = 0; $y -lt $scaled.Height; $y++) {
-      for ($x = 0; $x -lt $scaled.Width; $x++) {
-        $scaled.SetPixel($x, $y, $bmp.GetPixel([int][Math]::Floor($x / $s.scale), [int][Math]::Floor($y / $s.scale)))
-      }
-    }
-    $bmp.Dispose()
-    $bmp = $scaled
-  }
-  $relativePath = if ($s.path) { $s.path } else { $name + '.png' }
-  $path = Join-Path $OutRoot $relativePath
+  $path = Join-Path $OutRoot ($name + '.png')
   New-Item -ItemType Directory -Force (Split-Path $path) | Out-Null
   $bmp.Save($path, [Drawing.Imaging.ImageFormat]::Png)
   $bitmaps[$name] = $bmp
