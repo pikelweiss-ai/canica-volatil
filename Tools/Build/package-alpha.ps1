@@ -21,7 +21,7 @@ foreach($platform in @('Windows','Linux')){
     $dest=Join-Path $stage $name
     New-Item -ItemType Directory -Path $dest | Out-Null
     foreach($entry in Get-ChildItem -LiteralPath (Join-Path $project "Builds\AlphaReview\$platform")){
-        if($entry.Name -match 'DoNotShip|BackUpThisFolder|\.pdb$|\.mdb$|^build-result\.txt$'){continue}
+        if($entry.Name -match 'DoNotShip|BackUpThisFolder|\.pdb$|\.mdb$|^build-result\.txt$|\.log$|\.tmp$|~RF'){continue} # sense logs locals ni temporals del pegat
         Copy-Item -LiteralPath $entry.FullName -Destination $dest -Recurse
     }
     Move-Staged (Join-Path $dest 'CanicaAlphaReview_Data') (Join-Path $dest 'CanicaVolatil_Data')
@@ -40,7 +40,14 @@ foreach($platform in @('Windows','Linux')){
     if($platform -eq 'Windows'){
         Compress-Archive -LiteralPath $dest -DestinationPath (Join-Path $Out "$name.zip") -CompressionLevel Optimal
     }else{
-        & node (Join-Path $project 'Tools\Release\package-linux.mjs') $dest (Join-Path $Out "$name.tar.gz")
+        if(Get-Command node -ErrorAction SilentlyContinue){
+            & node (Join-Path $project 'Tools\Release\package-linux.mjs') $dest (Join-Path $Out "$name.tar.gz")
+        }else{
+            # Sense Node: el mateix TAR amb Python (py.exe o la instal·lacio d'usuari)
+            $py=(Get-Command py -ErrorAction SilentlyContinue).Source
+            if(-not $py){$py=Join-Path $env:LOCALAPPDATA 'Programs\Python\Python313\python.exe'}
+            & $py -I (Join-Path $project 'Tools\Release\package-linux.py') $dest (Join-Path $Out "$name.tar.gz")
+        }
         if($LASTEXITCODE -ne 0){throw 'Ha fallat el TAR Linux'}
     }
 }
@@ -49,5 +56,5 @@ Copy-Item -LiteralPath $apk -Destination $Out
 $hashes=foreach($p in Get-ChildItem -LiteralPath $Out -File | Where-Object {$_.Name -match '\.(zip|tar\.gz|apk)$'}){
     (Get-FileHash -LiteralPath $p.FullName -Algorithm SHA256).Hash.ToLower()+'  '+$p.Name
 }
-[IO.File]::WriteAllLines((Join-Path $Out 'SHA256SUMS.txt'),$hashes,[Text.UTF8Encoding]::new($false))
+[IO.File]::WriteAllText((Join-Path $Out 'SHA256SUMS.txt'),(($hashes -join "`n")+"`n"),[Text.UTF8Encoding]::new($false)) # LF: sha256sum -c funciona en Linux
 Write-Output "ALPHA_PACKAGES: $Out"
