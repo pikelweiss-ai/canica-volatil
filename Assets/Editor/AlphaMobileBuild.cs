@@ -35,7 +35,7 @@ public static class AlphaMobileBuild
             PlayerSettings.allowedAutorotateToPortrait = PlayerSettings.allowedAutorotateToPortraitUpsideDown = false;
             PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel26;
             PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
-            PlayerSettings.Android.bundleVersionCode = 3;
+            PlayerSettings.Android.bundleVersionCode = 4;
             PlayerSettings.Android.forceInternetPermission = true;
             PlayerSettings.Android.useCustomKeystore = false;
             PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
@@ -43,7 +43,7 @@ public static class AlphaMobileBuild
             EditorUserBuildSettings.buildAppBundle = false;
             EditorUserBuildSettings.exportAsGoogleAndroidProject = false;
             EditorUserBuildSettings.development = false;
-            const string output = "Builds/AlphaReview/Android/CanicaVolatil-Alpha-v1.0.0-Android.apk";
+            const string output = "Builds/AlphaReview/Android/CanicaVolatil-Alpha-v1.1.0-Android.apk";
             Directory.CreateDirectory(Path.GetDirectoryName(output));
             var scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray();
             var report = BuildPipeline.BuildPlayer(scenes, output, BuildTarget.Android, BuildOptions.StrictMode);

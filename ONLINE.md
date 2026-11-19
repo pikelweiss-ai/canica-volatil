@@ -1,6 +1,6 @@
 # Sales online — Canica Volàtil Alpha
 
-**Protocol d'esta branca de proves: 8.** Windows, Linux, Android i el servidor de sales han d'usar la mateixa revisió. L'Alpha v1.0.0 publicada usa protocol 5. Les instruccions de compilació estan a MOBILE_ALPHA.md.
+**Protocol: 8 (Alpha v1.1.0).** Windows, Linux, Android i el servidor de sales han d’usar la mateixa versió. L’Alpha v1.0.0 usa protocol 5 i no és compatible. Les instruccions de compilació estan a MOBILE_ALPHA.md.
 
 On està: **JUGAR → targeta "Online"**. Obri el navegador de sales.
 
