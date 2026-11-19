@@ -111,7 +111,13 @@ public static class NetCoop
     {
         if (templates.TryGetValue(key, out var t) && t != null) return t;
         var g = DungeonGenerator.Instance;
-        if (g == null) return null;
+        if (g == null)
+        {
+            // Mapa lliure: els enemics del mode Creatiu venen del cataleg
+            var cat = Resources.Load<NetContentCatalog>("NetContent");
+            if (cat != null && cat.enemies != null) foreach (var p in cat.enemies) if (p != null && Key(p) == key) return p;
+            return null;
+        }
         bool Match(GameObject p) => p != null && Key(p) == key;
         if (g.enemyPrefabs != null) foreach (var p in g.enemyPrefabs) if (Match(p)) return p;
         if (Match(g.bossPrefab)) return g.bossPrefab;
@@ -553,6 +559,7 @@ public static class NetCoop
             {
                 int token = r.ReadInt32(); int rarity = r.ReadInt32(); var cell = new Vector2Int(r.ReadInt32(), r.ReadInt32());
                 if (token == Token && gen != null) gen.NetSpawnChest(rarity, cell);
+                else if (token == Token) CreativeMode.CreateChest(rarity, cell); // mapa lliure: cofre del Creatiu (cel·la = posicio x4)
                 break;
             }
             case Msg.ChestOpened:

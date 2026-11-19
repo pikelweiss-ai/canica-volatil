@@ -121,6 +121,7 @@ public class PlayerAttack : MonoBehaviour
         // Només l'inici del clic decideix si la UI se'l queda.
         if (pressed) mouseBlocked = ClickTargetsUI(pointer);
         if (!held) mouseBlocked = false;
+        if (CreativeMode.Placing) return false; // el clic col·loca un enemic o cofre del mode Creatiu
         return !GameControls.Blocked && (otherBindingHeld || (mouseBound && held && !mouseBlocked));
     }
 

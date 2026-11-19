@@ -104,7 +104,7 @@ public class HealInventory : MonoBehaviour
             if (GameControls.Down(15 + i))
                 { selectedHeal = i; Use(i); }
         if (GameControls.WheelHeals && Input.mouseScrollDelta.y != 0f) selectedHeal = (selectedHeal + (Input.mouseScrollDelta.y < 0 ? 1 : 3)) % Slots;
-        if (GameControls.Down(10)) Use(selectedHeal);
+        if (GameControls.Down(10) && !CreativeMode.Placing) Use(selectedHeal); // el clic dret para el mode Creatiu
         ui.Select(selectedHeal);
     }
 

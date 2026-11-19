@@ -86,3 +86,11 @@ Més modes: *"ja vorem"*.
 - Quantes sales té una masmorra
 - Vida i mort en cooperatiu (reviure companys?)
 - Què passa amb les monedes si no hi ha botiga
+
+## 11. Mode Creatiu del mapa lliure (FIX-009, 19/11/2026)
+- Al **mapa lliure** (`GameScene`) hi ha un botó amb quatre blocs de colors **just davall del ☰**. També s'obri i es tanca amb la tecla **C**.
+- Pestanyes: **ARMES** (totes les del catàleg `NetContent`; van a la hotbar o, si està plena, al terra), **ENEMICS** (tots els de `Assets/Prefabs/Enemics`, bosses inclosos) i **COFRES** (els quatre de `Assets/Prefabs/Cofres`).
+- Enemics i cofres: clic a la fila i després clic al mapa. Es queda en mode col·locar per posar-ne uns quants seguits; **clic dret o Q** per a parar. Un fantasma roig vol dir que eixa casella està ocupada. Al mòbil apareixen dos blocs davant de la canica. **TREURE ENEMICS** elimina els que has creat.
+- **No es guarda res**: tot són objectes de l'escena. No toca `RunState`, el perfil ni `PlayerPrefs`. En eixir de la partida s'oblida tot.
+- **Online** (sala de mapa lliure): només el té l'**amfitrió**. Els enemics arriben als clients amb `EnemySpawn` i els cofres amb `ChestSpawn` (posició ×4 com a cel·la), els mateixos missatges d'abans, així que el **protocol continua sent 8**. El catàleg `NetContent` porta ara també `enemies` i `chests`, generats per `NetContentBuilder`. Tots els PCs de la sala han d'usar esta compilació perquè el client trobe els prefabs.
+- Codi: `Assets/Scripts/CreativeMode.cs`. Mentre col·loques, `PlayerAttack` no dispara i `HealInventory` no gasta cura amb el clic dret.
