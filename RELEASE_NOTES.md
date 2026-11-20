@@ -1,3 +1,12 @@
+# Alpha v1.1.2
+
+- Cada arma conserva el seu cooldown mentre esta guardada, quan cau a terra i entre pisos.
+- Els esbirros del boss i els llims dividits naixen dins de la seua sala.
+- El boti queda apartat dels portals. El portal blau torna a la sala inicial del mateix pis i el morat avanca tota la colla.
+- L'amfitrio confirma les recollides online i els clients recorden els cofres oberts encara que el cofre es cree mes tard.
+- Els tirs enemics passen per damunt de l'aigua, els barrets segueixen l'ordre del jugador i les bafarades es veuen per damunt dels arbres.
+- Protocol online **9**. Tots els participants han d'usar la mateixa versio.
+
 # Alpha v1.1.1
 
 **Online per Internet sense complicacions.** Crea una sala pública i els teus amics la veuen a la llista des de qualsevol casa, wifi o dades mòbils, i hi entren amb un clic o amb el codi de 6 lletres. **Sense escriure cap IP, sense obrir ports al router, sense VPN i sense instal·lar res més.** Funciona igual en Windows, Ubuntu/Linux i Android, i es pot jugar entre ells.

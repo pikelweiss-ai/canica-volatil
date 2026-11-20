@@ -36,6 +36,18 @@ function Wait-Bots($bots, [int]$seconds = 150) {
     return $ok
 }
 
+function Wait-RoomCode($path, $hostBot) {
+    $deadline = [DateTime]::UtcNow.AddSeconds(90)
+    while (!$hostBot.Proc.HasExited -and [DateTime]::UtcNow -lt $deadline) {
+        try {
+            if (([IO.File]::ReadAllText($path).Trim()) -match '^[A-Z0-9]{6}$') { return }
+        } catch [System.IO.IOException] {
+            # El bot encara no ha escrit el codi o te el fitxer obert.
+        }
+        Start-Sleep -Milliseconds 100
+    }
+}
+
 $results = [ordered]@{}
 
 Write-Host "`n== 1. LAN: llista de sales + contrasenya + mapa lliure ==" -ForegroundColor Cyan
@@ -47,6 +59,7 @@ $results["LAN llista"] = Wait-Bots @($h, $j) 260
 Write-Host "`n== 2. LAN: entrar per codi + masmorra cooperativa ==" -ForegroundColor Cyan
 $code = Join-Path $Out "codi-lan.txt"; if (Test-Path $code) { Remove-Item $code }
 $h = Start-Bot "code-host" @("-canicaBot", "host", "-botNet", "lan", "-botMode", "dungeon", "-botCoop", "-botCodeFile", "`"$code`"")
+Wait-RoomCode $code $h
 $j = Start-Bot "code-join" @("-canicaBot", "join", "-botJoin", "`"code-file:$code`"", "-botCoop")
 $results["LAN codi"] = Wait-Bots @($h, $j) 260
 
@@ -62,6 +75,7 @@ $results["Internet llista"] = Wait-Bots @($h, $j) 260
 Write-Host "`n== 4. Internet: entrar per codi ==" -ForegroundColor Cyan
 $code = Join-Path $Out "codi-net.txt"; if (Test-Path $code) { Remove-Item $code }
 $h = Start-Bot "netcode-host" @("-canicaBot", "host", "-botNet", "internet", "-botServer", "127.0.0.1:7790", "-botMode", "free", "-botCodeFile", "`"$code`"")
+Wait-RoomCode $code $h
 $j = Start-Bot "netcode-join" @("-canicaBot", "join", "-botJoin", "`"code-file:$code`"", "-botServer", "127.0.0.1:7790")
 $results["Internet codi"] = Wait-Bots @($h, $j) 260
 Select-String -Path $srvLog -Pattern "SERVIDOR SALES" | ForEach-Object { Write-Host "  [server] $($_.Line)" -ForegroundColor Gray }
@@ -78,6 +92,7 @@ $results["Sense IP llista"] = Wait-Bots @($h, $j) 300
 Write-Host "`n== 6. Internet SENSE IP: entrar per codi ==" -ForegroundColor Cyan
 $code = Join-Path $Out "codi-nuvol.txt"; if (Test-Path $code) { Remove-Item $code }
 $h = Start-Bot "cloudcode-host" (@("-canicaBot", "host", "-botNet", "internet", "-botMode", "free", "-botCodeFile", "`"$code`"") + $cloud)
+Wait-RoomCode $code $h
 $j = Start-Bot "cloudcode-join" (@("-canicaBot", "join", "-botJoin", "`"code-file:$code`"") + $cloud)
 $results["Sense IP codi"] = Wait-Bots @($h, $j) 300
 
