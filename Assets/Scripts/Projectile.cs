@@ -30,6 +30,7 @@ public class Projectile : MonoBehaviour
         startPosition = transform.position;
         firingPosition = shooter != null ? (Vector2)shooter.position : startPosition;
         pierceLeft = weapon.pierce;
+        wallBouncesLeft = weapon.wallBounces;
 
         // Gira el projectil cap a on va (els sprites apunten cap a la dreta)
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
@@ -141,6 +142,14 @@ public class Projectile : MonoBehaviour
             if (!hit.isTrigger)
             {
                 if (weapon.returns) { StartReturn(); return; }
+                if (wallBouncesLeft > 0 && Vector2.Dot(direction, contact.normal) < 0f)
+                {
+                    wallBouncesLeft--;
+                    travelled += contact.distance;
+                    transform.position += (Vector3)(contact.normal * 0.01f);
+                    direction = Vector2.Reflect(direction, contact.normal).normalized;
+                    return;
+                }
                 End();
                 return;
             }
@@ -215,6 +224,7 @@ public class Projectile : MonoBehaviour
 
     private bool ended;
     private int pierceLeft;
+    private int wallBouncesLeft;
     private readonly System.Collections.Generic.List<EnemyHealth> alreadyHit = new System.Collections.Generic.List<EnemyHealth>();
 
     // ---- Boleta generada per codi, per a armes sense prefab ----

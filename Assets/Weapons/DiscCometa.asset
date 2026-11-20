@@ -38,7 +38,8 @@ MonoBehaviour:
   explosionRadius: 0
   explosionDamage: 3
   pierce: 1
-  returns: 1
+  wallBounces: 3
+  returns: 0
   homing: 0
   spinSpeed: 800
   sound: 1

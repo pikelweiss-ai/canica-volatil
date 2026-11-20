@@ -727,6 +727,8 @@ public partial class NetBot : MonoBehaviour
         Destroy(wall);
         Destroy(fast);
         Ok("el cano i el projectil rapid respecten la paret");
+        yield return CheckCometDisc(player, origin + Vector2.up * 10f);
+        if (failed) yield break;
 
         var camera = Camera.main;
         float normalSize = camera.orthographicSize;
@@ -940,6 +942,45 @@ public partial class NetBot : MonoBehaviour
         if (failed) yield break;
         yield return CheckFloorReturn();
         if (!failed) Pass();
+    }
+
+    IEnumerator CheckCometDisc(Transform player, Vector2 origin)
+    {
+        var disc = NetCoop.Weapon("DiscCometa");
+        var boomerang = NetCoop.Weapon("Bumerang");
+        if (disc == null || disc.returns || disc.wallBounces != 3 || boomerang == null || !boomerang.returns)
+        {
+            Fail("el Disc i el Bumerang no tenen el comportament esperat");
+            yield break;
+        }
+
+        var walls = new GameObject("Parets de prova del Disc");
+        foreach (float side in new[] { -1f, 1f })
+        {
+            var wall = new GameObject("Paret de prova");
+            wall.transform.SetParent(walls.transform);
+            wall.transform.position = origin + Vector2.right * side * .65f;
+            wall.AddComponent<BoxCollider2D>().size = new Vector2(.1f, 2f);
+        }
+        Physics2D.SyncTransforms();
+        var shot = Projectile.Spawn(origin, Vector2.right, disc, player, 0, 0);
+        var remaining = typeof(Projectile).GetField("wallBouncesLeft", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        try
+        {
+            for (int bounce = 1; bounce <= 3; bounce++)
+            {
+                int expected = 3 - bounce;
+                yield return WaitFor(() => shot != null && (int)remaining.GetValue(shot) == expected,
+                    2, "rebot " + bounce + " del Disc de cometa");
+                if (failed) yield break;
+            }
+            yield return WaitFor(() => shot == null, 2, "el Disc desapareix al quart impacte contra la paret");
+        }
+        finally
+        {
+            if (shot != null) Destroy(shot.gameObject);
+            Destroy(walls);
+        }
     }
 
     void EnterProgressionRoom(DungeonGenerator dungeon)

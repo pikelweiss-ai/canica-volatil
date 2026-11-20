@@ -31,7 +31,7 @@ public static class AlphaContentBuilder
         db.trails=trails.ToArray();EditorUtility.SetDirty(db);
 
         var disc=Weapon("DiscCometa","Disc de cometa","Bumerang",ChestRarity.Rar);
-        disc.damage=2;disc.cooldown=.85f;disc.returns=true;disc.pierce=1;disc.spinSpeed=800;disc.projectileSprite=disc.icon;disc.range=6;EditorUtility.SetDirty(disc);
+        disc.damage=2;disc.cooldown=.85f;disc.returns=false;disc.wallBounces=3;disc.pierce=1;disc.spinSpeed=800;disc.projectileSprite=disc.icon;disc.range=6;EditorUtility.SetDirty(disc);
         var lance=Weapon("LlancaTempesta","Llança de tempesta","EspasaVidre",ChestRarity.Epic);
         lance.melee=true;lance.meleeArc=25;lance.meleeDashDistance=1.8f;lance.cooldown=.85f;lance.damage=3;lance.range=3.5f;EditorUtility.SetDirty(lance);
         var spores=Weapon("VaretaEspores","Vareta d'espores","Vareta",ChestRarity.Rar);

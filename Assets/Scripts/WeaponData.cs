@@ -53,6 +53,7 @@ public class WeaponData : ScriptableObject
     public int explosionDamage = 3;
     [Min(0)]
     public int pierce = 0;              // Enemics que travessa abans de parar (fletxes)
+    [Min(0)] public int wallBounces;
     public bool returns = false;        // Bumerang: en acabar (o xocar) torna cap a tu, pegant de nou
     public float homing = 0f;           // Teledirigit: com de ràpid gira cap a l'enemic (radians/s, 0 = no)
     public float spinSpeed = 0f;        // El dibuix gira (graus/s): shurikens, bumerangs...
