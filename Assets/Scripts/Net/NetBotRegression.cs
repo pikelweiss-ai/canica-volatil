@@ -221,12 +221,12 @@ public partial class NetBot
         var attack = dungeon.player.GetComponent<PlayerAttack>();
         var bag = dungeon.player.GetComponent<HealInventory>();
         var health = dungeon.player.GetComponent<PlayerHealth>();
-        var weapon = NetCoop.Weapon("Escopeta");
+        var weapon = NetCoop.Weapon("Llancaflames");
         HealItem heal = HealItem.All[0];
         Array.Clear(attack.hotbarSlots, 0, attack.hotbarSlots.Length);
         Array.Clear(bag.items, 0, bag.items.Length);
         Array.Clear(bag.counts, 0, bag.counts.Length);
-        if (!attack.AddWeapon(weapon, RecoveryWeaponCooldown) || !bag.Add(heal)) { Fail("l'amfitrió no ha pogut preparar l'inventari de prova"); yield break; }
+        if (!attack.AddWeapon(weapon, RecoveryWeaponCooldown, new WeaponCondition(125, 0f)) || !bag.Add(heal)) { Fail("l'amfitrió no ha pogut preparar l'inventari de prova"); yield break; }
 
         var room = dungeon.Rooms[0].rect;
         var corner = new Vector3Int(room.xMax - 1, room.yMax - 1, 0);
@@ -309,7 +309,7 @@ public partial class NetBot
         if (failed) yield break;
         var drops = InventoryDrops(ownerId);
         var droppedWeapon = Array.Find(drops, drop => drop.kind == NetShared.Kind.Weapon)?.GetComponent<ItemPickup>();
-        if (droppedWeapon == null || droppedWeapon.CooldownRemaining <= 0f || droppedWeapon.CooldownRemaining > RecoveryWeaponCooldown)
+        if (droppedWeapon == null || droppedWeapon.Condition.ShotsUsed != 125 || droppedWeapon.CooldownRemaining <= 0f || droppedWeapon.CooldownRemaining > RecoveryWeaponCooldown)
         {
             Fail("el client no ha rebut el cooldown pendent de l'arma caiguda");
             yield break;

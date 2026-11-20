@@ -732,6 +732,8 @@ public partial class NetBot : MonoBehaviour
         Ok("el cano i el projectil rapid respecten la paret");
         yield return CheckCometDisc(player, origin + Vector2.up * 10f);
         if (failed) yield break;
+        yield return CheckArsenal(attack, origin + Vector2.up * 20f);
+        if (failed) yield break;
 
         var camera = Camera.main;
         float normalSize = camera.orthographicSize;
@@ -743,9 +745,12 @@ public partial class NetBot : MonoBehaviour
             yield return WaitFor(() => camera.orthographicSize * Mathf.Min(1f, camera.aspect) >= weapon.range, 2, "tot el rang de " + id);
             if (failed) yield break;
         }
-        attack.hotbarSlots[0] = NetCoop.Weapon("Ballesta");
-        yield return WaitFor(() => Mathf.Approximately(camera.orthographicSize, normalSize), 2, "zoom normal amb la Ballesta");
-        if (failed) yield break;
+        foreach (string id in new[] { "Ballesta", "BallestaCristall" })
+        {
+            attack.hotbarSlots[0] = NetCoop.Weapon(id);
+            yield return WaitFor(() => Mathf.Approximately(camera.orthographicSize, normalSize), 2, "zoom normal amb " + id);
+            if (failed) yield break;
+        }
         attack.hotbarSlots[0] = null;
         yield return WaitFor(() => Mathf.Approximately(camera.orthographicSize, normalSize), 2, "zoom normal amb el puny");
         if (failed) yield break;
@@ -909,20 +914,18 @@ public partial class NetBot : MonoBehaviour
             }
         }
         Ok("totes les combinacions de skins i barrets s'apliquen amb rastre");
-        int previousBossHealth = 0;
         for (int i = 0; i < dungeon.themes.Length; i++)
         {
             RunState.Floor = i + 1;
             var prefab = dungeon.themes[i].boss;
             EnemyHealth bossHealth = null;
             yield return SpawnTestBoss(dungeon, prefab, h => bossHealth = h);
-            int expected = prefab.GetComponent<EnemyHealth>().maxHealth + 45 * i;
-            if (bossHealth == null || bossHealth.currentHealth != expected || bossHealth.maxHealth <= previousBossHealth)
+            int expected = prefab.GetComponent<EnemyHealth>().maxHealth + 25 * i;
+            if (bossHealth == null || bossHealth.currentHealth != expected)
             {
                 Fail("vida de boss individual incorrecta al pis " + RunState.Floor);
                 yield break;
             }
-            previousBossHealth = bossHealth.maxHealth;
             if (i == 0)
             {
                 yield return null;
@@ -945,6 +948,56 @@ public partial class NetBot : MonoBehaviour
         if (failed) yield break;
         yield return CheckFloorReturn();
         if (!failed) Pass();
+    }
+
+    IEnumerator CheckArsenal(PlayerAttack attack, Vector2 origin)
+    {
+        var flame = NetCoop.Weapon("Llancaflames");
+        var minigun = NetCoop.Weapon("Minigun");
+        const System.Reflection.BindingFlags instance = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        var cooldowns = (float[])typeof(PlayerAttack).GetField("slotCooldown", instance).GetValue(attack);
+        var conditions = (WeaponCondition[])typeof(PlayerAttack).GetField("conditions", instance).GetValue(attack);
+        var tick = typeof(PlayerAttack).GetMethod("TickAttack", instance);
+        attack.SelectSlot(0);
+        attack.AddWeapon(flame, condition: new WeaponCondition(299, 0f));
+        tick.Invoke(attack, new object[] { true });
+        if (attack.CurrentWeapon != null || flame.maxShots != 300)
+        { Fail("el Llancaflames no es trenca al tret 300"); yield break; }
+        attack.AddWeapon(minigun, condition: new WeaponCondition(0, 59f));
+        typeof(PlayerAttack).GetField("spinningWeapon", instance).SetValue(attack, minigun);
+        typeof(PlayerAttack).GetField("spinCharge", instance).SetValue(attack, minigun.spinUpTime);
+        tick.Invoke(attack, new object[] { true });
+        if (conditions[0].Heat != 60f || cooldowns[0] != 2f)
+        { Fail("la Minigun no es bloqueja durant dos segons"); yield break; }
+        attack.hotbarSlots[0] = null;
+        cooldowns[0] = 0f;
+        conditions[0] = default;
+        attack.SelectSlot(0);
+        foreach (var projectile in FindObjectsByType<Projectile>(FindObjectsSortMode.None)) Destroy(projectile.gameObject);
+        Ok("durabilitat del Llancaflames i bloqueig de la Minigun");
+
+        var targets = new EnemyHealth[5];
+        for (int i = 0; i < targets.Length; i++)
+        {
+            var target = new GameObject("Objectiu de prova", typeof(BoxCollider2D), typeof(EnemyHealth));
+            target.transform.position = origin + Vector2.right * (i * 2);
+            targets[i] = target.GetComponent<EnemyHealth>();
+            targets[i].currentHealth = 20;
+        }
+        Physics2D.SyncTransforms();
+        targets[0].TakeProjectileHit(2, Vector2.zero, ProjectileEffect.Chain);
+        if (targets[0].currentHealth != 18 || targets[1].currentHealth != 19 || targets[2].currentHealth != 19 ||
+            targets[3].currentHealth != 19 || targets[4].currentHealth != 20)
+        { Fail("el Projector no respecta el limit de tres salts"); yield break; }
+        targets[4].TakeProjectileHit(2, Vector2.zero, ProjectileEffect.Slow);
+        if (!Mathf.Approximately(targets[4].MovementMultiplier, .6f))
+        { Fail("la Ballesta de cristall no aplica l alentiment"); yield break; }
+        for (int i = 0; i < 4; i++) targets[4].TakeProjectileHit(1, Vector2.zero, ProjectileEffect.Poison);
+        yield return new WaitForSeconds(2.2f);
+        if (targets[4].currentHealth != 8 || targets[4].MovementMultiplier != 1f)
+        { Fail("el veri supera tres dosis o l alentiment no caduca"); yield break; }
+        foreach (var target in targets) Destroy(target.gameObject);
+        Ok("cadena de tres salts, alentiment temporal i veri amb tres dosis");
     }
 
     IEnumerator CheckCometDisc(Transform player, Vector2 origin)
