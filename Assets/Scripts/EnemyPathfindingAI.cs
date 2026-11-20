@@ -122,7 +122,7 @@ public class EnemyPathfindingAI : MonoBehaviour
         Vector2 target = player.position;
         float dist = Vector2.Distance(pos, target);
 
-        SeesPlayer = dist <= detectionRange * 1.75f && TileNav.LineOfSight(pos, target);
+        SeesPlayer = dist <= detectionRange * 1.75f && TileNav.LineOfSight(pos, target, 0f, true); // l'aigua no tapa la vista (BUG-025)
         if (SeesPlayer && (HasAggro || dist <= detectionRange))
         {
             HasAggro = true;

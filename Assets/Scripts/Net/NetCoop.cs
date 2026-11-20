@@ -490,7 +490,8 @@ public static class NetCoop
                 if (c == null || !DungeonGenerator.CanInteractAt(c.transform.position)) break;
                 if (openedChests.Contains(key)) { S.SendTo(fid, NetProtocol.Frame(Msg.ChestOpened, w => { w.Write(token); w.Write(key); })); break; }
                 openedChests.Add(key);
-                c.OpenAsAuthority();
+                Vector3? opener = from != null && S.Players.TryGetValue(fid, out var opening) ? new Vector3(opening.x, opening.y, 0f) : (Vector3?)null;
+                c.OpenAsAuthority(opener);
                 S.SendTo(fid, NetProtocol.Frame(Msg.ChestGrant, w => { w.Write(token); w.Write(key); }));
                 S.SendAllExcept(fid, NetProtocol.Frame(Msg.ChestOpened, w => { w.Write(token); w.Write(key); }));
                 break;

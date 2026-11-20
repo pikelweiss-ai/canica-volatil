@@ -256,11 +256,17 @@ public class Chest : MonoBehaviour
         StartCoroutine(OpenFinishRoutine(dropLoot));
     }
 
-    public void OpenAsAuthority()
+    // BUG-024: si l'obri un company (online), el botí es calcula al voltant d'ell i no del jugador local
+    Vector3? lootReference;
+    Vector3? LootRef => lootReference ?? (player != null ? player.position : (Vector3?)null);
+
+    public void OpenAsAuthority(Vector3? opener = null)
     {
         if (IsOpen) return;
+        lootReference = opener;
         NetMarkOpened();
         DropLoot();
+        lootReference = null;
     }
 
     // Ja has mantingut la E prou temps: s'obri, sona i bota
@@ -344,13 +350,13 @@ public class Chest : MonoBehaviour
         {
             float a = i * Mathf.PI / 4f;
             Vector3 candidate = transform.position + new Vector3(Mathf.Cos(a), Mathf.Sin(a), 0f) * 1.15f;
-            if (player != null && Vector2.Distance(candidate, player.position) < 0.85f) continue;
+            if (LootRef is Vector3 reference && Vector2.Distance(candidate, reference) < 0.85f) continue;
             if (CanLandLoot(candidate)) return candidate;
         }
 
         Vector3 fallback = transform.position + (Vector3)lootDropOffset;
         if (CanLandLoot(fallback)) return fallback;
-        if (player != null) return player.position;
+        if (LootRef is Vector3 fallbackRef) return fallbackRef;
         return TileNav.DropDestination(transform.position, fallback);
     }
 
@@ -365,7 +371,7 @@ public class Chest : MonoBehaviour
     {
         const float clearance = 0.25f;
         if (TileNav.Ready() && (!TileNav.CircleFree(candidate, clearance) ||
-            (player != null && !TileNav.LineOfSight(player.position, candidate, clearance)))) return false;
+            (LootRef is Vector3 sight && !TileNav.LineOfSight(sight, candidate, clearance)))) return false;
 
         foreach (Collider2D hit in Physics2D.OverlapCircleAll(candidate, clearance))
             if (!hit.isTrigger) return false;

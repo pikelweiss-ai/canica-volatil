@@ -100,7 +100,8 @@ public static class TileNav
     }
 
     // Línia de visió: cap casella bloquejada entre a i b (passos de mitja casella)
-    public static bool LineOfSight(Vector2 a, Vector2 b, float radius = 0f)
+    // ignoreWater: la visió (i els tirs) passen per damunt de l'aigua (BUG-025)
+    public static bool LineOfSight(Vector2 a, Vector2 b, float radius = 0f, bool ignoreWater = false)
     {
         if (Ground == null) return true;
         float dist = Vector2.Distance(a, b);
@@ -108,7 +109,7 @@ public static class TileNav
         for (int i = 1; i < steps; i++)
         {
             Vector2 p = Vector2.Lerp(a, b, i / (float)steps);
-            if (radius > 0f ? !CircleFree(p, radius) : IsBlockedWorld(p)) return false;
+            if (radius > 0f ? !CircleFree(p, radius) : IsBlocked(Cell(p), ignoreWater)) return false;
         }
         return true;
     }
