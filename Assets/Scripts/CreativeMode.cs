@@ -73,7 +73,6 @@ public class CreativeMode : MonoBehaviour
         IconPiece(b, new Vector2(2, -2) * k, new Vector2(26, 8) * k, UIKit.Shadow);
         IconPiece(b, Vector2.zero, new Vector2(8, 26) * k, UIKit.Gold);
         IconPiece(b, Vector2.zero, new Vector2(26, 8) * k, UIKit.Gold);
-        IconPiece(b, new Vector2(-2, 2) * k, new Vector2(4, 4) * k, new Color(1f, .93f, .7f)); // brillantor del centre
         PlaceButton();
         BuildPanel();
         panel.SetActive(false);
