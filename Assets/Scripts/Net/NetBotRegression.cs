@@ -226,7 +226,7 @@ public partial class NetBot
         Array.Clear(attack.hotbarSlots, 0, attack.hotbarSlots.Length);
         Array.Clear(bag.items, 0, bag.items.Length);
         Array.Clear(bag.counts, 0, bag.counts.Length);
-        if (!attack.AddWeapon(weapon) || !bag.Add(heal)) { Fail("l'amfitrió no ha pogut preparar l'inventari de prova"); yield break; }
+        if (!attack.AddWeapon(weapon, RecoveryWeaponCooldown) || !bag.Add(heal)) { Fail("l'amfitrió no ha pogut preparar l'inventari de prova"); yield break; }
 
         var room = dungeon.Rooms[0].rect;
         var corner = new Vector3Int(room.xMax - 1, room.yMax - 1, 0);
@@ -275,6 +275,8 @@ public partial class NetBot
             10, "el company ha confirmat que ja no veu el botí de l'amfitrió");
     }
 
+    const float RecoveryWeaponCooldown = 0.4f;
+
     IEnumerator ObserveHostRecovery()
     {
         var dungeon = DungeonGenerator.Instance;
@@ -306,6 +308,13 @@ public partial class NetBot
         yield return WaitFor(() => HasBothDropKinds(InventoryDrops(ownerId)), 10, "el client veu l'arma i la cura de l'amfitrió caigut");
         if (failed) yield break;
         var drops = InventoryDrops(ownerId);
+        var droppedWeapon = Array.Find(drops, drop => drop.kind == NetShared.Kind.Weapon)?.GetComponent<ItemPickup>();
+        if (droppedWeapon == null || droppedWeapon.CooldownRemaining <= 0f || droppedWeapon.CooldownRemaining > RecoveryWeaponCooldown)
+        {
+            Fail("el client no ha rebut el cooldown pendent de l'arma caiguda");
+            yield break;
+        }
+        Ok("el client rep el cooldown pendent de l'arma caiguda");
         yield return WaitFor(() => Array.TrueForAll(drops, drop => drop == null), 16, "el botí recuperat per l'amfitrió desapareix al client");
         if (failed) yield break;
         SetBotPosition(dungeon, clientPosition + Vector3.up);

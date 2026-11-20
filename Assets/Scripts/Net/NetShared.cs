@@ -110,7 +110,7 @@ public static class NetShared
 
     static void SpawnRemote(int id, Kind kind, string data, Vector3 from, Vector3 to, float cooldownRemaining)
     {
-        if (taken.Contains(id) || items.ContainsKey(id)) return;
+        if (taken.Contains(id) || (items.TryGetValue(id, out var existing) && existing != null)) return;
         Component c = null;
         spawningRemote = true;
         try

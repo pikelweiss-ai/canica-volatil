@@ -487,12 +487,7 @@ public partial class NetBot : MonoBehaviour
             if(hp.transform.position.x >= 1000 && hp.GetComponent<NetItem>() != null) { missing=hp;break; }
         if(missing == null) { Fail("falta cura per provar resincronitzacio");yield break; }
         int missingId=missing.GetComponent<NetItem>().id;
-        using(var stream=new MemoryStream())
-        {
-            using(var writer=new BinaryWriter(stream,System.Text.Encoding.UTF8,true))writer.Write(missingId);
-            stream.Position=0;
-            using(var reader=new BinaryReader(stream))NetShared.OnClient(Msg.PickupTaken,reader);
-        }
+        Destroy(missing.gameObject);
         yield return null;
         NetSession.Instance.SendToHost(NetProtocol.Frame(Msg.EnemyMark,w=>{w.Write(-1);w.Write(NetSession.SceneToken());}));
         yield return WaitFor(()=>{
