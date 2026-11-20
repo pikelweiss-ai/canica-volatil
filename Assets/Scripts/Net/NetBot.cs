@@ -738,15 +738,15 @@ public partial class NetBot : MonoBehaviour
 
         var camera = Camera.main;
         float normalSize = camera.orthographicSize;
-        foreach (string id in new[] { "Sniper", "Laser", "Vareta" })
+        foreach (string id in new[] { "Sniper", "Laser" })
         {
             var weapon = NetCoop.Weapon(id);
             attack.hotbarSlots[0] = weapon;
             attack.SelectSlot(0);
-            yield return WaitFor(() => camera.orthographicSize * Mathf.Min(1f, camera.aspect) >= weapon.range, 2, "tot el rang de " + id);
+            yield return WaitFor(() => camera.orthographicSize * Mathf.Min(1f, camera.aspect) >= Mathf.Min(weapon.range, 10f), 2, "el zoom de " + id + " (limitat a abast 10)");
             if (failed) yield break;
         }
-        foreach (string id in new[] { "Ballesta", "BallestaCristall" })
+        foreach (string id in new[] { "Ballesta", "BallestaCristall", "Vareta" })
         {
             attack.hotbarSlots[0] = NetCoop.Weapon(id);
             yield return WaitFor(() => Mathf.Approximately(camera.orthographicSize, normalSize), 2, "zoom normal amb " + id);
@@ -788,13 +788,14 @@ public partial class NetBot : MonoBehaviour
         var cooldowns = (float[])typeof(PlayerAttack).GetField("slotCooldown", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(attack);
         attack.SelectSlot(1);
         yield return new WaitForSeconds(0.1f);
-        if (cooldowns[0] != remaining || cooldowns[1] != 0f)
+        if (cooldowns[0] >= remaining || cooldowns[0] <= remaining - 0.5f || cooldowns[1] != 0f) // v1.2.1: el cooldown baixa tambe guardada
         {
-            Fail("el cooldown baixa amb l'arma guardada o afecta una altra casella");
+            Fail("el cooldown de l'arma guardada no baixa o afecta una altra casella");
             yield break;
         }
+        float beforeSwap = cooldowns[0];
         attack.SwapSlots(0, 1);
-        if (cooldowns[1] != remaining || attack.hotbarSlots[1] != sniper)
+        if (!Mathf.Approximately(cooldowns[1], beforeSwap) || attack.hotbarSlots[1] != sniper)
         {
             Fail("el cooldown no acompanya l'arma quan canvia de casella");
             yield break;
@@ -1050,8 +1051,8 @@ public partial class NetBot : MonoBehaviour
         }
         Physics2D.SyncTransforms();
         targets[0].TakeProjectileHit(2, Vector2.zero, ProjectileEffect.Chain);
-        if (targets[0].currentHealth != 18 || targets[1].currentHealth != 19 || targets[2].currentHealth != 19 ||
-            targets[3].currentHealth != 19 || targets[4].currentHealth != 20)
+        if (targets[0].currentHealth != 18 || targets[1].currentHealth != 20 - EnemyHealth.ChainJumpDamage || targets[2].currentHealth != 20 - EnemyHealth.ChainJumpDamage ||
+            targets[3].currentHealth != 20 - EnemyHealth.ChainJumpDamage || targets[4].currentHealth != 20)
         { Fail("el Projector no respecta el limit de tres salts"); yield break; }
         targets[4].TakeProjectileHit(2, Vector2.zero, ProjectileEffect.Slow);
         if (!Mathf.Approximately(targets[4].MovementMultiplier, .6f))

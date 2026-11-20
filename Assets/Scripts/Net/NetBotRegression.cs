@@ -87,7 +87,7 @@ public partial class NetBot
             foreach (float aspect in new[] { 2.4f, .75f })
             {
                 camera.aspect = aspect;
-                float range = sniper.range / Mathf.Cos(sniper.spreadAngle * Mathf.Deg2Rad) + 1f;
+                float range = Mathf.Min(sniper.range, 10f) / Mathf.Cos(sniper.spreadAngle * Mathf.Deg2Rad) + 1f; // zoom limitat a abast 10 (v1.2.1)
                 yield return WaitFor(() => camera.orthographicSize * Mathf.Min(1f, aspect) >= range - .01f,
                     4, "zoom del Sniper amb proporció " + aspect);
                 if (failed) yield break;
