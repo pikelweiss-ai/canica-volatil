@@ -16,18 +16,16 @@ public class TrailParticleEmitter : MonoBehaviour
     static readonly Dictionary<TrailShape, Sprite> sprites = new();
     TrailShape shape;
     Color color;
-    SpriteRenderer owner;
     RemoteAvatar remote;
     Vector3 previous;
     float carry;
     int side;
     GameObject root;
 
-    public void Init(TrailShape kind, Color tint, SpriteRenderer body)
+    public void Init(TrailShape kind, Color tint)
     {
         shape = kind;
         color = tint;
-        owner = body;
         remote = GetComponent<RemoteAvatar>();
         previous = transform.position;
         root = new GameObject("Particules de l'estela");
@@ -134,8 +132,8 @@ public class TrailParticleEmitter : MonoBehaviour
         if (shape == TrailShape.Footsteps) particle.position += cross * sign * .1f;
         if (shape == TrailShape.Sparks) particle.velocity = -direction * .55f + cross * sign * .22f;
         particle.renderer.sprite = SpriteFor(shape);
-        particle.renderer.sortingLayerID = owner.sortingLayerID;
-        particle.renderer.sortingOrder = owner.sortingOrder - 1;
+        particle.renderer.sortingLayerName = PlayerCosmetics.TrailSortingLayer;
+        particle.renderer.sortingOrder = 1;
         Draw(particle);
         particle.renderer.gameObject.SetActive(true);
         active.Add(particle);

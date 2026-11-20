@@ -332,7 +332,7 @@ public partial class NetBot : MonoBehaviour
         var fixture = new GameObject("Prova d'estela", typeof(SpriteRenderer));
         fixture.transform.position = new Vector3(600, 600);
         var emitter = fixture.AddComponent<TrailParticleEmitter>();
-        emitter.Init(TrailShape.Zigzag, Color.cyan, fixture.GetComponent<SpriteRenderer>());
+        emitter.Init(TrailShape.Zigzag, Color.cyan);
         yield return null;
 
         fixture.transform.position += Vector3.right * .15f;
@@ -343,12 +343,15 @@ public partial class NetBot : MonoBehaviour
             sprite => sprite.name == "Particula" && sprite.transform.position.x > 600.1f && sprite.transform.position.x < 600.2f);
         var root = particle != null ? particle.transform.parent : null;
         bool drawn = particle != null;
+        bool behindSkin = drawn && SortingLayer.GetLayerValueFromID(particle.sortingLayerID) <
+            SortingLayer.GetLayerValueFromName("Player");
         fixture.transform.position += Vector3.right * 10f;
         yield return null;
         yield return null;
         bool cleared = root != null && root.GetComponentsInChildren<SpriteRenderer>().Length == 0;
         Destroy(fixture);
         if (!drawn || !cleared) Fail("l'estela deixa una marca fora del punt o no es neteja al teletransport");
+        else if (!behindSkin) Fail("l'estela es dibuixa davant de la skin");
         else Ok("estela mostrejada per distància i neta després d'un teletransport");
     }
 

@@ -6,6 +6,7 @@ public class PlayerCosmetics : MonoBehaviour
 {
     private SpriteRenderer body;
     private SpriteRenderer hat;
+    internal const string TrailSortingLayer = "Shadows";
     private TrailRenderer trail;
     private bool rainbow;
     private RemoteAvatar remote;
@@ -44,7 +45,7 @@ public class PlayerCosmetics : MonoBehaviour
             if (selected.color.a > 0f)
             {
                 if(selected.shape==TrailShape.Ribbon)CreateTrail(selected.color);
-                else gameObject.AddComponent<TrailParticleEmitter>().Init(selected.shape,selected.color,body);
+                else gameObject.AddComponent<TrailParticleEmitter>().Init(selected.shape,selected.color);
             }
         }
     }
@@ -88,8 +89,8 @@ public class PlayerCosmetics : MonoBehaviour
             trail.sharedMaterial = trailMaterial;
         }
         previousTrailPosition = transform.position;
-        trail.sortingLayerID = body.sortingLayerID;
-        trail.sortingOrder = body.sortingOrder - 1;
+        trail.sortingLayerName = TrailSortingLayer;
+        trail.sortingOrder = 1;
         SetTrailColor(c);
     }
 

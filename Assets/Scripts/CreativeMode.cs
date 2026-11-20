@@ -68,13 +68,12 @@ public class CreativeMode : MonoBehaviour
         b.anchorMin = b.anchorMax = b.pivot = Vector2.one; toggleButton = b;
         b.gameObject.AddComponent<Button>().onClick.AddListener(Toggle);
         float k = size.y / 48f; // al mòbil el botó és més gran
-        // Ombra fosca desplaçada + creu daurada + una espurna blanca (estil píxel)
+        // Ombra fosca desplaçada + creu daurada (estil píxel)
         IconPiece(b, new Vector2(2, -2) * k, new Vector2(8, 26) * k, UIKit.Shadow);
         IconPiece(b, new Vector2(2, -2) * k, new Vector2(26, 8) * k, UIKit.Shadow);
         IconPiece(b, Vector2.zero, new Vector2(8, 26) * k, UIKit.Gold);
         IconPiece(b, Vector2.zero, new Vector2(26, 8) * k, UIKit.Gold);
         IconPiece(b, new Vector2(-2, 2) * k, new Vector2(4, 4) * k, new Color(1f, .93f, .7f)); // brillantor del centre
-        IconPiece(b, new Vector2(15, 14) * k, new Vector2(4, 4) * k, Color.white);              // espurna
         PlaceButton();
         BuildPanel();
         panel.SetActive(false);
