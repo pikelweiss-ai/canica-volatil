@@ -6,8 +6,9 @@ public class DungeonPortal : MonoBehaviour
 {
     private Transform player;
     private SpriteRenderer outer, inner;
-    private bool used;
-    public Vector3? ReturnDestination { get; set; }
+    private bool armed;
+    public int Direction { get; private set; } = 1;
+    public const float TriggerRadius = 0.6f;
     private float appear;
 
     public static DungeonPortal Create(Vector3 pos, bool returning = false)
@@ -17,6 +18,7 @@ public class DungeonPortal : MonoBehaviour
         DungeonPortal p = go.AddComponent<DungeonPortal>();
         Color outerColor = returning ? new Color(0.25f, 0.78f, 0.9f, 0.9f) : new Color(0.64f, 0.35f, 0.88f, 0.9f);
         Color innerColor = returning ? new Color(0.04f, 0.16f, 0.24f) : new Color(0.15f, 0.05f, 0.25f);
+        p.Direction = returning ? -1 : 1;
         p.outer = Child(go.transform, outerColor, 1.6f, 3);
         p.inner = Child(go.transform, innerColor, 1.0f, 4);
         Fx.Burst(pos, outerColor, 16, 4f);
@@ -35,6 +37,7 @@ public class DungeonPortal : MonoBehaviour
     {
         GameObject p = GameObject.FindWithTag("Player");
         if (p != null) player = p.transform;
+        armed = player == null || Vector2.Distance(player.position, transform.position) >= TriggerRadius;
         transform.localScale = Vector3.zero;
     }
 
@@ -52,20 +55,12 @@ public class DungeonPortal : MonoBehaviour
             Fx.Burst((Vector2)transform.position + offset, outer != null ? outer.color : new Color(0.85f, 0.6f, 1f), 1, 0.5f);
         }
 
-        if (used || player == null || !player.gameObject.activeInHierarchy || appear < 1f) return;
-        if (Vector2.Distance(player.position, transform.position) < 0.6f)
-        {
-            Fx.Play(Fx.Heal, 0.7f);
-            if (ReturnDestination.HasValue)
-            {
-                Vector3 destination = ReturnDestination.Value;
-                var body = player.GetComponent<Rigidbody2D>();
-                if (body != null) { body.position = destination; body.linearVelocity = Vector2.zero; }
-                player.position = destination;
-                return;
-            }
-            used = true;
-            DungeonGenerator.Instance?.NextFloor();
-        }
+        if (player == null || !player.gameObject.activeInHierarchy) return;
+        bool inside = Vector2.Distance(player.position, transform.position) < TriggerRadius;
+        if (!inside) { armed = true; return; }
+        if (!armed || appear < 1f || DungeonGenerator.Instance == null) return;
+        if (!DungeonGenerator.Instance.TryTravel(Direction, player.position)) return;
+        armed = false;
+        Fx.Play(Fx.Heal, 0.7f);
     }
 }

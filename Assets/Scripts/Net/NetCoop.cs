@@ -272,12 +272,25 @@ public static class NetCoop
     }
 
     // Portal: tots passen de pis alhora
-    public static bool InterceptNextFloor()
+    public static void RestoreOpenedChest(Chest chest)
+    {
+        chest.NetMarkOpened();
+        if (!IsHost) return;
+        int key = ChestKey(chest);
+        openedChests.Add(key);
+        S.SendAll(NetProtocol.Frame(Msg.ChestOpened, w => { w.Write(Token); w.Write(key); }));
+    }
+
+    public static bool InterceptFloorChange(int direction)
     {
         if (!Online) return false;
-        if (IsClient) { S.SendToHost(NetProtocol.Frame(Msg.PortalReq)); NetToast.Show("Passant de pis amb tota la colla...", 2f); return true; }
-        int next = RunState.Floor + 1;
-        S.SendAll(NetProtocol.Frame(Msg.NextFloorAll, w => w.Write(next)));
+        if (IsClient)
+        {
+            S.SendToHost(NetProtocol.Frame(Msg.PortalReq, w => { w.Write(Token); w.Write(direction); }));
+            return true;
+        }
+        int next = RunState.Floor + direction;
+        S.SendAll(NetProtocol.Frame(Msg.NextFloorAll, w => { w.Write(Token); w.Write(next); }));
         downed.Clear();
         return false;
     }
@@ -454,7 +467,7 @@ public static class NetCoop
                 if (c == null || !DungeonGenerator.CanInteractAt(c.transform.position)) break;
                 if (openedChests.Contains(key)) { S.SendTo(fid, NetProtocol.Frame(Msg.ChestOpened, w => { w.Write(token); w.Write(key); })); break; }
                 openedChests.Add(key);
-                c.NetMarkOpened();
+                c.OpenAsAuthority();
                 S.SendTo(fid, NetProtocol.Frame(Msg.ChestGrant, w => { w.Write(token); w.Write(key); }));
                 S.SendAllExcept(fid, NetProtocol.Frame(Msg.ChestOpened, w => { w.Write(token); w.Write(key); }));
                 break;
@@ -490,8 +503,13 @@ public static class NetCoop
                 break;
             default: NetShared.OnHost(from, type, r); break;
             case Msg.PortalReq:
-                if (DungeonGenerator.Instance != null) DungeonGenerator.Instance.NextFloor();
+            {
+                int token = r.ReadInt32();
+                int direction = r.ReadInt32();
+                if (Token == token && !downed.Contains(from.id) && S.Players.TryGetValue(from.id, out var peer) && peer.scene == token)
+                    DungeonGenerator.Instance?.TryTravel(direction, new Vector2(peer.x, peer.y), 1.4f);
                 break;
+            }
             case Msg.EnemyMark:
             {
                 // Un client acaba de carregar l'escena: li enviem tot el que ja ha passat
@@ -577,7 +595,7 @@ public static class NetCoop
                 if (token != Token) break;
                 pendingChests.Remove(key);
                 if (!openedChests.Add(key)) break;
-                var c = FindChest(key); if (c != null) c.NetGrantOpen();
+                var c = FindChest(key); if (c != null) c.NetGrantOpen(dropLoot: false);
                 break;
             }
             case Msg.PortalSpawn:
@@ -596,8 +614,9 @@ public static class NetCoop
             }
             case Msg.NextFloorAll:
             {
+                int token = r.ReadInt32();
                 int floor = r.ReadInt32();
-                if (gen != null) gen.NetNextFloor(floor);
+                if (token == Token && gen != null) gen.NetNextFloor(floor);
                 break;
             }
             case Msg.GameOverAll: if (gen != null) gen.NetGameOver(); break;

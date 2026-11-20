@@ -89,6 +89,15 @@ public class Breakable : MonoBehaviour
         Destroy(gameObject);
     }
 
+    public void RemoveWithoutLoot()
+    {
+        if (broken) return;
+        broken = true;
+        TileNav.RemoveBlocker(transform.position);
+        gameObject.SetActive(false);
+        Destroy(gameObject);
+    }
+
     void OnDestroy()
     {
         if (!broken) TileNav.RemoveBlocker(transform.position);

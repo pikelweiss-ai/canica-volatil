@@ -1025,7 +1025,7 @@ public class NetSession : MonoBehaviour
     public static int SceneToken()
     {
         var s = SceneManager.GetActiveScene();
-        return s.buildIndex * 1000 + (s.name == "Dungeon" ? RunState.Floor : 0);
+        return s.buildIndex * 1000 + (s.name == "Dungeon" ? unchecked(RunState.FloorVisit * 100000 + RunState.Floor) : 0);
     }
 
     bool SampleLocal(int id)

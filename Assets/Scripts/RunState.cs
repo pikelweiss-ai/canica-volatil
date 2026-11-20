@@ -12,6 +12,9 @@ public static class RunState
     public static HealItem[] HealItems;     // Bossa de cures
     public static int[] HealCounts;
     public static int Seed;
+    public static int FloorVisit;
+    public static int ArrivalDirection;
+    internal static readonly System.Collections.Generic.Dictionary<int, DungeonGenerator.FloorState> Floors = new();
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void Init() => Reset();
@@ -27,5 +30,8 @@ public static class RunState
         HealItems = null;
         HealCounts = null;
         Seed = 0;
+        FloorVisit = 0;
+        ArrivalDirection = 0;
+        Floors.Clear();
     }
 }

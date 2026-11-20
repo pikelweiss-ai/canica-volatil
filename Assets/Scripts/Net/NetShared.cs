@@ -22,6 +22,7 @@ public static class NetShared
     static readonly Dictionary<int, NetItem> items = new Dictionary<int, NetItem>();
     static readonly HashSet<int> taken = new HashSet<int>();   // amfitrio: objectes ja agafats
     static bool spawningRemote, breakingRemote;
+    static readonly HashSet<int> brokenProps = new();
     static Dictionary<string, HealItem> heals;
 
     // Per a les proves automatiques
@@ -42,7 +43,7 @@ public static class NetShared
 
     public static void Reset()
     {
-        items.Clear(); taken.Clear(); mapTaken.Clear(); mapPending.Clear(); Spectate.Stop();
+        items.Clear(); taken.Clear(); brokenProps.Clear(); mapTaken.Clear(); mapPending.Clear(); Spectate.Stop();
     }
 
     // =====================================================================
@@ -108,6 +109,12 @@ public static class NetShared
         Object.Destroy(pickup.gameObject);
     }
 
+    public static bool IsUnclaimed(Component pickup)
+    {
+        var netItem = pickup.GetComponent<NetItem>();
+        return netItem == null || !taken.Contains(netItem.id);
+    }
+
     static void SpawnRemote(int id, Kind kind, string data, Vector3 from, Vector3 to, float cooldownRemaining)
     {
         if (taken.Contains(id) || (items.TryGetValue(id, out var existing) && existing != null)) return;
@@ -169,7 +176,17 @@ public static class NetShared
     {
         if (!NetCoop.Online || breakingRemote) return;
         int key = BreakableKey(b), from = S.LocalId; bool host = NetCoop.IsHost;
+        if (host) brokenProps.Add(key);
         S.SendGame(NetProtocol.Frame(Msg.BreakableBroken, w => { w.Write(from); w.Write(Token); w.Write(key); w.Write(host); }));
+    }
+
+    public static void RestoreBroken(Breakable prop)
+    {
+        int key = BreakableKey(prop);
+        prop.RemoveWithoutLoot();
+        if (!NetCoop.IsHost) return;
+        brokenProps.Add(key);
+        S.SendAll(NetProtocol.Frame(Msg.BreakableBroken, w => { w.Write(S.LocalId); w.Write(Token); w.Write(key); w.Write(true); }));
     }
 
     static void BreakRemote(int key, bool explosionHandled)
@@ -237,6 +254,8 @@ public static class NetShared
                 w.Write(ni.GetComponent<ItemPickup>()?.CooldownRemaining ?? 0f);
             }));
         }
+        foreach (int key in brokenProps)
+            S.SendTo(playerId, NetProtocol.Frame(Msg.BreakableBroken, w => { w.Write(S.LocalId); w.Write(token); w.Write(key); w.Write(true); }));
         foreach (var key in mapTaken) { int k = key; S.SendTo(playerId, NetProtocol.Frame(Msg.MapCoinTaken, w => { w.Write(token); w.Write(k); })); }
     }
 

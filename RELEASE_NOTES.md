@@ -1,3 +1,7 @@
+# Alpha v1.1.3
+
+En passar pel portal del boss, la colla ix pel portal blau del pis següent. Després d'eixir del cercle, es pot tornar a entrar per recuperar el botí del pis anterior. Les sales, els cofres i els objectes es conserven durant la partida. Protocol online **10**.
+
 # Alpha v1.1.2
 
 - Cada arma conserva el seu cooldown mentre està guardada, quan cau a terra i entre pisos.

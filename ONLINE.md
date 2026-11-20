@@ -1,6 +1,6 @@
 # Sales online — Canica Volàtil Alpha
 
-**Protocol: 9 (Alpha v1.1.2).** `PickupSpawn` inclou el cooldown pendent de cada arma, també en resincronitzar. La v1.1.1 usa protocol **8**. Windows, Linux i Android han d’usar la mateixa versió. L’Alpha v1.0.0 usa protocol 5 i no és compatible. Les instruccions de compilació estan a MOBILE_ALPHA.md.
+**Protocol: 10 (Alpha v1.1.3).** `PickupSpawn` inclou el cooldown pendent de cada arma, també en resincronitzar. La v1.1.1 usa protocol **8**. Windows, Linux i Android han d’usar la mateixa versió. L’Alpha v1.0.0 usa protocol 5 i no és compatible. Les instruccions de compilació estan a MOBILE_ALPHA.md.
 
 On està: **JUGAR → targeta "Online"**. Obri el navegador de sales directament a **INTERNET · PÚBLIQUES**.
 
@@ -16,7 +16,7 @@ Per dins (`Assets/Scripts/Net/NetCloud.cs`):
 | Peça | Què fa | Servei |
 |---|---|---|
 | Túnel | L’amfitrió obri una connexió d’**eixida** al port 7835 de `bore.pub` (protocol obert de *bore*). El servei li assigna un port públic. Cada jugador que s’hi connecta arriba com una connexió TCP més a l’amfitrió (cua `accepted` de `NetSession`). | `bore.pub`, gratuït, sense compte |
-| Directori | L’amfitrió publica un anunci JSON (codi, nom, mode, jugadors, fase, `bore.pub:port`) cada 20 s, o abans si canvia alguna cosa, però mai més d’un cada 4 s. Quan tanca, publica `closed`. Les públiques van al tema `canica-volatil-v9-sales`. Les privades van a un tema derivat del SHA-256 del codi. | `ntfy.sh`, gratuït, sense compte |
+| Directori | L’amfitrió publica un anunci JSON (codi, nom, mode, jugadors, fase, `bore.pub:port`) cada 20 s, o abans si canvia alguna cosa, però mai més d’un cada 4 s. Quan tanca, publica `closed`. Les públiques van al tema `canica-volatil-v10-sales`. Les privades van a un tema derivat del SHA-256 del codi. | `ntfy.sh`, gratuït, sense compte |
 | Llista | El navegador llig els anuncis dels últims 75 s, es queda l’últim de cada codi i amaga els tancats o els que fa més de 50 s que no s’anuncien. Només accepta adreces `bore.pub:port`, perquè un anunci fals no puga portar ningú a un altre lloc. | — |
 | Ping | Temps fins al túnel del jugador + el de l’amfitrió (aproximat). | — |
 
@@ -144,7 +144,7 @@ L'**amfitrió mana** i els altres en veuen còpies (`Assets/Scripts/Net/NetCoop.
 - **Dany als jugadors**: cada jugador rep el dany al seu PC. Les bales enemigues es dupliquen a cada PC i fan mal a qui toquen. Les embestides, els colps del boss i les explosions de kamikazes els envia l'amfitrió al company afectat.
 - **Sales**: quan entra el primer jugador viu, es tanquen totes les portes menys la d'entrada (les tres caselles). Quan hi són tots, es tanca també l'entrada i comença el combat. Si tots retrocedeixen, es cancel·la l'espera i es reobrin les portes. L'amfitrió decideix l'estat i el replica als clients, també quan acaben de carregar. Els jugadors caiguts no bloquegen l'inici.
 - **Cofres**: en sales de combat/boss només es poden obrir després de netejar la sala, ni mentre falten jugadors ni durant les onades. L'amfitrió també valida les peticions dels clients. El primer que n'obri un se l'emporta; per a la resta queda obert i no es pot tornar a obrir. Els cofres de recompensa i el portal apareixen per a tots. Sala inicial i tresor conserven la interacció normal.
-- **Portal**: quan algú el creua, **tota la colla** passa de pis alhora. El portal blau torna a la sala inicial del mateix pis a qui el creua.
+- **Portal**: quan algú el creua, **tota la colla** passa de pis alhora. El portal blau és l'arribada del pis següent i torna tota la colla al portal del boss del pis anterior. L'amfitrió restaura les sales, els cofres i el botí que hi quedava.
 - **Caure i espectar**: si caus, **les teues armes i cures queden al terra** (les monedes no) i la càmera segueix un company (A/D o clic per canviar si n'hi ha diversos). Tornes amb tota la vida quan netegen la sala, als 4 segons si has caigut fora de combat (TNT, punxes) o al pis següent si els companys passen. Les armes i cures deixades al terra es poden recuperar mentre continuen allí. Si cauen tots, es torna a començar el pis 1 (la mateixa masmorra).
 - **Monedes, cures i armes del terra**: les veu tothom; se les queda el primer que les agafa (l'amfitrió fa d'àrbitre). L'imant de les monedes va cap al jugador més pròxim (no sempre cap a l'amfitrió).
 - **Monedes animades del mapa** (lobby, mapa lliure): només les agafa un jugador.

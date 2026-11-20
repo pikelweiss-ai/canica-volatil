@@ -248,15 +248,22 @@ public class Chest : MonoBehaviour
     }
 
     // L'amfitrio diu que es teu: s'obri com sempre (so, bot i boti)
-    public void NetGrantOpen()
+    public void NetGrantOpen(bool dropLoot = true)
     {
         netWaiting = false;
         if (IsOpen || opening) return;
-        StartCoroutine(OpenFinishRoutine());
+        StartCoroutine(OpenFinishRoutine(dropLoot));
+    }
+
+    public void OpenAsAuthority()
+    {
+        if (IsOpen) return;
+        NetMarkOpened();
+        DropLoot();
     }
 
     // Ja has mantingut la E prou temps: s'obri, sona i bota
-    IEnumerator OpenFinishRoutine()
+    IEnumerator OpenFinishRoutine(bool dropLoot = true)
     {
         opening = true;
         SetPromptVisible(false);
@@ -271,7 +278,7 @@ public class Chest : MonoBehaviour
         audioSource.pitch = 1f;
         audioSource.PlayOneShot(openSound, volume);
 
-        DropLoot();
+        if (dropLoot) DropLoot();
 
         if (onOpened != null)
             onOpened.Invoke();

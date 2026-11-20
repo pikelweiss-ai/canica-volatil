@@ -16,7 +16,7 @@ using UnityEngine.Tilemaps;
 // 4) EN JUGAR: quan entres a una sala de combat, les portes es tanquen i ixen enemics per onades.
 //    Quan els mates tots, les portes s'obrin (i a voltes apareix un cofre).
 //    Quan mates el boss, apareix un portal al pis següent (un altre tema i més difícil).
-public class DungeonGenerator : MonoBehaviour
+public partial class DungeonGenerator : MonoBehaviour
 {
     public static DungeonGenerator Instance { get; private set; }
 
@@ -97,7 +97,8 @@ public class DungeonGenerator : MonoBehaviour
 
         // En una sala online tots generen la mateixa masmorra: llavor de la sala + pis
         int netSeed = NetSession.Active && NetSession.Instance.Seed != 0 ? NetSession.Instance.Seed + RunState.Floor * 7919 : 0;
-        rng = new System.Random(netSeed != 0 ? netSeed : seed != 0 ? seed : System.Environment.TickCount);
+        if (RunState.Seed == 0) RunState.Seed = seed != 0 ? seed : System.Environment.TickCount | 1;
+        rng = new System.Random(netSeed != 0 ? netSeed : unchecked(RunState.Seed + (RunState.Floor - 1) * 7919));
         Theme = themes != null && themes.Length > 0 ? themes[(RunState.Floor - 1) % themes.Length] : null;
         if (enemyBulletSprite != null) EnemyBullet.sprite = enemyBulletSprite;
 
@@ -118,12 +119,14 @@ public class DungeonGenerator : MonoBehaviour
         // El jugador comença al mig de la sala inicial
         Room start = Rooms[0];
         Vector3 startPos = ground.GetCellCenterWorld(ToCell(start.Center));
+        if (RunState.Floor > 1) DungeonPortal.Create(startPos, returning: true);
+        if (RunState.ArrivalDirection < 0) startPos = PortalPosition(1);
         if (player != null) player.position = new Vector3(startPos.x, startPos.y, player.position.z);
         if (spawnPoint != null) spawnPoint.position = startPos;
         Camera cam = Camera.main;
         if (cam != null) cam.transform.position = new Vector3(startPos.x, startPos.y, cam.transform.position.z);
         start.visited = true;
-        CurrentRoom = start;
+        CurrentRoom = RunState.ArrivalDirection < 0 ? Rooms.Find(r => r.type == RoomType.Boss) : start;
 
         ui = DungeonUI.Create(this);
     }
@@ -519,7 +522,9 @@ public class DungeonGenerator : MonoBehaviour
     void SpawnChest(ChestRarity rarity, Vector2Int cell)
     {
         if (chestPrefabs == null || chestPrefabs.Length <= (int)rarity) return;
+        if (floorChests.TryGetValue(cell, out var existing) && existing != null) return;
         var spawned = Spawn(chestPrefabs[(int)rarity], cell);
+        if (spawned != null && spawned.TryGetComponent(out Chest floorChest)) floorChests[cell] = floorChest;
         if (spawned == null || ProgressionRoom == null || RunState.Floor < 4 ||
             cell != ProgressionRoom.Center + new Vector2Int(2, 0)) return;
 
@@ -695,8 +700,7 @@ public class DungeonGenerator : MonoBehaviour
 
     public void NetNextFloor(int floor)
     {
-        RunState.Floor = floor - 1;
-        NextFloorLocal();
+        if (Mathf.Abs(floor - RunState.Floor) == 1 && floor > 0) LoadFloor(floor);
     }
 
     public void NetGameOver() => PlayerDied();
@@ -984,7 +988,6 @@ public class DungeonGenerator : MonoBehaviour
         foreach (var c in r.doorCells) doors.SetTile(c, DoorSide(r, c) == entrance ? null : doorTile);
     }
 
-    static readonly Vector2Int ReturnPortalOffset = new Vector2Int(0, -3);
     static readonly Vector2Int NextPortalOffset = new Vector2Int(2, 0);
 
     public Vector3 KeepDropClearOfPortals(Vector3 position)
@@ -992,12 +995,14 @@ public class DungeonGenerator : MonoBehaviour
         Room boss = Rooms.Find(room => room.type == RoomType.Boss);
         if (boss == null) return position;
         Vector2 next = TileNav.Center(ToCell(boss.Center + NextPortalOffset));
-        Vector2 back = TileNav.Center(ToCell(boss.Center + ReturnPortalOffset));
-        bool Clear(Vector2 point) => (point - next).sqrMagnitude >= 1.44f && (point - back).sqrMagnitude >= 1.44f;
+        Vector2 back = PortalPosition(-1);
+        bool Near(Vector2 point, Vector2 portal) => (point - portal).sqrMagnitude < 1.44f;
+        bool Clear(Vector2 point) => !Near(point, next) && (RunState.Floor == 1 || !Near(point, back));
         if (Clear(position)) return position;
+        Room room = Near(position, next) ? boss : Rooms[0];
         float best = float.PositiveInfinity;
         Vector3 result = position;
-        foreach (Vector2Int cell in boss.rect.allPositionsWithin)
+        foreach (Vector2Int cell in room.rect.allPositionsWithin)
         {
             Vector3Int tile = ToCell(cell);
             if (TileNav.IsBlocked(tile)) continue;
@@ -1016,13 +1021,6 @@ public class DungeonGenerator : MonoBehaviour
     {
         if (portalsSpawned) return;
         portalsSpawned = true;
-        var start = Rooms.Find(room => room.type == RoomType.Start);
-        if (start != null)
-        {
-            Vector3 back = ground.GetCellCenterWorld(ToCell(cell - NextPortalOffset + ReturnPortalOffset));
-            var portal = DungeonPortal.Create(back, returning: true);
-            portal.ReturnDestination = ground.GetCellCenterWorld(ToCell(start.Center));
-        }
         Vector3 pos = ground.GetCellCenterWorld(ToCell(cell));
         if (portalPrefab != null) Instantiate(portalPrefab, pos, Quaternion.identity);
         else DungeonPortal.Create(pos);
@@ -1032,18 +1030,21 @@ public class DungeonGenerator : MonoBehaviour
 
     public void NextFloor()
     {
-        // Online: tota la colla passa de pis alhora (un client ho demana a l'amfitrio)
-        if (NetCoop.InterceptNextFloor()) return;
-        NextFloorLocal();
+        ChangeFloor(1);
     }
 
-    void NextFloorLocal()
+    void LoadFloor(int floor)
     {
+        if (changingFloor) return;
+        changingFloor = true;
+        if (!NetCoop.IsClient) RunState.Floors[RunState.Floor] = CaptureFloor();
         PlayerAttack attack = player != null ? player.GetComponent<PlayerAttack>() : null;
         attack?.SaveRunInventory();
         PlayerHealth health = player != null ? player.GetComponent<PlayerHealth>() : null;
         if (health != null) RunState.Health = health.currentHealth;
-        RunState.Floor++;
+        RunState.ArrivalDirection = floor - RunState.Floor;
+        RunState.Floor = floor;
+        RunState.FloorVisit++;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
