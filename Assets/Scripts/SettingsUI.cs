@@ -41,10 +41,11 @@ public class SettingsUI : MonoBehaviour
         if(panel!=null) { panel.SetActive(false); Destroy(panel); }
         var bg=Box("Fons",transform,Vector2.zero,Vector2.zero,new Color(.025f,.045f,.07f,.99f));panel=bg.gameObject;bg.anchorMin=Vector2.zero;bg.anchorMax=Vector2.one;bg.offsetMin=bg.offsetMax=Vector2.zero;
         Text("AJUSTOS",panel.transform,new Vector2(0,350),new Vector2(1200,70),42);
-        Button("PARTIDA",new Vector2(-480,245),new Vector2(280,65),()=>{page=0;Build();},page==0);
-        Button("SO",new Vector2(-160,245),new Vector2(280,65),()=>{page=1;Build();},page==1);
-        Button("PANTALLA",new Vector2(160,245),new Vector2(280,65),()=>{page=2;Build();},page==2);
-        Button("INTERFÍCIE",new Vector2(480,245),new Vector2(280,65),()=>{page=3;Build();},page==3);
+        Button("PARTIDA",new Vector2(-560,245),new Vector2(250,65),()=>{page=0;Build();},page==0);
+        Button("SO",new Vector2(-280,245),new Vector2(250,65),()=>{page=1;Build();},page==1);
+        Button("PANTALLA",new Vector2(0,245),new Vector2(250,65),()=>{page=2;Build();},page==2);
+        Button("INTERFÍCIE",new Vector2(280,245),new Vector2(250,65),()=>{page=3;Build();},page==3);
+        Button("OPCIONS",new Vector2(560,245),new Vector2(250,65),()=>{page=4;Build();},page==4);
         if(page==0)
         {
             Row("Mida del mapa",100,140,360,GameSettings.MapSize,v=>GameSettings.MapSize=v,0);
@@ -59,6 +60,15 @@ public class SettingsUI : MonoBehaviour
             Row("Enemics",-55,0,1,GameSettings.Volume(SoundCategory.Enemies),v=>GameSettings.Volume(SoundCategory.Enemies,v),2);
             Row("Efectes i objectes",-140,0,1,GameSettings.Volume(SoundCategory.Effects),v=>GameSettings.Volume(SoundCategory.Effects,v),2);
             Row("Música i ambient",-225,0,1,GameSettings.Volume(SoundCategory.Music),v=>GameSettings.Volume(SoundCategory.Music,v),2);
+        }
+        else if(page==4)
+        {
+            // v1.3.1: opcions de joc
+            Button("CURA INTEL·LIGENT (CLIC DRET): "+(GameOptions.SmartHeal?"SÍ":"NO"),new Vector2(0,120),new Vector2(1200,70),()=>{GameOptions.SmartHeal=!GameOptions.SmartHeal;Build();});
+            Button("NÚMEROS DE DANY: "+(GameOptions.DamageNumbers?"SÍ":"NO"),new Vector2(0,35),new Vector2(1200,70),()=>{GameOptions.DamageNumbers=!GameOptions.DamageNumbers;Build();});
+            Button("AIM AMB REBOTS (DISC): "+(GameOptions.BounceAim?"SÍ":"NO"),new Vector2(0,-50),new Vector2(1200,70),()=>{GameOptions.BounceAim=!GameOptions.BounceAim;Build();});
+            Row("Tremolor de càmera",-150,0,1,GameOptions.Shake,v=>GameOptions.Shake=v,2);
+            Text("Clic dret: la cura intel·ligent tria la que encaixa amb la vida que et falta.",panel.transform,new Vector2(0,-235),new Vector2(1350,60),22);
         }
         else if(page==2 && MobileInput.Active)
         {

@@ -8,7 +8,7 @@ using UnityEngine.EventSystems;
 // - Clic esquerre (o Espai) per a atacar
 // - Tecles 1-4 o la roda del ratolí per a triar casella de la hotbar
 // - Si la casella està buida, ataques amb el PUNY (curta distància)
-public class PlayerAttack : MonoBehaviour
+public partial class PlayerAttack : MonoBehaviour
 {
     [Header("Puny (quan la casella està buida)")]
     public int fistDamage = 1;
@@ -160,6 +160,7 @@ public class PlayerAttack : MonoBehaviour
             spinCharge+=Time.deltaTime;
             if(spinCharge<CurrentWeapon.spinUpTime) return;
         }
+        if (TickSpecialHeld(attackPressed)) return; // v1.3.1: Arc de llum (càrrega) i Escut
         if (attackPressed && slotCooldown[selectedSlot] <= 0f && !overheated[selectedSlot])
         {
             WeaponData weapon = CurrentWeapon;
@@ -248,6 +249,7 @@ public class PlayerAttack : MonoBehaviour
         float remaining = slotCooldown[selectedSlot];
         float progress = remaining <= 0f ? 1f : 1f - Mathf.Clamp01(remaining / (weapon != null ? (remaining > weapon.cooldown ? weapon.overheatCooldown : weapon.cooldown) : fistCooldown));
         bool charging = progress < 1f;
+        if (ChargeProgress(weapon, out float chargeProgress)) { progress = chargeProgress; charging = true; }
 
         Vector2 start = transform.position;
         Vector2 end = start + aimDirection * length;
@@ -259,17 +261,17 @@ public class PlayerAttack : MonoBehaviour
 
         bool radial = weapon != null && weapon.melee && weapon.meleeRadial;
         if (radial) SetAimCircle(aimLine, start, length, 1f, baseColor);
-        else if (weapon != null && !weapon.melee && weapon.wallBounces > 0)
+        else if (weapon != null && !weapon.melee && weapon.wallBounces > 0 && GameOptions.BounceAim)
         {
             aimLine.enabled = false; // el recorregut complet amb rebots el dibuixa DrawBouncePath
             DrawBouncePath(weapon, start, baseColor, 0.14f);
         }
         else SetLine(aimLine, start, end, width, endWidth, baseColor);
-        if (aimBounce != null && !(weapon != null && !weapon.melee && weapon.wallBounces > 0)) aimBounce.enabled = false;
+        if (aimBounce != null && !(weapon != null && !weapon.melee && weapon.wallBounces > 0 && GameOptions.BounceAim)) aimBounce.enabled = false;
 
         // Part carregada: creix des del jugador cap a fora amb el color normal
         // (l'opacitat es calcula perquè, sumada al fons, done just aimColor i no faça salt en acabar)
-        aimFill.enabled = showAimLine && charging && !(weapon != null && !weapon.melee && weapon.wallBounces > 0);
+        aimFill.enabled = showAimLine && charging && !(weapon != null && !weapon.melee && weapon.wallBounces > 0 && GameOptions.BounceAim);
         if (aimFill.enabled)
         {
             Color fillColor = aimColor;
@@ -452,6 +454,7 @@ public class PlayerAttack : MonoBehaviour
     void Shoot(WeaponData weapon)
     {
         if (weapon.melee) { Swing(weapon); return; }
+        if (weapon.special == SpecialKind.Turret || weapon.special == SpecialKind.Mine || weapon.special == SpecialKind.Grapple) { UseInstant(weapon); return; }
         Vector2 center = transform.position;
         Vector2 muzzle = center + aimDirection * Mathf.Max(0f, MuzzleDistance(weapon) - 0.2f) + Vector2.down * 0.08f;
         Vector2 spawnPos = Projectile.SafeMuzzle(center, muzzle, weapon.projectileSize * 0.5f, transform);
@@ -481,6 +484,7 @@ public class PlayerAttack : MonoBehaviour
 
         WeaponSounds.Play(WeaponSounds.ShootClip(weapon), 0.5f);
         recoil = pellets > 1 ? 0.14f : 0.08f; // L'arma recula (més si és escopeta)
+        if (weapon.special == SpecialKind.HealBolt) TryHealAlly(weapon);
     }
 
     // Un colp per objectiu dins de l'arc, amb visibilitat per evitar pegar a traves de murs.

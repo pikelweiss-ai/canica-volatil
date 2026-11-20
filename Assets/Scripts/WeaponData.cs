@@ -4,6 +4,8 @@ using UnityEngine;
 // - Tret: un "bang" cada vegada que dispara (AK...)
 // - Llancament: un "fiuu" en llançar-la i un "toc" quan impacta (pedra...)
 public enum ProjectileEffect : byte { None, Slow, Poison, Chain }
+// v1.3.1: armes amb comportament propi (Torreta, Mina, Arc de càrrega, Escut, Vareta curativa i Ganxo)
+public enum SpecialKind : byte { None, Turret, Mine, Charge, Shield, HealBolt, Grapple }
 
 public enum WeaponSound { Tret, Llancament, Escopeta, Sniper, Cristall, Electricitat }
 
@@ -55,6 +57,8 @@ public class WeaponData : ScriptableObject
     [Min(0f)] public float hitSpeedBoost;      // Colpejar amb esta arma dona +% de velocitat (0,15 = +15 %)...
     [Min(0f)] public float hitSpeedBoostTime;  // ...durant tants segons (es renova, no s'acumula)
     [Min(0f)] public float meleeLineWidth;     // > 0: el colp cos a cos és una línia recta d'esta amplada (Llança), no un arc
+    public SpecialKind special;             // Comportament propi de l'arma (v1.3.1)
+    public float specialValue;              // Torreta: segons vius; Mina: radi; Arc: segons de càrrega; Escut: graus; Vareta curativa: abast; Ganxo: distància d'estirada
     public bool melee = false;
     [Range(20f, 180f)] public float meleeArc = 110f;
 

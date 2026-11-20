@@ -481,14 +481,14 @@ public partial class DungeonGenerator : MonoBehaviour
         {
             if (r.type == RoomType.Treasure)
             {
-                ChestRarity rarity = RunState.Floor >= 3 && rng.NextDouble() < 0.4 ? ChestRarity.Llegendari
-                                   : rng.NextDouble() < 0.5 ? ChestRarity.Epic : ChestRarity.Rar;
+                ChestRarity rarity = TreasureRarity();
                 SpawnChest(rarity, r.Center);
             }
             else if (r.type == RoomType.Start)
             {
                 // Cofre a la sala inicial de cada pis (al pis 1 és la primera arma)
-                SpawnChest(RunState.Floor >= 3 && rng.NextDouble() < 0.4 ? ChestRarity.Rar : ChestRarity.Comu, r.Center + new Vector2Int(3, 3));
+                SpawnChest(RunState.Floor >= 3 && rng.NextDouble() < 0.4 ? ChestRarity.Rar : ChestRarity.Comu, r.Center + StartChestOffsets[0]);
+                for (int extra = 1; extra < StartChestCount(); extra++) SpawnChest(ChestRarity.Comu, r.Center + StartChestOffsets[extra]); // un cofre comú per jugador
             }
             else if (r.type == RoomType.Combat && r != ProgressionRoom && rng.NextDouble() < 0.45)
             {
@@ -505,14 +505,49 @@ public partial class DungeonGenerator : MonoBehaviour
         }
     }
 
-    // Comú 55 %, Rar 30 %, Èpic 12 %, Llegendari 3 % (més bons als pisos de dalt)
+    // v1.3.1: els cofres milloren amb els pisos. Al pis 1 no hi ha èpics ni llegendaris.
+    // Pesos (comú, rar, èpic, llegendari) per pis; del pis 6 en endavant es queda al darrer.
+    static readonly int[][] ChestWeights =
+    {
+        new[] { 70, 30, 0, 0 },    // pis 1
+        new[] { 55, 35, 10, 0 },   // pis 2
+        new[] { 45, 35, 17, 3 },   // pis 3
+        new[] { 35, 35, 23, 7 },   // pis 4
+        new[] { 28, 32, 28, 12 },  // pis 5
+        new[] { 20, 30, 32, 18 },  // pis 6+
+    };
+
     ChestRarity RandomRarity()
     {
-        double x = rng.NextDouble() - 0.04 * (RunState.Floor - 1);
-        if (x < 0.03) return ChestRarity.Llegendari;
-        if (x < 0.15) return ChestRarity.Epic;
-        if (x < 0.45) return ChestRarity.Rar;
+        int[] w = ChestWeights[Mathf.Clamp(RunState.Floor, 1, ChestWeights.Length) - 1];
+        int total = w[0] + w[1] + w[2] + w[3];
+        int roll = rng.Next(0, total);
+        for (int i = 0; i < 4; i++) { if (roll < w[i]) return (ChestRarity)i; roll -= w[i]; }
         return ChestRarity.Comu;
+    }
+
+    // Sala del tresor: sempre per damunt d'un cofre normal, però tampoc és llegendari al pis 1-2.
+    ChestRarity TreasureRarity()
+    {
+        double x = rng.NextDouble();
+        switch (RunState.Floor)
+        {
+            case 1: return ChestRarity.Rar;
+            case 2: return x < 0.7 ? ChestRarity.Rar : ChestRarity.Epic;
+            case 3: return x < 0.3 ? ChestRarity.Rar : x < 0.85 ? ChestRarity.Epic : ChestRarity.Llegendari;
+            default: return x < 0.15 ? ChestRarity.Rar : x < 0.7 ? ChestRarity.Epic : ChestRarity.Llegendari;
+        }
+    }
+
+    // Recompensa del boss: Rar al pis 1, Èpic al 2 i Llegendari a partir del 3.
+    ChestRarity BossRarity() => RunState.Floor <= 1 ? ChestRarity.Rar : RunState.Floor == 2 ? ChestRarity.Epic : ChestRarity.Llegendari;
+
+    // Online: un cofre comú per jugador a la sala inicial (cada cofre només l'obri una persona)
+    static readonly Vector2Int[] StartChestOffsets = { new Vector2Int(3, 3), new Vector2Int(-3, 3), new Vector2Int(3, -3), new Vector2Int(-3, -3) };
+    int StartChestCount()
+    {
+        var s = NetSession.Instance;
+        return NetCoop.Online && s != null ? Mathf.Clamp(s.Players.Count, 1, StartChestOffsets.Length) : 1;
     }
 
     GameObject Spawn(GameObject prefab, Vector2Int cell)
@@ -759,8 +794,9 @@ public partial class DungeonGenerator : MonoBehaviour
             yield return WaitClear(r);
             // Recompensa: cofre llegendari i portal
             Vector2Int bossChest = BossChestCell(r); // BUG-022: lluny de qualsevol jugador
-            SpawnChest(ChestRarity.Llegendari, bossChest);
-            NetCoop.ChestSpawned((int)ChestRarity.Llegendari, bossChest);
+            ChestRarity bossRarity = BossRarity();
+            SpawnChest(bossRarity, bossChest);
+            NetCoop.ChestSpawned((int)bossRarity, bossChest);
             SpawnPortal(r.Center + NextPortalOffset);
             NetCoop.PortalSpawned(r.Center + NextPortalOffset);
         }

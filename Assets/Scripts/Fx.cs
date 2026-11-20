@@ -77,7 +77,7 @@ public static class Fx
 
     // ---------- Números de dany ----------
 
-    public static void DamageNumber(Vector3 pos, int amount, Color color) => Text(pos, amount.ToString(), color, 4f);
+    public static void DamageNumber(Vector3 pos, int amount, Color color) { if (GameOptions.DamageNumbers) Text(pos, amount.ToString(), color, 4f); }
 
     // Text que puja i s'esvaeix damunt d'algú ("+2", "Vida plena!"...)
     public static void Text(Vector3 pos, string text, Color color, float size = 3.5f)

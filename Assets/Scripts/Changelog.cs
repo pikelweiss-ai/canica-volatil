@@ -12,6 +12,32 @@ public static class Changelog
     {
         new Entry
         {
+            version = "Alpha v1.3.1", title = "Sis armes noves, bosses nous i cofres que milloren",
+            lines = new[]
+            {
+                "ARMES NOVES",
+                "Bàcul de torreta (rar): deixa una torreta que dispara sola durant 9 s.",
+                "Llançamines (rar): deixa fins a 3 mines que exploten quan s'hi acosta un enemic.",
+                "Arc de llum (èpic): mantín el clic per carregar; més càrrega, més mal, i travessa enemics.",
+                "Escut de mirall (èpic): mantín el clic per parar i reflectir les bales; també copeja.",
+                "Vareta curativa (rar): en cooperatiu, cura el company ferit que apuntes.",
+                "Ganxo d'abordatge (comú): estira un enemic cap a tu, o et llança cap a una paret.",
+                "MASMORRA",
+                "Enemics nous: Gàrgola (tira en ventall), Cranc (resistent) i Fantasma de gel (es teletransporta).",
+                "Bosses nous: Reina Aranya (Bosc i Cripta) i Rei de Gel (Neu).",
+                "Els cofres milloren amb els pisos: al pis 1 no hi ha armes èpiques ni llegendàries.",
+                "En cooperatiu, la sala inicial té un cofre comú per a cada jugador.",
+                "ESTÈTICA",
+                "Barrets nous: Mag, Cuiner, Orelles de gat, Cowboy i Antenes. El barret de Pirata és nou.",
+                "Esteles noves: Cors, Flamarada, Floc de neu, Diamants, Fulles i Arc de Sant Martí.",
+                "OPCIONS",
+                "Nova pestanya OPCIONS als Ajustos: cura intel·ligent (sí/no), números de dany, aim amb rebots i tremolor de càmera.",
+                "ONLINE",
+                "Protocol 16: cal la v1.3.1 per a jugar amb altres jugadors.",
+            }
+        },
+        new Entry
+        {
             version = "Alpha v1.3.0", title = "Cooldown de sempre i més personalitat a les armes",
             lines = new[]
             {

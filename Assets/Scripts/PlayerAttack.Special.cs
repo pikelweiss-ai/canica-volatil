@@ -1,0 +1,314 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+// Alpha v1.3.1: armes amb comportament propi.
+//  - Bàcul de torreta: deixa una torreta que dispara sola.      - Llançamines: deixa mines que exploten.
+//  - Arc de llum: mantín per carregar, solta per disparar.        - Escut de mirall: mantín el clic per parar i reflectir bales.
+//  - Vareta curativa: cura el company que apuntes.                - Ganxo: estira un enemic o t'estira cap a una paret.
+// Els efectes (torreta, mines, ganxo) són visibles per a qui les usa; el mal passa per EnemyHealth i, per tant, també online.
+public partial class PlayerAttack
+{
+    float chargeTime;
+    TurretUnit turret;
+    readonly List<MineUnit> mines = new List<MineUnit>();
+    static readonly Dictionary<int, WeaponData> chargedShots = new Dictionary<int, WeaponData>();
+    GameObject shieldVisual;
+    WeaponData reflectShot;
+
+    // ------------------------------------------------------------ Armes que mantenen el botó
+    // Torna true si el tick d'atac ja l'ha gestionat (Arc de llum).
+    bool TickSpecialHeld(bool attackPressed)
+    {
+        WeaponData w = CurrentWeapon;
+        if (w == null || w.special == SpecialKind.None) { chargeTime = 0f; HideShield(); return false; }
+
+        if (w.special == SpecialKind.Charge)
+        {
+            HideShield();
+            float full = Mathf.Max(0.3f, w.specialValue);
+            if (attackPressed && slotCooldown[selectedSlot] <= 0f)
+                chargeTime = Mathf.Min(full, chargeTime + Time.deltaTime);
+            else if (chargeTime > 0f)
+            {
+                float level = chargeTime / full; chargeTime = 0f;
+                if (level >= 0.15f) FireCharged(w, level);
+            }
+            return true;
+        }
+
+        chargeTime = 0f;
+        if (w.special == SpecialKind.Shield) UpdateShield(w, attackPressed);
+        else HideShield();
+        return false;
+    }
+
+    // De 2 a 8 de dany segons la càrrega (la flecha travessa enemics, com diu l'arma)
+    void FireCharged(WeaponData w, float level)
+    {
+        int damage = Mathf.RoundToInt(Mathf.Lerp(2f, 8f, Mathf.Clamp01(level)));
+        if (!chargedShots.TryGetValue(damage, out var shot) || shot == null)
+        {
+            shot = Instantiate(w); shot.name = w.name; shot.damage = damage; shot.special = SpecialKind.None;
+            chargedShots[damage] = shot;
+        }
+        Shoot(shot);
+        slotCooldown[selectedSlot] = w.cooldown;
+        if (level >= 0.95f) Fx.Text(transform.position, "Càrrega total", new Color(1f, 0.9f, 0.4f));
+    }
+
+    // L'aim ensenya la càrrega mentre la mantens
+    bool ChargeProgress(WeaponData w, out float progress)
+    {
+        progress = 0f;
+        if (w == null || w.special != SpecialKind.Charge || chargeTime <= 0f) return false;
+        progress = chargeTime / Mathf.Max(0.3f, w.specialValue);
+        return true;
+    }
+
+    // ------------------------------------------------------------ Armes d'un sol ús
+    void UseInstant(WeaponData w)
+    {
+        switch (w.special)
+        {
+            case SpecialKind.Turret: PlaceTurret(w); break;
+            case SpecialKind.Mine: PlaceMine(w); break;
+            case SpecialKind.Grapple: FireGrapple(w); break;
+        }
+        WeaponSounds.Play(WeaponSounds.ShootClip(w), 0.4f);
+        recoil = 0.08f;
+    }
+
+    Vector3 SpotInFront(float distance) => TileNav.DropDestination(transform.position, transform.position + (Vector3)(aimDirection * distance));
+
+    void PlaceTurret(WeaponData w)
+    {
+        if (turret != null) turret.Expire();
+        var go = new GameObject("Torreta");
+        go.transform.position = SpotInFront(1.2f);
+        turret = go.AddComponent<TurretUnit>();
+        turret.Setup(w, transform, Mathf.Max(3f, w.specialValue));
+    }
+
+    void PlaceMine(WeaponData w)
+    {
+        mines.RemoveAll(m => m == null);
+        while (mines.Count >= 3) { mines[0].Expire(); mines.RemoveAt(0); }
+        var go = new GameObject("Mina");
+        go.transform.position = SpotInFront(0.9f);
+        var mine = go.AddComponent<MineUnit>();
+        mine.Setup(w, transform, w.specialValue > 0f ? w.specialValue : 1.5f);
+        mines.Add(mine);
+    }
+
+    void FireGrapple(WeaponData w)
+    {
+        Vector2 origin = transform.position;
+        Vector2 end = origin + aimDirection * w.range;
+        foreach (var hit in Physics2D.CircleCastAll(origin, 0.25f, aimDirection, w.range))
+        {
+            Collider2D c = hit.collider;
+            if (c == null || c.transform.IsChildOf(transform)) continue;
+            EnemyHealth enemy = c.GetComponentInParent<EnemyHealth>();
+            if (enemy != null && !enemy.IsDead)
+            {
+                end = hit.point;
+                RunStats.HitBy = w.weaponName; enemy.TakeHit(w.damage, aimDirection * 2f); RunStats.HitBy = null;
+                // El gegant (boss) no es mou; els enemics de l'amfitrió es mouen sols: només se'n va el mal
+                if (enemy.GetComponentInParent<EnemyBoss>() == null && !enemy.IsNetProxy)
+                    StartCoroutine(PullEnemy(enemy, Mathf.Max(0.5f, w.specialValue)));
+                break;
+            }
+            if (c.isTrigger) continue;
+            end = hit.point;
+            float distance = Mathf.Max(0f, hit.distance - 0.6f);
+            if (distance > 0.5f) GetComponent<PlayerMovement>()?.Dash(aimDirection, distance); // et llances cap a la paret
+            break;
+        }
+        StartCoroutine(RopeFlash(origin, end));
+    }
+
+    IEnumerator PullEnemy(EnemyHealth enemy, float stopDistance)
+    {
+        var body = enemy != null ? enemy.GetComponent<Rigidbody2D>() : null;
+        for (float t = 0f; t < 0.25f && enemy != null && !enemy.IsDead; t += Time.deltaTime)
+        {
+            Vector2 target = (Vector2)transform.position + aimDirection * stopDistance;
+            Vector2 now = enemy.transform.position;
+            Vector2 next = Vector2.MoveTowards(now, target, 22f * Time.deltaTime);
+            if (TileNav.Ready() && !TileNav.LineOfSight(now, next, 0.2f)) break;
+            if (body != null) body.position = next; else enemy.transform.position = next;
+            yield return null;
+        }
+    }
+
+    IEnumerator RopeFlash(Vector2 from, Vector2 to)
+    {
+        Vector2 delta = to - from;
+        var rope = Fx.MakeSprite("Corda del ganxo", (from + to) * 0.5f, Fx.Disc, new Color(0.85f, 0.75f, 0.5f), "Player", 9);
+        rope.transform.localScale = new Vector3(delta.magnitude, 0.08f, 1f);
+        rope.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
+        yield return new WaitForSeconds(0.18f);
+        if (rope != null) Destroy(rope.gameObject);
+    }
+
+    // Vareta curativa: si apuntes a un company ferit, el cures 1 cor (només online)
+    void TryHealAlly(WeaponData w)
+    {
+        var session = NetSession.Instance;
+        if (session == null || !NetCoop.Online) return;
+        float range = w.specialValue > 0f ? w.specialValue : 7f;
+        NetPlayer best = null; float bestDistance = float.MaxValue;
+        foreach (var p in session.Players.Values)
+        {
+            if (p.id == session.LocalId || p.maxHealth <= 0 || p.health >= p.maxHealth || NetCoop.IsDown(p.id)) continue;
+            if (p.scene != NetSession.SceneToken() || Time.realtimeSinceStartupAsDouble - p.lastPos > 2) continue;
+            Vector2 delta = new Vector2(p.x, p.y) - (Vector2)transform.position;
+            if (delta.magnitude > range || Vector2.Angle(aimDirection, delta) > 35f) continue;
+            if (TileNav.Ready() && !TileNav.LineOfSight(transform.position, new Vector2(p.x, p.y), 0f, true)) continue;
+            if (delta.magnitude < bestDistance) { bestDistance = delta.magnitude; best = p; }
+        }
+        if (best == null) return;
+        NetCoop.HealAlly(best.id);
+        StartCoroutine(RopeFlash(transform.position, new Vector2(best.x, best.y)));
+    }
+
+    // ------------------------------------------------------------ Escut de mirall
+    void UpdateShield(WeaponData w, bool pressed)
+    {
+        if (!pressed) { HideShield(); return; }
+        if (shieldVisual == null)
+        {
+            var sr = Fx.MakeSprite("Escut de mirall", transform.position, w.icon != null ? w.icon : Fx.Disc, Color.white, "Player", 9);
+            sr.transform.localScale = Vector3.one * 0.7f;
+            shieldVisual = sr.gameObject;
+        }
+        shieldVisual.SetActive(true);
+        Vector2 centre = (Vector2)transform.position + aimDirection * 0.85f;
+        shieldVisual.transform.position = centre;
+        GetComponent<PlayerMovement>()?.BoostSpeed(0.7f, 0.1f); // amb l'escut alçat vas més a poc a poc
+
+        float arc = w.specialValue > 0f ? w.specialValue : 120f;
+        foreach (var bullet in FindObjectsByType<EnemyBullet>(FindObjectsSortMode.None))
+        {
+            Vector2 delta = (Vector2)bullet.transform.position - (Vector2)transform.position;
+            if (delta.magnitude > 1.5f || Vector2.Angle(aimDirection, delta) > arc * 0.5f) continue;
+            ReflectBullet(bullet);
+        }
+    }
+
+    void ReflectBullet(EnemyBullet bullet)
+    {
+        Vector2 position = bullet.transform.position;
+        Vector2 direction = (position - (Vector2)transform.position).normalized;
+        Destroy(bullet.gameObject);
+        if (reflectShot == null) reflectShot = NetCoop.Weapon("Pistola");
+        if (reflectShot != null)
+        {
+            int layer = playerSprite != null ? playerSprite.sortingLayerID : 0;
+            int order = playerSprite != null ? playerSprite.sortingOrder + 1 : 0;
+            Projectile.Spawn(position, direction, reflectShot, transform, layer, order, position + direction * 8f);
+        }
+        Fx.Burst(position, new Color(0.7f, 0.9f, 1f), 6, 2f);
+    }
+
+    void HideShield() { if (shieldVisual != null && shieldVisual.activeSelf) shieldVisual.SetActive(false); }
+}
+
+// ---------------------------------------------------------------- Torreta
+public class TurretUnit : MonoBehaviour
+{
+    WeaponData weapon; Transform owner;
+    float life, nextShot;
+    SpriteRenderer body, light;
+
+    public void Setup(WeaponData w, Transform ownerTransform, float seconds)
+    {
+        weapon = w; owner = ownerTransform; life = seconds;
+        body = Fx.MakeSprite("Torreta cos", transform.position, Fx.Disc, new Color(0.55f, 0.6f, 0.68f), "Player", 6);
+        body.transform.SetParent(transform, true); body.transform.localScale = Vector3.one * 0.55f;
+        light = Fx.MakeSprite("Torreta llum", transform.position, Fx.Disc, new Color(1f, 0.3f, 0.3f), "Player", 7);
+        light.transform.SetParent(transform, true); light.transform.localScale = Vector3.one * 0.2f;
+        Fx.Burst(transform.position, new Color(0.7f, 0.75f, 0.85f), 8, 2f);
+    }
+
+    public void Expire()
+    {
+        Fx.Burst(transform.position, new Color(0.7f, 0.75f, 0.85f), 6, 2f);
+        Destroy(gameObject);
+    }
+
+    void Update()
+    {
+        life -= Time.deltaTime;
+        if (life <= 0f) { Expire(); return; }
+        if (Time.time < nextShot) return;
+
+        EnemyHealth target = null; float best = 7f * 7f;
+        foreach (var c in Physics2D.OverlapCircleAll(transform.position, 7f))
+        {
+            var enemy = c.GetComponentInParent<EnemyHealth>();
+            if (enemy == null || enemy.IsDead) continue;
+            float d = ((Vector2)enemy.transform.position - (Vector2)transform.position).sqrMagnitude;
+            if (d >= best) continue;
+            if (TileNav.Ready() && !TileNav.LineOfSight(transform.position, enemy.transform.position, 0f, true)) continue;
+            best = d; target = enemy;
+        }
+        if (target == null) return;
+
+        nextShot = Time.time + 0.4f;
+        Vector2 from = transform.position, to = target.transform.position;
+        RunStats.HitBy = weapon.weaponName;
+        target.TakeHit(Mathf.Max(1, weapon.damage), (to - from).normalized * 1.5f);
+        RunStats.HitBy = null;
+        StartCoroutine(Tracer(from, to));
+        light.transform.position = from + (to - from).normalized * 0.18f;
+    }
+
+    IEnumerator Tracer(Vector2 from, Vector2 to)
+    {
+        Vector2 delta = to - from;
+        var beam = Fx.MakeSprite("Tret de torreta", (from + to) * 0.5f, Fx.Disc, new Color(1f, 0.85f, 0.4f), "Player", 8);
+        beam.transform.localScale = new Vector3(delta.magnitude, 0.07f, 1f);
+        beam.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
+        yield return new WaitForSeconds(0.08f);
+        if (beam != null) Destroy(beam.gameObject);
+    }
+}
+
+// ---------------------------------------------------------------- Mina
+public class MineUnit : MonoBehaviour
+{
+    WeaponData weapon; Transform owner;
+    float radius, armedAt, life = 25f;
+    SpriteRenderer body;
+
+    public void Setup(WeaponData w, Transform ownerTransform, float blastRadius)
+    {
+        weapon = w; owner = ownerTransform; radius = blastRadius; armedAt = Time.time + 0.7f;
+        body = Fx.MakeSprite("Mina cos", transform.position, Fx.Disc, new Color(0.35f, 0.25f, 0.25f), "Player", 5);
+        body.transform.SetParent(transform, true); body.transform.localScale = Vector3.one * 0.38f;
+    }
+
+    public void Expire() { if (this != null) Destroy(gameObject); }
+
+    void Update()
+    {
+        life -= Time.deltaTime;
+        if (life <= 0f) { Expire(); return; }
+        bool armed = Time.time >= armedAt;
+        body.color = armed && ((int)(Time.time * 4f) % 2 == 0) ? new Color(1f, 0.2f, 0.2f) : new Color(0.35f, 0.25f, 0.25f);
+        if (!armed) return;
+
+        foreach (var c in Physics2D.OverlapCircleAll(transform.position, 0.9f))
+        {
+            var enemy = c.GetComponentInParent<EnemyHealth>();
+            if (enemy == null || enemy.IsDead) continue;
+            RunStats.HitBy = weapon.weaponName;
+            Fx.Explode(transform.position, radius, 0, Mathf.Max(1, weapon.damage), owner);
+            RunStats.HitBy = null;
+            Destroy(gameObject);
+            return;
+        }
+    }
+}

@@ -735,6 +735,8 @@ public partial class NetBot : MonoBehaviour
         if (failed) yield break;
         yield return CheckArsenal(attack, origin + Vector2.up * 20f);
         if (failed) yield break;
+        yield return CheckNewWeapons(attack, origin + Vector2.up * 30f);
+        if (failed) yield break;
 
         var camera = Camera.main;
         float normalSize = camera.orthographicSize;
@@ -966,6 +968,8 @@ public partial class NetBot : MonoBehaviour
         yield return CheckFloorReturn();
         if (failed) yield break;
         yield return CheckSoloSummary();
+        if (failed) yield break;
+        yield return CheckNewEnemies();
         if (!failed) Pass();
     }
 
@@ -1028,6 +1032,121 @@ public partial class NetBot : MonoBehaviour
         Ok("el client espera l'amfitrió");
         yield return WaitFor(() => Scene == "Dungeon" && RunState.Floor == 1 && DungeonGenerator.Instance != null &&
             DungeonGenerator.Instance != dungeon, 25, "el client torna a jugar quan ho diu l'amfitrió");
+    }
+
+    // v1.3.1: enemics i bosses nous, al final perquè deixen la sala feta un nyap
+    IEnumerator CheckNewEnemies()
+    {
+        var dungeonRoom = DungeonGenerator.Instance.Rooms[0];
+        var origin = (Vector2)DungeonGenerator.Instance.ground.GetCellCenterWorld(new Vector3Int(dungeonRoom.Center.x, dungeonRoom.Center.y, 0)) + Vector2.left * 3f;
+        var player = DungeonGenerator.Instance.player;
+        var body = player.GetComponent<Rigidbody2D>();
+        // Enemics i bosses nous: es creen, es mouen i ataquen sense errors
+        var catalog = Resources.Load<NetContentCatalog>("NetContent");
+        foreach (string id in new[] { "Gargola", "Cranc", "FantasmaGel", "ReinaAranya", "ReiGel" })
+        {
+            GameObject prefab = null;
+            foreach (var e in catalog.enemies) if (e != null && e.name == id) prefab = e;
+            if (prefab == null) { Fail("falta " + id + " al catàleg d'enemics"); yield break; }
+            player.position = origin + new Vector2(-1.5f, 0f); if (body != null) body.position = player.position;
+            var spawned = Instantiate(prefab, origin + new Vector2(5f, 0f), Quaternion.identity);
+            var guard = player.GetComponent<PlayerHealth>();
+            for (float waited = 0f; waited < (id.StartsWith("Rei") ? 6f : 2.5f); waited += 0.25f) { if (guard != null) guard.currentHealth = guard.maxHealth; yield return new WaitForSeconds(0.25f); }
+            if (spawned == null || spawned.GetComponent<EnemyHealth>() == null) { Fail(id + " ha desaparegut o no té vida"); yield break; }
+            Destroy(spawned);
+            var hurt = player.GetComponent<PlayerHealth>(); if (hurt != null) hurt.currentHealth = hurt.maxHealth;
+            Ok("enemic nou: " + id);
+        }
+    }
+
+    // v1.3.1: les sis armes noves fan el que diuen
+    IEnumerator CheckNewWeapons(PlayerAttack attack, Vector2 origin)
+    {
+        const System.Reflection.BindingFlags instance = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        // Dins de la sala inicial (fora del mapa la línia de visió no existeix i la torreta no veuria res)
+        var dungeonRoom = DungeonGenerator.Instance.Rooms[0];
+        origin = (Vector2)DungeonGenerator.Instance.ground.GetCellCenterWorld(new Vector3Int(dungeonRoom.Center.x, dungeonRoom.Center.y, 0)) + Vector2.left * 3f;
+        var aimField = typeof(PlayerAttack).GetField("aimDirection", instance);
+        var player = attack.transform;
+        var body = player.GetComponent<Rigidbody2D>();
+        EnemyHealth Dummy(Vector2 at)
+        {
+            var go = new GameObject("Objectiu de prova nou", typeof(BoxCollider2D), typeof(EnemyHealth));
+            go.transform.position = at;
+            var health = go.GetComponent<EnemyHealth>(); health.currentHealth = 30;
+            return health;
+        }
+        void Equip(string id) { attack.hotbarSlots[0] = NetCoop.Weapon(id); attack.SelectSlot(0); }
+        player.position = origin; if (body != null) body.position = origin;
+        aimField.SetValue(attack, Vector2.right);
+
+        // Torreta: dispara sola contra l'enemic proper
+        var target = Dummy(origin + new Vector2(4.5f, 0f)); Physics2D.SyncTransforms();
+        Equip("BaculTorreta");
+        typeof(PlayerAttack).GetMethod("Shoot", instance).Invoke(attack, new object[] { NetCoop.Weapon("BaculTorreta") });
+        yield return WaitFor(() => target.currentHealth < 30, 3, "la torreta dispara a un enemic");
+        if (failed) yield break;
+        foreach (var t in FindObjectsByType<TurretUnit>(FindObjectsSortMode.None)) t.Expire();
+        Ok("Bàcul de torreta");
+
+        // Mina: explota quan s'hi acosta un enemic
+        target.currentHealth = 30;
+        player.position = origin + new Vector2(-1f, 0f); if (body != null) body.position = player.position;
+        aimField.SetValue(attack, Vector2.right);
+        var mineWeapon = NetCoop.Weapon("Llancamines");
+        var mineGo = new GameObject("Mina de prova"); mineGo.transform.position = target.transform.position + Vector3.left * 0.3f;
+        mineGo.AddComponent<MineUnit>().Setup(mineWeapon, player, 1.5f);
+        yield return WaitFor(() => target.currentHealth <= 30 - mineWeapon.damage, 4, "la mina explota i fa mal");
+        if (failed) yield break;
+        Ok("Llançamines");
+
+        // Arc de llum: més càrrega, més mal
+        foreach (var p in FindObjectsByType<Projectile>(FindObjectsSortMode.None)) Destroy(p.gameObject);
+        player.position = origin; if (body != null) body.position = origin;
+        Equip("ArcLlum");
+        var fire = typeof(PlayerAttack).GetMethod("FireCharged", instance);
+        fire.Invoke(attack, new object[] { NetCoop.Weapon("ArcLlum"), 1f });
+        yield return null;
+        bool arrow = false; foreach (var p in FindObjectsByType<Projectile>(FindObjectsSortMode.None)) arrow = true;
+        if (!arrow) { Fail("l'Arc de llum no dispara la fletxa carregada"); yield break; }
+        Ok("Arc de llum");
+
+        // Escut: reflecteix una bala enemiga que ve de cara
+        foreach (var p in FindObjectsByType<Projectile>(FindObjectsSortMode.None)) Destroy(p.gameObject);
+        Equip("EscutMirall"); aimField.SetValue(attack, Vector2.right);
+        var bullet = EnemyBullet.Fire(origin + new Vector2(1.1f, 0f), Vector2.left, 1f, 1, null);
+        var tick = typeof(PlayerAttack).GetMethod("TickAttack", instance);
+        tick.Invoke(attack, new object[] { true });
+        yield return null;
+        if (bullet != null) { Fail("l'Escut de mirall no reflecteix la bala"); yield break; }
+        Ok("Escut de mirall");
+
+        // Ganxo: fa mal i estira l'enemic cap a tu
+        var pulled = Dummy(origin + new Vector2(4.5f, 0f)); Physics2D.SyncTransforms();
+        Equip("Ganxo"); aimField.SetValue(attack, Vector2.right);
+        float before = pulled.transform.position.x;
+        typeof(PlayerAttack).GetMethod("Shoot", instance).Invoke(attack, new object[] { NetCoop.Weapon("Ganxo") });
+        yield return new WaitForSeconds(0.5f);
+        if (pulled.currentHealth >= 30 || pulled.transform.position.x >= before) { Fail("el Ganxo no estira l'enemic ni li fa mal"); yield break; }
+        Ok("Ganxo d'abordatge");
+
+        // Cofres: al pis 1 no hi ha èpics ni llegendaris; a partir del 3 sí que poden eixir
+        var generator = DungeonGenerator.Instance;
+        int savedFloor = RunState.Floor;
+        var pick = typeof(DungeonGenerator).GetMethod("RandomRarity", instance);
+        RunState.Floor = 1;
+        for (int i = 0; i < 400; i++)
+        {
+            var rarity = (ChestRarity)pick.Invoke(generator, null);
+            if (rarity == ChestRarity.Epic || rarity == ChestRarity.Llegendari) { RunState.Floor = savedFloor; Fail("al pis 1 ha eixit un cofre " + rarity); yield break; }
+        }
+        RunState.Floor = 6; bool legendary = false;
+        for (int i = 0; i < 600 && !legendary; i++) legendary = (ChestRarity)pick.Invoke(generator, null) == ChestRarity.Llegendari;
+        RunState.Floor = savedFloor;
+        if (!legendary) { Fail("al pis 6 mai ix un cofre llegendari"); yield break; }
+        Ok("cofres progressius");
+
+        Destroy(target.gameObject); Destroy(pulled.gameObject);
     }
 
     IEnumerator CheckArsenal(PlayerAttack attack, Vector2 origin)

@@ -385,6 +385,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 922d599e12e2b7b43b242c846fd907d4, type: 2}
   - {fileID: 11400000, guid: af559f414d0fb9d46b199d4deb5bcf42, type: 2}
   - {fileID: 11400000, guid: b8e72bd0eafde06449b276bb0c044f0c, type: 2}
+  - {fileID: 11400000, guid: 6d78508b5b1a958468e392923fe7d7ea, type: 2}
+  - {fileID: 11400000, guid: 67637f3c48d6576489d3f35f1b7a3e8a, type: 2}
+  - {fileID: 11400000, guid: d5f2be7098f10714d809e1cb758a8f25, type: 2}
   lootDropOffset: {x: 0, y: -0.8}
   healChance: 0.75
   onOpened:

@@ -150,6 +150,21 @@ MonoBehaviour:
   - name: "Capit\xE0"
     sprite: {fileID: 21300000, guid: 1a3820dfde839d44cb87c4cdee532f7c, type: 3}
     fullHelmet: 0
+  - name: Mag
+    sprite: {fileID: 21300000, guid: 7c0d55ff5f8782241953c5547bac035c, type: 3}
+    fullHelmet: 0
+  - name: Cuiner
+    sprite: {fileID: 21300000, guid: 2fe52559c36290b42bd7bf023e71acca, type: 3}
+    fullHelmet: 0
+  - name: Orelles de gat
+    sprite: {fileID: 21300000, guid: 994bda37acc5bd6479d94443c52d6bc7, type: 3}
+    fullHelmet: 0
+  - name: Cowboy
+    sprite: {fileID: 21300000, guid: fc5506e31a0a2db40b0a495948868057, type: 3}
+    fullHelmet: 0
+  - name: Antenes
+    sprite: {fileID: 21300000, guid: 6a137572d66b12d4aba1c58545799eb2, type: 3}
+    fullHelmet: 0
   trails:
   - name: Cap
     color: {r: 0, g: 0, b: 0, a: 0}
@@ -205,3 +220,18 @@ MonoBehaviour:
   - name: Ziga-zaga
     color: {r: 0.7, g: 0.5, b: 1, a: 1}
     shape: 4
+  - name: Cors
+    color: {r: 1, g: 0.4, b: 0.6, a: 1}
+    shape: 7
+  - name: Flamarada
+    color: {r: 1, g: 0.5, b: 0.1, a: 1}
+    shape: 8
+  - name: Floc de neu
+    color: {r: 0.8, g: 0.95, b: 1, a: 1}
+    shape: 9
+  - name: Diamants
+    color: {r: 0.4, g: 0.95, b: 1, a: 1}
+    shape: 10
+  - name: Fulles
+    color: {r: 0.4, g: 0.85, b: 0.35, a: 1}
+    shape: 11

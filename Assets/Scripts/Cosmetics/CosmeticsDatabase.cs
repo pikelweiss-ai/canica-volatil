@@ -43,4 +43,4 @@ public class CosmeticsDatabase : ScriptableObject
 
     public static bool IsRainbow(Color c) => c.a > 0.98f && c.a < 1f;
 }
-public enum TrailShape { Ribbon, Dots, Sparks, Rings, Zigzag, Footsteps, Stars }
+public enum TrailShape { Ribbon, Dots, Sparks, Rings, Zigzag, Footsteps, Stars, Hearts, Flames, Snow, Diamonds, Leaves }

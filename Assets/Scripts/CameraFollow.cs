@@ -87,6 +87,6 @@ public class CameraFollow : MonoBehaviour
     public void ShakeCamera(float duration, float magnitude)
     {
         shakeDuration = duration;
-        shakeMagnitude = magnitude;
+        shakeMagnitude = magnitude * GameOptions.Shake; // opció de tremolor
     }
 }

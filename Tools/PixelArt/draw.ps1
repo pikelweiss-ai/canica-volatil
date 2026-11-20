@@ -309,6 +309,7 @@ $sprites['Cofres/Dungeon/C_Metall'] = @{ size = 16; mirror = $true; rows = @(
 . (Join-Path $PSScriptRoot 'masmorra2.ps1')
 . (Join-Path $PSScriptRoot 'prealpha.ps1')
 . (Join-Path $PSScriptRoot 'alpha-personality.ps1')
+. (Join-Path $PSScriptRoot 'expansio131.ps1')
 
 # Sprites retocats a ma: el PNG del projecte es l'original i no es torna a generar.
 # Llista a fets-a-ma.txt (un patro per linia, p. ex. Skins/*).

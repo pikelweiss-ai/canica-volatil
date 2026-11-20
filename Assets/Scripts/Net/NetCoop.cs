@@ -481,6 +481,14 @@ public static class NetCoop
                 }
                 break;
             }
+            case Msg.HealReq:
+            {
+                int token = r.ReadInt32(); int target = r.ReadInt32();
+                if (token != Token) break;
+                if (target == S.LocalId) HealLocal();
+                else S.SendTo(target, NetProtocol.Frame(Msg.HealAlly, w => w.Write(token)));
+                break;
+            }
             case Msg.ChestReq:
             {
                 int token = r.ReadInt32(); int key = r.ReadInt32();
@@ -551,6 +559,27 @@ public static class NetCoop
         }
     }
 
+
+    // ---------- Vareta curativa (v1.3.1) ----------
+    public static void HealAlly(int targetId)
+    {
+        if (S == null || !Online) return;
+        if (IsHost)
+        {
+            if (targetId == S.LocalId) HealLocal();
+            else S.SendTo(targetId, NetProtocol.Frame(Msg.HealAlly, w => w.Write(Token)));
+        }
+        else S.SendToHost(NetProtocol.Frame(Msg.HealReq, w => { w.Write(Token); w.Write(targetId); }));
+    }
+
+    static void HealLocal()
+    {
+        var ph = Object.FindFirstObjectByType<PlayerHealth>();
+        if (ph == null || ph.IsFull) return;
+        ph.Heal(1);
+        Fx.Text(ph.transform.position, "+1", new Color(0.45f, 1f, 0.45f));
+        Fx.Burst(ph.transform.position, new Color(0.4f, 1f, 0.5f), 8, 2.5f);
+    }
     // Al client des de l'amfitrio
     public static void ChainJump(Vector2 from, Vector2 to)
     {
@@ -636,6 +665,12 @@ public static class NetCoop
                 pendingChests.Remove(key);
                 if (!openedChests.Add(key)) break;
                 var c = FindChest(key); if (c != null) c.NetGrantOpen(dropLoot: false);
+                break;
+            }
+            case Msg.HealAlly:
+            {
+                int token = r.ReadInt32();
+                if (token == Token) HealLocal();
                 break;
             }
             case Msg.ChainFx:

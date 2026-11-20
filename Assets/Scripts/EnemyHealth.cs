@@ -39,6 +39,7 @@ public class EnemyHealth : MonoBehaviour
     // Online: identificador comu i si aquest enemic es una copia d'un enemic de l'amfitrio
     [System.NonSerialized] public int netId;
     [System.NonSerialized] public bool netProxy;
+    public bool IsNetProxy => netProxy;
     private SpriteRenderer spriteRenderer;
     private Color originalColor;
     private EnemyPathfindingAI pathfinding;

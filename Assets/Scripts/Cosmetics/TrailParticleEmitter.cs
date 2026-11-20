@@ -154,6 +154,17 @@ public class TrailParticleEmitter : MonoBehaviour
         particle.renderer.color = tint;
     }
 
+    // v1.3.1: formes dibuixades a mà (8x8, de dalt cap avall)
+    static string[] BitmapFor(TrailShape shape) => shape switch
+    {
+        TrailShape.Hearts => new[] { "........", ".##..##.", "########", "########", ".######.", "..####..", "...##...", "........" },
+        TrailShape.Flames => new[] { "...#....", "..##....", "..###...", ".####.#.", ".#####..", ".#####..", "..###...", "........" },
+        TrailShape.Snow => new[] { "...##...", ".#.##.#.", "..####..", "########", "..####..", ".#.##.#.", "...##...", "........" },
+        TrailShape.Diamonds => new[] { "...##...", "..####..", ".######.", "########", ".######.", "..####..", "...##...", "........" },
+        TrailShape.Leaves => new[] { "......##", "....####", "...#####", "..#####.", ".#####..", "##.##...", "#.......", "........" },
+        _ => null,
+    };
+
     public static Sprite SpriteFor(TrailShape shape)
     {
         if(sprites.TryGetValue(shape,out var sprite))return sprite;
@@ -161,6 +172,8 @@ public class TrailParticleEmitter : MonoBehaviour
         for(int y=0;y<8;y++)for(int x=0;x<8;x++)
         {
             float d=Vector2.Distance(new Vector2(x,y),new Vector2(3.5f,3.5f));bool on;
+            var bitmap=BitmapFor(shape);
+            if(bitmap!=null){tex.SetPixel(x,y,bitmap[7-y][x]==(char)35?Color.white:Color.clear);continue;}
             switch(shape)
             {
                 case TrailShape.Rings:on=d>2.4f&&d<3.8f;break;

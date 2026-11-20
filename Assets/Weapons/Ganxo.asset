@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8b6c57b668240d6bb2883b297e8d7c7, type: 3}
+  m_Name: Ganxo
+  m_EditorClassIdentifier: 
+  weaponName: Ganxo d'abordatge
+  icon: {fileID: 21300000, guid: d223520e0290c9f4e959ac75119c40be, type: 3}
+  rarity: 0
+  handScale: 0.7
+  damage: 2
+  closeDamageRange: 0
+  cooldown: 1.6
+  knockbackForce: 2
+  projectilePrefab: {fileID: 0}
+  projectileSprite: {fileID: 21300000, guid: f4a1590dd3eeff246aaf1d9f0b0e8a5d, type: 3}
+  projectileSpriteScale: 0.8
+  projectileSpeed: 16
+  range: 6
+  zoomRange: 0
+  projectileSize: 0.15
+  projectileColor: {r: 1, g: 0.85, b: 0.3, a: 1}
+  tintProjectileSprite: 0
+  fixedSpread: 0
+  spreadAngle: 3
+  pellets: 1
+  rangeRandom: 0
+  spinUpTime: 0
+  meleeDashDistance: 0
+  alternateSwing: 0
+  meleeRadial: 0
+  meleeMaxTargets: 0
+  bounceDamage: 0
+  bounceRangeBonus: 0
+  hitSpeedBoost: 0
+  hitSpeedBoostTime: 0
+  meleeLineWidth: 0
+  special: 6
+  specialValue: 1.1
+  melee: 0
+  meleeArc: 110
+  projectileEffect: 0
+  explosionRadius: 0
+  explosionDamage: 3
+  pierce: 0
+  wallBounces: 0
+  returns: 0
+  homing: 0
+  spinSpeed: 0
+  maxShots: 0
+  heatLimit: 0
+  heatCoolingRate: 0
+  overheatCooldown: 0
+  sound: 0
+  shootSound: {fileID: 0}
+  impactSound: {fileID: 0}
