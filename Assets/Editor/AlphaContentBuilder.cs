@@ -36,19 +36,19 @@ public static class AlphaContentBuilder
         db.trails=trails.ToArray();EditorUtility.SetDirty(db);
 
         var disc=Weapon("DiscCometa","Disc de cometa","Bumerang",ChestRarity.Rar);
-        disc.damage=2;disc.cooldown=.85f;disc.returns=false;disc.wallBounces=3;disc.pierce=1;disc.spinSpeed=800;disc.projectileSprite=disc.icon;disc.range=6;EditorUtility.SetDirty(disc);
+        disc.damage=2;disc.cooldown=.85f;disc.returns=false;disc.wallBounces=3;disc.pierce=1;disc.spinSpeed=800;disc.projectileSprite=disc.icon;disc.range=9;disc.bounceDamage=1;EditorUtility.SetDirty(disc);
         var lance=Weapon("LlancaTempesta","Llança de tempesta","EspasaVidre",ChestRarity.Epic);
-        lance.melee=true;lance.meleeArc=25;lance.meleeDashDistance=1.8f;lance.cooldown=.85f;lance.damage=3;lance.range=3.5f;EditorUtility.SetDirty(lance);
+        lance.melee=true;lance.meleeArc=25;lance.meleeDashDistance=1.2f;lance.cooldown=.85f;lance.damage=3;lance.range=3f;lance.meleeMaxTargets=3;EditorUtility.SetDirty(lance);
         var spores=Weapon("VaretaEspores","Vareta d'espores","Vareta",ChestRarity.Rar);
-        spores.damage=1;spores.pellets=3;spores.fixedSpread=true;spores.spreadAngle=14;spores.cooldown=1.1f;spores.homing=2;spores.projectileSpeed=9;spores.projectileEffect=ProjectileEffect.Poison;spores.range=7;spores.projectileColor=new Color(.6f,1,.4f);spores.tintProjectileSprite=true;EditorUtility.SetDirty(spores);
+        spores.damage=1;spores.pellets=3;spores.fixedSpread=true;spores.spreadAngle=10;spores.cooldown=1f;spores.homing=0;spores.projectileSpeed=11;spores.projectileEffect=ProjectileEffect.Poison;spores.range=7;spores.projectileColor=new Color(.6f,1,.4f);spores.tintProjectileSprite=true;EditorUtility.SetDirty(spores);
         var pulse = Weapon("ProjectorPolsos", "Projector de polsos", "Llancagranades", ChestRarity.Rar);
-        pulse.damage = 2; pulse.cooldown = 0.8f; pulse.range = 5.5f; pulse.projectileSpeed = 8f;
+        pulse.damage = 3; pulse.cooldown = 0.8f; pulse.range = 5.5f; pulse.projectileSpeed = 8f;
         pulse.explosionRadius = 0f; pulse.explosionDamage = 0; pulse.projectileEffect = ProjectileEffect.Chain;
         pulse.sound = WeaponSound.Electricitat; pulse.projectileSprite = null; pulse.projectileColor = new Color(.3f, .72f, 1f);
         EditorUtility.SetDirty(pulse);
 
         var crystal = Weapon("BallestaCristall", "Ballesta de cristall", "Ballesta", ChestRarity.Epic);
-        crystal.damage = 2; crystal.cooldown = .75f; crystal.range = 8.5f; crystal.projectileEffect = ProjectileEffect.Slow; crystal.pierce = 3;
+        crystal.damage = 2; crystal.cooldown = .6f; crystal.range = 8.5f; crystal.projectileEffect = ProjectileEffect.Slow; crystal.pierce = 3;
         crystal.pellets = 3; crystal.spreadAngle = 9f; crystal.fixedSpread = true;
         crystal.sound = WeaponSound.Cristall; crystal.projectileSprite = S("Armes/Fletxa"); crystal.tintProjectileSprite = true; crystal.projectileColor = new Color(.66f, .48f, 1f);
         EditorUtility.SetDirty(crystal);

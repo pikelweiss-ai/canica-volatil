@@ -1,3 +1,14 @@
+# Alpha v1.2.1
+
+- **Balanç:** Sniper 8 de dany amb recàrrega més lenta i menys zoom; Làser 3 de dany i travessa 2; Vareta d'espores sense teledirigit; Espasa de vidre 4 de dany amb colp en V; Llança de tempesta amb menys abast i dash, i màxim 3 enemics per estocada; Ballesta de cristall més ràpida; Disc de cometa amb +1 de dany a cada rebot i més abast; Projector de polsos amb bala de 3 i salts de 2; el Martell orbital pega per damunt de les parets.
+- **Cooldown:** les armes guardades també es recuperen (abans es quedaven congelades) i, en canviar d'arma, la nova espera la meitat del cooldown de l'última. El Llançaflames només es trenca a la masmorra.
+- **Arreglos:** les armes cos a cos trenquen caixes i barrils; els enemics et veuen per damunt de l'aigua; els ítems d'un cofre cauen al voltant de qui l'obri; una sala s'activa també amb algú als raconets; el cofre del boss no apareix damunt d'un jugador; les caixes no es posen una damunt de l'altra.
+- **Novetats:** panell de novetats clicant el número de versió del menú, lava i àcid amb bombolles i crosta, "_" al xat, cura intel·ligent amb el clic dret, cures iguals que s'ajunten.
+- La llista de sales s'obri a INTERNET i el formulari avisa si una sala pública només serà per a la xarxa local.
+- Protocol online **14**: tots els jugadors han d'usar la v1.2.1.
+
+**Verificació i límits:** Windows, Linux i Android compilen sense errors. La prova individual passa en Windows. Les proves online LAN i Internet passen; les dues d'Internet sense IP no s'han pogut completar en esta passada perquè ntfy.sh retornava 429. L'ajust del cofre del boss i l'arreglo dels cofres online no s'han provat a mà amb altres persones. El binari de Linux i l'APK no s'han executat en una màquina o un telèfon reals.
+
 # Alpha v1.2.0
 
 - Passada de balanç de l'Arsenal amb rebots del Disc, una estocada de la Llança i un indicador circular per al Martell.
