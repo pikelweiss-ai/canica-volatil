@@ -30,7 +30,7 @@ MonoBehaviour:
   projectileColor: {r: 1, g: 0.85, b: 0.3, a: 1}
   tintProjectileSprite: 0
   fixedSpread: 0
-  spreadAngle: 3
+  spreadAngle: 0
   pellets: 1
   rangeRandom: 0
   spinUpTime: 0

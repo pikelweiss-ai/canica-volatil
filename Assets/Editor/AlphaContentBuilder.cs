@@ -60,10 +60,10 @@ public static class AlphaContentBuilder
         // ---- Alpha v1.3.1: sis armes noves amb comportament propi ----
         var turretStaff = Weapon("BaculTorreta", "Bàcul de torreta", "Vareta", ChestRarity.Rar);
         turretStaff.special = SpecialKind.Turret; turretStaff.specialValue = 9f; turretStaff.damage = 1; turretStaff.cooldown = 10f;
-        turretStaff.range = 7f; turretStaff.homing = 0f; turretStaff.zoomRange = 0f; EditorUtility.SetDirty(turretStaff);
+        turretStaff.range = 7f; turretStaff.homing = 0f; turretStaff.zoomRange = 0f; turretStaff.spreadAngle = 0f; EditorUtility.SetDirty(turretStaff);
         var minelauncher = Weapon("Llancamines", "Llançamines", "Llancagranades", ChestRarity.Rar);
         minelauncher.special = SpecialKind.Mine; minelauncher.specialValue = 1.5f; minelauncher.damage = 4; minelauncher.cooldown = 0.8f;
-        minelauncher.explosionRadius = 0f; minelauncher.zoomRange = 0f; EditorUtility.SetDirty(minelauncher);
+        minelauncher.explosionRadius = 0f; minelauncher.zoomRange = 0f; minelauncher.spreadAngle = 0f; EditorUtility.SetDirty(minelauncher);
         var lightBow = Weapon("ArcLlum", "Arc de llum", "Ballesta", ChestRarity.Epic);
         lightBow.special = SpecialKind.Charge; lightBow.specialValue = 1.2f; lightBow.damage = 2; lightBow.cooldown = 0.3f;
         lightBow.pierce = 3; lightBow.projectileSpeed = 26f; lightBow.range = 10f; lightBow.zoomRange = 0f; lightBow.pellets = 1; lightBow.spreadAngle = 0f;
@@ -76,10 +76,10 @@ public static class AlphaContentBuilder
         EditorUtility.SetDirty(mirrorShield);
         var healWand = Weapon("VaretaCurativa", "Vareta curativa", "Vareta", ChestRarity.Rar);
         healWand.special = SpecialKind.HealBolt; healWand.specialValue = 7f; healWand.damage = 1; healWand.cooldown = 1.1f; healWand.homing = 0f;
-        healWand.range = 7f; healWand.projectileColor = new Color(.45f, 1f, .5f); healWand.zoomRange = 0f; EditorUtility.SetDirty(healWand);
+        healWand.range = 7f; healWand.projectileColor = new Color(.45f, 1f, .5f); healWand.zoomRange = 0f; healWand.spreadAngle = 0f; EditorUtility.SetDirty(healWand);
         var grapple = Weapon("Ganxo", "Ganxo d'abordatge", "Pistola", ChestRarity.Comu);
         grapple.special = SpecialKind.Grapple; grapple.specialValue = 1.1f; grapple.damage = 2; grapple.cooldown = 1.6f; grapple.range = 6f;
-        grapple.zoomRange = 0f; EditorUtility.SetDirty(grapple);
+        grapple.zoomRange = 0f; grapple.spreadAngle = 0f; EditorUtility.SetDirty(grapple);
 
         foreach(string path in Directory.GetFiles("Assets/Prefabs/Cofres","*.prefab"))
         {

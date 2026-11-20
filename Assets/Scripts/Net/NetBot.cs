@@ -51,7 +51,7 @@ public partial class NetBot : MonoBehaviour
 
     void Start()
     {
-        StartCoroutine(role == "solo" ? SoloCombat() : role == "trails" ? TrailGallery() : role == "host" ? Host() : Join());
+        StartCoroutine(role == "solo" ? SoloCombat() : role == "weaponshots" ? WeaponShots() : role == "trails" ? TrailGallery() : role == "host" ? Host() : Join());
         StartCoroutine(Watchdog());
     }
 
@@ -356,11 +356,28 @@ public partial class NetBot : MonoBehaviour
         else Ok("estela mostrejada per distància i neta després d'un teletransport");
     }
 
+    // v1.3.1: amb dos jugadors, la sala inicial té dos cofres comuns (un per jugador)
+    bool CheckStartChests(DungeonGenerator g, int players)
+    {
+        var start = g.Rooms.Find(r => r.type == DungeonGenerator.RoomType.Start);
+        if (start == null) { Fail("no hi ha sala inicial"); return false; }
+        int common = 0;
+        foreach (var chest in FindObjectsByType<Chest>(FindObjectsSortMode.None))
+        {
+            var cell = g.ground.WorldToCell(chest.transform.position);
+            if (start.rect.Contains(new Vector2Int(cell.x, cell.y)) && chest.rarity == ChestRarity.Comu) common++;
+        }
+        if (common < players) { Fail("la sala inicial té " + common + " cofres comuns i hi ha " + players + " jugadors"); return false; }
+        Ok("sala inicial amb " + common + " cofres comuns per a " + players + " jugadors");
+        return true;
+    }
+
     IEnumerator HostCoop()
     {
         var g = DungeonGenerator.Instance;
         if (g == null) { Fail("no hi ha masmorra"); yield break; }
         keepAlive = true; StartCoroutine(KeepAlive(g.player.GetComponent<PlayerHealth>()));
+        if (!CheckStartChests(g, 2)) yield break;
         SpawnTestCrate(g);
         yield return CheckProjectiles(g); if(failed)yield break;
         int remoteKills = 0;
@@ -485,6 +502,7 @@ public partial class NetBot : MonoBehaviour
         if (g == null) { Fail("no hi ha masmorra"); yield break; }
         var health = FindFirstObjectByType<PlayerHealth>();
         keepAlive = true; StartCoroutine(KeepAlive(health));
+        if (!CheckStartChests(g, 2)) yield break;
         SpawnTestCrate(g);
         yield return CheckProjectiles(g); if(failed)yield break;
         // L'amfitrio entra primer i comprova que la sala l'espera
@@ -676,6 +694,22 @@ public partial class NetBot : MonoBehaviour
         yield return JoinProgression();
     }
 
+
+    // Captures de les armes, enemics i bosses nous (cal obrir el joc amb gràfics i -botShots <carpeta>)
+    IEnumerator WeaponShots()
+    {
+        RunState.Reset();
+        SceneManager.LoadScene("Dungeon");
+        yield return WaitFor(() => Scene == "Dungeon" && DungeonGenerator.Instance != null, 12, "masmorra individual carregada");
+        if (failed) yield break;
+        yield return new WaitForSeconds(1f);
+        var player = DungeonGenerator.Instance.player;
+        var attack = player.GetComponent<PlayerAttack>();
+        yield return CheckNewWeapons(attack, player.position);
+        if (failed) yield break;
+        yield return CheckNewEnemies();
+        if (!failed) { Log("PASS"); Application.Quit(0); }
+    }
     // Prova de regressió en una masmorra individual real.
     IEnumerator SoloCombat()
     {
@@ -1053,6 +1087,7 @@ public partial class NetBot : MonoBehaviour
             var guard = player.GetComponent<PlayerHealth>();
             for (float waited = 0f; waited < (id.StartsWith("Rei") ? 6f : 2.5f); waited += 0.25f) { if (guard != null) guard.currentHealth = guard.maxHealth; yield return new WaitForSeconds(0.25f); }
             if (spawned == null || spawned.GetComponent<EnemyHealth>() == null) { Fail(id + " ha desaparegut o no té vida"); yield break; }
+            yield return Shot("e-" + id);
             Destroy(spawned);
             var hurt = player.GetComponent<PlayerHealth>(); if (hurt != null) hurt.currentHealth = hurt.maxHealth;
             Ok("enemic nou: " + id);
@@ -1086,6 +1121,7 @@ public partial class NetBot : MonoBehaviour
         typeof(PlayerAttack).GetMethod("Shoot", instance).Invoke(attack, new object[] { NetCoop.Weapon("BaculTorreta") });
         yield return WaitFor(() => target.currentHealth < 30, 3, "la torreta dispara a un enemic");
         if (failed) yield break;
+        yield return Shot("w1-torreta");
         foreach (var t in FindObjectsByType<TurretUnit>(FindObjectsSortMode.None)) t.Expire();
         Ok("Bàcul de torreta");
 
@@ -1097,6 +1133,7 @@ public partial class NetBot : MonoBehaviour
         var mineGo = new GameObject("Mina de prova"); mineGo.transform.position = target.transform.position + Vector3.left * 0.3f;
         mineGo.AddComponent<MineUnit>().Setup(mineWeapon, player, 1.5f);
         yield return WaitFor(() => target.currentHealth <= 30 - mineWeapon.damage, 4, "la mina explota i fa mal");
+        yield return Shot("w2-mina");
         if (failed) yield break;
         Ok("Llançamines");
 
@@ -1109,6 +1146,7 @@ public partial class NetBot : MonoBehaviour
         yield return null;
         bool arrow = false; foreach (var p in FindObjectsByType<Projectile>(FindObjectsSortMode.None)) arrow = true;
         if (!arrow) { Fail("l'Arc de llum no dispara la fletxa carregada"); yield break; }
+        yield return Shot("w3-arc");
         Ok("Arc de llum");
 
         // Escut: reflecteix una bala enemiga que ve de cara
@@ -1119,6 +1157,7 @@ public partial class NetBot : MonoBehaviour
         tick.Invoke(attack, new object[] { true });
         yield return null;
         if (bullet != null) { Fail("l'Escut de mirall no reflecteix la bala"); yield break; }
+        attack.enabled = false; tick.Invoke(attack, new object[] { true }); yield return Shot("w4-escut"); attack.enabled = true;
         Ok("Escut de mirall");
 
         // Ganxo: fa mal i estira l'enemic cap a tu
@@ -1128,6 +1167,7 @@ public partial class NetBot : MonoBehaviour
         typeof(PlayerAttack).GetMethod("Shoot", instance).Invoke(attack, new object[] { NetCoop.Weapon("Ganxo") });
         yield return new WaitForSeconds(0.5f);
         if (pulled.currentHealth >= 30 || pulled.transform.position.x >= before) { Fail("el Ganxo no estira l'enemic ni li fa mal"); yield break; }
+        yield return Shot("w6-ganxo");
         Ok("Ganxo d'abordatge");
 
         // Cofres: al pis 1 no hi ha èpics ni llegendaris; a partir del 3 sí que poden eixir
@@ -1291,6 +1331,29 @@ public partial class NetBot : MonoBehaviour
         }
         if (Time.realtimeSinceStartup >= end) { Fail("el host no veu el dany del pols al client"); yield break; }
         Ok("el host veu el cor perdut pel client dins del pols");
+
+        // v1.3.1: la Vareta curativa de l'amfitrió cura el cor que el client ha perdut
+        {
+            const System.Reflection.BindingFlags nonPublic = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            yield return new WaitForSecondsRealtime(1.5f); // perquè el client comprove abans el cor perdut
+            var hostAttack = dungeon.player.GetComponent<PlayerAttack>();
+            var wand = NetCoop.Weapon("VaretaCurativa");
+            hostAttack.hotbarSlots[0] = wand; hostAttack.SelectSlot(0);
+            Vector2 clientPosition = new Vector2(session.Players[clientId].x, session.Players[clientId].y);
+            Vector2 hostSpot = clientPosition + Vector2.left * 2f;
+            dungeon.player.GetComponent<Rigidbody2D>().position = hostSpot; dungeon.player.position = hostSpot;
+            typeof(PlayerAttack).GetField("aimDirection", nonPublic).SetValue(hostAttack, Vector2.right);
+            float healUntil = Time.realtimeSinceStartup + 6f; bool healed = false;
+            while (Time.realtimeSinceStartup < healUntil && !healed)
+            {
+                SilenceRoomEnemies(room);
+                typeof(PlayerAttack).GetMethod("TryHealAlly", nonPublic).Invoke(hostAttack, new object[] { wand });
+                yield return new WaitForSecondsRealtime(0.3f);
+                healed = session.Players.TryGetValue(clientId, out var after) && after.health == after.maxHealth;
+            }
+            if (!healed) { Fail("la Vareta curativa no cura el client online"); yield break; }
+            Ok("la Vareta curativa cura el client online");
+        }
 
         end = Time.realtimeSinceStartup + 22f;
         while (!room.cleared && Time.realtimeSinceStartup < end)
