@@ -884,6 +884,22 @@ public partial class NetBot : MonoBehaviour
         arena.active = false;
         arena.type = emptyRoomType;
 
+        // v1.2.1 (BUG-021): una arma cos a cos (Espasa de vidre) trenca una caixa a una casella i mitja
+        {
+            var swingCrate = Instantiate(dungeon.cratePrefab, cratePos, Quaternion.identity).GetComponent<Breakable>();
+            swingCrate.coinChance = 0f; swingCrate.healChance = 0f;
+            player.position = cratePos + Vector3.right * 1.5f; body.position = player.position;
+            Physics2D.SyncTransforms();
+            yield return null;
+            var instance = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            typeof(PlayerAttack).GetField("aimDirection", instance).SetValue(attack, Vector2.left);
+            var swing = typeof(PlayerAttack).GetMethod("Swing", instance);
+            var sword = NetCoop.Weapon("EspasaVidre");
+            for (int i = 0; i < 4 && swingCrate != null; i++) { swing.Invoke(attack, new object[] { sword }); yield return null; }
+            if (swingCrate != null) { Fail("l'Espasa de vidre no trenca una caixa a una casella i mitja (BUG-021)"); yield break; }
+            Ok("el cos a cos trenca caixes");
+        }
+
         var db = CosmeticsDatabase.Instance;
         for (int skin = 0; skin < db.skins.Length; skin++)
         {
