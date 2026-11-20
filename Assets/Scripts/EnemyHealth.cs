@@ -65,7 +65,7 @@ public class EnemyHealth : MonoBehaviour
     // El crida PlayerAttack / Projectile / explosions: fa mal, flash roig i empenta l'enemic
     float slowedUntil;
     int poisonDoses;
-    public float MovementMultiplier => Time.time < slowedUntil ? 0.6f : 1f;
+    public float MovementMultiplier => Time.time < slowedUntil ? 0.8f : 1f; // v1.3: alentir un 20 %
 
     public void TakeProjectileHit(int damage, Vector2 knockback, ProjectileEffect effect)
     {
@@ -79,7 +79,7 @@ public class EnemyHealth : MonoBehaviour
         TakeHit(damage, knockback);
         if (effect == ProjectileEffect.Chain) ChainLightning();
         if (isDead) return;
-        if (effect == ProjectileEffect.Slow) slowedUntil = Time.time + 0.5f;
+        if (effect == ProjectileEffect.Slow) slowedUntil = Time.time + 1.5f; // v1.3: durant 1,5 s
         if (effect == ProjectileEffect.Poison && poisonDoses < 3) StartCoroutine(PoisonDose());
     }
 

@@ -28,7 +28,8 @@ public class AlphaMainMenu : MonoBehaviour
         ui.Button(go.transform,"AJUSTOS",new Vector2(-455,-170),SettingsUI.Open);
         ui.Button(go.transform,"CONTROLS",new Vector2(-455,-265),ControlsUI.Open);
         // El número de versió és un botó: obri les novetats (amb "NOU" la primera vegada de cada versió)
-        UIKit.Button(go.transform, GameVersion.Label + "  ·  NOVETATS" + (Changelog.HasNew ? "  <color=#EBB347>● NOU</color>" : ""), new Vector2(-445,-385), new Vector2(500,46), Changelog.Open, UIKit.Style.Ghost, 20);
+        ui.Text(go.transform,GameVersion.Label,new Vector2(-440,-385),new Vector2(630,50),22,TextAlignmentOptions.Left,new Color(.4f,.58f,.62f));
+        UIKit.Button(go.transform, "NOVETATS" + (Changelog.HasNew ? "  <color=#EBB347>● NOU</color>" : ""), new Vector2(-455,-385), new Vector2(230,40), Changelog.Open, UIKit.Style.Ghost, 18);
         ui.Diorama(go.transform);
     }
     void Diorama(Transform parent)

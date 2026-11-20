@@ -36,13 +36,13 @@ public static class AlphaContentBuilder
         db.trails=trails.ToArray();EditorUtility.SetDirty(db);
 
         var disc=Weapon("DiscCometa","Disc de cometa","Bumerang",ChestRarity.Rar);
-        disc.damage=2;disc.cooldown=.85f;disc.returns=false;disc.wallBounces=3;disc.pierce=1;disc.spinSpeed=800;disc.projectileSprite=disc.icon;disc.range=9;disc.bounceDamage=1;EditorUtility.SetDirty(disc);
+        disc.damage=2;disc.cooldown=.85f;disc.returns=false;disc.wallBounces=3;disc.pierce=1;disc.spinSpeed=800;disc.projectileSprite=disc.icon;disc.range=9;disc.bounceDamage=1;disc.zoomRange=0;disc.bounceRangeBonus=.15f;EditorUtility.SetDirty(disc);
         var lance=Weapon("LlancaTempesta","Llança de tempesta","EspasaVidre",ChestRarity.Epic);
-        lance.melee=true;lance.meleeArc=25;lance.meleeDashDistance=1.2f;lance.cooldown=.85f;lance.damage=3;lance.range=3f;lance.meleeMaxTargets=3;EditorUtility.SetDirty(lance);
+        lance.melee=true;lance.meleeArc=25;lance.meleeDashDistance=1.2f;lance.cooldown=.85f;lance.damage=3;lance.range=3f;lance.meleeMaxTargets=3;lance.meleeLineWidth=.7f;EditorUtility.SetDirty(lance);
         var spores=Weapon("VaretaEspores","Vareta d'espores","Vareta",ChestRarity.Rar);
         spores.damage=1;spores.pellets=3;spores.fixedSpread=true;spores.spreadAngle=10;spores.cooldown=1f;spores.homing=0;spores.projectileSpeed=11;spores.projectileEffect=ProjectileEffect.Poison;spores.range=7;spores.projectileColor=new Color(.6f,1,.4f);spores.tintProjectileSprite=true;EditorUtility.SetDirty(spores);
         var pulse = Weapon("ProjectorPolsos", "Projector de polsos", "Llancagranades", ChestRarity.Rar);
-        pulse.damage = 3; pulse.cooldown = 0.8f; pulse.range = 5.5f; pulse.projectileSpeed = 8f;
+        pulse.damage = 3; pulse.cooldown = 0.8f; pulse.range = 6.5f; pulse.projectileSpeed = 8f;
         pulse.explosionRadius = 0f; pulse.explosionDamage = 0; pulse.projectileEffect = ProjectileEffect.Chain;
         pulse.sound = WeaponSound.Electricitat; pulse.projectileSprite = null; pulse.projectileColor = new Color(.3f, .72f, 1f);
         EditorUtility.SetDirty(pulse);

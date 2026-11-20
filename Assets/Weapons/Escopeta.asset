@@ -25,6 +25,7 @@ MonoBehaviour:
   projectileSpriteScale: 1.3
   projectileSpeed: 12
   range: 4
+  zoomRange: -1
   projectileSize: 0.12
   projectileColor: {r: 1, g: 0.28, b: 0.2, a: 1}
   tintProjectileSprite: 1

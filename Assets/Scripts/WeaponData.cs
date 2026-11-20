@@ -30,6 +30,7 @@ public class WeaponData : ScriptableObject
     public float projectileSpriteScale = 1f;
     public float projectileSpeed = 12f;
     public float range = 6f;            // Distància màxima del projectil
+    public float zoomRange = -1f;       // Abast que compta per a l'allunyament de la càmera: -1 = l'abast (màx. 10), 0 = no allunya
     public float projectileSize = 0.3f; // Mida de la hitbox (i de la boleta si no hi ha sprite)
     public Color projectileColor = Color.white;
     public bool tintProjectileSprite;
@@ -50,6 +51,10 @@ public class WeaponData : ScriptableObject
     public bool meleeRadial;
     [Min(0)] public int meleeMaxTargets;    // Enemics màxims per colp (0 = tots). Llança: 3
     [Min(0)] public int bounceDamage;       // Dany que suma el projectil a cada rebot de paret (Disc)
+    [Min(0f)] public float bounceRangeBonus;   // Cada rebot allarga el recorregut en aquesta fracció de l'abast (Disc: 0,15)
+    [Min(0f)] public float hitSpeedBoost;      // Colpejar amb esta arma dona +% de velocitat (0,15 = +15 %)...
+    [Min(0f)] public float hitSpeedBoostTime;  // ...durant tants segons (es renova, no s'acumula)
+    [Min(0f)] public float meleeLineWidth;     // > 0: el colp cos a cos és una línia recta d'esta amplada (Llança), no un arc
     public bool melee = false;
     [Range(20f, 180f)] public float meleeArc = 110f;
 

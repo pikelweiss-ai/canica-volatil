@@ -25,6 +25,7 @@ MonoBehaviour:
   projectileSpriteScale: 1
   projectileSpeed: 12
   range: 3
+  zoomRange: -1
   projectileSize: 0.3
   projectileColor: {r: 0.6, g: 0.9, b: 1, a: 1}
   tintProjectileSprite: 0
@@ -38,6 +39,10 @@ MonoBehaviour:
   meleeRadial: 0
   meleeMaxTargets: 3
   bounceDamage: 0
+  bounceRangeBonus: 0
+  hitSpeedBoost: 0
+  hitSpeedBoostTime: 0
+  meleeLineWidth: 0.7
   melee: 1
   meleeArc: 25
   projectileEffect: 0

@@ -20,13 +20,14 @@ MonoBehaviour:
   heatLimit: 60
   heatCoolingRate: 15
   overheatCooldown: 2
-  cooldown: 0.045
+  cooldown: 0.05
   knockbackForce: 0.8
   projectilePrefab: {fileID: 0}
   projectileSprite: {fileID: 21300000, guid: f4a1590dd3eeff246aaf1d9f0b0e8a5d, type: 3}
   projectileSpriteScale: 1
   projectileSpeed: 19
-  range: 7.5
+  range: 6.5
+  zoomRange: -1
   projectileSize: 0.15
   projectileColor: {r: 1, g: 1, b: 1, a: 1}
   spreadAngle: 12
@@ -38,6 +39,10 @@ MonoBehaviour:
   meleeRadial: 0
   meleeMaxTargets: 0
   bounceDamage: 0
+  bounceRangeBonus: 0
+  hitSpeedBoost: 0
+  hitSpeedBoostTime: 0
+  meleeLineWidth: 0
   melee: 0
   meleeArc: 110
   explosionRadius: 0

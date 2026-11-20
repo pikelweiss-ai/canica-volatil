@@ -13,6 +13,9 @@ public class PlayerMovement : MonoBehaviour
     readonly RaycastHit2D[] dashHits=new RaycastHit2D[16];
     public void Dash(Vector2 direction,float distance){dashDirection=direction.normalized;dashLeft=distance;}
     private float currentSpeed;
+    private float boostMultiplier = 1f, boostUntil;
+    // v1.3: colpejar amb l'Espasa de vidre dona +15 % de velocitat durant 1 s; es renova però no s'acumula
+    public void BoostSpeed(float multiplier, float seconds) { boostMultiplier = multiplier; boostUntil = Time.time + seconds; }
     private Rigidbody2D rb;
     private Vector2 movement;
 
@@ -46,7 +49,7 @@ public class PlayerMovement : MonoBehaviour
     void Update()
     {
         bool onLiquid = liquidTilemap != null && liquidTilemap.HasTile(liquidTilemap.WorldToCell(transform.position));
-        currentSpeed = onLiquid ? waterSpeed : normalSpeed;
+        currentSpeed = (onLiquid ? waterSpeed : normalSpeed) * (Time.time < boostUntil ? boostMultiplier : 1f);
 
         movement = GameControls.Move;
     }

@@ -43,8 +43,7 @@ public class PlayerAttack : MonoBehaviour
     private int selectedSlot = 0;
     private bool mouseBlocked;          // El clic ha començat damunt de la UI
     private readonly float[] slotCooldown = new float[4];
-    private int lastShotSlot = -1;
-    private float lastShotTime = -99f, lastShotCooldown;
+    private readonly bool[] overheated = new bool[4]; // Minigun: bloquejada fins que l'escalfament torna a 0
     private readonly WeaponCondition[] conditions = new WeaponCondition[4];
     private LineRenderer aimFill; // Part carregada del cooldown, damunt de l'aim
     private Vector2 aimDirection = Vector2.right;
@@ -109,8 +108,11 @@ public class PlayerAttack : MonoBehaviour
             showAimLine = !showAimLine;
 
         HandleSlotSelection();
-        // v1.2.1: el cooldown baixa a totes les caselles, tambe a les armes guardades
-        for (int s = 0; s < slotCooldown.Length; s++) slotCooldown[s] = Mathf.Max(0f, slotCooldown[s] - Time.deltaTime);
+        // v1.3: com abans de la v1.2.1, nomes baixa el cooldown de l'arma que tens a la ma;
+        // les armes guardades es queden congelades, llevat de les de cos a cos (i l'escalfament, mes avall).
+        for (int s = 0; s < slotCooldown.Length; s++)
+            if (s == selectedSlot || (hotbarSlots[s] != null && hotbarSlots[s].melee))
+                slotCooldown[s] = Mathf.Max(0f, slotCooldown[s] - Time.deltaTime);
         UpdateAim();
         UpdateHand();
 
@@ -146,9 +148,10 @@ public class PlayerAttack : MonoBehaviour
         for (int i = 0; i < hotbarSlots.Length; i++)
         {
             var gun = hotbarSlots[i];
-            if (gun == null || gun.heatLimit <= 0) continue;
-            if (i != selectedSlot || !attackPressed || slotCooldown[i] > gun.cooldown)
+            if (gun == null || gun.heatLimit <= 0) { overheated[i] = false; continue; }
+            if (i != selectedSlot || !attackPressed || slotCooldown[i] > gun.cooldown || overheated[i])
                 conditions[i].Heat = Mathf.Max(0f, conditions[i].Heat - gun.heatCoolingRate * Time.deltaTime);
+            if (overheated[i] && conditions[i].Heat <= 0f) overheated[i] = false; // v1.3: no pots tornar a disparar fins que la barra torna al principi
         }
         if(!attackPressed || spinningWeapon!=CurrentWeapon){spinCharge=0;spinningWeapon=CurrentWeapon;}
         if(attackPressed && CurrentWeapon!=null && CurrentWeapon.spinUpTime>0)
@@ -157,26 +160,25 @@ public class PlayerAttack : MonoBehaviour
             spinCharge+=Time.deltaTime;
             if(spinCharge<CurrentWeapon.spinUpTime) return;
         }
-        // Canviar d'arma no evita l'espera: l'arma nova espera la meitat del cooldown de l'ultima que has disparat
-        bool swapLocked = selectedSlot != lastShotSlot && Time.time < lastShotTime + 0.5f * lastShotCooldown;
-        if (attackPressed && slotCooldown[selectedSlot] <= 0f && !swapLocked)
+        if (attackPressed && slotCooldown[selectedSlot] <= 0f && !overheated[selectedSlot])
         {
             WeaponData weapon = CurrentWeapon;
 
             if (weapon == null)
             {
-                Punch(); lastShotSlot = selectedSlot; lastShotTime = Time.time; lastShotCooldown = fistCooldown;
+                Punch();
                 slotCooldown[selectedSlot] = fistCooldown;
             }
             else
             {
-                Shoot(weapon); lastShotSlot = selectedSlot; lastShotTime = Time.time; lastShotCooldown = weapon.cooldown;
+                Shoot(weapon);
                 slotCooldown[selectedSlot] = weapon.cooldown;
                 ref WeaponCondition condition = ref conditions[selectedSlot];
                 if (weapon.heatLimit > 0 && ++condition.Heat >= weapon.heatLimit)
                 {
                     condition.Heat = weapon.heatLimit;
                     slotCooldown[selectedSlot] = weapon.overheatCooldown;
+                    overheated[selectedSlot] = true;
                     Fx.Text(transform.position, "Sobreescalfada", new Color(1f, .45f, .2f));
                 }
                 // v1.2.1 (FIX-019): només en masmorra es trenquen; al mapa lliure i al mode Creatiu no
@@ -238,7 +240,8 @@ public class PlayerAttack : MonoBehaviour
         if (weapon != null && weapon.spreadAngle > 0f)
             endWidth = Mathf.Max(width, 2f * length * Mathf.Tan(weapon.spreadAngle * Mathf.Deg2Rad));
         // Cos a cos: l'aim dibuixa la V real del colp (amplada de la corda de l'arc)
-        if (weapon != null && weapon.melee && !weapon.meleeRadial)
+        if (weapon != null && weapon.melee && weapon.meleeLineWidth > 0f) { width = weapon.meleeLineWidth; endWidth = width; }
+        else if (weapon != null && weapon.melee && !weapon.meleeRadial)
             endWidth = Mathf.Max(width, 2f * length * Mathf.Sin(weapon.meleeArc * 0.5f * Mathf.Deg2Rad));
 
         // Progrés del cooldown: 0 = acabes d'atacar, 1 = llest
@@ -256,11 +259,17 @@ public class PlayerAttack : MonoBehaviour
 
         bool radial = weapon != null && weapon.melee && weapon.meleeRadial;
         if (radial) SetAimCircle(aimLine, start, length, 1f, baseColor);
+        else if (weapon != null && !weapon.melee && weapon.wallBounces > 0)
+        {
+            aimLine.enabled = false; // el recorregut complet amb rebots el dibuixa DrawBouncePath
+            DrawBouncePath(weapon, start, baseColor, 0.14f);
+        }
         else SetLine(aimLine, start, end, width, endWidth, baseColor);
+        if (aimBounce != null && !(weapon != null && !weapon.melee && weapon.wallBounces > 0)) aimBounce.enabled = false;
 
         // Part carregada: creix des del jugador cap a fora amb el color normal
         // (l'opacitat es calcula perquè, sumada al fons, done just aimColor i no faça salt en acabar)
-        aimFill.enabled = showAimLine && charging;
+        aimFill.enabled = showAimLine && charging && !(weapon != null && !weapon.melee && weapon.wallBounces > 0);
         if (aimFill.enabled)
         {
             Color fillColor = aimColor;
@@ -269,6 +278,38 @@ public class PlayerAttack : MonoBehaviour
             if (radial) SetAimCircle(aimFill, start, length, progress, fillColor);
             else SetLine(aimFill, start, start + aimDirection * (length * progress), width, Mathf.Lerp(width, endWidth, progress), fillColor);
         }
+    }
+
+    // Disc (v1.3): l'aim ensenya tots els rebots que farà, com el Rico del Brawl Stars.
+    // Cada rebot allarga el recorregut un 15 % de l'abast (bounceRangeBonus).
+    LineRenderer aimBounce;
+    void DrawBouncePath(WeaponData w, Vector2 start, Color color, float width)
+    {
+        if (aimBounce == null) aimBounce = CreateLine("AimBounce", aimLine.sharedMaterial, -2);
+        var points = new System.Collections.Generic.List<Vector2> { start };
+        Vector2 pos = start, dir = aimDirection;
+        float remaining = w.range;
+        for (int segment = 0; segment <= w.wallBounces && remaining > 0.01f; segment++)
+        {
+            RaycastHit2D wall = default; bool found = false;
+            foreach (var hit in Physics2D.RaycastAll(pos, dir, remaining))
+            {
+                var c = hit.collider;
+                if (c == null || c.isTrigger || c.transform.IsChildOf(transform) || c.GetComponentInParent<EnemyHealth>() != null) continue;
+                wall = hit; found = true; break;
+            }
+            if (!found) { points.Add(pos + dir * remaining); break; }
+            points.Add(wall.point);
+            if (segment == w.wallBounces) break;
+            remaining = remaining - wall.distance + w.range * w.bounceRangeBonus;
+            dir = Vector2.Reflect(dir, wall.normal);
+            pos = wall.point + wall.normal * 0.02f;
+        }
+        aimBounce.enabled = showAimLine;
+        aimBounce.positionCount = points.Count;
+        aimBounce.startWidth = aimBounce.endWidth = width;
+        aimBounce.startColor = aimBounce.endColor = color;
+        for (int i = 0; i < points.Count; i++) aimBounce.SetPosition(i, points[i]);
     }
 
     void SetAimCircle(LineRenderer line, Vector2 center, float radius, float progress, Color color)
@@ -455,7 +496,14 @@ public class PlayerAttack : MonoBehaviour
         foreach (Collider2D hit in Physics2D.OverlapCircleAll(origin, weapon.range))
         {
             Vector2 delta = (Vector2)hit.ClosestPoint(origin) - origin;
-            if (delta.sqrMagnitude > 0.01f && !weapon.meleeRadial && Vector2.Angle(aimDirection, delta) > weapon.meleeArc * 0.5f) continue;
+            if (weapon.meleeLineWidth > 0f)
+            {
+                // Llança (v1.3): colp en línia recta, no en V
+                Vector2 centre = hit.bounds.center;
+                Vector2 onLine = origin + aimDirection * Mathf.Clamp(Vector2.Dot(centre - origin, aimDirection), 0f, weapon.range);
+                if (Vector2.Dot(centre - origin, aimDirection) < -0.3f || ((Vector2)hit.ClosestPoint(onLine) - onLine).magnitude > weapon.meleeLineWidth * 0.5f) continue;
+            }
+            else if (delta.sqrMagnitude > 0.01f && !weapon.meleeRadial && Vector2.Angle(aimDirection, delta) > weapon.meleeArc * 0.5f) continue;
             Breakable box = hit.GetComponentInParent<Breakable>();
             // El martell (radial) pega per damunt de les parets. La resta necessita visió.
             if (!weapon.meleeRadial && TileNav.Ready())
@@ -475,6 +523,7 @@ public class PlayerAttack : MonoBehaviour
             if (box != null && objects.Add(box)) box.Hit(weapon.damage);
         }
         targets.Sort((a, b) => a.dist.CompareTo(b.dist));
+        if (targets.Count > 0 && weapon.hitSpeedBoost > 0f) GetComponent<PlayerMovement>()?.BoostSpeed(1f + weapon.hitSpeedBoost, weapon.hitSpeedBoostTime);
         int hits = 0;
         foreach (var t in targets)
         {
@@ -494,6 +543,12 @@ public class PlayerAttack : MonoBehaviour
         line.positionCount = 17; line.startWidth = 0.13f; line.endWidth = 0.03f;
         line.sortingLayerID = playerSprite.sortingLayerID; line.sortingOrder = playerSprite.sortingOrder + 3;
         Color color = weapon.projectileColor;
+        if (weapon.meleeLineWidth > 0f)
+        {
+            line.positionCount = 2; line.startWidth = line.endWidth = weapon.meleeLineWidth * 0.5f;
+            line.SetPosition(0, transform.position); line.SetPosition(1, transform.position + (Vector3)(aimDirection * weapon.range));
+        }
+        else
         for (int i = 0; i < 17; i++) line.SetPosition(i, transform.position + (Vector3)(Rotate(aimDirection, (reverseSwing?-1:1) * ((weapon.meleeRadial?360:weapon.meleeArc) * (i / 16f - 0.5f))) * weapon.range));
         for (float t = 0; t < 0.16f; t += Time.deltaTime) { color.a = 1f - t / 0.16f; line.startColor = line.endColor = color; yield return null; }
         Destroy(line.material); Destroy(go);

@@ -18,13 +18,14 @@ MonoBehaviour:
   handScale: 0.75
   damage: 1
   maxShots: 300
-  cooldown: 0.06
+  cooldown: 0.067
   knockbackForce: 0.5
   projectilePrefab: {fileID: 0}
   projectileSprite: {fileID: 0}
   projectileSpriteScale: 1
   projectileSpeed: 9
   range: 2.8
+  zoomRange: -1
   projectileSize: 0.28
   projectileColor: {r: 1, g: 0.55, b: 0.15, a: 0.85}
   spreadAngle: 14
@@ -36,6 +37,10 @@ MonoBehaviour:
   meleeRadial: 0
   meleeMaxTargets: 0
   bounceDamage: 0
+  bounceRangeBonus: 0
+  hitSpeedBoost: 0
+  hitSpeedBoostTime: 0
+  meleeLineWidth: 0
   melee: 0
   meleeArc: 110
   explosionRadius: 0

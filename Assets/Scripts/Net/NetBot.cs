@@ -743,10 +743,10 @@ public partial class NetBot : MonoBehaviour
             var weapon = NetCoop.Weapon(id);
             attack.hotbarSlots[0] = weapon;
             attack.SelectSlot(0);
-            yield return WaitFor(() => camera.orthographicSize * Mathf.Min(1f, camera.aspect) >= Mathf.Min(weapon.range, 10f), 2, "el zoom de " + id + " (limitat a abast 10)");
+            yield return WaitFor(() => camera.orthographicSize * Mathf.Min(1f, camera.aspect) >= CameraFollow.ZoomRange(weapon), 2, "el zoom de " + id);
             if (failed) yield break;
         }
-        foreach (string id in new[] { "Ballesta", "BallestaCristall", "Vareta" })
+        foreach (string id in new[] { "Ballesta", "BallestaCristall", "Vareta", "DiscCometa", "ProjectorPolsos" })
         {
             attack.hotbarSlots[0] = NetCoop.Weapon(id);
             yield return WaitFor(() => Mathf.Approximately(camera.orthographicSize, normalSize), 2, "zoom normal amb " + id);
@@ -788,14 +788,13 @@ public partial class NetBot : MonoBehaviour
         var cooldowns = (float[])typeof(PlayerAttack).GetField("slotCooldown", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(attack);
         attack.SelectSlot(1);
         yield return new WaitForSeconds(0.1f);
-        if (cooldowns[0] >= remaining || cooldowns[0] <= remaining - 0.5f || cooldowns[1] != 0f) // v1.2.1: el cooldown baixa tambe guardada
+        if (cooldowns[0] != remaining || cooldowns[1] != 0f)
         {
-            Fail("el cooldown de l'arma guardada no baixa o afecta una altra casella");
+            Fail("el cooldown baixa amb l'arma guardada o afecta una altra casella");
             yield break;
         }
-        float beforeSwap = cooldowns[0];
         attack.SwapSlots(0, 1);
-        if (!Mathf.Approximately(cooldowns[1], beforeSwap) || attack.hotbarSlots[1] != sniper)
+        if (cooldowns[1] != remaining || attack.hotbarSlots[1] != sniper)
         {
             Fail("el cooldown no acompanya l'arma quan canvia de casella");
             yield break;
@@ -1071,7 +1070,7 @@ public partial class NetBot : MonoBehaviour
             targets[3].currentHealth != 20 - EnemyHealth.ChainJumpDamage || targets[4].currentHealth != 20)
         { Fail("el Projector no respecta el limit de tres salts"); yield break; }
         targets[4].TakeProjectileHit(2, Vector2.zero, ProjectileEffect.Slow);
-        if (!Mathf.Approximately(targets[4].MovementMultiplier, .6f))
+        if (!Mathf.Approximately(targets[4].MovementMultiplier, .8f))
         { Fail("la Ballesta de cristall no aplica l alentiment"); yield break; }
         for (int i = 0; i < 4; i++) targets[4].TakeProjectileHit(1, Vector2.zero, ProjectileEffect.Poison);
         yield return new WaitForSeconds(2.2f);

@@ -145,6 +145,7 @@ public class Projectile : MonoBehaviour
                 if (wallBouncesLeft > 0 && Vector2.Dot(direction, contact.normal) < 0f)
                 {
                     wallBouncesLeft--; bouncesDone++;
+                    maxDistance += weapon.range * weapon.bounceRangeBonus; // Disc: cada rebot allarga el recorregut un 15 %
                     travelled += contact.distance;
                     transform.position += (Vector3)(contact.normal * 0.01f);
                     direction = Vector2.Reflect(direction, contact.normal).normalized;

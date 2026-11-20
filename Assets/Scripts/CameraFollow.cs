@@ -2,6 +2,9 @@ using UnityEngine;
 
 public class CameraFollow : MonoBehaviour
 {
+    // Abast que compta per a l'allunyament de la càmera (v1.3: cada arma pot tindre el seu)
+    public static float ZoomRange(WeaponData w) => w == null ? 0f : w.zoomRange >= 0f ? w.zoomRange : Mathf.Min(w.range, 10f);
+
     public Transform target;
     public float smoothing = 5f;
 
@@ -44,9 +47,10 @@ public class CameraFollow : MonoBehaviour
         if (view != null && view.orthographic)
         {
             float size = normalSize;
-            if (weapon != null && !weapon.melee && weapon.range >= 9f)
+            float zoom = ZoomRange(weapon);
+            if (weapon != null && !weapon.melee && weapon.range >= 9f && zoom > 0f)
             {
-                float range = Mathf.Min(weapon.range, 10f) / Mathf.Cos(weapon.spreadAngle * Mathf.Deg2Rad) + 1f; // v1.2.1: el zoom no passa d'abast 10
+                float range = zoom / Mathf.Cos(weapon.spreadAngle * Mathf.Deg2Rad) + 1f;
                 size = Mathf.Max(normalSize, range / Mathf.Min(1f, view.aspect));
             }
             view.orthographicSize = Mathf.MoveTowards(view.orthographicSize, size, 18f * Time.deltaTime);

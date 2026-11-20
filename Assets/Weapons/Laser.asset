@@ -17,13 +17,14 @@ MonoBehaviour:
   rarity: 3
   handScale: 0.75
   damage: 3
-  cooldown: 0.5
+  cooldown: 0.6
   knockbackForce: 2
   projectilePrefab: {fileID: 0}
   projectileSprite: {fileID: 21300000, guid: 896e784b758f5eb4bbba3d30bd3f86ea, type: 3}
   projectileSpriteScale: 1
   projectileSpeed: 35
   range: 12
+  zoomRange: 9
   projectileSize: 0.18
   projectileColor: {r: 1, g: 1, b: 1, a: 1}
   spreadAngle: 0
@@ -35,11 +36,15 @@ MonoBehaviour:
   meleeRadial: 0
   meleeMaxTargets: 0
   bounceDamage: 0
+  bounceRangeBonus: 0
+  hitSpeedBoost: 0
+  hitSpeedBoostTime: 0
+  meleeLineWidth: 0
   melee: 0
   meleeArc: 110
   explosionRadius: 0
   explosionDamage: 3
-  pierce: 2
+  pierce: 99
   returns: 0
   homing: 0
   spinSpeed: 0

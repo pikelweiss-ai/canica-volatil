@@ -12,6 +12,30 @@ public static class Changelog
     {
         new Entry
         {
+            version = "Alpha v1.3.0", title = "Cooldown de sempre i més personalitat a les armes",
+            lines = new[]
+            {
+                "COOLDOWN",
+                "Torna el cooldown de sempre: les armes guardades NO es recuperen, només les de cos a cos (i l'escalfament de la Minigun).",
+                "Canviar d'arma ja no fa esperar.",
+                "ARMES",
+                "Ballesta de cristall: alenteix un 20 % durant 1,5 s.",
+                "Disc de cometa: no allunya la càmera, l'aim ensenya tots els rebots (com el Rico) i cada rebot allarga el recorregut un 15 %.",
+                "Espasa de vidre: ara és de qualitat verda; si colpeges, +15 % de velocitat durant 1 s (es renova, no s'acumula).",
+                "Làser: torna a travessar tots els enemics, amb menys zoom i menys cadència.",
+                "Llançaflames: un 10 % menys de cadència.",
+                "Llança de tempesta: el rang i el colp són una línia recta, no una V.",
+                "Minigun: menys abast, un poc menys de cadència i no pots tornar a disparar fins que l'escalfament torna al principi.",
+                "Projector de polsos: un poc més d'abast, sense tocar la càmera.",
+                "Sniper: un poc menys de zoom.",
+                "Vareta màgica: un 15 % menys de cadència.",
+                "Martell orbital: 5 de dany.",
+                "ONLINE",
+                "Protocol 15: cal la v1.3.0 per a jugar amb altres jugadors.",
+            }
+        },
+        new Entry
+        {
             version = "Alpha v1.2.1", title = "Balanç, arreglos i cares noves",
             lines = new[]
             {
@@ -39,7 +63,7 @@ public static class Changelog
                 "MÉS",
                 "Lava i àcid amb bombolles i crosta, connectats.",
                 "El xat mostra una \"_\" parpellejant quan escrius.",
-                "Aquest panell de novetats: clica el número de versió del menú.",
+                "Aquest panell de novetats: botó NOVETATS del menú principal.",
                 "ONLINE",
                 "Protocol 14: cal la v1.2.1 per a jugar amb altres jugadors.",
                 "La llista de sales s'obri a INTERNET i el formulari avisa si una sala pública només serà per a la teua wifi.",

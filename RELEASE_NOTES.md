@@ -1,3 +1,11 @@
+# Alpha v1.3.0
+
+- **Cooldown de sempre:** les armes guardades no es recuperen (només les de cos a cos i l'escalfament de la Minigun) i canviar d'arma no fa esperar.
+- **Ballesta de cristall:** alenteix un 20 % durant 1,5 s. **Disc de cometa:** sense zoom de càmera, l'aim ensenya tots els rebots i cada rebot allarga el recorregut un 15 %. **Espasa de vidre:** qualitat verda i +15 % de velocitat durant 1 s en colpejar.
+- **Làser:** travessa tots els enemics, amb menys zoom i menys cadència. **Llançaflames:** 10 % menys de cadència. **Llança de tempesta:** colp en línia recta. **Minigun:** menys abast, un poc menys de cadència i bloqueig fins que l'escalfament torna a zero. **Projector de polsos:** un poc més d'abast. **Sniper:** un poc menys de zoom. **Vareta màgica:** 15 % menys de cadència. **Martell orbital:** 5 de dany.
+- Les armes que no es citen no canvien, ni el zoom de càmera de les que no es citen.
+- Protocol online **15**: tots els jugadors han d'usar la v1.3.0.
+
 # Alpha v1.2.1
 
 - **Balanç:** Sniper 8 de dany amb recàrrega més lenta i menys zoom; Làser 3 de dany i travessa 2; Vareta d'espores sense teledirigit; Espasa de vidre 4 de dany amb colp en V; Llança de tempesta amb menys abast i dash, i màxim 3 enemics per estocada; Ballesta de cristall més ràpida; Disc de cometa amb +1 de dany a cada rebot i més abast; Projector de polsos amb bala de 3 i salts de 2; el Martell orbital pega per damunt de les parets.
