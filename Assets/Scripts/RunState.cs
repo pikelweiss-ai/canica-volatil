@@ -8,6 +8,7 @@ public static class RunState
     public static int Health;               // Cors en acabar el pis anterior
     public static int Coins;                // Monedes de la partida
     public static float[] WeaponCooldowns;
+    public static WeaponCondition[] WeaponConditions;
     public static WeaponData[] Weapons;     // Hotbar en acabar el pis anterior
     public static HealItem[] HealItems;     // Bossa de cures
     public static int[] HealCounts;
@@ -27,6 +28,7 @@ public static class RunState
         Coins = 0;
         Weapons = null;
         WeaponCooldowns = null;
+        WeaponConditions = null;
         HealItems = null;
         HealCounts = null;
         Seed = 0;

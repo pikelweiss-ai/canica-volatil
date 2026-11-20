@@ -389,7 +389,7 @@ public static class DungeonBuilder
         {
             f.weaponName = "Llançaflames"; f.rarity = ChestRarity.Llegendari; f.handScale = 0.75f;
             f.damage = 1; f.cooldown = 0.06f; f.knockbackForce = 0.5f;
-            f.projectileSpeed = 9f; f.range = 3.2f; f.projectileSize = 0.28f;
+            f.projectileSpeed = 9f; f.range = 2.8f; f.maxShots = 300; f.projectileSize = 0.28f;
             f.projectileColor = new Color(1f, 0.55f, 0.15f, 0.85f);
             f.spreadAngle = 14f; f.pellets = 2; f.rangeRandom = 0.35f;
             f.sound = WeaponSound.Llancament;
@@ -439,7 +439,7 @@ public static class DungeonBuilder
         New("Vareta", "Vareta màgica", ChestRarity.Epic, "Vareta", "BolaMagica", 1f, 2, 0.35f, 9f, 9f, 0.25f, WeaponSound.Llancament,
             w => { w.homing = 6f; });
         New("Minigun", "Minigun", ChestRarity.Llegendari, "Minigun", "Bala", 1f, 1, 0.045f, 19f, 7.5f, 0.15f, WeaponSound.Tret,
-            w => { w.spreadAngle = 9f; w.knockbackForce = 0.8f; });
+            w => { w.spreadAngle = 12f; w.knockbackForce = 0.8f; w.heatLimit = 60; w.heatCoolingRate = 15f; w.overheatCooldown = 2f; });
         W("Minigun").spinUpTime = 0.6f;
         EditorUtility.SetDirty(W("Minigun"));
         New("Laser", "Làser", ChestRarity.Llegendari, "Laser", "Raig", 1f, 4, 0.5f, 35f, 12f, 0.18f, WeaponSound.Tret,

@@ -17,6 +17,7 @@ public class HotbarUI : MonoBehaviour
 
     private Image[][] borders;
     private Image[] icons;
+    private Image[] conditionBars;
     private SlotInput[] inputs;
     private TextMeshProUGUI[] names;
     private TextMeshProUGUI currentWeaponText;
@@ -49,6 +50,7 @@ public class HotbarUI : MonoBehaviour
     {
         borders = new Image[slotCount][];
         icons = new Image[slotCount];
+        conditionBars = new Image[slotCount];
         inputs = new SlotInput[slotCount];
         names = new TextMeshProUGUI[slotCount];
 
@@ -90,6 +92,9 @@ public class HotbarUI : MonoBehaviour
             icons[i] = icon;
 
             // Número de la tecla
+            conditionBars[i] = CreateBorderBar(slot.transform, new Vector2(0.08f, 0.78f), new Vector2(0.92f, 0.78f), Vector2.zero, new Vector2(0f, 5f));
+            conditionBars[i].enabled = false;
+
             TextMeshProUGUI number = CreateText(slot.transform, GameControls.Label(11 + i), 18, TextAlignmentOptions.TopLeft);
             number.gameObject.AddComponent<ControlKeyLabel>().action = 11 + i;
             number.rectTransform.offsetMin = new Vector2(6f, 0f);
@@ -159,6 +164,15 @@ public class HotbarUI : MonoBehaviour
     }
 
     // Actualitza la hotbar: quina casella està triada i què hi ha a cada una
+    public void SetWeaponCondition(int slot, float progress, bool heat)
+    {
+        Image bar = conditionBars[slot];
+        bar.enabled = progress >= 0f;
+        if (!bar.enabled) return;
+        bar.rectTransform.anchorMax = new Vector2(Mathf.Lerp(0.08f, 0.92f, Mathf.Clamp01(progress)), 0.78f);
+        bar.color = heat ? Color.Lerp(Color.yellow, Color.red, progress) : Color.Lerp(Color.red, Color.green, progress);
+    }
+
     public void Refresh(WeaponData[] slots, int selected)
     {
         for (int i = 0; i < borders.Length; i++)

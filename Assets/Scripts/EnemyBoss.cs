@@ -72,7 +72,7 @@ public class EnemyBoss : MonoBehaviour
         attacking = true;
         ai.mode = EnemyPathfindingAI.Mode.Hold;
 
-        int count = Mathf.Clamp(enraged ? attacks.Length : calmAttacks, 1, attacks.Length);
+        int count = Mathf.Clamp(enraged ? attacks.Length : calmAttacks + (RunState.Floor - 1) / 3, 1, attacks.Length);
         int a;
         int guard = 0;
         do { a = Random.Range(0, count); } while (a == lastAttack && count > 1 && guard++ < 10);
@@ -310,7 +310,7 @@ public class EnemyBoss : MonoBehaviour
 
     void Fire(Vector2 dir, float speedMul = 1f)
     {
-        EnemyBullet.Fire((Vector2)transform.position + dir * 0.9f, dir, bulletSpeed * speedMul, 1, transform, 1.3f,
+        EnemyBullet.Fire((Vector2)transform.position + dir * 0.9f, dir, bulletSpeed * speedMul * (1f + Mathf.Min(0.4f, 0.08f * (RunState.Floor - 1))), 1, transform, 1.3f,
                          useBulletColor ? bulletColor : (Color?)null);
     }
 

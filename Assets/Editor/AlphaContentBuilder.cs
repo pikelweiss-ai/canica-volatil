@@ -35,17 +35,17 @@ public static class AlphaContentBuilder
         var lance=Weapon("LlancaTempesta","Llança de tempesta","EspasaVidre",ChestRarity.Epic);
         lance.melee=true;lance.meleeArc=25;lance.meleeDashDistance=1.8f;lance.cooldown=.85f;lance.damage=3;lance.range=3.5f;EditorUtility.SetDirty(lance);
         var spores=Weapon("VaretaEspores","Vareta d'espores","Vareta",ChestRarity.Rar);
-        spores.damage=1;spores.pellets=3;spores.fixedSpread=true;spores.spreadAngle=20;spores.cooldown=1.1f;spores.homing=2;spores.projectileSpeed=6;spores.range=7;spores.projectileColor=new Color(.6f,1,.4f);EditorUtility.SetDirty(spores);
+        spores.damage=1;spores.pellets=3;spores.fixedSpread=true;spores.spreadAngle=14;spores.cooldown=1.1f;spores.homing=2;spores.projectileSpeed=9;spores.projectileEffect=ProjectileEffect.Poison;spores.range=7;spores.projectileColor=new Color(.6f,1,.4f);spores.tintProjectileSprite=true;EditorUtility.SetDirty(spores);
         var pulse = Weapon("ProjectorPolsos", "Projector de polsos", "Llancagranades", ChestRarity.Rar);
-        pulse.damage = 1; pulse.cooldown = 1.25f; pulse.range = 5f; pulse.projectileSpeed = 8f;
-        pulse.explosionRadius = 1.25f; pulse.explosionDamage = 2;
-        pulse.projectileSprite = null; pulse.projectileColor = new Color(.42f, .94f, .86f);
+        pulse.damage = 2; pulse.cooldown = 0.8f; pulse.range = 5.5f; pulse.projectileSpeed = 8f;
+        pulse.explosionRadius = 0f; pulse.explosionDamage = 0; pulse.projectileEffect = ProjectileEffect.Chain;
+        pulse.sound = WeaponSound.Electricitat; pulse.projectileSprite = null; pulse.projectileColor = new Color(.3f, .72f, 1f);
         EditorUtility.SetDirty(pulse);
 
         var crystal = Weapon("BallestaCristall", "Ballesta de cristall", "Ballesta", ChestRarity.Epic);
-        crystal.damage = 2; crystal.cooldown = .75f; crystal.range = 9f; crystal.pierce = 3;
+        crystal.damage = 2; crystal.cooldown = .75f; crystal.range = 8.5f; crystal.projectileEffect = ProjectileEffect.Slow; crystal.pierce = 3;
         crystal.pellets = 3; crystal.spreadAngle = 9f; crystal.fixedSpread = true;
-        crystal.projectileSprite = null; crystal.projectileColor = new Color(.66f, .48f, 1f);
+        crystal.sound = WeaponSound.Cristall; crystal.projectileSprite = S("Armes/Fletxa"); crystal.tintProjectileSprite = true; crystal.projectileColor = new Color(.66f, .48f, 1f);
         EditorUtility.SetDirty(crystal);
 
         foreach(string path in Directory.GetFiles("Assets/Prefabs/Cofres","*.prefab"))

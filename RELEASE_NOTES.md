@@ -1,3 +1,11 @@
+# Alpha v1.2.0
+
+- Passada de balanç de l'Arsenal amb rebots del Disc, una estocada de la Llança i un indicador circular per al Martell.
+- Llançaflames amb 300 trets i Minigun amb calor. L'estat de cada arma passa amb ella entre jugadors i pisos.
+- La Ballesta de cristall alenteix, la Vareta d'espores enverina i el Projector de polsos encadena fins a tres salts elèctrics.
+- Bosses amb 25 punts de vida addicionals per pis, un atac més cada tres pisos i projectils més ràpids.
+- Creu groga del Mode Creatiu i esteles darrere de les skins. Protocol online **12**.
+
 # Alpha v1.1.3
 
 En passar pel portal del boss, la colla ix pel portal blau del pis següent. Després d'eixir del cercle, es pot tornar a entrar per recuperar el botí del pis anterior. Les sales, els cofres i els objectes es conserven durant la partida. Protocol online **10**.

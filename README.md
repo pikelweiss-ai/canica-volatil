@@ -1,6 +1,6 @@
-# Canica Volàtil · Alpha v1.1.3
+# Canica Volàtil · Alpha v1.2.0
 
-El codi de la v1.1.3 usa el protocol **10**. Els enllaços de descàrrega apunten a la versió publicada, v1.1.1 (protocol **8**).
+El codi de la v1.2.0 usa el protocol **12**. Els enllaços de descàrrega apunten a la versió publicada, v1.1.1 (protocol **8**).
 
 Joc 2D de caniques, combat i masmorres fet amb Unity. Explora huit ambients, combina armes i juga en solitari o en cooperatiu **per Internet sense escriure cap IP**.
 

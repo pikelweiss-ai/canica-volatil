@@ -62,7 +62,7 @@ public static class NetShared
         {
             w.Write(from_); w.Write(Token); w.Write(id); w.Write((byte)kind); w.Write(data ?? "");
             w.Write(from.x); w.Write(from.y); w.Write(to.x); w.Write(to.y);
-            w.Write(pickup is ItemPickup weapon ? weapon.CooldownRemaining : 0f);
+            WriteWeaponState(w, pickup as ItemPickup);
         }));
     }
 
@@ -115,7 +115,14 @@ public static class NetShared
         return netItem == null || !taken.Contains(netItem.id);
     }
 
-    static void SpawnRemote(int id, Kind kind, string data, Vector3 from, Vector3 to, float cooldownRemaining)
+    static void WriteWeaponState(BinaryWriter writer, ItemPickup item)
+    {
+        writer.Write(item?.CooldownRemaining ?? 0f);
+        writer.Write(item?.Condition.ShotsUsed ?? 0);
+        writer.Write(item?.Condition.Heat ?? 0f);
+    }
+
+    static void SpawnRemote(int id, Kind kind, string data, Vector3 from, Vector3 to, float cooldownRemaining, WeaponCondition condition)
     {
         if (taken.Contains(id) || (items.TryGetValue(id, out var existing) && existing != null)) return;
         Component c = null;
@@ -126,7 +133,7 @@ public static class NetShared
             {
                 case Kind.Coin: c = CoinDrop.SpawnAt(from, to); break;
                 case Kind.Heal: { var h = Heal(data); if (h != null) c = HealPickup.Spawn(h, from, to); break; }
-                case Kind.Weapon: { var wd = NetCoop.Weapon(data); if (wd != null) c = ItemPickup.Spawn(wd, from, to, cooldownRemaining: cooldownRemaining); break; }
+                case Kind.Weapon: { var wd = NetCoop.Weapon(data); if (wd != null) c = ItemPickup.Spawn(wd, from, to, cooldownRemaining: cooldownRemaining, condition: condition); break; }
             }
         }
         finally { spawningRemote = false; }
@@ -251,7 +258,7 @@ public static class NetShared
             S.SendTo(playerId, NetProtocol.Frame(Msg.PickupSpawn, w => {
                 w.Write(id / 1000000); w.Write(token); w.Write(id); w.Write((byte)kind); w.Write(data);
                 w.Write(from.x); w.Write(from.y); w.Write(to.x); w.Write(to.y);
-                w.Write(ni.GetComponent<ItemPickup>()?.CooldownRemaining ?? 0f);
+                WriteWeaponState(w, ni.GetComponent<ItemPickup>());
             }));
         }
         foreach (int key in brokenProps)
@@ -291,10 +298,11 @@ public static class NetShared
                 r.ReadInt32(); int token = r.ReadInt32(); int id = r.ReadInt32(); var kind = (Kind)r.ReadByte(); string data = r.ReadString();
                 var a = new Vector3(r.ReadSingle(), r.ReadSingle()); var b = new Vector3(r.ReadSingle(), r.ReadSingle());
                 float cooldownRemaining = r.ReadSingle();
+                var condition = new WeaponCondition(r.ReadInt32(), r.ReadSingle());
                 int fid = from.id;
                 if (token != Token || id / 1000000 != fid || taken.Contains(id) || items.ContainsKey(id)) break;
-                S.SendAllExcept(fid, NetProtocol.Frame(Msg.PickupSpawn, w => { w.Write(fid); w.Write(token); w.Write(id); w.Write((byte)kind); w.Write(data); w.Write(a.x); w.Write(a.y); w.Write(b.x); w.Write(b.y); w.Write(cooldownRemaining); }));
-                if (token == Token) SpawnRemote(id, kind, data, a, b, cooldownRemaining);
+                S.SendAllExcept(fid, NetProtocol.Frame(Msg.PickupSpawn, w => { w.Write(fid); w.Write(token); w.Write(id); w.Write((byte)kind); w.Write(data); w.Write(a.x); w.Write(a.y); w.Write(b.x); w.Write(b.y); w.Write(cooldownRemaining); w.Write(condition.ShotsUsed); w.Write(condition.Heat); }));
+                if (token == Token) SpawnRemote(id, kind, data, a, b, cooldownRemaining, condition);
                 break;
             }
             case Msg.PickupClaim:
@@ -344,7 +352,8 @@ public static class NetShared
                 r.ReadInt32(); int token = r.ReadInt32(); int id = r.ReadInt32(); var kind = (Kind)r.ReadByte(); string data = r.ReadString();
                 var a = new Vector3(r.ReadSingle(), r.ReadSingle()); var b = new Vector3(r.ReadSingle(), r.ReadSingle());
                 float cooldownRemaining = r.ReadSingle();
-                if (token == Token) SpawnRemote(id, kind, data, a, b, cooldownRemaining);
+                var condition = new WeaponCondition(r.ReadInt32(), r.ReadSingle());
+                if (token == Token) SpawnRemote(id, kind, data, a, b, cooldownRemaining, condition);
                 break;
             }
             case Msg.PickupGrant:

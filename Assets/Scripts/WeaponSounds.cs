@@ -7,6 +7,7 @@ public static class WeaponSounds
 
 
     private static AudioClip shot, throwClip, impact;
+    private static AudioClip shotgun, sniper, crystal, electric, crystalImpact, electricImpact;
 
     // Reprodueix un so en 2D (mateix volum a tot arreu), amb el to un poc aleatori
     public static void Play(AudioClip clip, float volume = 0.6f, float pitchVariation = 0.08f)
@@ -17,13 +18,27 @@ public static class WeaponSounds
     public static AudioClip ShootClip(WeaponData w)
     {
         if (w.shootSound != null) return w.shootSound;
-        return w.sound == WeaponSound.Llancament ? Throw : Shot;
+        return w.sound switch
+        {
+            WeaponSound.Escopeta => shotgun ??= Synth("Escopeta", .18f, 110f, 48f, .75f),
+            WeaponSound.Sniper => sniper ??= Synth("Sniper", .25f, 230f, 65f, .55f),
+            WeaponSound.Cristall => crystal ??= Synth("Fletxa de cristall", .16f, 490f, 740f, .18f),
+            WeaponSound.Electricitat => electric ??= Synth("Pols electric", .16f, 660f, 190f, .27f),
+            WeaponSound.Llancament => Throw,
+            _ => Shot
+        };
     }
 
     public static AudioClip ImpactClip(WeaponData w)
     {
         if (w.impactSound != null) return w.impactSound;
-        return w.sound == WeaponSound.Llancament ? Impact : null; // Les bales no fan "toc"
+        return w.sound switch
+        {
+            WeaponSound.Cristall => crystalImpact ??= Synth("Impacte de cristall", .12f, 880f, 470f, .09f),
+            WeaponSound.Electricitat => electricImpact ??= Synth("Descarrega", .1f, 300f, 125f, .44f),
+            WeaponSound.Llancament => Impact,
+            _ => null
+        };
     }
 
     // "Bang" curt: esclat de soroll + colp greu
@@ -98,6 +113,21 @@ public static class WeaponSounds
             }
             return impact;
         }
+    }
+
+    static AudioClip Synth(string name, float duration, float start, float end, float noiseMix)
+    {
+        float[] samples = new float[Mathf.CeilToInt(duration * SampleRate)];
+        var noise = new System.Random(17);
+        float phase = 0f;
+        for (int i = 0; i < samples.Length; i++)
+        {
+            float progress = i / (float)samples.Length;
+            phase += 2f * Mathf.PI * Mathf.Lerp(start, end, progress) / SampleRate;
+            float signal = Mathf.Lerp(Mathf.Sin(phase), (float)(noise.NextDouble() * 2 - 1), noiseMix);
+            samples[i] = signal * Mathf.Min(1f, progress * 40f) * Mathf.Pow(1f - progress, 4f) * .65f;
+        }
+        return Make(name, samples);
     }
 
     static AudioClip Make(string name, float[] data)

@@ -26,6 +26,8 @@ public class EnemyPathfindingAI : MonoBehaviour
     [Header("Moviment")]
     public float detectionRange = 8f;
     public float moveSpeed = 2.5f;
+    EnemyHealth enemyHealth;
+    float EffectiveSpeed => moveSpeed * (enemyHealth != null ? enemyHealth.MovementMultiplier : 1f);
     public float recalculateTime = 0.25f;
     public float bodyRadius = 0.28f;          // Mida del cos (per a no ficar-se a les parets)
 
@@ -63,6 +65,7 @@ public class EnemyPathfindingAI : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         if(rb!=null) rb.interpolation=RigidbodyInterpolation2D.Interpolate;
+        enemyHealth = GetComponent<EnemyHealth>();
         home = transform.position;
         wanderTarget = home;
 
@@ -159,7 +162,7 @@ public class EnemyPathfindingAI : MonoBehaviour
         dir += Separation(pos);
         if (dir.sqrMagnitude > 1f) dir.Normalize();
 
-        Vector2 step = dir * moveSpeed * speedMultiplier * dt;
+        Vector2 step = dir * EffectiveSpeed * speedMultiplier * dt;
         Velocity = step / dt;
         if (step.sqrMagnitude > 0f)
         {
@@ -229,7 +232,7 @@ public class EnemyPathfindingAI : MonoBehaviour
 
         Vector2 to = wanderTarget - pos;
         if (to.magnitude < 0.1f) return;
-        Vector2 step = to.normalized * moveSpeed * 0.4f * dt;
+        Vector2 step = to.normalized * EffectiveSpeed * 0.4f * dt;
         if (!TryMove(pos + step)) wanderTimer = 0f;
         Velocity = step / dt;
     }

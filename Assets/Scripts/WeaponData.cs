@@ -3,7 +3,9 @@ using UnityEngine;
 // Quin so fa l'arma:
 // - Tret: un "bang" cada vegada que dispara (AK...)
 // - Llancament: un "fiuu" en llançar-la i un "toc" quan impacta (pedra...)
-public enum WeaponSound { Tret, Llancament }
+public enum ProjectileEffect : byte { None, Slow, Poison, Chain }
+
+public enum WeaponSound { Tret, Llancament, Escopeta, Sniper, Cristall, Electricitat }
 
 // Una arma de la hotbar. Es crea des de Unity amb:
 // clic dret a Project -> Create -> Canica -> Arma
@@ -30,6 +32,7 @@ public class WeaponData : ScriptableObject
     public float range = 6f;            // Distància màxima del projectil
     public float projectileSize = 0.3f; // Mida de la hitbox (i de la boleta si no hi ha sprite)
     public Color projectileColor = Color.white;
+    public bool tintProjectileSprite;
 
     [Header("Dispersió (0 = tret recte; l'aim es fa en V)")]
     public bool fixedSpread;
@@ -49,6 +52,7 @@ public class WeaponData : ScriptableObject
     [Range(20f, 180f)] public float meleeArc = 110f;
 
     [Header("Especials")]
+    public ProjectileEffect projectileEffect;
     public float explosionRadius = 0f;  // > 0: el projectil explota en acabar (granades)
     public int explosionDamage = 3;
     [Min(0)]
@@ -58,8 +62,26 @@ public class WeaponData : ScriptableObject
     public float homing = 0f;           // Teledirigit: com de ràpid gira cap a l'enemic (radians/s, 0 = no)
     public float spinSpeed = 0f;        // El dibuix gira (graus/s): shurikens, bumerangs...
 
+    [Header("Estat per instància")]
+    [Min(0)] public int maxShots;
+    [Min(0)] public int heatLimit;
+    [Min(0f)] public float heatCoolingRate;
+    [Min(0f)] public float overheatCooldown;
+
     [Header("So (si els clips estan buits, es generen per codi)")]
     public WeaponSound sound = WeaponSound.Tret;
     public AudioClip shootSound;
     public AudioClip impactSound;
+}
+
+public struct WeaponCondition
+{
+    public int ShotsUsed;
+    public float Heat;
+
+    public WeaponCondition(int shotsUsed, float heat)
+    {
+        ShotsUsed = shotsUsed;
+        Heat = heat;
+    }
 }

@@ -16,16 +16,16 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: da7c7e5301995db4cbff01cb96d64a0c, type: 3}
   rarity: 1
   handScale: 0.75
-  damage: 1
-  cooldown: 1.25
+  damage: 2
+  cooldown: 0.8
   knockbackForce: 3
   projectilePrefab: {fileID: 0}
   projectileSprite: {fileID: 0}
   projectileSpriteScale: 1
   projectileSpeed: 8
-  range: 5
+  range: 5.5
   projectileSize: 0.25
-  projectileColor: {r: 0.42, g: 0.94, b: 0.86, a: 1}
+  projectileColor: {r: 0.3, g: 0.72, b: 1, a: 1}
   fixedSpread: 0
   spreadAngle: 0
   pellets: 1
@@ -36,12 +36,13 @@ MonoBehaviour:
   meleeRadial: 0
   melee: 0
   meleeArc: 110
-  explosionRadius: 1.25
-  explosionDamage: 2
+  projectileEffect: 3
+  explosionRadius: 0
+  explosionDamage: 0
   pierce: 0
   returns: 0
   homing: 0
   spinSpeed: 0
-  sound: 1
+  sound: 5
   shootSound: {fileID: 0}
   impactSound: {fileID: 0}

@@ -11,19 +11,20 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a8b6c57b668240d6bb2883b297e8d7c7, type: 3}
   m_Name: Llancaflames
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier:
   weaponName: "Llan\xE7aflames"
   icon: {fileID: 21300000, guid: 56544ad8e1702724d862d2a89601764e, type: 3}
   rarity: 3
   handScale: 0.75
   damage: 1
+  maxShots: 300
   cooldown: 0.06
   knockbackForce: 0.5
   projectilePrefab: {fileID: 0}
   projectileSprite: {fileID: 0}
   projectileSpriteScale: 1
   projectileSpeed: 9
-  range: 3.2
+  range: 2.8
   projectileSize: 0.28
   projectileColor: {r: 1, g: 0.55, b: 0.15, a: 0.85}
   spreadAngle: 14

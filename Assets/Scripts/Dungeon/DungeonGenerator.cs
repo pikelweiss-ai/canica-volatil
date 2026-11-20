@@ -920,7 +920,7 @@ public partial class DungeonGenerator : MonoBehaviour
             if (r.type == RoomType.Boss)
             {
                 float partyMultiplier = 1f + 0.55f * (NetCoop.PlayerCount - 1);
-                h.maxHealth = Mathf.RoundToInt((h.maxHealth + 45 * (RunState.Floor - 1)) * partyMultiplier);
+                h.maxHealth = Mathf.RoundToInt((h.maxHealth + 25 * (RunState.Floor - 1)) * partyMultiplier);
             }
             else
             {

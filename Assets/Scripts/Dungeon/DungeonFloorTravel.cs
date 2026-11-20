@@ -9,7 +9,7 @@ public partial class DungeonGenerator
         internal readonly List<(bool cleared, bool visited)> Rooms = new();
         internal readonly List<(Vector2Int cell, ChestRarity rarity, bool opened)> Chests = new();
         internal readonly Dictionary<int, int> BreakableHealth = new();
-        internal readonly List<(Vector3 position, WeaponData weapon, HealItem heal, float cooldown)> Drops = new();
+        internal readonly List<(Vector3 position, WeaponData weapon, HealItem heal, float cooldown, WeaponCondition condition)> Drops = new();
         internal bool ExitOpen;
     }
 
@@ -64,11 +64,11 @@ public partial class DungeonGenerator
         }
 
         foreach (var pickup in FindObjectsByType<ItemPickup>(FindObjectsSortMode.None))
-            if (NetShared.IsUnclaimed(pickup)) state.Drops.Add((RestingPosition(pickup), pickup.weapon, null, pickup.CooldownRemaining));
+            if (NetShared.IsUnclaimed(pickup)) state.Drops.Add((RestingPosition(pickup), pickup.weapon, null, pickup.CooldownRemaining, pickup.Condition));
         foreach (var pickup in FindObjectsByType<HealPickup>(FindObjectsSortMode.None))
-            if (NetShared.IsUnclaimed(pickup)) state.Drops.Add((RestingPosition(pickup), null, pickup.item, 0f));
+            if (NetShared.IsUnclaimed(pickup)) state.Drops.Add((RestingPosition(pickup), null, pickup.item, 0f, default));
         foreach (var pickup in FindObjectsByType<CoinDrop>(FindObjectsSortMode.None))
-            if (NetShared.IsUnclaimed(pickup)) state.Drops.Add((RestingPosition(pickup), null, null, 0f));
+            if (NetShared.IsUnclaimed(pickup)) state.Drops.Add((RestingPosition(pickup), null, null, 0f, default));
 
         return state;
     }
@@ -119,7 +119,7 @@ public partial class DungeonGenerator
         foreach (var drop in saved.Drops)
         {
             if (drop.weapon != null)
-                ItemPickup.Spawn(drop.weapon, drop.position, drop.position, cooldownRemaining: drop.cooldown);
+                ItemPickup.Spawn(drop.weapon, drop.position, drop.position, cooldownRemaining: drop.cooldown, condition: drop.condition);
             else if (drop.heal != null) HealPickup.Spawn(drop.heal, drop.position, drop.position);
             else CoinDrop.Spawn(drop.position, drop.position);
         }

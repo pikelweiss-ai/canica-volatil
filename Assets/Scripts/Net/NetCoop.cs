@@ -100,11 +100,11 @@ public static class NetCoop
     }
 
     // Client: ha pegat a una copia -> el colp el decideix l'amfitrio
-    public static void ProxyHit(EnemyHealth h, int damage, Vector2 knockback)
+    public static void ProxyHit(EnemyHealth h, int damage, Vector2 knockback, ProjectileEffect effect = ProjectileEffect.None)
     {
         if (!IsClient) return;
         int id = h.netId;
-        S.SendToHost(NetProtocol.Frame(Msg.EnemyHitReq, w => { w.Write(id); w.Write(damage); w.Write(knockback.x); w.Write(knockback.y); }));
+        S.SendToHost(NetProtocol.Frame(Msg.EnemyHitReq, w => { w.Write(id); w.Write(damage); w.Write(knockback.x); w.Write(knockback.y); w.Write((byte)effect); }));
     }
 
     static GameObject Lookup(string key)
@@ -455,7 +455,10 @@ public static class NetCoop
             case Msg.EnemyHitReq:
             {
                 int id = r.ReadInt32(); int dmg = r.ReadInt32(); var kb = new Vector2(r.ReadSingle(), r.ReadSingle());
-                if (enemies.TryGetValue(id, out var h) && h != null && !h.IsDead) h.TakeHit(Mathf.Clamp(dmg, 0, 10000), Vector2.ClampMagnitude(kb, 40f));
+                var effect = (ProjectileEffect)r.ReadByte();
+                if (effect > ProjectileEffect.Chain) break;
+                if (enemies.TryGetValue(id, out var h) && h != null && !h.IsDead)
+                    h.TakeProjectileHit(Mathf.Clamp(dmg, 0, 10000), Vector2.ClampMagnitude(kb, 40f), effect);
                 break;
             }
             case Msg.ChestReq:
@@ -528,6 +531,22 @@ public static class NetCoop
     }
 
     // Al client des de l'amfitrio
+    public static void ChainJump(Vector2 from, Vector2 to)
+    {
+        DrawChainJump(from, to);
+        if (IsHost) S.SendAll(NetProtocol.Frame(Msg.ChainFx, w =>
+        { w.Write(Token); w.Write(from.x); w.Write(from.y); w.Write(to.x); w.Write(to.y); }));
+    }
+
+    static void DrawChainJump(Vector2 from, Vector2 to)
+    {
+        Vector2 delta = to - from;
+        var beam = Fx.MakeSprite("Raig de polsos", (from + to) * 0.5f, Fx.Disc, new Color(0.3f, 0.72f, 1f), "Enemy", 2);
+        beam.transform.localScale = new Vector3(delta.magnitude, 0.09f, 1f);
+        beam.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
+        Object.Destroy(beam.gameObject, 0.15f);
+    }
+
     public static void OnClient(Msg type, BinaryReader r)
     {
         var gen = DungeonGenerator.Instance;
@@ -596,6 +615,14 @@ public static class NetCoop
                 pendingChests.Remove(key);
                 if (!openedChests.Add(key)) break;
                 var c = FindChest(key); if (c != null) c.NetGrantOpen(dropLoot: false);
+                break;
+            }
+            case Msg.ChainFx:
+            {
+                int token = r.ReadInt32();
+                Vector2 start = new Vector2(r.ReadSingle(), r.ReadSingle());
+                Vector2 end = new Vector2(r.ReadSingle(), r.ReadSingle());
+                if (token == Token) DrawChainJump(start, end);
                 break;
             }
             case Msg.PortalSpawn:

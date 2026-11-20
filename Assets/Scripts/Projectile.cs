@@ -122,7 +122,7 @@ public class Projectile : MonoBehaviour
             {
                 if (alreadyHit.Contains(enemy)) continue; // Fletxa que travessa: no pega dues vegades
                 alreadyHit.Add(enemy);
-                if (!cosmetic) enemy.TakeHit(ImpactDamage(), direction * knockbackForce);
+                if (!cosmetic) enemy.TakeProjectileHit(ImpactDamage(), direction * knockbackForce, weapon.projectileEffect);
                 if (pierceLeft-- > 0 || weapon.returns) continue;
                 End();
                 return;
@@ -186,7 +186,7 @@ public class Projectile : MonoBehaviour
             EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
             if (enemy == null || alreadyHit.Contains(enemy)) continue;
             alreadyHit.Add(enemy);
-            if (!cosmetic) enemy.TakeHit(ImpactDamage(), direction * knockbackForce);
+            if (!cosmetic) enemy.TakeProjectileHit(ImpactDamage(), direction * knockbackForce, weapon.projectileEffect);
         }
     }
 
@@ -229,7 +229,18 @@ public class Projectile : MonoBehaviour
 
     // ---- Boleta generada per codi, per a armes sense prefab ----
 
-    private static Sprite circleSprite;
+    private static Sprite circleSprite, flameSprite, boltSprite;
+
+    static Sprite PixelShape(params string[] rows)
+    {
+        int width = rows[0].Length, height = rows.Length;
+        var texture = new Texture2D(width, height) { filterMode = FilterMode.Point };
+        for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
+                texture.SetPixel(x, height - y - 1, rows[y][x] == '#' ? Color.white : Color.clear);
+        texture.Apply();
+        return Sprite.Create(texture, new Rect(0, 0, width, height), new Vector2(.5f, .5f), width);
+    }
 
     public static Sprite CircleSprite
     {
@@ -275,12 +286,17 @@ public class Projectile : MonoBehaviour
             {
                 // Sprite propi (bala, pedra...): Init el gira cap a on va
                 sr.sprite = weapon.projectileSprite;
+                if (weapon.tintProjectileSprite) sr.color = weapon.projectileColor;
                 go.transform.localScale = Vector3.one * weapon.projectileSpriteScale;
             }
             else
             {
                 // Sense sprite: boleta de color
-                sr.sprite = CircleSprite;
+                sr.sprite = weapon.maxShots > 0
+                    ? (flameSprite ??= PixelShape("...##...", "..####..", "..######", ".#######", "########", "..#####.", "...###.."))
+                    : weapon.projectileEffect == ProjectileEffect.Chain
+                        ? (boltSprite ??= PixelShape("...####.", "..####..", ".####...", "######..", "..###...", ".##.....", "##......"))
+                        : CircleSprite;
                 sr.color = weapon.projectileColor;
                 go.transform.localScale = Vector3.one * weapon.projectileSize;
             }

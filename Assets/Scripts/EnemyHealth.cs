@@ -58,6 +58,63 @@ public class EnemyHealth : MonoBehaviour
     }
 
     // El crida PlayerAttack / Projectile / explosions: fa mal, flash roig i empenta l'enemic
+    float slowedUntil;
+    int poisonDoses;
+    public float MovementMultiplier => Time.time < slowedUntil ? 0.6f : 1f;
+
+    public void TakeProjectileHit(int damage, Vector2 knockback, ProjectileEffect effect)
+    {
+        if (isDead) return;
+        if (netProxy && effect != ProjectileEffect.None)
+        {
+            NetCoop.ProxyHit(this, damage, knockback, effect);
+            return;
+        }
+        TakeHit(damage, knockback);
+        if (effect == ProjectileEffect.Chain) ChainLightning();
+        if (isDead) return;
+        if (effect == ProjectileEffect.Slow) slowedUntil = Time.time + 0.5f;
+        if (effect == ProjectileEffect.Poison && poisonDoses < 3) StartCoroutine(PoisonDose());
+    }
+
+    System.Collections.IEnumerator PoisonDose()
+    {
+        poisonDoses++;
+        for (int i = 0; i < 2; i++)
+        {
+            yield return new WaitForSeconds(1f);
+            if (isDead) yield break;
+            TakeHit(1, Vector2.zero);
+        }
+        poisonDoses--;
+    }
+
+    void ChainLightning()
+    {
+        var hit = new System.Collections.Generic.HashSet<EnemyHealth> { this };
+        Vector2 origin = transform.position;
+        for (int jump = 0; jump < 3; jump++)
+        {
+            EnemyHealth nearest = null;
+            float distance = 2.5f * 2.5f;
+            foreach (var collider in Physics2D.OverlapCircleAll(origin, 2.5f))
+            {
+                var target = collider.GetComponentInParent<EnemyHealth>();
+                if (target == null || target.IsDead || hit.Contains(target)) continue;
+                float squared = ((Vector2)target.transform.position - origin).sqrMagnitude;
+                if (squared > distance) continue;
+                distance = squared;
+                nearest = target;
+            }
+            if (nearest == null) break;
+            hit.Add(nearest);
+            Vector2 next = nearest.transform.position;
+            NetCoop.ChainJump(origin, next);
+            nearest.TakeHit(1, Vector2.zero);
+            origin = next;
+        }
+    }
+
     public void TakeHit(int damage, Vector2 knockback)
     {
         if (isDead) return;
