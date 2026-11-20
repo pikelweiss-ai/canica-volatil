@@ -48,6 +48,8 @@ public class WeaponData : ScriptableObject
     public float meleeDashDistance;
     public bool alternateSwing;
     public bool meleeRadial;
+    [Min(0)] public int meleeMaxTargets;    // Enemics màxims per colp (0 = tots). Llança: 3
+    [Min(0)] public int bounceDamage;       // Dany que suma el projectil a cada rebot de paret (Disc)
     public bool melee = false;
     [Range(20f, 180f)] public float meleeArc = 110f;
 

@@ -11,7 +11,7 @@ using System.Text;
 // El mateix format serveix per a parlar amb l'amfitrio (LAN/IP) i amb el servidor de sales (Internet).
 public static class NetProtocol
 {
-    public const int Version = 13; // Resum de partida: l'amfitrio decideix tornar a jugar (RestartRun)
+    public const int Version = 14; // v1.2.1: balanc d armes (Sniper, Laser, Llanca...), disc i projector
     public const int GamePort = 7777;      // TCP: l'amfitrio escolta ací (prova 7777..7787)
     public const int DiscoveryPort = 7778; // UDP: descobriment de sales en LAN
     public const int RelayPort = 7780;     // TCP: servidor de sales d'Internet

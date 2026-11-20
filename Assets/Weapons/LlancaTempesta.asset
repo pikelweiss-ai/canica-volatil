@@ -17,30 +17,41 @@ MonoBehaviour:
   rarity: 2
   handScale: 0.75
   damage: 3
+  closeDamageRange: 0
   cooldown: 0.85
   knockbackForce: 5
   projectilePrefab: {fileID: 0}
   projectileSprite: {fileID: 0}
   projectileSpriteScale: 1
   projectileSpeed: 12
-  range: 3.5
+  range: 3
   projectileSize: 0.3
   projectileColor: {r: 0.6, g: 0.9, b: 1, a: 1}
+  tintProjectileSprite: 0
+  fixedSpread: 0
   spreadAngle: 0
   pellets: 1
   rangeRandom: 0
   spinUpTime: 0
-  meleeDashDistance: 1.8
+  meleeDashDistance: 1.2
   alternateSwing: 1
   meleeRadial: 0
+  meleeMaxTargets: 3
+  bounceDamage: 0
   melee: 1
   meleeArc: 25
+  projectileEffect: 0
   explosionRadius: 0
   explosionDamage: 3
   pierce: 0
+  wallBounces: 0
   returns: 0
   homing: 0
   spinSpeed: 0
+  maxShots: 0
+  heatLimit: 0
+  heatCoolingRate: 0
+  overheatCooldown: 0
   sound: 1
   shootSound: {fileID: 0}
   impactSound: {fileID: 0}

@@ -43,6 +43,8 @@ public class PlayerAttack : MonoBehaviour
     private int selectedSlot = 0;
     private bool mouseBlocked;          // El clic ha començat damunt de la UI
     private readonly float[] slotCooldown = new float[4];
+    private int lastShotSlot = -1;
+    private float lastShotTime = -99f, lastShotCooldown;
     private readonly WeaponCondition[] conditions = new WeaponCondition[4];
     private LineRenderer aimFill; // Part carregada del cooldown, damunt de l'aim
     private Vector2 aimDirection = Vector2.right;
@@ -107,7 +109,8 @@ public class PlayerAttack : MonoBehaviour
             showAimLine = !showAimLine;
 
         HandleSlotSelection();
-        slotCooldown[selectedSlot] = Mathf.Max(0f, slotCooldown[selectedSlot] - Time.deltaTime);
+        // v1.2.1: el cooldown baixa a totes les caselles, tambe a les armes guardades
+        for (int s = 0; s < slotCooldown.Length; s++) slotCooldown[s] = Mathf.Max(0f, slotCooldown[s] - Time.deltaTime);
         UpdateAim();
         UpdateHand();
 
@@ -154,18 +157,20 @@ public class PlayerAttack : MonoBehaviour
             spinCharge+=Time.deltaTime;
             if(spinCharge<CurrentWeapon.spinUpTime) return;
         }
-        if (attackPressed && slotCooldown[selectedSlot] <= 0f)
+        // Canviar d'arma no evita l'espera: l'arma nova espera la meitat del cooldown de l'ultima que has disparat
+        bool swapLocked = selectedSlot != lastShotSlot && Time.time < lastShotTime + 0.5f * lastShotCooldown;
+        if (attackPressed && slotCooldown[selectedSlot] <= 0f && !swapLocked)
         {
             WeaponData weapon = CurrentWeapon;
 
             if (weapon == null)
             {
-                Punch();
+                Punch(); lastShotSlot = selectedSlot; lastShotTime = Time.time; lastShotCooldown = fistCooldown;
                 slotCooldown[selectedSlot] = fistCooldown;
             }
             else
             {
-                Shoot(weapon);
+                Shoot(weapon); lastShotSlot = selectedSlot; lastShotTime = Time.time; lastShotCooldown = weapon.cooldown;
                 slotCooldown[selectedSlot] = weapon.cooldown;
                 ref WeaponCondition condition = ref conditions[selectedSlot];
                 if (weapon.heatLimit > 0 && ++condition.Heat >= weapon.heatLimit)
@@ -231,6 +236,9 @@ public class PlayerAttack : MonoBehaviour
         float endWidth = width;
         if (weapon != null && weapon.spreadAngle > 0f)
             endWidth = Mathf.Max(width, 2f * length * Mathf.Tan(weapon.spreadAngle * Mathf.Deg2Rad));
+        // Cos a cos: l'aim dibuixa la V real del colp (amplada de la corda de l'arc)
+        if (weapon != null && weapon.melee && !weapon.meleeRadial)
+            endWidth = Mathf.Max(width, 2f * length * Mathf.Sin(weapon.meleeArc * 0.5f * Mathf.Deg2Rad));
 
         // Progrés del cooldown: 0 = acabes d'atacar, 1 = llest
         float remaining = slotCooldown[selectedSlot];
@@ -441,16 +449,36 @@ public class PlayerAttack : MonoBehaviour
         NetCoop.LocalSwing(weapon, aimDirection, reverseSwing);
         var enemies = new System.Collections.Generic.HashSet<EnemyHealth>();
         var objects = new System.Collections.Generic.HashSet<Breakable>();
+        var targets = new System.Collections.Generic.List<(float dist, EnemyHealth enemy)>();
         Vector2 origin = transform.position;
         foreach (Collider2D hit in Physics2D.OverlapCircleAll(origin, weapon.range))
         {
             Vector2 delta = (Vector2)hit.ClosestPoint(origin) - origin;
             if (delta.sqrMagnitude > 0.01f && !weapon.meleeRadial && Vector2.Angle(aimDirection, delta) > weapon.meleeArc * 0.5f) continue;
-            if (TileNav.Ready() && !TileNav.LineOfSight(origin, hit.transform.position)) continue;
-            EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
-            if (enemy != null && enemies.Add(enemy)) { RunStats.HitBy = weapon.weaponName; enemy.TakeHit(weapon.damage, aimDirection * weapon.knockbackForce); RunStats.HitBy = null; }
             Breakable box = hit.GetComponentInParent<Breakable>();
+            // El martell (radial) pega per damunt de les parets. La resta necessita visió.
+            if (!weapon.meleeRadial && TileNav.Ready())
+            {
+                Vector2 to = hit.transform.position;
+                if (box != null)
+                {
+                    // La casella de la caixa és un bloqueig: mira fins a mig tros abans del centre,
+                    // però una paret de pel mig continua tallant el colp (BUG-021).
+                    Vector2 toBox = to - origin; float len = toBox.magnitude;
+                    to = len > 0.7f ? origin + toBox * ((len - 0.7f) / len) : origin;
+                }
+                if (!TileNav.LineOfSight(origin, to)) continue;
+            }
+            EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
+            if (enemy != null && enemies.Add(enemy)) targets.Add((((Vector2)enemy.transform.position - origin).sqrMagnitude, enemy));
             if (box != null && objects.Add(box)) box.Hit(weapon.damage);
+        }
+        targets.Sort((a, b) => a.dist.CompareTo(b.dist));
+        int hits = 0;
+        foreach (var t in targets)
+        {
+            if (weapon.meleeMaxTargets > 0 && hits++ >= weapon.meleeMaxTargets) break;
+            RunStats.HitBy = weapon.weaponName; t.enemy.TakeHit(weapon.damage, aimDirection * weapon.knockbackForce); RunStats.HitBy = null;
         }
         StartCoroutine(AttackSquash());
         StartCoroutine(SwingArc(weapon));

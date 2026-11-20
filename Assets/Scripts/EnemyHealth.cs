@@ -95,6 +95,8 @@ public class EnemyHealth : MonoBehaviour
         poisonDoses--;
     }
 
+    public const int ChainJumpDamage = 2; // v1.2.1: cada salt del Projector de polsos
+
     void ChainLightning()
     {
         var hit = new System.Collections.Generic.HashSet<EnemyHealth> { this };
@@ -116,7 +118,7 @@ public class EnemyHealth : MonoBehaviour
             hit.Add(nearest);
             Vector2 next = nearest.transform.position;
             NetCoop.ChainJump(origin, next);
-            nearest.TakeHit(1, Vector2.zero);
+            nearest.TakeHit(ChainJumpDamage, Vector2.zero);
             origin = next;
         }
     }

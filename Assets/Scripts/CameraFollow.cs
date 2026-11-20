@@ -46,7 +46,7 @@ public class CameraFollow : MonoBehaviour
             float size = normalSize;
             if (weapon != null && !weapon.melee && weapon.range >= 9f)
             {
-                float range = weapon.range / Mathf.Cos(weapon.spreadAngle * Mathf.Deg2Rad) + 1f;
+                float range = Mathf.Min(weapon.range, 10f) / Mathf.Cos(weapon.spreadAngle * Mathf.Deg2Rad) + 1f; // v1.2.1: el zoom no passa d'abast 10
                 size = Mathf.Max(normalSize, range / Mathf.Min(1f, view.aspect));
             }
             view.orthographicSize = Mathf.MoveTowards(view.orthographicSize, size, 18f * Time.deltaTime);

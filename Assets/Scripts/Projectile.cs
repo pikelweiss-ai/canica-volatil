@@ -144,7 +144,7 @@ public class Projectile : MonoBehaviour
                 if (weapon.returns) { StartReturn(); return; }
                 if (wallBouncesLeft > 0 && Vector2.Dot(direction, contact.normal) < 0f)
                 {
-                    wallBouncesLeft--;
+                    wallBouncesLeft--; bouncesDone++;
                     travelled += contact.distance;
                     transform.position += (Vector3)(contact.normal * 0.01f);
                     direction = Vector2.Reflect(direction, contact.normal).normalized;
@@ -169,8 +169,9 @@ public class Projectile : MonoBehaviour
     int ImpactDamage()
     {
         float range = weapon.closeDamageRange;
-        return range > 0f && ((Vector2)transform.position - firingPosition).sqrMagnitude < range * range
-            ? damage + 1 : damage;
+        int bounceBonus = bouncesDone * weapon.bounceDamage; // Disc: +1 a cada rebot
+        return bounceBonus + (range > 0f && ((Vector2)transform.position - firingPosition).sqrMagnitude < range * range
+            ? damage + 1 : damage);
     }
 
     void StartReturn()
@@ -232,7 +233,7 @@ public class Projectile : MonoBehaviour
 
     private bool ended;
     private int pierceLeft;
-    private int wallBouncesLeft;
+    private int wallBouncesLeft, bouncesDone;
     private readonly System.Collections.Generic.List<EnemyHealth> alreadyHit = new System.Collections.Generic.List<EnemyHealth>();
 
     // ---- Boleta generada per codi, per a armes sense prefab ----

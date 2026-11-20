@@ -33,6 +33,8 @@ MonoBehaviour:
   meleeDashDistance: 0
   alternateSwing: 0
   meleeRadial: 0
+  meleeMaxTargets: 0
+  bounceDamage: 0
   melee: 0
   meleeArc: 110
   explosionRadius: 0
