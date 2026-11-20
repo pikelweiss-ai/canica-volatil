@@ -29,8 +29,17 @@ public static class Changelog
                 "ARREGLOS",
                 "Les armes cos a cos ja trenquen caixes i barrils.",
                 "Les caixes ja no es posen una damunt de l'altra.",
+                "Els enemics et veuen i et disparen per damunt de l'aigua.",
+                "Els ítems d'un cofre cauen al voltant de qui l'obri, també en cooperatiu.",
+                "Una sala s'activa també si algú està als raconets.",
+                "Dues cures iguals s'ajunten en arrossegar-ne una damunt de l'altra.",
+                "MÉS",
+                "Lava i àcid amb bombolles i crosta, connectats.",
+                "El xat mostra una \"_\" parpellejant quan escrius.",
+                "Aquest panell de novetats: clica el número de versió del menú.",
                 "ONLINE",
                 "Protocol 14: cal la v1.2.1 per a jugar amb altres jugadors.",
+                "La llista de sales s'obri a INTERNET i el formulari avisa si una sala pública només serà per a la teua wifi.",
             }
         },
         new Entry
