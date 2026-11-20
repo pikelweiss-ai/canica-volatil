@@ -179,7 +179,8 @@ public class PlayerAttack : MonoBehaviour
                     slotCooldown[selectedSlot] = weapon.overheatCooldown;
                     Fx.Text(transform.position, "Sobreescalfada", new Color(1f, .45f, .2f));
                 }
-                if (weapon.maxShots > 0 && ++condition.ShotsUsed >= weapon.maxShots)
+                // v1.2.1 (FIX-019): només en masmorra es trenquen; al mapa lliure i al mode Creatiu no
+                if (weapon.maxShots > 0 && RunState.Active && ++condition.ShotsUsed >= weapon.maxShots)
                 {
                     hotbarSlots[selectedSlot] = null;
                     condition = default;

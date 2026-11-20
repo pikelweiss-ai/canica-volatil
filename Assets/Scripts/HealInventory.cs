@@ -116,8 +116,42 @@ public class HealInventory : MonoBehaviour
             if (GameControls.Down(15 + i))
                 { selectedHeal = i; Use(i); }
         if (GameControls.WheelHeals && Input.mouseScrollDelta.y != 0f) selectedHeal = (selectedHeal + (Input.mouseScrollDelta.y < 0 ? 1 : 3)) % Slots;
-        if (GameControls.Down(10) && !CreativeMode.Placing) Use(selectedHeal); // el clic dret para el mode Creatiu
+        if (GameControls.Down(10) && !CreativeMode.Placing) { if (SmartHeal) UseSmart(); else Use(selectedHeal); } // el clic dret para el mode Creatiu
         ui.Select(selectedHeal);
+    }
+
+    // Cura intel·ligent (v1.2.1, FIX-018): el clic dret tria la cura que millor encaixa amb la vida que et falta.
+    // Activada per defecte; es pot apagar amb PlayerPrefs "SmartHeal" = 0. Les tecles 5-8 usen la casella triada.
+    public static bool SmartHeal
+    {
+        get { try { return PlayerPrefs.GetInt("SmartHeal", 1) != 0; } catch { return true; } }
+        set { try { PlayerPrefs.SetInt("SmartHeal", value ? 1 : 0); PlayerPrefs.Save(); } catch { } }
+    }
+
+    // Falten N cors: la cura més gran que no passa de N; si totes passen, la més petita (es malgasta menys).
+    public int BestSlotFor(int missing)
+    {
+        int best = -1;
+        for (int i = 0; i < Slots; i++)
+        {
+            if (items[i] == null || counts[i] <= 0) continue;
+            if (best < 0) { best = i; continue; }
+            int a = items[i].healAmount, b = items[best].healAmount;
+            bool aFits = a <= missing, bFits = b <= missing;
+            if (aFits && !bFits) best = i;
+            else if (aFits && bFits && a > b) best = i;
+            else if (!aFits && !bFits && a < b) best = i;
+        }
+        return best;
+    }
+
+    public void UseSmart()
+    {
+        if (health == null) return;
+        int slot = BestSlotFor(health.maxHealth - health.currentHealth);
+        if (slot < 0) return;
+        selectedHeal = slot;
+        Use(slot);
     }
 
     public void Use(int slot)

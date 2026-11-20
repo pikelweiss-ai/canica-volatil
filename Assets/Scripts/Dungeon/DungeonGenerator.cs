@@ -758,8 +758,9 @@ public partial class DungeonGenerator : MonoBehaviour
             yield return SpawnEnemy(boss, r.Center + new Vector2Int(0, r.rect.height / 4), r, 1.2f);
             yield return WaitClear(r);
             // Recompensa: cofre llegendari i portal
-            SpawnChest(ChestRarity.Llegendari, r.Center + new Vector2Int(-2, 0));
-            NetCoop.ChestSpawned((int)ChestRarity.Llegendari, r.Center + new Vector2Int(-2, 0));
+            Vector2Int bossChest = BossChestCell(r); // BUG-022: lluny de qualsevol jugador
+            SpawnChest(ChestRarity.Llegendari, bossChest);
+            NetCoop.ChestSpawned((int)ChestRarity.Llegendari, bossChest);
             SpawnPortal(r.Center + NextPortalOffset);
             NetCoop.PortalSpawned(r.Center + NextPortalOffset);
         }
@@ -992,6 +993,25 @@ public partial class DungeonGenerator : MonoBehaviour
     {
         r.waitingEntrance = entrance;
         foreach (var c in r.doorCells) doors.SetTile(c, DoorSide(r, c) == entrance ? null : doorTile);
+    }
+
+    // El cofre del boss apareix a l'esquerra del centre, però si hi ha algú just allí (pot quedar-se encallat
+    // dins del col·lisionador) tria una altra casella lliure de la sala.
+    Vector2Int BossChestCell(Room r)
+    {
+        var options = new[] { new Vector2Int(-2, 0), new Vector2Int(-2, 2), new Vector2Int(-2, -2), new Vector2Int(-3, 0), new Vector2Int(0, -3), new Vector2Int(0, 3) };
+        var people = new List<Vector2>();
+        if (player != null && player.gameObject.activeInHierarchy) people.Add(player.position);
+        if (NetCoop.Online) foreach (var p in RemotePlayerPositions()) people.Add(p);
+        foreach (var o in options)
+        {
+            Vector2Int cell = r.Center + o;
+            Vector3 world = ground.GetCellCenterWorld(new Vector3Int(cell.x, cell.y, 0));
+            bool free = !TileNav.IsBlocked(new Vector3Int(cell.x, cell.y, 0));
+            foreach (var p in people) if (Vector2.Distance(p, world) < 1.6f) free = false;
+            if (free) return cell;
+        }
+        return r.Center + options[0];
     }
 
     static readonly Vector2Int NextPortalOffset = new Vector2Int(2, 0);
