@@ -12,7 +12,7 @@ public class RoomBrowserUI : MonoBehaviour
     enum Tab { Internet, Lan }
     static RoomBrowserUI open;
 
-    Tab tab = Tab.Lan;
+    Tab tab = Tab.Internet; // v1.2.1: s obri a INTERNET (abans a XARXA LOCAL i la gent creava sales "publiques" només per a la LAN)
     UIKit.UIButton tabInternet, tabLan, hideFull, hideLocked, joinSelected;
     TMP_InputField search, codeInput, nameInput, serverInput;
     TextMeshProUGUI status, detailTitle, detailBody, footerHint;
@@ -408,7 +408,7 @@ public class RoomBrowserUI : MonoBehaviour
         {
             visA.SetStyle(s.isPublic ? UIKit.Style.Primary : UIKit.Style.Normal);
             visB.SetStyle(!s.isPublic ? UIKit.Style.Primary : UIKit.Style.Normal);
-            visHelp.text = s.isPublic ? "Surt a la llista de sales." : "No surt a la llista: només s'hi entra amb el codi.";
+            visHelp.text = s.isPublic ? (s.internet ? "Surt a la llista de sales d'Internet." : "Surt només a la llista de la teua xarxa local (wifi o cable). Per a tot el món, tria INTERNET.") : "No surt a la llista: només s'hi entra amb el codi.";
         };
         visA = UIKit.Button(panel, "PÚBLICA", new Vector2(-10, y), new Vector2(235, 52), () => { s.isPublic = true; paintVis(); }, UIKit.Style.Normal, 21);
         visB = UIKit.Button(panel, "PRIVADA", new Vector2(235, y), new Vector2(235, 52), () => { s.isPublic = false; paintVis(); }, UIKit.Style.Normal, 21);
@@ -422,6 +422,7 @@ public class RoomBrowserUI : MonoBehaviour
         bool serverOk = true; // sense servidor propi, Internet va pel túnel automàtic
         System.Action paintNet = () =>
         {
+            paintVis();
             netA.SetStyle(!s.internet ? UIKit.Style.Primary : UIKit.Style.Normal);
             netB.SetStyle(s.internet ? UIKit.Style.Primary : UIKit.Style.Normal);
             netHelp.text = s.internet ? (NetCloud.InUse ? "Per a tot el món: sense IPs, sense obrir ports, sense VPN." : "Via servidor " + NetSession.ServerAddress + ": no cal obrir ports.") : "Només la teua wifi o cable (casa, classe). Més ràpid.";

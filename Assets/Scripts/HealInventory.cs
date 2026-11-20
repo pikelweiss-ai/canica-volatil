@@ -52,6 +52,18 @@ public class HealInventory : MonoBehaviour
     // Arrossegar una cura a una altra casella: les intercanvia
     public void Swap(int a, int b)
     {
+        // v1.2.1 (FIX-028): dues cures iguals s'ajunten en una sola pila (fins al màxim)
+        if (a != b && items[a] != null && items[a] == items[b])
+        {
+            int moved = Mathf.Min(counts[a], maxStack - counts[b]);
+            if (moved > 0)
+            {
+                counts[b] += moved; counts[a] -= moved;
+                if (counts[a] <= 0) { items[a] = null; counts[a] = 0; }
+                Changed();
+                return;
+            }
+        }
         (items[a], items[b]) = (items[b], items[a]);
         (counts[a], counts[b]) = (counts[b], counts[a]);
         Changed();

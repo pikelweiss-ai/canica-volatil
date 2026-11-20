@@ -209,6 +209,7 @@ public class ChatBox : MonoBehaviour
 {
     TextMeshProUGUI log;
     TMP_InputField input;
+    TextMeshProUGUI typing;
     CanvasGroup group;
     bool fade;
     float lastActivity;
@@ -235,6 +236,9 @@ public class ChatBox : MonoBehaviour
             var send=UIKit.Button(root,"ENVIA",Vector2.zero,new Vector2(84,42),()=>box.Submit(box.input.text),UIKit.Style.Normal,17,false);
             send.rect.anchorMin=send.rect.anchorMax=new Vector2(1,0);send.rect.pivot=new Vector2(1,.5f);send.rect.anchoredPosition=new Vector2(-8,29);
         }
+        // "_" que parpelleja mentre escrius, perquè es veja que el xat està actiu (FIX-021)
+        box.typing = UIKit.Text(box.input.transform, "_", Vector2.zero, Vector2.zero, 30, TextAlignmentOptions.MidlineRight, UIKit.Gold);
+        UIKit.Stretch(box.typing.rectTransform, 8, 4, 12, 0); box.typing.raycastTarget = false; box.typing.enabled = false;
         box.input.onSubmit.AddListener(box.Submit);
         box.lastActivity = Time.unscaledTime;
         return box;
@@ -300,6 +304,7 @@ public class ChatBox : MonoBehaviour
             input.Select(); input.ActivateInputField();
             lastActivity = Time.unscaledTime;
         }
+        if (typing != null) typing.enabled = input.isFocused && ((int)(Time.unscaledTime * 2f) % 2 == 0);
         if (input.isFocused) lastActivity = Time.unscaledTime;
         if (fade)
         {

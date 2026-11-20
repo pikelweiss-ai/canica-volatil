@@ -165,7 +165,37 @@ public static class AlphaVisualBuilder
         if(edge==0) return Hex(lava ? "37272e" : "20372f");
         if(edge==1) return Hex(lava ? "ab442e" : "4e7339");
         if(edge==2) return Hex(lava ? "ffc34f" : "c4df66");
-        return Hex(Surface[15-y][x]=='l' ? (lava ? "ffc34f" : "b6d96b") : (lava ? "df6135" : "70a34b"));
+        // Interior (v1.2.1): bombolles i crosta. El dibuix és periòdic (dona la volta cada 16 px),
+        // per això les peces veïnes es connecten sense juntes.
+        int bubble = Bubble(x, 15 - y);
+        if(bubble == 1 || bubble == 3) return Hex(lava ? "ffb347" : "cfe86f");
+        if(bubble == 2) return Hex(lava ? "ffe28a" : "e6f5a0");
+        if(bubble == 4) return Hex(lava ? "b8452b" : "5a8a3e");
+        return Hex(lava ? "df6135" : "70a34b");
+    }
+    // 0 = res, 1 = anell de bombolla, 2 = brillantor, 3 = punt, 4 = taca fosca. Y de dalt cap avall.
+    static readonly string[] BigBubble = { ".XXX.", "X...X", "X...X", "X...X", ".XXX." };
+    static readonly string[] SmallBubble = { ".X.", "X.X", ".X." };
+    static readonly (char kind, int x, int y)[] Bubbles =
+    {
+        ('o', 9, 1), ('s', 2, 3), ('s', 3, 11), ('d', 12, 9), ('d', 7, 7), ('d', 14, 14), ('t', 0, 7), ('t', 8, 11), ('t', 11, 4)
+    };
+    static int Bubble(int x, int ty)
+    {
+        foreach(var b in Bubbles)
+        {
+            if(b.kind == 'd') { if(x == b.x && ty == b.y) return 3; continue; }
+            if(b.kind == 't')
+            {
+                for(int dy = 0; dy < 2; dy++) for(int dx = 0; dx < 4; dx++) if(((b.x + dx) & 15) == x && ((b.y + dy) & 15) == ty) return 4;
+                continue;
+            }
+            var shape = b.kind == 'o' ? BigBubble : SmallBubble;
+            for(int dy = 0; dy < shape.Length; dy++) for(int dx = 0; dx < shape[dy].Length; dx++)
+                if(shape[dy][dx] == 'X' && ((b.x + dx) & 15) == x && ((b.y + dy) & 15) == ty)
+                    return (dx == 1 && dy == 1) || (b.kind == 's' && dx == 1 && dy == 0) ? 2 : 1;
+        }
+        return 0;
     }
     static void Write(string name,Func<int,int,Color> pixel)
     {

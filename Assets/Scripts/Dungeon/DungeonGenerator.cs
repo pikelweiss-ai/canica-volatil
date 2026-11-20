@@ -471,9 +471,11 @@ public partial class DungeonGenerator : MonoBehaviour
                         var cell=RandomCell(room);if(!FreeForDecor(room,cell,2))continue;
                         reserved.Add(cell);Spawn(Theme.decorPrefabs[rng.Next(Theme.decorPrefabs.Length)],cell);break;
                     }
-        foreach (Vector2Int p in cratesToSpawn) Spawn(cratePrefab, p);
-        foreach (Vector2Int p in barrelsToSpawn) Spawn(barrelPrefab, p);
-        foreach (Vector2Int p in spikesToSpawn) Spawn(spikePrefab, p);
+        // v1.2.1 (BUG-026): mai dos objectes a la mateixa casella
+        var occupied = new HashSet<Vector2Int>();
+        foreach (Vector2Int p in cratesToSpawn) if (occupied.Add(p)) Spawn(cratePrefab, p);
+        foreach (Vector2Int p in barrelsToSpawn) if (occupied.Add(p)) Spawn(barrelPrefab, p);
+        foreach (Vector2Int p in spikesToSpawn) if (occupied.Add(p)) Spawn(spikePrefab, p);
 
         foreach (Room r in Rooms)
         {
@@ -631,7 +633,8 @@ public partial class DungeonGenerator : MonoBehaviour
                     break;
                 }
             if (waitingRoom == null || cells.Count < NetCoop.AliveCount) return;
-            foreach (var c in cells) if (RoomAt(c, 1) != waitingRoom) return;
+            // v1.2.1 (FIX-027): els raconets i les vores també compten (abans calia estar una casella endins)
+            foreach (var c in cells) if (RoomAt(c, 0) != waitingRoom || waitingRoom.doorCells.Contains(new Vector3Int(c.x, c.y, 0))) return;
             Room ready = waitingRoom;
             waitingRoom = null;
             TryStartRoom(new Vector3Int(ready.Center.x, ready.Center.y, 0));
