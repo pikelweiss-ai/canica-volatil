@@ -125,7 +125,7 @@ public partial class PlayerAttack
             if (distance > 0.5f) GetComponent<PlayerMovement>()?.Dash(aimDirection, distance); // et llances cap a la paret
             break;
         }
-        StartCoroutine(RopeFlash(origin, end));
+        StartCoroutine(RopeFlash(origin, end, w.specialSprite));
     }
 
     IEnumerator PullEnemy(EnemyHealth enemy, float stopDistance)
@@ -142,14 +142,32 @@ public partial class PlayerAttack
         }
     }
 
-    IEnumerator RopeFlash(Vector2 from, Vector2 to)
+    // Corda (i harpó, si l'arma en té) que s'allarga fins al punt tocat
+    IEnumerator RopeFlash(Vector2 from, Vector2 to, Sprite hook = null)
     {
-        Vector2 delta = to - from;
-        var rope = Fx.MakeSprite("Corda del ganxo", (from + to) * 0.5f, Fx.Disc, new Color(0.85f, 0.75f, 0.5f), "Player", 9);
-        rope.transform.localScale = new Vector3(delta.magnitude, 0.08f, 1f);
-        rope.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
-        yield return new WaitForSeconds(0.18f);
+        Vector2 delta = to - from; float length = delta.magnitude;
+        float angle = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg;
+        var rope = Fx.MakeSprite("Corda del ganxo", from, Fx.Disc, new Color(0.85f, 0.75f, 0.5f), "Player", 9);
+        rope.transform.rotation = Quaternion.Euler(0f, 0f, angle);
+        SpriteRenderer head = null;
+        if (hook != null)
+        {
+            head = Fx.MakeSprite("Harpo", from, hook, Color.white, "Player", 10);
+            head.transform.rotation = Quaternion.Euler(0f, 0f, angle);
+        }
+        const float flight = 0.1f;
+        for (float t = 0f; t < flight; t += Time.deltaTime)
+        {
+            float k = t / flight; Vector2 tip = from + delta * k;
+            if (rope != null) { rope.transform.position = (from + tip) * 0.5f; rope.transform.localScale = new Vector3(delta.magnitude * k, 0.08f, 1f); }
+            if (head != null) head.transform.position = tip;
+            yield return null;
+        }
+        if (rope != null) { rope.transform.position = (from + to) * 0.5f; rope.transform.localScale = new Vector3(length, 0.08f, 1f); }
+        if (head != null) head.transform.position = to;
+        yield return new WaitForSeconds(0.12f);
         if (rope != null) Destroy(rope.gameObject);
+        if (head != null) Destroy(head.gameObject);
     }
 
     // Vareta curativa: si apuntes a un company ferit, el cures 1 cor (només online)
@@ -222,13 +240,29 @@ public class TurretUnit : MonoBehaviour
     float life, nextShot;
     SpriteRenderer body, light;
 
+    SpriteRenderer barrel;
+
     public void Setup(WeaponData w, Transform ownerTransform, float seconds)
     {
         weapon = w; owner = ownerTransform; life = seconds;
-        body = Fx.MakeSprite("Torreta cos", transform.position, Fx.Disc, new Color(0.55f, 0.6f, 0.68f), "Player", 6);
-        body.transform.SetParent(transform, true); body.transform.localScale = Vector3.one * 0.55f;
-        light = Fx.MakeSprite("Torreta llum", transform.position, Fx.Disc, new Color(1f, 0.3f, 0.3f), "Player", 7);
-        light.transform.SetParent(transform, true); light.transform.localScale = Vector3.one * 0.2f;
+        if (w.specialSprite != null)
+        {
+            // Sprite propi: cúpula fixa i canó que gira cap a l'enemic
+            body = Fx.MakeSprite("Torreta cos", transform.position, w.specialSprite, Color.white, "Player", 6);
+            body.transform.SetParent(transform, true);
+            if (w.specialSprite2 != null)
+            {
+                barrel = Fx.MakeSprite("Torreta cano", transform.position + Vector3.up * 0.05f, w.specialSprite2, Color.white, "Player", 7);
+                barrel.transform.SetParent(transform, true);
+            }
+        }
+        else
+        {
+            body = Fx.MakeSprite("Torreta cos", transform.position, Fx.Disc, new Color(0.55f, 0.6f, 0.68f), "Player", 6);
+            body.transform.SetParent(transform, true); body.transform.localScale = Vector3.one * 0.55f;
+            light = Fx.MakeSprite("Torreta llum", transform.position, Fx.Disc, new Color(1f, 0.3f, 0.3f), "Player", 7);
+            light.transform.SetParent(transform, true); light.transform.localScale = Vector3.one * 0.2f;
+        }
         Fx.Burst(transform.position, new Color(0.7f, 0.75f, 0.85f), 8, 2f);
     }
 
@@ -262,7 +296,13 @@ public class TurretUnit : MonoBehaviour
         target.TakeHit(Mathf.Max(1, weapon.damage), (to - from).normalized * 1.5f);
         RunStats.HitBy = null;
         StartCoroutine(Tracer(from, to));
-        light.transform.position = from + (to - from).normalized * 0.18f;
+        Vector2 aim = (to - from).normalized;
+        if (light != null) light.transform.position = from + aim * 0.18f;
+        if (barrel != null)
+        {
+            barrel.transform.position = (Vector3)(from + aim * 0.32f) + Vector3.up * 0.05f;
+            barrel.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(aim.y, aim.x) * Mathf.Rad2Deg);
+        }
     }
 
     IEnumerator Tracer(Vector2 from, Vector2 to)
@@ -281,13 +321,27 @@ public class MineUnit : MonoBehaviour
 {
     WeaponData weapon; Transform owner;
     float radius, armedAt, life = 25f;
-    SpriteRenderer body;
+    SpriteRenderer body, lamp;
 
     public void Setup(WeaponData w, Transform ownerTransform, float blastRadius)
     {
         weapon = w; owner = ownerTransform; radius = blastRadius; armedAt = Time.time + 0.7f;
-        body = Fx.MakeSprite("Mina cos", transform.position, Fx.Disc, new Color(0.35f, 0.25f, 0.25f), "Player", 5);
-        body.transform.SetParent(transform, true); body.transform.localScale = Vector3.one * 0.38f;
+        if (w.specialSprite != null)
+        {
+            body = Fx.MakeSprite("Mina cos", transform.position, w.specialSprite, Color.white, "Player", 5);
+            body.transform.SetParent(transform, true);
+            if (w.specialSprite2 != null)
+            {
+                lamp = Fx.MakeSprite("Mina llum", transform.position + Vector3.up * 0.02f, w.specialSprite2, Color.white, "Player", 6);
+                lamp.transform.SetParent(transform, true);
+                lamp.enabled = false; // només parpelleja quan la mina està armada
+            }
+        }
+        else
+        {
+            body = Fx.MakeSprite("Mina cos", transform.position, Fx.Disc, new Color(0.35f, 0.25f, 0.25f), "Player", 5);
+            body.transform.SetParent(transform, true); body.transform.localScale = Vector3.one * 0.38f;
+        }
     }
 
     public void Expire() { if (this != null) Destroy(gameObject); }
@@ -297,7 +351,9 @@ public class MineUnit : MonoBehaviour
         life -= Time.deltaTime;
         if (life <= 0f) { Expire(); return; }
         bool armed = Time.time >= armedAt;
-        body.color = armed && ((int)(Time.time * 4f) % 2 == 0) ? new Color(1f, 0.2f, 0.2f) : new Color(0.35f, 0.25f, 0.25f);
+        bool blink = armed && ((int)(Time.time * 4f) % 2 == 0);
+        if (lamp != null) lamp.enabled = blink;
+        else if (body != null) body.color = blink ? new Color(1f, 0.2f, 0.2f) : new Color(0.35f, 0.25f, 0.25f);
         if (!armed) return;
 
         foreach (var c in Physics2D.OverlapCircleAll(transform.position, 0.9f))

@@ -51,7 +51,7 @@ public partial class NetBot : MonoBehaviour
 
     void Start()
     {
-        StartCoroutine(role == "solo" ? SoloCombat() : role == "weaponshots" ? WeaponShots() : role == "trails" ? TrailGallery() : role == "host" ? Host() : Join());
+        StartCoroutine(role == "solo" ? SoloCombat() : role == "menushot" ? MenuShots() : role == "weaponshots" ? WeaponShots() : role == "trails" ? TrailGallery() : role == "host" ? Host() : Join());
         StartCoroutine(Watchdog());
     }
 
@@ -722,6 +722,19 @@ public partial class NetBot : MonoBehaviour
         yield return Shot("h-barrets-nous");
         foreach (var f in fixtures) Destroy(f);
         Ok("barrets nous");
+    }
+
+    // Captures del menú principal i del panell de novetats (cal gràfics i -botShots <carpeta>)
+    IEnumerator MenuShots()
+    {
+        yield return WaitFor(() => Scene == "MainMenu", 20, "menú principal carregat");
+        if (failed) yield break;
+        yield return new WaitForSeconds(1.5f);
+        yield return Shot("m-menu");
+        ClickButton("VEURE-HO TOT");
+        yield return new WaitForSeconds(0.5f);
+        yield return Shot("m-novetats-completes");
+        Log("PASS"); Application.Quit(0);
     }
 
     // Captures de les armes, enemics i bosses nous (cal obrir el joc amb gràfics i -botShots <carpeta>)

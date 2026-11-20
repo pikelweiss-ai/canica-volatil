@@ -6,13 +6,31 @@ using TMPro;
 // Per a una versió nova: afig un bloc a dalt de tot de Entries (el més nou primer) i canvia GameVersion.
 public static class Changelog
 {
-    public class Entry { public string version; public string title; public string[] lines; }
+    public class Entry { public string version; public string title; public string[] lines; public string[] summary; /* resum curt per al menú */ }
 
     public static readonly Entry[] Entries =
     {
         new Entry
         {
+            version = "Alpha v1.3.2", title = "Sprites propis i menú amb novetats",
+            summary = new[] { "Novetats al costat del menú", "Torreta i mines amb sprite", "Harpó animat al Ganxo", "Vareta curativa: tir verd", "Barret de Cuiner arreglat" },
+            lines = new[]
+            {
+                "MENÚ",
+                "El menú principal mostra les novetats al costat dels botons.",
+                "ARMES",
+                "La torreta té cúpula i un canó que gira cap a l'enemic.",
+                "Les mines tenen sprite propi i una llum que parpelleja quan s'armen.",
+                "El Ganxo d'abordatge llança un harpó que arriba fins a l'objectiu.",
+                "La Vareta curativa dispara una bola verda amb una creu, diferent de la Vareta normal.",
+                "ARREGLOS",
+                "Barret de Cuiner: ja no falta un píxel a la vora.",
+            }
+        },
+        new Entry
+        {
             version = "Alpha v1.3.1", title = "Sis armes noves, bosses nous i cofres que milloren",
+            summary = new[] { "Sis armes noves", "3 enemics i 2 bosses nous", "Cofres que milloren", "Cofre comú per jugador", "Barrets i esteles noves" },
             lines = new[]
             {
                 "ARMES NOVES",
@@ -108,6 +126,21 @@ public static class Changelog
         },
     };
 
+
+    // Text curt per al panell del menú principal: les dues darreres versions
+    public static string PanelText(int versions = 2)
+    {
+        var sb = new System.Text.StringBuilder();
+        for (int i = 0; i < Entries.Length && i < versions; i++)
+        {
+            var e = Entries[i];
+            if (i > 0) sb.Append("\n");
+            sb.Append("<color=#EBB347>").Append(e.version).Append("</color>\n");
+            if (e.summary != null) foreach (var line in e.summary) sb.Append("·  ").Append(line).Append('\n');
+            else sb.Append("·  ").Append(e.title).Append('\n');
+        }
+        return sb.ToString();
+    }
     const string SeenKey = "Changelog_Seen";
 
     // Hi ha novetats que l'usuari encara no ha obert d'aquesta versió?

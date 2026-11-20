@@ -1,3 +1,12 @@
+# Alpha v1.3.2
+
+- **Menú principal** amb un panell de novetats al costat dels botons (les dues darreres versions) i botó VEURE-HO TOT.
+- **Sprites propis:** la torreta té cúpula i un canó que gira cap a l'enemic, les mines tenen sprite i una llum que parpelleja, el Ganxo llança un harpó animat i la Vareta curativa dispara una bola verda amb una creu.
+- **Barret de Cuiner:** arreglat el píxel que faltava a la vora.
+- El protocol online continua sent el **16**: la v1.3.2 pot jugar amb la v1.3.1.
+
+**Verificació i límits:** Windows, Linux i Android compilen. La prova individual passa; en online passen LAN i Internet (una vegada la prova de la Vareta curativa va fallar i va passar en repetir-la). Les proves d'Internet sense IP no es poden fer ara per la xarxa d'este equip.
+
 # Alpha v1.3.1
 
 - **Sis armes noves:** Bàcul de torreta, Llançamines, Arc de llum (de càrrega), Escut de mirall (reflecteix bales), Vareta curativa (cura companys en cooperatiu) i Ganxo d'abordatge.

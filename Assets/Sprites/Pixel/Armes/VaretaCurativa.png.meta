@@ -147,7 +147,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      VaretaCurativa_0: -4832957029221129520
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -59,6 +59,7 @@ public class WeaponData : ScriptableObject
     [Min(0f)] public float meleeLineWidth;     // > 0: el colp cos a cos és una línia recta d'esta amplada (Llança), no un arc
     public SpecialKind special;             // Comportament propi de l'arma (v1.3.1)
     public float specialValue;              // Torreta: segons vius; Mina: radi; Arc: segons de càrrega; Escut: graus; Vareta curativa: abast; Ganxo: distància d'estirada
+    public Sprite specialSprite, specialSprite2; // Torreta: cos i canó; Mina: cos i llum; Ganxo: harpó (v1.3.2)
     public bool melee = false;
     [Range(20f, 180f)] public float meleeArc = 110f;
 

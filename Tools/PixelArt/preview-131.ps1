@@ -3,7 +3,8 @@ Add-Type -AssemblyName System.Drawing
 $root = Split-Path (Split-Path $PSScriptRoot)
 $items = @('Barrets/Pirata','Barrets/Mag','Barrets/Cuiner','Barrets/Gat','Barrets/Cowboy','Barrets/Antenes',
   'Armes/BaculTorreta','Armes/Llancamines','Armes/ArcLlum','Armes/EscutMirall','Armes/VaretaCurativa','Armes/Ganxo',
-  'Enemics/Gargola','Enemics/Cranc','Enemics/FantasmaGel','Enemics/ReinaAranya','Enemics/ReiGel')
+  'Enemics/Gargola','Enemics/Cranc','Enemics/FantasmaGel','Enemics/ReinaAranya','Enemics/ReiGel',
+  'Armes/TorretaCos','Armes/TorretaCano','Armes/MinaCos','Armes/MinaLlum','Armes/CuraBala','Armes/GanxoHarpo')
 $cell = 260; $cols = 6; $rows = [int][Math]::Ceiling($items.Count / $cols)
 $sheet = [Drawing.Bitmap]::new($cols * $cell, $rows * $cell)
 $g = [Drawing.Graphics]::FromImage($sheet); $g.Clear([Drawing.Color]::FromArgb(40, 70, 40))

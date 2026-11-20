@@ -147,7 +147,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      BaculTorreta_0: 8783650363218965061
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

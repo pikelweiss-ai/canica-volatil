@@ -147,7 +147,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      Llancamines_0: 557224553969429055
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

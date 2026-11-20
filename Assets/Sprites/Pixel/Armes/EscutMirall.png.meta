@@ -147,7 +147,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      EscutMirall_0: 91124757840497900
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

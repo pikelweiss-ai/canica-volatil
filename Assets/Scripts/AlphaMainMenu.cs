@@ -29,7 +29,12 @@ public class AlphaMainMenu : MonoBehaviour
         ui.Button(go.transform,"CONTROLS",new Vector2(-455,-265),ControlsUI.Open);
         // El número de versió és un botó: obri les novetats (amb "NOU" la primera vegada de cada versió)
         ui.Text(go.transform,GameVersion.Label,new Vector2(-440,-385),new Vector2(630,50),22,TextAlignmentOptions.Left,new Color(.4f,.58f,.62f));
-        UIKit.Button(go.transform, "NOVETATS" + (Changelog.HasNew ? "  <color=#EBB347>● NOU</color>" : ""), new Vector2(-455,-385), new Vector2(230,40), Changelog.Open, UIKit.Style.Ghost, 18);
+        // Panell de novetats al costat dels botons (v1.3.2)
+        var news = ui.Box(go.transform, new Vector2(612,-10), new Vector2(330,800), new Color(.025f,.06f,.09f,.96f));
+        ui.Text(news, "NOVETATS" + (Changelog.HasNew ? "  <color=#EBB347>● NOU</color>" : ""), new Vector2(0,350), new Vector2(300,50), 28, TextAlignmentOptions.Center, new Color(1,.87f,.45f));
+        ui.Box(news, new Vector2(0,318), new Vector2(280,3), new Color(.92f,.70f,.28f,.6f));
+        ui.Text(news, Changelog.PanelText(2), new Vector2(0,-5), new Vector2(296,600), 19, TextAlignmentOptions.TopLeft, new Color(.88f,.94f,.95f));
+        UIKit.Button(news, "VEURE-HO TOT", new Vector2(0,-352), new Vector2(280,56), Changelog.Open, UIKit.Style.Normal, 22);
         ui.Diorama(go.transform);
     }
     void Diorama(Transform parent)
@@ -37,9 +42,9 @@ public class AlphaMainMenu : MonoBehaviour
         var style=AlphaVisualStyle.Current; if(style == null) return;
         if(style.menuArtwork != null)
         {
-            Picture(parent,style.menuArtwork,new Vector2(395,-20),new Vector2(620,620));
-            Text(parent,"CADA PARTIDA,\nUNA NOVA HISTÒRIA.",new Vector2(395,350),new Vector2(650,100),30,TextAlignmentOptions.Center,new Color(.85f,.93f,.9f));
-            Text(parent,"EXPLORA · COMBINA · SUPERA'T",new Vector2(395,-365),new Vector2(650,60),20,TextAlignmentOptions.Center,new Color(.5f,.7f,.7f));
+            Picture(parent,style.menuArtwork,new Vector2(205,-10),new Vector2(500,500));
+            Text(parent,"CADA PARTIDA,\nUNA NOVA HISTÒRIA.",new Vector2(205,330),new Vector2(420,100),26,TextAlignmentOptions.Center,new Color(.85f,.93f,.9f));
+            Text(parent,"EXPLORA · COMBINA · SUPERA'T",new Vector2(205,-300),new Vector2(420,60),18,TextAlignmentOptions.Center,new Color(.5f,.7f,.7f));
             return;
         }
         // Illa de rajola, gespa i fusta: peces del mapa, sense il·lustracio generada.

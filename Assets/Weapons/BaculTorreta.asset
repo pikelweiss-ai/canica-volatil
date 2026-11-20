@@ -45,6 +45,8 @@ MonoBehaviour:
   meleeLineWidth: 0
   special: 1
   specialValue: 9
+  specialSprite: {fileID: 21300000, guid: 1a56905b0e22fff48b210e125ce84c61, type: 3}
+  specialSprite2: {fileID: 21300000, guid: b68cbd7e3cfc491499a30294261b172f, type: 3}
   melee: 0
   meleeArc: 110
   projectileEffect: 0
