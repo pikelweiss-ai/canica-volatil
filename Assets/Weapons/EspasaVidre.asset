@@ -23,7 +23,7 @@ MonoBehaviour:
   projectileSprite: {fileID: 0}
   projectileSpriteScale: 1
   projectileSpeed: 12
-  range: 1.7
+  range: 2
   projectileSize: 0.3
   projectileColor: {r: 0.6, g: 0.9, b: 1, a: 1}
   spreadAngle: 0
@@ -34,7 +34,7 @@ MonoBehaviour:
   alternateSwing: 1
   meleeRadial: 0
   melee: 1
-  meleeArc: 100
+  meleeArc: 120
   explosionRadius: 0
   explosionDamage: 3
   pierce: 0

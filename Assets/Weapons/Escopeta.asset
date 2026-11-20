@@ -17,18 +17,19 @@ MonoBehaviour:
   rarity: 1
   handScale: 0.75
   damage: 1
+  closeDamageRange: 1.5
   cooldown: 0.85
   knockbackForce: 2.5
   projectilePrefab: {fileID: 0}
   projectileSprite: {fileID: 21300000, guid: e5e21ce7c89d0134991af5d8b7718343, type: 3}
   projectileSpriteScale: 1
-  projectileSpeed: 15
+  projectileSpeed: 12
   range: 4
   projectileSize: 0.12
   projectileColor: {r: 1, g: 0.85, b: 0.3, a: 1}
   fixedSpread: 1
   spreadAngle: 22
-  pellets: 7
+  pellets: 6
   rangeRandom: 0.3
   sound: 0
   shootSound: {fileID: 0}

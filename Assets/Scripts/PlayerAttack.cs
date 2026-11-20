@@ -213,7 +213,9 @@ public class PlayerAttack : MonoBehaviour
         if (charging)
             baseColor.a *= aimChargingOpacity;
 
-        SetLine(aimLine, start, end, width, endWidth, baseColor);
+        bool radial = weapon != null && weapon.melee && weapon.meleeRadial;
+        if (radial) SetAimCircle(aimLine, start, length, 1f, baseColor);
+        else SetLine(aimLine, start, end, width, endWidth, baseColor);
 
         // Part carregada: creix des del jugador cap a fora amb el color normal
         // (l'opacitat es calcula perquè, sumada al fons, done just aimColor i no faça salt en acabar)
@@ -223,12 +225,27 @@ public class PlayerAttack : MonoBehaviour
             Color fillColor = aimColor;
             fillColor.a = baseColor.a >= 1f ? 1f : (aimColor.a - baseColor.a) / (1f - baseColor.a);
             // La part carregada segueix la forma de la V (a mig camí, mitja amplària)
-            SetLine(aimFill, start, start + aimDirection * (length * progress), width, Mathf.Lerp(width, endWidth, progress), fillColor);
+            if (radial) SetAimCircle(aimFill, start, length, progress, fillColor);
+            else SetLine(aimFill, start, start + aimDirection * (length * progress), width, Mathf.Lerp(width, endWidth, progress), fillColor);
+        }
+    }
+
+    void SetAimCircle(LineRenderer line, Vector2 center, float radius, float progress, Color color)
+    {
+        const int segments = 48;
+        line.positionCount = segments + 1;
+        line.startWidth = line.endWidth = 0.045f;
+        line.startColor = line.endColor = color;
+        for (int i = 0; i <= segments; i++)
+        {
+            float angle = 2f * Mathf.PI * progress * i / segments;
+            line.SetPosition(i, center + new Vector2(Mathf.Sin(angle), Mathf.Cos(angle)) * radius);
         }
     }
 
     void SetLine(LineRenderer line, Vector2 start, Vector2 end, float startWidth, float endWidth, Color color)
     {
+        line.positionCount = 2;
         line.startWidth = startWidth;
         line.endWidth = endWidth;
         line.startColor = color;

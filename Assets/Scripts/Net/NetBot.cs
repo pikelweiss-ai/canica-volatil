@@ -730,7 +730,7 @@ public partial class NetBot : MonoBehaviour
 
         var camera = Camera.main;
         float normalSize = camera.orthographicSize;
-        foreach (string id in new[] { "Sniper", "Laser", "Vareta", "Ballesta" })
+        foreach (string id in new[] { "Sniper", "Laser", "Vareta" })
         {
             var weapon = NetCoop.Weapon(id);
             attack.hotbarSlots[0] = weapon;
@@ -738,6 +738,9 @@ public partial class NetBot : MonoBehaviour
             yield return WaitFor(() => camera.orthographicSize * Mathf.Min(1f, camera.aspect) >= weapon.range, 2, "tot el rang de " + id);
             if (failed) yield break;
         }
+        attack.hotbarSlots[0] = NetCoop.Weapon("Ballesta");
+        yield return WaitFor(() => Mathf.Approximately(camera.orthographicSize, normalSize), 2, "zoom normal amb la Ballesta");
+        if (failed) yield break;
         attack.hotbarSlots[0] = null;
         yield return WaitFor(() => Mathf.Approximately(camera.orthographicSize, normalSize), 2, "zoom normal amb el puny");
         if (failed) yield break;

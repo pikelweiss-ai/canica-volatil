@@ -12,6 +12,7 @@ public class Projectile : MonoBehaviour
     private float radius;
     private Transform owner;
     private Vector2 startPosition;
+    private Vector2 firingPosition;
     private WeaponData weapon;
     // Online: bala d'un company. Es veu igual pero no fa mal (el dany el compta el PC de qui dispara)
     [System.NonSerialized] public bool cosmetic;
@@ -27,6 +28,7 @@ public class Projectile : MonoBehaviour
         radius = weapon.projectileSize * 0.5f;
         owner = shooter;
         startPosition = transform.position;
+        firingPosition = shooter != null ? (Vector2)shooter.position : startPosition;
         pierceLeft = weapon.pierce;
 
         // Gira el projectil cap a on va (els sprites apunten cap a la dreta)
@@ -119,7 +121,7 @@ public class Projectile : MonoBehaviour
             {
                 if (alreadyHit.Contains(enemy)) continue; // Fletxa que travessa: no pega dues vegades
                 alreadyHit.Add(enemy);
-                if (!cosmetic) enemy.TakeHit(damage, direction * knockbackForce);
+                if (!cosmetic) enemy.TakeHit(ImpactDamage(), direction * knockbackForce);
                 if (pierceLeft-- > 0 || weapon.returns) continue;
                 End();
                 return;
@@ -129,7 +131,7 @@ public class Projectile : MonoBehaviour
             Breakable breakable = hit.GetComponentInParent<Breakable>();
             if (breakable != null)
             {
-                if (!cosmetic) breakable.Hit(damage);
+                if (!cosmetic) breakable.Hit(ImpactDamage());
                 if (weapon.returns) { StartReturn(); return; }
                 End();
                 return;
@@ -155,6 +157,13 @@ public class Projectile : MonoBehaviour
         }
     }
 
+    int ImpactDamage()
+    {
+        float range = weapon.closeDamageRange;
+        return range > 0f && ((Vector2)transform.position - firingPosition).sqrMagnitude < range * range
+            ? damage + 1 : damage;
+    }
+
     void StartReturn()
     {
         returning = true;
@@ -168,7 +177,7 @@ public class Projectile : MonoBehaviour
             EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
             if (enemy == null || alreadyHit.Contains(enemy)) continue;
             alreadyHit.Add(enemy);
-            if (!cosmetic) enemy.TakeHit(damage, direction * knockbackForce);
+            if (!cosmetic) enemy.TakeHit(ImpactDamage(), direction * knockbackForce);
         }
     }
 

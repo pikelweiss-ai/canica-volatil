@@ -33,7 +33,7 @@ public static class AlphaContentBuilder
         var disc=Weapon("DiscCometa","Disc de cometa","Bumerang",ChestRarity.Rar);
         disc.damage=2;disc.cooldown=.85f;disc.returns=true;disc.pierce=1;disc.spinSpeed=800;disc.projectileSprite=disc.icon;disc.range=6;EditorUtility.SetDirty(disc);
         var lance=Weapon("LlancaTempesta","Llança de tempesta","EspasaVidre",ChestRarity.Epic);
-        lance.melee=true;lance.meleeArc=55;lance.meleeDashDistance=1.8f;lance.cooldown=.85f;lance.damage=3;lance.range=2.5f;EditorUtility.SetDirty(lance);
+        lance.melee=true;lance.meleeArc=25;lance.meleeDashDistance=1.8f;lance.cooldown=.85f;lance.damage=3;lance.range=3.5f;EditorUtility.SetDirty(lance);
         var spores=Weapon("VaretaEspores","Vareta d'espores","Vareta",ChestRarity.Rar);
         spores.damage=1;spores.pellets=3;spores.fixedSpread=true;spores.spreadAngle=20;spores.cooldown=1.1f;spores.homing=2;spores.projectileSpeed=6;spores.range=7;spores.projectileColor=new Color(.6f,1,.4f);EditorUtility.SetDirty(spores);
         var pulse = Weapon("ProjectorPolsos", "Projector de polsos", "Llancagranades", ChestRarity.Rar);

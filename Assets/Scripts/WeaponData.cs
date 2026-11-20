@@ -18,6 +18,7 @@ public class WeaponData : ScriptableObject
 
     [Header("Atac")]
     public int damage = 1;
+    [Min(0f)] public float closeDamageRange; // Dins d'aquest radi, suma un punt per impacte.
     public float cooldown = 0.5f;       // Temps entre trets (segons)
     public float knockbackForce = 4f;
 

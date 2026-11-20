@@ -72,24 +72,24 @@ public partial class NetBot
         var sky = background != null ? background.GetComponent<SpriteRenderer>() : null;
         var player = GameObject.FindWithTag("Player");
         var attack = player != null ? player.GetComponent<PlayerAttack>() : null;
-        var crossbow = NetCoop.Weapon("Ballesta");
-        if (sky == null || !sky.enabled || !sky.gameObject.activeInHierarchy || attack == null || crossbow == null)
+        var sniper = NetCoop.Weapon("Sniper");
+        if (sky == null || !sky.enabled || !sky.gameObject.activeInHierarchy || attack == null || sniper == null)
         {
-            Fail("falta el fons o la Ballesta en el mapa lliure");
+            Fail("falta el fons o falta el Sniper en el mapa lliure");
             yield break;
         }
 
         var saved = attack.hotbarSlots[0];
         try
         {
-            attack.hotbarSlots[0] = crossbow;
+            attack.hotbarSlots[0] = sniper;
             attack.SelectSlot(0);
             foreach (float aspect in new[] { 2.4f, .75f })
             {
                 camera.aspect = aspect;
-                float range = crossbow.range / Mathf.Cos(crossbow.spreadAngle * Mathf.Deg2Rad) + 1f;
+                float range = sniper.range / Mathf.Cos(sniper.spreadAngle * Mathf.Deg2Rad) + 1f;
                 yield return WaitFor(() => camera.orthographicSize * Mathf.Min(1f, aspect) >= range - .01f,
-                    4, "zoom de la Ballesta amb proporció " + aspect);
+                    4, "zoom del Sniper amb proporció " + aspect);
                 if (failed) yield break;
                 yield return null;
                 var bounds = sky.bounds;
@@ -102,7 +102,7 @@ public partial class NetBot
                     yield break;
                 }
             }
-            Ok("el cel del mapa lliure cobreix tota la Ballesta en pantalles amples i estretes");
+            Ok("el cel del mapa lliure cobreix tot l'abast del Sniper en pantalles amples i estretes");
         }
         finally
         {

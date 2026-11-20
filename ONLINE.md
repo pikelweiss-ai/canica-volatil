@@ -1,6 +1,6 @@
 # Sales online — Canica Volàtil Alpha
 
-**Protocol: 10 (Alpha v1.1.3).** `PickupSpawn` inclou el cooldown pendent de cada arma, també en resincronitzar. La v1.1.1 usa protocol **8**. Windows, Linux i Android han d’usar la mateixa versió. L’Alpha v1.0.0 usa protocol 5 i no és compatible. Les instruccions de compilació estan a MOBILE_ALPHA.md.
+**Protocol: 11 (Alpha v1.2.0-dev).** La v1.1.3 usa el protocol 10. `PickupSpawn` inclou el cooldown pendent de cada arma, també en resincronitzar. La v1.1.1 usa protocol **8**. Windows, Linux i Android han d’usar la mateixa versió. L’Alpha v1.0.0 usa protocol 5 i no és compatible. Les instruccions de compilació estan a MOBILE_ALPHA.md.
 
 On està: **JUGAR → targeta "Online"**. Obri el navegador de sales directament a **INTERNET · PÚBLIQUES**.
 
@@ -16,7 +16,7 @@ Per dins (`Assets/Scripts/Net/NetCloud.cs`):
 | Peça | Què fa | Servei |
 |---|---|---|
 | Túnel | L’amfitrió obri una connexió d’**eixida** al port 7835 de `bore.pub` (protocol obert de *bore*). El servei li assigna un port públic. Cada jugador que s’hi connecta arriba com una connexió TCP més a l’amfitrió (cua `accepted` de `NetSession`). | `bore.pub`, gratuït, sense compte |
-| Directori | L’amfitrió publica un anunci JSON (codi, nom, mode, jugadors, fase, `bore.pub:port`) cada 20 s, o abans si canvia alguna cosa, però mai més d’un cada 4 s. Quan tanca, publica `closed`. Les públiques van al tema `canica-volatil-v10-sales`. Les privades van a un tema derivat del SHA-256 del codi. | `ntfy.sh`, gratuït, sense compte |
+| Directori | L’amfitrió publica un anunci JSON (codi, nom, mode, jugadors, fase, `bore.pub:port`) cada 20 s, o abans si canvia alguna cosa, però mai més d’un cada 4 s. Quan tanca, publica `closed`. Les públiques van al tema `canica-volatil-v11-sales`. Les privades van a un tema derivat del SHA-256 del codi. | `ntfy.sh`, gratuït, sense compte |
 | Llista | El navegador llig els anuncis dels últims 75 s, es queda l’últim de cada codi i amaga els tancats o els que fa més de 50 s que no s’anuncien. Només accepta adreces `bore.pub:port`, perquè un anunci fals no puga portar ningú a un altre lloc. | — |
 | Ping | Temps fins al túnel del jugador + el de l’amfitrió (aproximat). | — |
 

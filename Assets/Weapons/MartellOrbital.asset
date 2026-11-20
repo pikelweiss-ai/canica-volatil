@@ -16,7 +16,7 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 70b9d8b06b5c3ab43a38ab011bf105c9, type: 3}
   rarity: 2
   handScale: 0.75
-  damage: 7
+  damage: 6
   cooldown: 1.1
   knockbackForce: 5
   projectilePrefab: {fileID: 0}

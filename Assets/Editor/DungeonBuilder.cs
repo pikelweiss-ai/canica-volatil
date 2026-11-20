@@ -377,7 +377,7 @@ public static class DungeonBuilder
         {
             b.weaponName = "Ballesta"; b.rarity = ChestRarity.Rar; b.handScale = 0.75f;
             b.damage = 3; b.cooldown = 0.6f; b.knockbackForce = 2.5f;
-            b.projectileSpeed = 20f; b.range = 9f; b.projectileSize = 0.15f;
+            b.projectileSpeed = 20f; b.range = 8.5f; b.projectileSize = 0.15f;
             b.pierce = 2;
             b.sound = WeaponSound.Llancament;
         }
@@ -408,9 +408,9 @@ public static class DungeonBuilder
             w.meleeRadial = file == "MartellOrbital";
             w.sound = WeaponSound.Llancament; EditorUtility.SetDirty(w);
         }
-        Melee("EspasaVidre", "Espasa de vidre", ChestRarity.Comu, 3, 0.55f, 1.7f, 100f, new Color(0.6f, 0.9f, 1f));
+        Melee("EspasaVidre", "Espasa de vidre", ChestRarity.Comu, 3, 0.55f, 2f, 120f, new Color(0.6f, 0.9f, 1f));
         Melee("SabreCorall", "Sabre de corall", ChestRarity.Rar, 4, 0.65f, 2f, 130f, new Color(1f, 0.45f, 0.6f));
-        Melee("MartellOrbital", "Martell orbital", ChestRarity.Epic, 7, 1.1f, 2.2f, 160f, new Color(0.8f, 0.6f, 1f));
+        Melee("MartellOrbital", "Martell orbital", ChestRarity.Epic, 6, 1.1f, 2.2f, 160f, new Color(0.8f, 0.6f, 1f));
 
         // ---- Armes noves (els valors només es posen la primera vegada; després els canvies a l'Inspector) ----
         void New(string file, string name, ChestRarity rarity, string icon, string proj, float projScale,
@@ -434,7 +434,7 @@ public static class DungeonBuilder
         New("Revolver", "Revòlver", ChestRarity.Comu, "Revolver", "Bala", 1f, 2, 0.45f, 18f, 7.5f, 0.15f, WeaponSound.Tret);
         New("Bumerang", "Bumerang", ChestRarity.Rar, "Bumerang", "Bumerang", 0.8f, 2, 0.7f, 11f, 5.5f, 0.35f, WeaponSound.Llancament,
             w => { w.returns = true; w.spinSpeed = 900f; });
-        New("Shuriken", "Shurikens", ChestRarity.Comu, "Shuriken", "Shuriken", 0.7f, 1, 0.3f, 15f, 6f, 0.2f, WeaponSound.Llancament,
+        New("Shuriken", "Shurikens", ChestRarity.Comu, "Shuriken", "Shuriken", 0.7f, 1, 0.45f, 15f, 6f, 0.2f, WeaponSound.Llancament,
             w => { w.pellets = 3; w.spreadAngle = 12f; w.pierce = 1; w.spinSpeed = 1080f; });
         New("Vareta", "Vareta màgica", ChestRarity.Epic, "Vareta", "BolaMagica", 1f, 2, 0.35f, 9f, 9f, 0.25f, WeaponSound.Llancament,
             w => { w.homing = 6f; });
@@ -442,7 +442,7 @@ public static class DungeonBuilder
             w => { w.spreadAngle = 9f; w.knockbackForce = 0.8f; });
         W("Minigun").spinUpTime = 0.6f;
         EditorUtility.SetDirty(W("Minigun"));
-        New("Laser", "Làser", ChestRarity.Llegendari, "Laser", "Raig", 1f, 3, 0.5f, 35f, 12f, 0.18f, WeaponSound.Tret,
+        New("Laser", "Làser", ChestRarity.Llegendari, "Laser", "Raig", 1f, 4, 0.5f, 35f, 12f, 0.18f, WeaponSound.Tret,
             w => { w.pierce = 5; });
     }
 
