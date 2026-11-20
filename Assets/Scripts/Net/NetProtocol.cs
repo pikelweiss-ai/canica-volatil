@@ -11,7 +11,7 @@ using System.Text;
 // El mateix format serveix per a parlar amb l'amfitrio (LAN/IP) i amb el servidor de sales (Internet).
 public static class NetProtocol
 {
-    public const int Version = 12; // Estat de les armes i efectes de projectil
+    public const int Version = 13; // Resum de partida: l'amfitrio decideix tornar a jugar (RestartRun)
     public const int GamePort = 7777;      // TCP: l'amfitrio escolta ací (prova 7777..7787)
     public const int DiscoveryPort = 7778; // UDP: descobriment de sales en LAN
     public const int RelayPort = 7780;     // TCP: servidor de sales d'Internet
@@ -195,7 +195,7 @@ public enum Msg : byte
     // Objectes compartits (qualsevol -> amfitrio -> tots)
     PickupSpawn = 86, PickupClaim = 87, PickupGrant = 88, PickupTaken = 89, BreakableBroken = 90,
     MapCoinReq = 91, MapCoinGrant = 92, MapCoinTaken = 93,
-    BreakableHit = 94, ChainFx = 95,
+    BreakableHit = 94, ChainFx = 95, RestartRun = 96,
 }
 
 public enum RoomMode : byte { Dungeon = 0, FreeMap = 1 }

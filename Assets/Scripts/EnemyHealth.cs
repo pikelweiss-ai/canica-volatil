@@ -31,6 +31,11 @@ public class EnemyHealth : MonoBehaviour
 
     private bool isDead = false;
 
+    // Resum de partida: arma de l'ultim colp d'aquest jugador ("" = un company) i si l'ha colpejat algu
+    private string lastHitBy;
+    private bool hitByPlayer;
+    void NoteHitter() { if (RunStats.HitBy != null) { lastHitBy = RunStats.HitBy; hitByPlayer = true; } }
+
     // Online: identificador comu i si aquest enemic es una copia d'un enemic de l'amfitrio
     [System.NonSerialized] public int netId;
     [System.NonSerialized] public bool netProxy;
@@ -65,6 +70,7 @@ public class EnemyHealth : MonoBehaviour
     public void TakeProjectileHit(int damage, Vector2 knockback, ProjectileEffect effect)
     {
         if (isDead) return;
+        NoteHitter();
         if (netProxy && effect != ProjectileEffect.None)
         {
             NetCoop.ProxyHit(this, damage, knockback, effect);
@@ -118,6 +124,7 @@ public class EnemyHealth : MonoBehaviour
     public void TakeHit(int damage, Vector2 knockback)
     {
         if (isDead) return;
+        NoteHitter();
 
         // Copia online: es veu el colp ací, pero el dany el decideix l'amfitrio
         if (netProxy)
@@ -183,6 +190,7 @@ public class EnemyHealth : MonoBehaviour
         Fx.Burst(transform.position, deathColor, 10, 3.5f);
         DropLoot();
 
+        RunStats.EnemyKilled(this, lastHitBy, hitByPlayer);
         Died?.Invoke(this);
         AnyDied?.Invoke(this);
         NetCoop.EnemyDied(this);
@@ -195,6 +203,8 @@ public class EnemyHealth : MonoBehaviour
     {
         if (isDead) return;
         isDead = true;
+        // Client: la mort la decideix l'amfitrio, que ja ha descartat els kamikazes que esclaten sols
+        RunStats.EnemyKilled(this, lastHitBy, true);
         if (poofEffectPrefab != null) Instantiate(poofEffectPrefab, transform.position, Quaternion.identity);
         Fx.Burst(transform.position, deathColor, 10, 3.5f);
         // El boti el crea l'amfitrio i es comparteix (el primer que l'agafa)

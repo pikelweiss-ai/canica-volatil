@@ -81,21 +81,72 @@ public class DungeonUI : MonoBehaviour
         bannerGroup.alpha = 0f;
     }
 
-    public void ShowDeath(int floor, int coins)
+    // Resum de partida en morir: dades de la partida, records i botons.
+    // waitForHost: client online, nomes pot esperar o eixir (l'amfitrio decideix).
+    public void ShowSummary(List<RunStats.Record> records, bool coop, bool waitForHost,
+        UnityEngine.Events.UnityAction again, UnityEngine.Events.UnityAction menu, string menuLabel)
     {
-
-        Time.timeScale=1f;
-        Image dim = NewImage("Mort", transform, new Color(0f, 0f, 0f, 0f));
+        Time.timeScale = 1f;
+        StopAllCoroutines();
+        Transform root = UIKit.Canvas("Resum de partida", 60).transform;
+        Image dim = NewImage("Fosc", root, new Color(0f, 0f, 0f, 0f));
         RectTransform r = dim.rectTransform;
         r.anchorMin = Vector2.zero; r.anchorMax = Vector2.one; r.offsetMin = r.offsetMax = Vector2.zero;
-
-        TextMeshProUGUI t = NewText("Titol", dim.transform, "HAS MORT", 90);
-        t.color = new Color(1f, 0.35f, 0.35f);
-        t.rectTransform.anchoredPosition = new Vector2(0f, 40f);
-        TextMeshProUGUI s = NewText("Info", dim.transform, $"Has arribat al pis {floor}  ·  {coins} monedes\nTornes a començar...", 32);
-        s.rectTransform.anchoredPosition = new Vector2(0f, -70f);
-        s.rectTransform.sizeDelta = new Vector2(1200f, 120f);
+        dim.raycastTarget = true; // Que no es puga clicar el que hi ha davall
         StartCoroutine(FadeIn(dim));
+
+        UIKit.Text(root, "HAS MORT", new Vector2(0, 330), new Vector2(1200, 110), 84, TextAlignmentOptions.Center, new Color(1f, 0.35f, 0.35f));
+        UIKit.Text(root, coop ? "Partida cooperativa" : "Partida en solitari", new Vector2(0, 268), new Vector2(1200, 40), 26, TextAlignmentOptions.Center, UIKit.Muted);
+
+        // Resum
+        RectTransform left = UIKit.Box(root, new Vector2(-270, 10), new Vector2(500, 430), new Color(0.04f, 0.07f, 0.1f, 0.92f), "Resum");
+        UIKit.Text(left, "RESUM", new Vector2(0, 180), new Vector2(460, 44), 30, TextAlignmentOptions.Center, UIKit.Gold);
+        string fav = RunStats.FavoriteWeapon(out int favKills);
+        var rows = new (string, string)[]
+        {
+            ("Pis màxim", RunStats.MaxFloor.ToString()),
+            ("Temps", RunStats.TimeText()),
+            ("Monedes guanyades", RunStats.CoinsEarned.ToString()),
+            ("Enemics", RunStats.Kills.ToString()),
+            ("Bosses", RunStats.BossKills.ToString()),
+            ("Arma favorita", fav != null ? $"{fav} ({favKills})" : "—"),
+            ("Sales netejades", RunStats.RoomsCleared.ToString()),
+            ("Cofres oberts", RunStats.ChestsOpened.ToString()),
+        };
+        for (int i = 0; i < rows.Length; i++)
+        {
+            float y = 125 - i * 42;
+            UIKit.Text(left, rows[i].Item1, new Vector2(-100, y), new Vector2(260, 38), 24, TextAlignmentOptions.MidlineLeft);
+            UIKit.Text(left, rows[i].Item2, new Vector2(115, y), new Vector2(220, 38), 24, TextAlignmentOptions.MidlineRight, Color.white);
+        }
+
+        // Records
+        RectTransform right = UIKit.Box(root, new Vector2(270, 10), new Vector2(500, 430), new Color(0.04f, 0.07f, 0.1f, 0.92f), "Records");
+        UIKit.Text(right, coop ? "RÈCORDS · COOPERATIU" : "RÈCORDS · SOL", new Vector2(0, 180), new Vector2(460, 44), 30, TextAlignmentOptions.Center, UIKit.Gold);
+        UIKit.Text(right, "Ara", new Vector2(10, 128), new Vector2(100, 30), 20, TextAlignmentOptions.Center, UIKit.Muted);
+        UIKit.Text(right, "Millor", new Vector2(150, 128), new Vector2(160, 30), 20, TextAlignmentOptions.Center, UIKit.Muted);
+        for (int i = 0; i < records.Count; i++)
+        {
+            float y = 80 - i * 58;
+            var rec = records[i];
+            UIKit.Text(right, rec.label, new Vector2(-150, y), new Vector2(180, 40), 24, TextAlignmentOptions.MidlineLeft);
+            UIKit.Text(right, rec.value.ToString(), new Vector2(10, y), new Vector2(100, 40), 26, TextAlignmentOptions.Center, Color.white);
+            UIKit.Text(right, rec.isNew ? "NOU RÈCORD!" : rec.best.ToString(), new Vector2(150, y), new Vector2(180, 40), rec.isNew ? 22 : 26,
+                TextAlignmentOptions.Center, rec.isNew ? UIKit.Gold : UIKit.TextColor);
+        }
+        UIKit.Text(right, "El Mode Creatiu no compta.", new Vector2(0, -185), new Vector2(460, 30), 18, TextAlignmentOptions.Center, UIKit.Dim);
+
+        // Botons
+        if (waitForHost)
+        {
+            UIKit.Text(root, "Esperant que l'amfitrió trie...", new Vector2(0, -268), new Vector2(900, 40), 26, TextAlignmentOptions.Center, UIKit.Muted);
+            UIKit.Button(root, "EIXIR DE LA SALA", new Vector2(0, -330), new Vector2(300, 56), menu, UIKit.Style.Ghost, 22);
+        }
+        else
+        {
+            UIKit.Button(root, "TORNAR A JUGAR", new Vector2(-170, -300), new Vector2(300, 64), again, UIKit.Style.Primary, 26);
+            UIKit.Button(root, menuLabel, new Vector2(170, -300), new Vector2(300, 64), menu, UIKit.Style.Normal, 26);
+        }
     }
 
     IEnumerator FadeIn(Image dim)

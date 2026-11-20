@@ -572,6 +572,7 @@ public partial class DungeonGenerator : MonoBehaviour
     {
         // Online (amfitrio): els companys tambe obrin sales, encara que l'amfitrio haja caigut
         if (!gameOver && NetCoop.IsHost) TryStartRoomTogether();
+        if (!gameOver) RunStats.Tick(Time.deltaTime);
 
         if (gameOver || player == null || !player.gameObject.activeInHierarchy) return;
 
@@ -689,6 +690,7 @@ public partial class DungeonGenerator : MonoBehaviour
         }
         else if (state == 2 && !r.cleared)
         {
+            if (r.type != RoomType.Start && r.type != RoomType.Treasure) RunStats.RoomCleared();
             r.cleared = true; r.active = false;
             SetDoors(r, false);
             ui.RefreshMap();
@@ -788,6 +790,7 @@ public partial class DungeonGenerator : MonoBehaviour
             }
         }
 
+        if (!r.cleared) RunStats.RoomCleared();
         r.cleared = true;
         SetDoors(r, false);
         ui.RefreshMap();
@@ -1044,6 +1047,7 @@ public partial class DungeonGenerator : MonoBehaviour
         if (health != null) RunState.Health = health.currentHealth;
         RunState.ArrivalDirection = floor - RunState.Floor;
         RunState.Floor = floor;
+        RunStats.Floor(floor);
         RunState.FloorVisit++;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
@@ -1055,12 +1059,36 @@ public partial class DungeonGenerator : MonoBehaviour
         StartCoroutine(GameOver());
     }
 
+    // Resum de partida. Sol: tornar a jugar o menu. Online: decideix l'amfitrio
+    // (tornar a jugar tots o tornar al lobby); el client espera o ix de la sala.
     IEnumerator GameOver()
     {
-        ui.ShowDeath(RunState.Floor, RunState.Coins);
-        yield return new WaitForSeconds(3.5f);
+        bool coop = NetCoop.Online;
+        var records = RunStats.CommitRecords(coop);
+        if (!coop) ui.ShowSummary(records, false, false, RestartRun, ToMainMenu, "MENÚ PRINCIPAL");
+        else if (NetCoop.IsHost) ui.ShowSummary(records, true, false, NetCoop.RestartRunAll, () => NetSession.Instance.BackToLobby(), "TORNAR AL LOBBY");
+        else ui.ShowSummary(records, true, true, null, LeaveRoom, null);
+        yield break;
+    }
+
+    // Comença una partida nova des del pis 1 (sol, o quan l'amfitrio ho diu)
+    public void RestartRun()
+    {
         RunState.Reset();
         RunState.Active = true;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    static void ToMainMenu()
+    {
+        RunState.Reset();
+        SceneManager.LoadScene("MainMenu");
+    }
+
+    static void LeaveRoom()
+    {
+        if (NetSession.Active) NetSession.Instance.Leave(null);
+        RunState.Reset();
+        SceneManager.LoadScene("MainMenu");
     }
 }

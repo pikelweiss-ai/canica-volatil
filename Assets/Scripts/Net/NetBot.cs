@@ -26,6 +26,7 @@ public partial class NetBot : MonoBehaviour
         string Arg(string key, string def) { int i = Array.IndexOf(a, key); return i >= 0 && i + 1 < a.Length ? a[i + 1] : def; }
         string role = Arg("-canicaBot", null);
         if (role == null) return;
+        RunStats.DontSave = true; // Les proves no guarden records al PC
         var go = new GameObject("NetBot");
         DontDestroyOnLoad(go);
         var bot = go.AddComponent<NetBot>();
@@ -947,7 +948,70 @@ public partial class NetBot : MonoBehaviour
         yield return CheckProgression();
         if (failed) yield break;
         yield return CheckFloorReturn();
+        if (failed) yield break;
+        yield return CheckSoloSummary();
         if (!failed) Pass();
+    }
+
+    static void ClickButton(string label)
+    {
+        var go = GameObject.Find("Boto " + label);
+        go?.GetComponent<UnityEngine.UI.Button>()?.onClick.Invoke();
+    }
+
+    // Resum de partida en solitari: compta enemics, bosses i pis; l'arma favorita surt del context del colp;
+    // "Tornar a jugar" comença al pis 1 amb el resum a zero.
+    IEnumerator CheckSoloSummary()
+    {
+        var dungeon = DungeonGenerator.Instance;
+        if (RunStats.Seconds <= 0f) { Fail("el temps de partida no avança"); yield break; }
+        EnemyHealth target = null;
+        yield return SpawnTestBoss(dungeon, dungeon.themes[0].boss, h => target = h);
+        if (target == null) { Fail("no s'ha pogut crear l'enemic del resum"); yield break; }
+        int kills = RunStats.Kills, bosses = RunStats.BossKills;
+        RunStats.HitBy = "Sniper"; target.TakeHit(99999, Vector2.zero); RunStats.HitBy = null;
+        string fav = RunStats.FavoriteWeapon(out int favKills);
+        if (RunStats.Kills != kills + 1 || RunStats.BossKills != bosses + 1) { Fail($"el resum no compta el boss ({RunStats.Kills - kills} enemics, {RunStats.BossKills - bosses} bosses)"); yield break; }
+        if (fav != "Sniper" || favKills < 1) { Fail("arma favorita del resum incorrecta: " + fav); yield break; }
+        Ok($"resum: {RunStats.Kills} enemics, {RunStats.BossKills} bosses, pis {RunStats.MaxFloor}, {RunStats.TimeText()}, favorita {fav}");
+
+        dungeon.PlayerDied();
+        yield return WaitFor(() => GameObject.Find("Resum de partida") != null && GameObject.Find("Boto TORNAR A JUGAR") != null &&
+            GameObject.Find("Boto MENÚ PRINCIPAL") != null, 5, "resum de partida en solitari amb els dos botons");
+        if (failed) yield break;
+        yield return new WaitForSecondsRealtime(0.5f);
+        if (DungeonGenerator.Instance != dungeon) { Fail("el resum en solitari no ha esperat el botó"); yield break; }
+        ClickButton("TORNAR A JUGAR");
+        yield return WaitFor(() => Scene == "Dungeon" && RunState.Floor == 1 && DungeonGenerator.Instance != null &&
+            DungeonGenerator.Instance != dungeon && RunStats.Kills == 0 && RunStats.MaxFloor == 1, 12, "tornar a jugar comença al pis 1 amb el resum a zero");
+    }
+
+    // Cooperatiu: l'amfitrio veu el resum amb els seus botons i "tornar a jugar" porta tota la colla al pis 1
+    IEnumerator HostRunRestart()
+    {
+        yield return new WaitForSecondsRealtime(10f); // Que el client acabe les seues comprovacions del pis
+        var dungeon = DungeonGenerator.Instance;
+        NetCoop.ForceGameOverAll();
+        yield return WaitFor(() => GameObject.Find("Resum de partida") != null && GameObject.Find("Boto TORNAR A JUGAR") != null &&
+            GameObject.Find("Boto TORNAR AL LOBBY") != null, 5, "l'amfitrió veu el resum cooperatiu amb els seus botons");
+        if (failed) yield break;
+        yield return new WaitForSecondsRealtime(2f);
+        ClickButton("TORNAR A JUGAR");
+        yield return WaitFor(() => Scene == "Dungeon" && RunState.Floor == 1 && DungeonGenerator.Instance != null &&
+            DungeonGenerator.Instance != dungeon && Avatars >= 1, 20, "tota la colla torna a jugar al pis 1");
+    }
+
+    IEnumerator JoinRunRestart()
+    {
+        DungeonGenerator dungeon = null;
+        yield return WaitFor(() => GameObject.Find("Resum de partida") != null && (dungeon = DungeonGenerator.Instance) != null, 30,
+            "el client veu el resum de partida");
+        if (failed) yield break;
+        if (GameObject.Find("Boto TORNAR A JUGAR") != null || GameObject.Find("Boto EIXIR DE LA SALA") == null)
+        { Fail("el client no hauria de poder decidir tornar a jugar"); yield break; }
+        Ok("el client espera l'amfitrió");
+        yield return WaitFor(() => Scene == "Dungeon" && RunState.Floor == 1 && DungeonGenerator.Instance != null &&
+            DungeonGenerator.Instance != dungeon, 25, "el client torna a jugar quan ho diu l'amfitrió");
     }
 
     IEnumerator CheckArsenal(PlayerAttack attack, Vector2 origin)
@@ -1104,6 +1168,8 @@ public partial class NetBot : MonoBehaviour
         if (!room.cleared) { Fail("cambra cooperativa sense acabar"); yield break; }
         yield return new WaitForSecondsRealtime(1.5f);
         yield return CheckFloorReturn();
+        if (failed) yield break;
+        yield return HostRunRestart();
     }
 
     IEnumerator JoinProgression()
@@ -1150,6 +1216,8 @@ public partial class NetBot : MonoBehaviour
             15, "la colla torna al pis anterior amb el cofre obert");
         if (!failed)
             yield return WaitFor(() => FindReturnedWeapon(), 6, "el client recupera el boti compartit del pis anterior");
+        if (!failed)
+            yield return JoinRunRestart();
     }
 
     static DungeonPortal FindFloorPortal(int direction) => System.Array.Find(

@@ -30,6 +30,7 @@ public class CoinCounter : MonoBehaviour
         currentCoins++;
         RunState.Coins = currentCoins;
         CoinBank.Add(1);
+        RunStats.Coin();
         UpdateText();
         if (coinAudioSource != null) coinAudioSource.Play();
     }

@@ -317,9 +317,25 @@ public static class NetCoop
     static void CheckAllDown()
     {
         foreach (var p in S.Players.Values) if (!downed.Contains(p.id)) return;
+        ForceGameOverAll();
+    }
+
+    // Tots han caigut (o una prova ho força): fi de partida i resum per a tots
+    public static void ForceGameOverAll()
+    {
+        if (!IsHost) return;
         downed.Clear();
         S.SendAll(NetProtocol.Frame(Msg.GameOverAll));
         DungeonGenerator.Instance?.NetGameOver();
+    }
+
+    // Resum de partida: l'amfitrio tria "tornar a jugar" i tots tornen al pis 1
+    public static void RestartRunAll()
+    {
+        if (!IsHost) { DungeonGenerator.Instance?.RestartRun(); return; }
+        downed.Clear();
+        S.SendAll(NetProtocol.Frame(Msg.RestartRun));
+        DungeonGenerator.Instance?.RestartRun();
     }
 
     static void ReviveEveryone()
@@ -458,7 +474,11 @@ public static class NetCoop
                 var effect = (ProjectileEffect)r.ReadByte();
                 if (effect > ProjectileEffect.Chain) break;
                 if (enemies.TryGetValue(id, out var h) && h != null && !h.IsDead)
+                {
+                    RunStats.HitBy = ""; // colp d'un company: compta com a mort, pero no per a l'arma de l'amfitrio
                     h.TakeProjectileHit(Mathf.Clamp(dmg, 0, 10000), Vector2.ClampMagnitude(kb, 40f), effect);
+                    RunStats.HitBy = null;
+                }
                 break;
             }
             case Msg.ChestReq:
@@ -647,6 +667,7 @@ public static class NetCoop
                 break;
             }
             case Msg.GameOverAll: if (gen != null) gen.NetGameOver(); break;
+            case Msg.RestartRun: if (gen != null) gen.RestartRun(); break;
             case Msg.ReviveAll: ReviveLocal(); break;
             case Msg.BulletFx:
             {

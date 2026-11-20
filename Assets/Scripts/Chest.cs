@@ -241,6 +241,7 @@ public class Chest : MonoBehaviour
         netWaiting = false;
         if (IsOpen) return;
         IsOpen = true;
+        RunStats.ChestOpened();
         if (spriteRenderer != null && openSprite != null) spriteRenderer.sprite = openSprite;
         SetPromptVisible(false);
         if (visual != null) ResetVisual();
@@ -273,6 +274,7 @@ public class Chest : MonoBehaviour
         if (spriteRenderer != null && openSprite != null)
             spriteRenderer.sprite = openSprite;
 
+        if (!IsOpen) RunStats.ChestOpened();
         IsOpen = true;
 
         audioSource.pitch = 1f;

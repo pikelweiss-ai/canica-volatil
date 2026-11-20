@@ -24,7 +24,7 @@ public class GameplayMenu : MonoBehaviour
         Button("Continuar",150,()=>Pause(false));
         Button("Ajustos",50,SettingsUI.Open);
         Button("Controls",-50,ControlsUI.Open);
-        Button("Eixir al menú principal",-150,()=>{Pause(false);if(NetSession.Active)NetSession.Instance.Leave(null);RunState.Reset();SceneManager.LoadScene("MainMenu");});
+        Button("Eixir al menú principal",-150,()=>{Pause(false);if(RunStats.Counting)RunStats.CommitRecords(NetCoop.Online);if(NetSession.Active)NetSession.Instance.Leave(null);RunState.Reset();SceneManager.LoadScene("MainMenu");});
         panel.SetActive(false);
     }
     RectTransform Box(string name,Transform parent,Vector2 size,Color color)

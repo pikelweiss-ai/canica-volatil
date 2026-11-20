@@ -389,7 +389,9 @@ public class PlayerAttack : MonoBehaviour
             if (enemy == null)
                 continue;
 
+            RunStats.HitBy = "Puny";
             enemy.TakeHit(fistDamage, aimDirection * punchKnockback);
+            RunStats.HitBy = null;
             hitSomething = true;
         }
 
@@ -446,7 +448,7 @@ public class PlayerAttack : MonoBehaviour
             if (delta.sqrMagnitude > 0.01f && !weapon.meleeRadial && Vector2.Angle(aimDirection, delta) > weapon.meleeArc * 0.5f) continue;
             if (TileNav.Ready() && !TileNav.LineOfSight(origin, hit.transform.position)) continue;
             EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
-            if (enemy != null && enemies.Add(enemy)) enemy.TakeHit(weapon.damage, aimDirection * weapon.knockbackForce);
+            if (enemy != null && enemies.Add(enemy)) { RunStats.HitBy = weapon.weaponName; enemy.TakeHit(weapon.damage, aimDirection * weapon.knockbackForce); RunStats.HitBy = null; }
             Breakable box = hit.GetComponentInParent<Breakable>();
             if (box != null && objects.Add(box)) box.Hit(weapon.damage);
         }

@@ -122,7 +122,7 @@ public class Projectile : MonoBehaviour
             {
                 if (alreadyHit.Contains(enemy)) continue; // Fletxa que travessa: no pega dues vegades
                 alreadyHit.Add(enemy);
-                if (!cosmetic) enemy.TakeProjectileHit(ImpactDamage(), direction * knockbackForce, weapon.projectileEffect);
+                if (!cosmetic) HitEnemy(enemy);
                 if (pierceLeft-- > 0 || weapon.returns) continue;
                 End();
                 return;
@@ -186,8 +186,16 @@ public class Projectile : MonoBehaviour
             EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
             if (enemy == null || alreadyHit.Contains(enemy)) continue;
             alreadyHit.Add(enemy);
-            if (!cosmetic) enemy.TakeProjectileHit(ImpactDamage(), direction * knockbackForce, weapon.projectileEffect);
+            if (!cosmetic) HitEnemy(enemy);
         }
+    }
+
+    // Colp d'un projectil d'aquest jugador: el resum de partida apunta l'arma
+    void HitEnemy(EnemyHealth enemy)
+    {
+        RunStats.HitBy = weapon.weaponName;
+        enemy.TakeProjectileHit(ImpactDamage(), direction * knockbackForce, weapon.projectileEffect);
+        RunStats.HitBy = null;
     }
 
     EnemyHealth NearestEnemy()
@@ -217,7 +225,7 @@ public class Projectile : MonoBehaviour
         {
             WeaponSounds.Play(WeaponSounds.ImpactClip(weapon), 0.6f);
             if (weapon.explosionRadius > 0f)
-                { if (cosmetic) Fx.ExplodeVisual(transform.position, weapon.explosionRadius); else Fx.Explode(transform.position, weapon.explosionRadius, 0, weapon.explosionDamage, owner); } // No et fa mal a tu
+                { if (cosmetic) Fx.ExplodeVisual(transform.position, weapon.explosionRadius); else { RunStats.HitBy = weapon.weaponName; Fx.Explode(transform.position, weapon.explosionRadius, 0, weapon.explosionDamage, owner); RunStats.HitBy = null; } } // No et fa mal a tu
         }
         Destroy(gameObject);
     }

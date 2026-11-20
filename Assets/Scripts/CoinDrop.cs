@@ -80,7 +80,7 @@ public class CoinDrop : MonoBehaviour
     void Collect()
     {
         if (CoinCounter.instance != null) CoinCounter.instance.AddCoin();
-        else { Fx.Play(Fx.Coin, 0.4f); RunState.Coins++; CoinBank.Add(1); }
+        else { Fx.Play(Fx.Coin, 0.4f); RunState.Coins++; CoinBank.Add(1); RunStats.Coin(); }
         Destroy(gameObject);
     }
 }
