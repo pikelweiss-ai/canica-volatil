@@ -105,3 +105,9 @@ Onze perfils (balanç, tester, casuals, pro, jugadors que venen de Brawl Stars i
 - **Progressió barata:** resum de partida i rècord, monedes per a cosmètics, repte setmanal amb llavor fixa.
 - **v1.3 · Varietat:** amulets (1 de 3 per pis), minibosses, enemic virus, estats elementals; després etapes temàtiques (bosc maligne primer).
 - **Joc obert:** encara no; primer guardar mapes del Creatiu en local.
+
+## 13. Estat de l'Arsenal (Alpha v1.2.0)
+
+L'Arsenal està empaquetat en local amb protocol 12. La durabilitat i la calor són estat de cada arma i es conserven en deixar-la, recuperar-la o canviar de pis. L'amfitrió aplica els efectes dels projectils. El portal blau d'arribada retorna tota la colla al pis anterior i conserva les sales netejades, els cofres oberts i el botí.
+
+La següent etapa del full de ruta és la progressió barata del Consell. La prova de sensació al Mode Creatiu i l'execució en Android i Linux físics queden pendents. Vegeu [notes de versió](RELEASE_NOTES.md) i [traspàs tècnic](TRASPAS_CLAUDE_V120.md).
