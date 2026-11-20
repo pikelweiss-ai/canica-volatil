@@ -9,6 +9,7 @@ using UnityEngine;
 public class ItemPickup : MonoBehaviour
 {
     public WeaponData weapon;
+    public float CooldownRemaining { get; private set; }
     public float pickupRange = 0.6f;
     public float floatHeight = 0.3f;   // Altura a la qual flota
     public float bobHeight = 0.06f;    // Quant puja i baixa
@@ -26,12 +27,14 @@ public class ItemPickup : MonoBehaviour
     private float bobOffset;
 
     // Crea l'item a 'from' i el fa saltar fins a 'to'
-    public static ItemPickup Spawn(WeaponData weapon, Vector3 from, Vector3 to, bool droppedByPlayer = false)
+    public static ItemPickup Spawn(WeaponData weapon, Vector3 from, Vector3 to, bool droppedByPlayer = false, float cooldownRemaining = 0f)
     {
+        if (DungeonGenerator.Instance != null) to = DungeonGenerator.Instance.KeepDropClearOfPortals(to);
         GameObject go = new GameObject("Item " + weapon.weaponName);
         go.transform.position = from;
         ItemPickup item = go.AddComponent<ItemPickup>();
         item.weapon = weapon;
+        item.CooldownRemaining = cooldownRemaining;
         item.waitForPlayerToLeave = droppedByPlayer;
         item.Build();
         item.StartCoroutine(item.PopOut(from, to));
@@ -136,7 +139,7 @@ public class ItemPickup : MonoBehaviour
 
     void Collect()
     {
-        if (playerAttack != null && playerAttack.AddWeapon(weapon))
+        if (playerAttack != null && playerAttack.AddWeapon(weapon, CooldownRemaining))
         {
             ItemGraphics.PlayPickupSound(transform.position);
             Destroy(gameObject);

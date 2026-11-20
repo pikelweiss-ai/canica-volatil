@@ -127,7 +127,7 @@ public partial class NetBot
         Vector2 world = new Vector2(Screen.width * .57f, Screen.height * .52f);
         var read = typeof(PlayerAttack).GetMethod("ReadDesktopAttack", PrivateInstance);
         var tick = typeof(PlayerAttack).GetMethod("TickAttack", PrivateInstance);
-        var cooldown = typeof(PlayerAttack).GetField("nextAttackTime", PrivateInstance);
+        var cooldown = (float[])typeof(PlayerAttack).GetField("slotCooldown", PrivateInstance).GetValue(attack);
         bool Read(bool start, bool held, Vector2 pointer) =>
             (bool)read.Invoke(attack, new object[] { start, held, pointer, true, false });
 
@@ -140,18 +140,19 @@ public partial class NetBot
                 var weapon = NetCoop.Weapon(name);
                 attack.hotbarSlots[0] = weapon;
                 attack.SelectSlot(0);
-                cooldown.SetValue(attack, 0f);
+                cooldown[0] = 0f;
                 if (!Read(true, true, world)) { Fail("el clic al món no arma el tret"); yield break; }
                 tick.Invoke(attack, new object[] { true });
-                float first = (float)cooldown.GetValue(attack);
-                if (first <= Time.time || !Read(false, true, hud))
+                float first = cooldown[0];
+                if (first <= 0f || !Read(false, true, hud))
                 {
                     Fail("el tret s'atura en arrossegar el punter sobre el HUD");
                     yield break;
                 }
                 yield return new WaitForSeconds(weapon.cooldown + .05f);
+                cooldown[0] = 0f;
                 tick.Invoke(attack, new object[] { Read(false, true, hud) });
-                if ((float)cooldown.GetValue(attack) <= first)
+                if (cooldown[0] <= 0f)
                 {
                     Fail("el tret s'atura amb el punter quiet al HUD: " + name);
                     yield break;
@@ -169,7 +170,7 @@ public partial class NetBot
         finally
         {
             attack.hotbarSlots[0] = savedWeapon;
-            cooldown.SetValue(attack, 0f);
+            cooldown[0] = 0f;
             attack.SelectSlot(0);
             attack.enabled = true;
         }

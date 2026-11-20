@@ -197,7 +197,7 @@ public class ChatBubble : MonoBehaviour
             b.text.rectTransform.sizeDelta = new Vector2(7f, 2f);
             b.text.rectTransform.pivot = new Vector2(.5f, 0);
             var mr = go.GetComponent<MeshRenderer>(); mr.sortingOrder = 400;
-            var ownerRenderer = owner.GetComponent<SpriteRenderer>(); if (ownerRenderer != null) mr.sortingLayerID = ownerRenderer.sortingLayerID;
+            mr.sortingLayerName = "PlayerName";
         }
         if (message.Length > 70) message = message.Substring(0, 67) + "...";
         b.text.text = "<mark=#0B1620E6 padding=\"18,18,8,8\">" + NetSession.Safe(message) + "</mark>";

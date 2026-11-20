@@ -176,7 +176,12 @@ public class EnemyBoss : MonoBehaviour
         for (int i = 0; i < count; i++)
         {
             Vector2 pos = (Vector2)transform.position + Random.insideUnitCircle.normalized * 1.6f;
-            if (TileNav.Ground != null) pos = TileNav.Center(TileNav.NearestFree(TileNav.Cell(pos)));
+            var dungeon = DungeonGenerator.Instance;
+            if (dungeon != null)
+            {
+                if (!dungeon.TryChildSpawn(GetComponent<EnemyHealth>(), pos, out pos)) continue;
+            }
+            else if (TileNav.Ground != null) pos = TileNav.Center(TileNav.NearestFree(TileNav.Cell(pos)));
             GameObject m = Instantiate(minionPrefab, pos, Quaternion.identity);
             m.transform.localScale *= 0.7f;
             EnemySplitter split = m.GetComponent<EnemySplitter>();

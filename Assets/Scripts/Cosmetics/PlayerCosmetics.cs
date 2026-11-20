@@ -107,7 +107,15 @@ public class PlayerCosmetics : MonoBehaviour
             SetTrailColor(Color.HSVToRGB(Time.time * 0.5f % 1f, 0.8f, 1f));
 
         // Mentre el jugador parpelleja (invulnerable), el barret també
-        if (hat != null && body != null) hat.enabled = body.enabled;
+        if (body != null)
+        {
+            body.sortingOrder = Mathf.Clamp(Mathf.RoundToInt(-transform.position.y * 8f), -30000, 30000);
+            if (hat != null)
+            {
+                hat.sortingOrder = body.sortingOrder + 1;
+                hat.enabled = body.enabled;
+            }
+        }
     }
     void LateUpdate()
     {

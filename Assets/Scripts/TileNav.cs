@@ -75,15 +75,19 @@ public static class TileNav
     }
 
     // Casella on no es pot estar: sense terra, o amb un obstacle damunt
-    public static bool IsBlocked(Vector3Int cell)
+    public static bool IsBlocked(Vector3Int cell, bool ignoreWater = false)
     {
         if (Ground == null) return false;
         if (!Ground.HasTile(cell)) return true;
         if (Blockers.ContainsKey(cell)) return true;
         for (int i = 0; i < Obstacles.Count; i++)
-            if (Obstacles[i] != null && Obstacles[i].HasTile(cell)) return true;
+            if (Obstacles[i] != null && Obstacles[i].HasTile(cell) &&
+                !(ignoreWater && IsWaterTilemap(Obstacles[i]) && !(Obstacles[i].GetTile(cell) is DamageTile))) return true;
         return false;
     }
+
+    public static bool IsWaterTilemap(UnityEngine.Tilemaps.Tilemap map) =>
+        map != null && (map == DungeonGenerator.Instance?.liquid || map.name == "Tilemap Liquid");
 
     public static bool IsBlockedWorld(Vector2 pos) => IsBlocked(Cell(pos));
 

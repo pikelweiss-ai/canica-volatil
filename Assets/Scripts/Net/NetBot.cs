@@ -768,8 +768,31 @@ public partial class NetBot : MonoBehaviour
             Fail("un objecte pot caure dins d'una paret");
             yield break;
         }
-        var dropGun = NetCoop.Weapon("Escopeta");
-        attack.hotbarSlots[0] = dropGun;
+        var sniper = NetCoop.Weapon("Sniper");
+        var pistol = NetCoop.Weapon("Pistola");
+        const float remaining = 0.6f;
+        attack.AddWeapon(sniper, remaining);
+        attack.AddWeapon(pistol);
+        var cooldowns = (float[])typeof(PlayerAttack).GetField("slotCooldown", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(attack);
+        attack.SelectSlot(1);
+        yield return new WaitForSeconds(0.1f);
+        if (cooldowns[0] != remaining || cooldowns[1] != 0f)
+        {
+            Fail("el cooldown baixa amb l'arma guardada o afecta una altra casella");
+            yield break;
+        }
+        attack.SwapSlots(0, 1);
+        if (cooldowns[1] != remaining || attack.hotbarSlots[1] != sniper)
+        {
+            Fail("el cooldown no acompanya l'arma quan canvia de casella");
+            yield break;
+        }
+        attack.hotbarSlots[0] = null;
+        attack.hotbarSlots[1] = null;
+        cooldowns[1] = 0f;
+        attack.AddWeapon(sniper, remaining);
+        var dropGun = sniper;
+        attack.SelectSlot(0);
         player.GetComponent<Rigidbody2D>().position = dropFrom;
         player.position = dropFrom;
         typeof(PlayerAttack).GetField("aimDirection", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
@@ -777,7 +800,7 @@ public partial class NetBot : MonoBehaviour
         attack.DropSlot(0);
         yield return new WaitForSeconds(0.9f);
         var dropped = FindFirstObjectByType<ItemPickup>();
-        if (dropped == null || dropped.weapon != dropGun || !TileNav.CircleFree(dropped.transform.position, 0.12f))
+        if (dropped == null || dropped.weapon != dropGun || dropped.CooldownRemaining != remaining || !TileNav.CircleFree(dropped.transform.position, 0.12f))
         {
             Fail("l'arma solta no ha quedat al terra davant la paret");
             yield break;
@@ -792,7 +815,14 @@ public partial class NetBot : MonoBehaviour
         player.position = resting;
         yield return WaitFor(() => dropped == null, 2, "arma solta al costat de la paret recuperada");
         if (failed) yield break;
+        if (cooldowns[0] <= 0f || attack.CurrentWeapon != sniper)
+        {
+            Fail("l'arma recuperada ha perdut el cooldown pendent");
+            yield break;
+        }
+        Ok("cooldown independent i conservat en canviar, soltar i recollir");
         attack.hotbarSlots[0] = null;
+        cooldowns[0] = 0f;
 
         var movementController = player.GetComponent<PlayerMovement>();
         var moveInput = typeof(PlayerMovement).GetField("movement", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);

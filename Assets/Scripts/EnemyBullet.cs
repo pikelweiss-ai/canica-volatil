@@ -33,7 +33,7 @@ public class EnemyBullet : MonoBehaviour
         life -= Time.fixedDeltaTime;
         if (life <= 0f) { Destroy(gameObject); return; }
 
-        if (TileNav.Ground != null && TileNav.IsBlockedWorld(transform.position)) { Pop(); return; }
+        if (TileNav.Ground != null && TileNav.IsBlocked(TileNav.Cell(transform.position), ignoreWater: true)) { Pop(); return; }
 
         foreach (Collider2D hit in Physics2D.OverlapCircleAll(transform.position, 0.12f * transform.localScale.x))
         {
@@ -47,6 +47,8 @@ public class EnemyBullet : MonoBehaviour
                 return;
             }
             if (hit.GetComponentInParent<EnemyHealth>() != null) continue;     // Travessa els altres enemics
+            var tilemap = hit.GetComponent<UnityEngine.Tilemaps.Tilemap>();
+            if (TileNav.IsWaterTilemap(tilemap) && !(tilemap.GetTile(tilemap.WorldToCell(transform.position)) is DamageTile)) continue;
             if (!hit.isTrigger) { Pop(); return; }                             // Paret, cofre, caixa...
         }
     }

@@ -7,6 +7,7 @@ public static class RunState
     public static int Floor = 1;            // Pis actual (1, 2, 3...)
     public static int Health;               // Cors en acabar el pis anterior
     public static int Coins;                // Monedes de la partida
+    public static float[] WeaponCooldowns;
     public static WeaponData[] Weapons;     // Hotbar en acabar el pis anterior
     public static HealItem[] HealItems;     // Bossa de cures
     public static int[] HealCounts;
@@ -22,6 +23,7 @@ public static class RunState
         Health = 0;
         Coins = 0;
         Weapons = null;
+        WeaponCooldowns = null;
         HealItems = null;
         HealCounts = null;
         Seed = 0;

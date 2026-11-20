@@ -81,8 +81,10 @@ public class Chest : MonoBehaviour
         visualStartScale = visual.localScale;
         visualStartRot = visual.localRotation;
 
-        if (spriteRenderer != null && closedSprite != null)
-            spriteRenderer.sprite = closedSprite;
+        if (NetCoop.IsClient && NetCoop.IsChestOpenedForAll(NetCoop.ChestKey(this))) IsOpen = true;
+        Sprite initialSprite = IsOpen ? openSprite : closedSprite;
+        if (spriteRenderer != null && initialSprite != null)
+            spriteRenderer.sprite = initialSprite;
 
         GameObject p = GameObject.FindWithTag("Player");
         if (p != null) player = p.transform;
@@ -241,7 +243,7 @@ public class Chest : MonoBehaviour
         IsOpen = true;
         if (spriteRenderer != null && openSprite != null) spriteRenderer.sprite = openSprite;
         SetPromptVisible(false);
-        ResetVisual();
+        if (visual != null) ResetVisual();
         Fx.Burst(transform.position, new Color(1f, 0.9f, 0.5f), 5, 1.5f);
     }
 

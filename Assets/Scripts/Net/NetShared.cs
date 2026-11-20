@@ -61,6 +61,7 @@ public static class NetShared
         {
             w.Write(from_); w.Write(Token); w.Write(id); w.Write((byte)kind); w.Write(data ?? "");
             w.Write(from.x); w.Write(from.y); w.Write(to.x); w.Write(to.y);
+            w.Write(pickup is ItemPickup weapon ? weapon.CooldownRemaining : 0f);
         }));
     }
 
@@ -71,6 +72,7 @@ public static class NetShared
         if (!NetCoop.Online || pickup == null) return false;
         var ni = pickup.GetComponent<NetItem>();
         if (ni == null) return false;
+        if (!NetCoop.IsHost && taken.Contains(ni.id)) return true;
         if (NetCoop.IsHost)
         {
             if (!taken.Add(ni.id)) { Object.Destroy(pickup.gameObject); return true; }
@@ -106,9 +108,9 @@ public static class NetShared
         Object.Destroy(pickup.gameObject);
     }
 
-    static void SpawnRemote(int id, Kind kind, string data, Vector3 from, Vector3 to)
+    static void SpawnRemote(int id, Kind kind, string data, Vector3 from, Vector3 to, float cooldownRemaining)
     {
-        if (items.ContainsKey(id)) return;
+        if (taken.Contains(id) || items.ContainsKey(id)) return;
         Component c = null;
         spawningRemote = true;
         try
@@ -117,7 +119,7 @@ public static class NetShared
             {
                 case Kind.Coin: c = CoinDrop.SpawnAt(from, to); break;
                 case Kind.Heal: { var h = Heal(data); if (h != null) c = HealPickup.Spawn(h, from, to); break; }
-                case Kind.Weapon: { var wd = NetCoop.Weapon(data); if (wd != null) c = ItemPickup.Spawn(wd, from, to); break; }
+                case Kind.Weapon: { var wd = NetCoop.Weapon(data); if (wd != null) c = ItemPickup.Spawn(wd, from, to, cooldownRemaining: cooldownRemaining); break; }
             }
         }
         finally { spawningRemote = false; }
@@ -232,6 +234,7 @@ public static class NetShared
             S.SendTo(playerId, NetProtocol.Frame(Msg.PickupSpawn, w => {
                 w.Write(id / 1000000); w.Write(token); w.Write(id); w.Write((byte)kind); w.Write(data);
                 w.Write(from.x); w.Write(from.y); w.Write(to.x); w.Write(to.y);
+                w.Write(ni.GetComponent<ItemPickup>()?.CooldownRemaining ?? 0f);
             }));
         }
         foreach (var key in mapTaken) { int k = key; S.SendTo(playerId, NetProtocol.Frame(Msg.MapCoinTaken, w => { w.Write(token); w.Write(k); })); }
@@ -268,15 +271,21 @@ public static class NetShared
             {
                 r.ReadInt32(); int token = r.ReadInt32(); int id = r.ReadInt32(); var kind = (Kind)r.ReadByte(); string data = r.ReadString();
                 var a = new Vector3(r.ReadSingle(), r.ReadSingle()); var b = new Vector3(r.ReadSingle(), r.ReadSingle());
+                float cooldownRemaining = r.ReadSingle();
                 int fid = from.id;
-                S.SendAllExcept(fid, NetProtocol.Frame(Msg.PickupSpawn, w => { w.Write(fid); w.Write(token); w.Write(id); w.Write((byte)kind); w.Write(data); w.Write(a.x); w.Write(a.y); w.Write(b.x); w.Write(b.y); }));
-                if (token == Token) SpawnRemote(id, kind, data, a, b);
+                if (token != Token || id / 1000000 != fid || taken.Contains(id) || items.ContainsKey(id)) break;
+                S.SendAllExcept(fid, NetProtocol.Frame(Msg.PickupSpawn, w => { w.Write(fid); w.Write(token); w.Write(id); w.Write((byte)kind); w.Write(data); w.Write(a.x); w.Write(a.y); w.Write(b.x); w.Write(b.y); w.Write(cooldownRemaining); }));
+                if (token == Token) SpawnRemote(id, kind, data, a, b, cooldownRemaining);
                 break;
             }
             case Msg.PickupClaim:
             {
                 int id = r.ReadInt32(); int fid = from.id;
-                if (!taken.Add(id)) { S.SendTo(fid, NetProtocol.Frame(Msg.PickupTaken, w => w.Write(id))); break; }
+                if (!items.TryGetValue(id, out var item) || item == null || !taken.Add(id))
+                {
+                    S.SendTo(fid, NetProtocol.Frame(Msg.PickupTaken, w => w.Write(id)));
+                    break;
+                }
                 S.SendTo(fid, NetProtocol.Frame(Msg.PickupGrant, w => w.Write(id)));
                 S.SendAllExcept(fid, NetProtocol.Frame(Msg.PickupTaken, w => w.Write(id)));
                 RemoveItem(id);
@@ -315,13 +324,14 @@ public static class NetShared
             {
                 r.ReadInt32(); int token = r.ReadInt32(); int id = r.ReadInt32(); var kind = (Kind)r.ReadByte(); string data = r.ReadString();
                 var a = new Vector3(r.ReadSingle(), r.ReadSingle()); var b = new Vector3(r.ReadSingle(), r.ReadSingle());
-                if (token == Token) SpawnRemote(id, kind, data, a, b);
+                float cooldownRemaining = r.ReadSingle();
+                if (token == Token) SpawnRemote(id, kind, data, a, b, cooldownRemaining);
                 break;
             }
             case Msg.PickupGrant:
             {
                 int id = r.ReadInt32();
-                if (items.TryGetValue(id, out var ni) && ni != null)
+                if (taken.Add(id) && items.TryGetValue(id, out var ni) && ni != null)
                 {
                     items.Remove(id);
                     var go = ni.gameObject;
@@ -332,7 +342,13 @@ public static class NetShared
                 }
                 break;
             }
-            case Msg.PickupTaken: RemoveItem(r.ReadInt32()); break;
+            case Msg.PickupTaken:
+            {
+                int id = r.ReadInt32();
+                taken.Add(id);
+                RemoveItem(id);
+                break;
+            }
             case Msg.MapCoinGrant:
             {
                 int token = r.ReadInt32(); int key = r.ReadInt32();

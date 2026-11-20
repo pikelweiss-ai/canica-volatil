@@ -42,8 +42,7 @@ public class PlayerAttack : MonoBehaviour
     private bool reverseSwing;
     private int selectedSlot = 0;
     private bool mouseBlocked;          // El clic ha començat damunt de la UI
-    private float nextAttackTime = 0f;
-    private float lastCooldownDuration = 1f;
+    private readonly float[] slotCooldown = new float[4];
     private LineRenderer aimFill; // Part carregada del cooldown, damunt de l'aim
     private Vector2 aimDirection = Vector2.right;
     public Vector2 AimDirection => aimDirection;
@@ -76,6 +75,8 @@ public class PlayerAttack : MonoBehaviour
         if (RunState.Active && RunState.Weapons != null)
             for (int i = 0; i < hotbarSlots.Length && i < RunState.Weapons.Length; i++)
                 hotbarSlots[i] = RunState.Weapons[i];
+        if (RunState.Active && RunState.WeaponCooldowns != null)
+            System.Array.Copy(RunState.WeaponCooldowns, slotCooldown, slotCooldown.Length);
 
         CreateAimLine();
         CreateHand();
@@ -102,8 +103,9 @@ public class PlayerAttack : MonoBehaviour
         if (GameControls.Down(7))
             showAimLine = !showAimLine;
 
-        UpdateAim();
         HandleSlotSelection();
+        slotCooldown[selectedSlot] = Mathf.Max(0f, slotCooldown[selectedSlot] - Time.deltaTime);
+        UpdateAim();
         UpdateHand();
 
         if (GameControls.Down(6))
@@ -134,21 +136,20 @@ public class PlayerAttack : MonoBehaviour
             spinCharge+=Time.deltaTime;
             if(spinCharge<CurrentWeapon.spinUpTime) return;
         }
-        if (attackPressed && Time.time >= nextAttackTime)
+        if (attackPressed && slotCooldown[selectedSlot] <= 0f)
         {
             WeaponData weapon = CurrentWeapon;
 
             if (weapon == null)
             {
                 Punch();
-                lastCooldownDuration = fistCooldown;
+                slotCooldown[selectedSlot] = fistCooldown;
             }
             else
             {
                 Shoot(weapon);
-                lastCooldownDuration = weapon.cooldown;
+                slotCooldown[selectedSlot] = weapon.cooldown;
             }
-            nextAttackTime = Time.time + lastCooldownDuration;
         }
     }
 
@@ -200,8 +201,8 @@ public class PlayerAttack : MonoBehaviour
             endWidth = Mathf.Max(width, 2f * length * Mathf.Tan(weapon.spreadAngle * Mathf.Deg2Rad));
 
         // Progrés del cooldown: 0 = acabes d'atacar, 1 = llest
-        float remaining = nextAttackTime - Time.time;
-        float progress = remaining <= 0f ? 1f : 1f - Mathf.Clamp01(remaining / lastCooldownDuration);
+        float remaining = slotCooldown[selectedSlot];
+        float progress = remaining <= 0f ? 1f : 1f - Mathf.Clamp01(remaining / (weapon != null ? weapon.cooldown : fistCooldown));
         bool charging = progress < 1f;
 
         Vector2 start = transform.position;
@@ -296,13 +297,14 @@ public class PlayerAttack : MonoBehaviour
     // Per si en el futur vols recollir armes del terra
     public bool HasFreeSlot { get { if (hotbarSlots == null) return false; foreach (var w in hotbarSlots) if (w == null) return true; return false; } }
 
-    public bool AddWeapon(WeaponData weapon)
+    public bool AddWeapon(WeaponData weapon, float cooldownRemaining = 0f)
     {
         for (int i = 0; i < hotbarSlots.Length; i++)
         {
             if (hotbarSlots[i] == null)
             {
                 hotbarSlots[i] = weapon;
+                slotCooldown[i] = Mathf.Clamp(cooldownRemaining, 0f, weapon.cooldown);
                 hotbarUI.Refresh(hotbarSlots, selectedSlot);
                 return true;
             }
@@ -489,6 +491,7 @@ public class PlayerAttack : MonoBehaviour
     public void SwapSlots(int a, int b)
     {
         (hotbarSlots[a], hotbarSlots[b]) = (hotbarSlots[b], hotbarSlots[a]);
+        (slotCooldown[a], slotCooldown[b]) = (slotCooldown[b], slotCooldown[a]);
         if (selectedSlot == a) selectedSlot = b;
         else if (selectedSlot == b) selectedSlot = a;
         hotbarUI.Refresh(hotbarSlots, selectedSlot);
@@ -500,15 +503,23 @@ public class PlayerAttack : MonoBehaviour
         for (int i = 0; i < hotbarSlots.Length; i++)
         {
             WeaponData weapon = hotbarSlots[i];
+            float remaining = slotCooldown[i];
+            slotCooldown[i] = 0f;
             if (weapon == null) continue;
             hotbarSlots[i] = null;
             float a = (i / (float)hotbarSlots.Length) * Mathf.PI * 2f + Random.Range(-0.3f, 0.3f);
             Vector3 from = transform.position;
             Vector3 to = from + new Vector3(Mathf.Cos(a), Mathf.Sin(a)) * 1.1f;
-            ItemPickup.Spawn(weapon, from, TileNav.DropDestination(from, to));
+            ItemPickup.Spawn(weapon, from, TileNav.DropDestination(from, to), cooldownRemaining: remaining);
         }
         if (hotbarUI != null) hotbarUI.Refresh(hotbarSlots, selectedSlot);
+        SaveRunInventory();
+    }
+
+    public void SaveRunInventory()
+    {
         RunState.Weapons = (WeaponData[])hotbarSlots.Clone();
+        RunState.WeaponCooldowns = (float[])slotCooldown.Clone();
     }
 
     // Tira al terra l'arma de la casella 'i' (Z o arrossegar-la fora de la hotbar)
@@ -523,7 +534,8 @@ public class PlayerAttack : MonoBehaviour
 
         Vector3 from = transform.position;
         Vector3 to = transform.position + (Vector3)(aimDirection * 1f);
-        ItemPickup.Spawn(weapon, from, TileNav.DropDestination(from, to), true);
+        ItemPickup.Spawn(weapon, from, TileNav.DropDestination(from, to), true, slotCooldown[i]);
+        slotCooldown[i] = 0f;
     }
 
     void OnDisable()

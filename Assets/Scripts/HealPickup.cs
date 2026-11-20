@@ -18,6 +18,7 @@ public class HealPickup : MonoBehaviour
 
     public static HealPickup Spawn(HealItem item, Vector3 from, Vector3 to, bool droppedByPlayer = false)
     {
+        if (DungeonGenerator.Instance != null) to = DungeonGenerator.Instance.KeepDropClearOfPortals(to);
         GameObject go = new GameObject("Cura " + item.itemName);
         go.transform.position = from;
         HealPickup p = go.AddComponent<HealPickup>();

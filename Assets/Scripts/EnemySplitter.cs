@@ -22,7 +22,12 @@ public class EnemySplitter : MonoBehaviour
         {
             Vector2 offset = Random.insideUnitCircle.normalized * 0.35f;
             Vector2 pos = (Vector2)transform.position + offset;
-            if (TileNav.Ground != null && TileNav.IsBlockedWorld(pos)) pos = transform.position;
+            var dungeon = DungeonGenerator.Instance;
+            if (dungeon != null)
+            {
+                if (!dungeon.TryChildSpawn(h, pos, out pos)) continue;
+            }
+            else if (TileNav.Ground != null && TileNav.IsBlockedWorld(pos)) pos = transform.position;
 
             GameObject child = Instantiate(gameObject, pos, Quaternion.identity);
             child.name = gameObject.name;

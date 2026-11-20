@@ -751,8 +751,8 @@ public class DungeonGenerator : MonoBehaviour
             // Recompensa: cofre llegendari i portal
             SpawnChest(ChestRarity.Llegendari, r.Center + new Vector2Int(-2, 0));
             NetCoop.ChestSpawned((int)ChestRarity.Llegendari, r.Center + new Vector2Int(-2, 0));
-            SpawnPortal(r.Center + new Vector2Int(2, 0));
-            NetCoop.PortalSpawned(r.Center + new Vector2Int(2, 0));
+            SpawnPortal(r.Center + NextPortalOffset);
+            NetCoop.PortalSpawned(r.Center + NextPortalOffset);
         }
         else
         {
@@ -934,6 +934,26 @@ public class DungeonGenerator : MonoBehaviour
     }
 
     // Els llims que es divideixen i els fills del boss també compten
+    public bool TryChildSpawn(EnemyHealth parent, Vector2 desired, out Vector2 position)
+    {
+        position = desired;
+        Room room = Rooms.Find(r => r.alive.Contains(parent));
+        if (room == null) return true;
+
+        float bestDistance = float.PositiveInfinity;
+        foreach (Vector2Int cell in room.rect.allPositionsWithin)
+        {
+            Vector3Int tile = ToCell(cell);
+            if (TileNav.IsBlocked(tile)) continue;
+            Vector2 center = TileNav.Center(tile);
+            float distance = (center - desired).sqrMagnitude;
+            if (distance >= bestDistance) continue;
+            bestDistance = distance;
+            position = center;
+        }
+        return !float.IsPositiveInfinity(bestDistance);
+    }
+
     public void RegisterSpawned(EnemyHealth h)
     {
         if (h == null) return;
@@ -964,8 +984,45 @@ public class DungeonGenerator : MonoBehaviour
         foreach (var c in r.doorCells) doors.SetTile(c, DoorSide(r, c) == entrance ? null : doorTile);
     }
 
+    static readonly Vector2Int ReturnPortalOffset = new Vector2Int(0, -3);
+    static readonly Vector2Int NextPortalOffset = new Vector2Int(2, 0);
+
+    public Vector3 KeepDropClearOfPortals(Vector3 position)
+    {
+        Room boss = Rooms.Find(room => room.type == RoomType.Boss);
+        if (boss == null) return position;
+        Vector2 next = TileNav.Center(ToCell(boss.Center + NextPortalOffset));
+        Vector2 back = TileNav.Center(ToCell(boss.Center + ReturnPortalOffset));
+        bool Clear(Vector2 point) => (point - next).sqrMagnitude >= 1.44f && (point - back).sqrMagnitude >= 1.44f;
+        if (Clear(position)) return position;
+        float best = float.PositiveInfinity;
+        Vector3 result = position;
+        foreach (Vector2Int cell in boss.rect.allPositionsWithin)
+        {
+            Vector3Int tile = ToCell(cell);
+            if (TileNav.IsBlocked(tile)) continue;
+            Vector2 center = TileNav.Center(tile);
+            float distance = (center - (Vector2)position).sqrMagnitude;
+            if (!Clear(center) || distance >= best) continue;
+            best = distance;
+            result = new Vector3(center.x, center.y, position.z);
+        }
+        return result;
+    }
+
+    bool portalsSpawned;
+
     void SpawnPortal(Vector2Int cell)
     {
+        if (portalsSpawned) return;
+        portalsSpawned = true;
+        var start = Rooms.Find(room => room.type == RoomType.Start);
+        if (start != null)
+        {
+            Vector3 back = ground.GetCellCenterWorld(ToCell(cell - NextPortalOffset + ReturnPortalOffset));
+            var portal = DungeonPortal.Create(back, returning: true);
+            portal.ReturnDestination = ground.GetCellCenterWorld(ToCell(start.Center));
+        }
         Vector3 pos = ground.GetCellCenterWorld(ToCell(cell));
         if (portalPrefab != null) Instantiate(portalPrefab, pos, Quaternion.identity);
         else DungeonPortal.Create(pos);
@@ -983,7 +1040,7 @@ public class DungeonGenerator : MonoBehaviour
     void NextFloorLocal()
     {
         PlayerAttack attack = player != null ? player.GetComponent<PlayerAttack>() : null;
-        if (attack != null) RunState.Weapons = (WeaponData[])attack.hotbarSlots.Clone();
+        attack?.SaveRunInventory();
         PlayerHealth health = player != null ? player.GetComponent<PlayerHealth>() : null;
         if (health != null) RunState.Health = health.currentHealth;
         RunState.Floor++;

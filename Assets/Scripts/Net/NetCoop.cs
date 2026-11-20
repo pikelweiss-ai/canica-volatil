@@ -567,6 +567,7 @@ public static class NetCoop
                 int token = r.ReadInt32(); int key = r.ReadInt32();
                 if (token != Token) break;
                 pendingChests.Remove(key);
+                openedChests.Add(key);
                 var c = FindChest(key); if (c != null) c.NetMarkOpened();
                 break;
             }
@@ -575,6 +576,7 @@ public static class NetCoop
                 int token = r.ReadInt32(); int key = r.ReadInt32();
                 if (token != Token) break;
                 pendingChests.Remove(key);
+                if (!openedChests.Add(key)) break;
                 var c = FindChest(key); if (c != null) c.NetGrantOpen();
                 break;
             }
