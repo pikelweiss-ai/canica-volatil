@@ -384,6 +384,8 @@ public partial class NetBot : MonoBehaviour
         if (!CheckRoomLocked(g, combat)) yield break;
         if (shots != null) yield return new WaitForSecondsRealtime(1f);
         yield return Shot("7-masmorra-amfitrio");
+        foreach (var chest in FindObjectsByType<Chest>(FindObjectsSortMode.None)) chest.healChance = 1f;
+
         // 2) El client en mata un (via colp a la seua copia)
         yield return WaitFor(() => remoteKills > 0, 25, "un enemic ha mort pel colp del company");
         // 3) Bales del company visibles
@@ -394,7 +396,9 @@ public partial class NetBot : MonoBehaviour
         if (failed) yield break;
         if (!NetCoop.InterceptChestOpen(opened)) { Fail("l'amfitrio ha pogut tornar a obrir el cofre"); yield break; }
         Ok("el cofre no es pot obrir dues vegades");
-        yield return WaitFor(() => NetShared.RemoteHealsSeen > 0, 10, "cura del cofre del client visible a l'amfitrio");
+        yield return WaitFor(() => System.Array.Exists(FindObjectsByType<HealPickup>(FindObjectsSortMode.None),
+            heal => Vector2.Distance(heal.transform.position, opened.transform.position) < 3f),
+            10, "l'amfitrio genera la cura del cofre obert pel client");
         // Bot real de boss: forcem la probabilitat, no substituim la ruta de botí.
         var bossPrefab = g.Theme != null && g.Theme.boss != null ? g.Theme.boss : g.bossPrefab;
         EnemyHealth bossHealth = null;
@@ -568,7 +572,6 @@ public partial class NetBot : MonoBehaviour
             if (!ch.IsOpen && DungeonGenerator.CanInteractAt(ch.transform.position) && d < best) { best = d; nearest = ch; }
         }
         if (nearest == null) { Fail("cap cofre tancat"); yield break; }
-        nearest.healChance = 1; // prova determinista del boti del cofre
         if (!NetCoop.InterceptChestOpen(nearest)) { Fail("el client ha obert el cofre sense preguntar"); yield break; }
         yield return WaitFor(() => nearest.IsOpen, 10, "l'amfitrio ha donat el cofre al client");
         GameObject bossWarning = null;
@@ -931,6 +934,8 @@ public partial class NetBot : MonoBehaviour
         yield return CheckChestLootAtWall();
         if (failed) yield break;
         yield return CheckProgression();
+        if (failed) yield break;
+        yield return CheckFloorReturn();
         if (!failed) Pass();
     }
 
@@ -998,6 +1003,7 @@ public partial class NetBot : MonoBehaviour
         }
         if (!room.cleared) { Fail("cambra cooperativa sense acabar"); yield break; }
         yield return new WaitForSecondsRealtime(1.5f);
+        yield return CheckFloorReturn();
     }
 
     IEnumerator JoinProgression()
@@ -1030,6 +1036,72 @@ public partial class NetBot : MonoBehaviour
         var reward = ProgressionReward(dungeon);
         if (reward.lootTable.Length != 1 || reward.lootTable[0] != NetCoop.Weapon("ProjectorPolsos"))
             Fail("la recompensa del client difereix de la del host");
+        if (failed) yield break;
+
+        yield return WaitFor(() => RunState.Floor == 5 && DungeonGenerator.Instance != dungeon, 25, "el client ix pel portal blau");
+        if (failed) yield break;
+        var next = DungeonGenerator.Instance;
+        var portal = FindFloorPortal(-1);
+        if (portal == null || Vector2.Distance(next.player.position, portal.transform.position) > .1f)
+        { Fail("el client no ha aparegut dins del portal blau"); yield break; }
+        yield return WalkBackThroughPortal(next, portal);
+        if (failed) yield break;
+        yield return WaitFor(() => RunState.Floor == 4 && ProgressionReward(DungeonGenerator.Instance)?.IsOpen == true,
+            15, "la colla torna al pis anterior amb el cofre obert");
+        if (!failed)
+            yield return WaitFor(() => FindReturnedWeapon(), 6, "el client recupera el boti compartit del pis anterior");
+    }
+
+    static DungeonPortal FindFloorPortal(int direction) => System.Array.Find(
+        FindObjectsByType<DungeonPortal>(FindObjectsSortMode.None), p => p.Direction == direction);
+
+    static bool FindReturnedWeapon() => System.Array.Exists(FindObjectsByType<ItemPickup>(FindObjectsSortMode.None),
+        item => item.weapon == NetCoop.Weapon("Sniper") && Mathf.Approximately(item.CooldownRemaining, .55f));
+
+    IEnumerator WalkBackThroughPortal(DungeonGenerator dungeon, DungeonPortal portal)
+    {
+        var position = portal.transform.position;
+        yield return new WaitForSeconds(.65f);
+        if (DungeonGenerator.Instance != dungeon) { Fail("el portal ha tornat abans d'eixir del cercle"); yield break; }
+        SetBotPosition(dungeon, position + Vector3.right * 1.25f);
+        yield return new WaitForSeconds(.4f);
+        SetBotPosition(dungeon, position);
+    }
+
+    IEnumerator CheckFloorReturn()
+    {
+        var dungeon = DungeonGenerator.Instance;
+        int floor = RunState.Floor;
+        var boss = dungeon.Rooms.Find(room => room.type == DungeonGenerator.RoomType.Boss);
+        dungeon.NetRoomState(dungeon.Rooms.IndexOf(boss), 2);
+        var center = boss.Center;
+        var exitCell = center + new Vector2Int(2, 0);
+        dungeon.NetSpawnPortal(exitCell);
+        NetCoop.PortalSpawned(exitCell);
+        NetCoop.RestoreOpenedChest(ProgressionReward(dungeon));
+        Vector3 drop = TileNav.Center(new Vector3Int(center.x - 2, center.y, 0));
+        ItemPickup.Spawn(NetCoop.Weapon("Sniper"), drop, drop, cooldownRemaining: .55f);
+        var exit = FindFloorPortal(1);
+        Vector3 exitPosition = exit.transform.position;
+        yield return null;
+        SetBotPosition(dungeon, exitPosition);
+        yield return WaitFor(() => RunState.Floor == floor + 1 && DungeonGenerator.Instance != dungeon,
+            12, "la colla passa pel portal del boss");
+        if (failed) yield break;
+        var next = DungeonGenerator.Instance;
+        var back = FindFloorPortal(-1);
+        if (back == null || Vector2.Distance(next.player.position, back.transform.position) > .1f)
+        { Fail("no s'ha aparegut dins del portal blau"); yield break; }
+        if (!NetCoop.Online) yield return WalkBackThroughPortal(next, back);
+        if (failed) yield break;
+        yield return WaitFor(() => RunState.Floor == floor && DungeonGenerator.Instance != next && FindReturnedWeapon(),
+            18, "tornada amb el boti del pis anterior");
+        if (failed) yield break;
+        var restored = DungeonGenerator.Instance;
+        if (!restored.Rooms.Find(room => room.type == DungeonGenerator.RoomType.Boss).cleared ||
+            ProgressionReward(restored)?.IsOpen != true || FindFloorPortal(1) == null ||
+            Vector2.Distance(restored.player.position, exitPosition) > .1f)
+            Fail("estat o punt d'arribada incorrecte al pis restaurat");
     }
 
     IEnumerator CheckProgression()
