@@ -310,6 +310,14 @@ $sprites['Cofres/Dungeon/C_Metall'] = @{ size = 16; mirror = $true; rows = @(
 . (Join-Path $PSScriptRoot 'prealpha.ps1')
 . (Join-Path $PSScriptRoot 'alpha-personality.ps1')
 
+# Sprites retocats a ma: el PNG del projecte es l'original i no es torna a generar.
+# Llista a fets-a-ma.txt (un patro per linia, p. ex. Skins/*).
+$fetsAMaFile = Join-Path $PSScriptRoot 'fets-a-ma.txt'
+if (Test-Path $fetsAMaFile) {
+  $fetsAMa = @(Get-Content $fetsAMaFile | Where-Object { $_ -and -not $_.StartsWith('#') })
+  foreach ($key in @($sprites.Keys)) { foreach ($pat in $fetsAMa) { if ($key -like $pat) { $sprites.Remove($key); "MA $key (no es regenera)"; break } } }
+}
+
 # ---------------- Guardar PNG ----------------
 $bitmaps = [ordered]@{}
 foreach ($name in $sprites.Keys) {

@@ -468,7 +468,7 @@ public static class DungeonBuilder
         };
         var skins = new List<CosmeticsDatabase.Hat> { new CosmeticsDatabase.Hat { name = "Clàssica", sprite = null } };
         foreach (var s in new[] { ("Vidre", "Canica de vidre"), ("Foc", "Bola de foc"), ("Gel", "Glaçó"), ("Or", "Canica d'or"),
-                                  ("Robot", "Robot"), ("Zombi", "Zombi"), ("Ninja", "Ninja"), ("Sindria", "Síndria"), ("Fantasma", "Fantasma"), ("Cosmos", "Cosmos"), ("Corall", "Corall"), ("Menta", "Menta"), ("Obsidiana", "Obsidiana"), ("Bombolla", "Bombolla"), ("Capvespre", "Capvespre"), ("Aurora", "Aurora"), ("Coure", "Coure"), ("Caramel", "Caramel"), ("Llima", "Llima"), ("Safir", "Safir"), ("Perla", "Perla") })
+                                  ("Robot", "Robot"), ("Zombi", "Zombi"), ("Ninja", "Ninja"), ("Sindria", "Síndria"), ("Fantasma", "Fantasma"), ("Cosmos", "Cosmos"), ("Flor", "Flor"), ("Menta", "Menta"), ("Irisada", "Irisada"), ("Bombolla", "Bombolla"), ("Capvespre", "Capvespre"), ("Aurora", "Aurora"), ("Coure", "Coure"), ("Caramel", "Caramel"), ("Llima", "Llima"), ("Safir", "Safir"), ("Perla", "Perla") })
             skins.Add(new CosmeticsDatabase.Hat { name = s.Item2, sprite = S("Skins/" + s.Item1) });
         db.skins = skins.ToArray();
         var trails = new List<CosmeticsDatabase.Tint>(db.trails ?? new CosmeticsDatabase.Tint[0]);

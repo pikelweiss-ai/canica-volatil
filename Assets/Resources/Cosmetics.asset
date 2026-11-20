@@ -47,14 +47,14 @@ MonoBehaviour:
   - name: Cosmos
     sprite: {fileID: 21300000, guid: 39f40229da8644d49a5c40c911a59a36, type: 3}
     fullHelmet: 0
-  - name: Corall
-    sprite: {fileID: 21300000, guid: ce5d23ef0ffac1b40b27b987a68b8ce4, type: 3}
+  - name: Flor
+    sprite: {fileID: 21300000, guid: 0404343b3131e464aae7090e03106f48, type: 3}
     fullHelmet: 0
   - name: Menta
     sprite: {fileID: 21300000, guid: 746bc558fa233a34889dd1af064aa962, type: 3}
     fullHelmet: 0
-  - name: Obsidiana
-    sprite: {fileID: 21300000, guid: 253b5e69b6361364ba138c6939bc25ab, type: 3}
+  - name: Irisada
+    sprite: {fileID: 21300000, guid: febd41baa9236864d8be6e755ee496b5, type: 3}
     fullHelmet: 0
   - name: Bombolla
     sprite: {fileID: 21300000, guid: f37e48bd861cb024a934118bce658b98, type: 3}
@@ -88,6 +88,15 @@ MonoBehaviour:
     fullHelmet: 0
   - name: Gota
     sprite: {fileID: 21300000, guid: 7be117bd83761e849ae60cf674e1d4c7, type: 3}
+    fullHelmet: 0
+  - name: Llop
+    sprite: {fileID: 21300000, guid: e628e1f03d242654baf9ad7c35ac24ea, type: 3}
+    fullHelmet: 0
+  - name: Ciclotep
+    sprite: {fileID: 21300000, guid: 98a3770f13aa57f4c837c907112d1523, type: 3}
+    fullHelmet: 0
+  - name: Postal
+    sprite: {fileID: 21300000, guid: 6ec7a649207b45b4595ffb91f62bde0d, type: 3}
     fullHelmet: 0
   hats:
   - name: Cap

@@ -1,0 +1,3 @@
+# Sprites retocats a ma per Ferran. draw.ps1 no els torna a generar.
+# Per a canviar-los, edita el PNG d'Assets/Sprites/Pixel directament.
+Skins/*

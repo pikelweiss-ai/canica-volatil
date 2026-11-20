@@ -14,6 +14,11 @@ public static class AlphaContentBuilder
         var db=AssetDatabase.LoadAssetAtPath<CosmeticsDatabase>("Assets/Resources/Cosmetics.asset");
         var skins=db.skins.ToList();
         foreach(string name in new[] { "Ciclope","Gat","Gota" })if(!skins.Any(s=>s.sprite==S("Skins/"+name)))skins.Add(new CosmeticsDatabase.Hat { name=name=="Ciclope"?"Cíclop":name,sprite=S("Skins/"+name) });
+        // Skins retocades per Ferran (20/11/2026). La skin triada es guarda per posicio,
+        // aixi que Flor i Irisada ocupen el lloc de Corall i Obsidiana i les noves van al final.
+        foreach(var swap in new[] { ("Corall","Flor"),("Obsidiana","Irisada") })
+            for(int i=0;i<skins.Count;i++)if(skins[i].name==swap.Item1){var h=skins[i];h.name=swap.Item2;h.sprite=S("Skins/"+swap.Item2);skins[i]=h;}
+        foreach(string name in new[] { "Llop","Ciclotep","Postal" })if(!skins.Any(s=>s.name==name))skins.Add(new CosmeticsDatabase.Hat { name=name,sprite=S("Skins/"+name) });
         db.skins=skins.ToArray();var hats=db.hats.ToList();
         foreach(var h in hats)if(h.sprite!=null && h.sprite.name=="Astronauta"){h.fullHelmet=true;h.name="Casc d'astronauta";}
         foreach(var entry in new[] { ("Bruixa","Bruixa"),("Explorador","Explorador"),("Enginyer","Enginyer"),("Capita","Capità") })
@@ -92,6 +97,7 @@ public static class AlphaContentBuilder
     {
         var db=AssetDatabase.LoadAssetAtPath<CosmeticsDatabase>("Assets/Resources/Cosmetics.asset");
         if(db.skins.Any(s=>s.sprite!=null && (s.sprite.rect.width!=16||s.sprite.rect.height!=16)))throw new Exception("Skin fora de 16x16");
+        if(db.skins.Skip(1).Any(s=>s.sprite==null))throw new Exception("Hi ha una skin sense sprite");
         if(!db.hats.Any(h=>h.fullHelmet && h.sprite!=null))throw new Exception("Falta casc complet");
         if(db.trails.Select(t=>t.shape).Distinct().Count()<7)throw new Exception("Falten formes d'estela");
         var faces=new HashSet<string>();

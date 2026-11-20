@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: ce5d23ef0ffac1b40b27b987a68b8ce4
+guid: 6ec7a649207b45b4595ffb91f62bde0d
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 6517335235582759936
-    second: Corall_0
+      213: -1073788765035086822
+    second: Postal_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -96,11 +96,24 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Corall_0
+      name: Postal_0
       rect:
         serializedVersion: 2
         x: 0
@@ -115,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 0041c0fcdd9327a50800000000000000
-      internalID: 6517335235582759936
+      spriteID: a1c3740bec22911f0800000000000000
+      internalID: -1073788765035086822
       vertices: []
       indices: 
       edges: []
