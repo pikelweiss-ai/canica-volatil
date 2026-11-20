@@ -695,6 +695,35 @@ public partial class NetBot : MonoBehaviour
     }
 
 
+    // Captura dels barrets nous damunt de la canica (només amb -botShots)
+    IEnumerator HatShots()
+    {
+        if (shots == null) yield break;
+        var db = CosmeticsDatabase.Instance;
+        var player = DungeonGenerator.Instance.player;
+        var dungeonRoom = DungeonGenerator.Instance.Rooms[0];
+        Vector2 spot = (Vector2)DungeonGenerator.Instance.ground.GetCellCenterWorld(new Vector3Int(dungeonRoom.Center.x, dungeonRoom.Center.y, 0));
+        player.position = spot + new Vector2(0f, -3.2f);
+        var names = new[] { "Pirata", "Mag", "Cuiner", "Orelles de gat", "Cowboy", "Antenes" };
+        var fixtures = new System.Collections.Generic.List<GameObject>();
+        for (int i = 0; i < names.Length; i++)
+        {
+            int hat = System.Array.FindIndex(db.hats, h => h.name == names[i]);
+            if (hat < 0) { Fail("falta el barret " + names[i]); yield break; }
+            var fixture = new GameObject("Barret " + names[i]);
+            fixture.SetActive(false);
+            fixture.transform.position = spot + new Vector2(-3.5f + i * 1.4f, 0f);
+            var renderer = fixture.AddComponent<SpriteRenderer>(); renderer.sprite = db.playerSprite; renderer.sortingLayerName = "Player";
+            var cosmetics = fixture.AddComponent<PlayerCosmetics>(); cosmetics.hatOverride = hat; cosmetics.trailOverride = 0;
+            fixture.SetActive(true);
+            fixtures.Add(fixture);
+        }
+        yield return new WaitForSeconds(0.6f);
+        yield return Shot("h-barrets-nous");
+        foreach (var f in fixtures) Destroy(f);
+        Ok("barrets nous");
+    }
+
     // Captures de les armes, enemics i bosses nous (cal obrir el joc amb gràfics i -botShots <carpeta>)
     IEnumerator WeaponShots()
     {
@@ -705,6 +734,7 @@ public partial class NetBot : MonoBehaviour
         yield return new WaitForSeconds(1f);
         var player = DungeonGenerator.Instance.player;
         var attack = player.GetComponent<PlayerAttack>();
+        yield return HatShots();
         yield return CheckNewWeapons(attack, player.position);
         if (failed) yield break;
         yield return CheckNewEnemies();
@@ -1185,6 +1215,18 @@ public partial class NetBot : MonoBehaviour
         RunState.Floor = savedFloor;
         if (!legendary) { Fail("al pis 6 mai ix un cofre llegendari"); yield break; }
         Ok("cofres progressius");
+
+        // Les armes noves ixen dels cofres de la seua raresa
+        var prefabs = DungeonGenerator.Instance.chestPrefabs;
+        bool InChest(ChestRarity rarity, string id)
+        {
+            var chest = prefabs[(int)rarity].GetComponent<Chest>();
+            return chest != null && chest.lootTable != null && System.Array.IndexOf(chest.lootTable, NetCoop.Weapon(id)) >= 0;
+        }
+        foreach (var entry in new[] { (ChestRarity.Rar, "BaculTorreta"), (ChestRarity.Rar, "Llancamines"), (ChestRarity.Rar, "VaretaCurativa"),
+                                      (ChestRarity.Epic, "ArcLlum"), (ChestRarity.Epic, "EscutMirall"), (ChestRarity.Comu, "Ganxo") })
+            if (!InChest(entry.Item1, entry.Item2)) { Fail(entry.Item2 + " no ix dels cofres " + entry.Item1); yield break; }
+        Ok("les armes noves ixen dels cofres");
 
         Destroy(target.gameObject); Destroy(pulled.gameObject);
     }

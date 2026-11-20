@@ -36,7 +36,7 @@ public static class AlphaContentBuilder
         // v1.3.1: esteles noves
         Trail("Cors",TrailShape.Hearts,new Color(1,.4f,.6f));Trail("Flamarada",TrailShape.Flames,new Color(1,.5f,.1f));
         Trail("Floc de neu",TrailShape.Snow,new Color(.8f,.95f,1));Trail("Diamants",TrailShape.Diamonds,new Color(.4f,.95f,1));
-        Trail("Fulles",TrailShape.Leaves,new Color(.4f,.85f,.35f));Trail("Arc de Sant Martí",TrailShape.Stars,new Color(1,1,1,.99f));
+        Trail("Fulles",TrailShape.Leaves,new Color(.4f,.85f,.35f));Trail("Estrelles de colors",TrailShape.Stars,new Color(1,1,1,.99f));
         db.trails=trails.ToArray();EditorUtility.SetDirty(db);
 
         var disc=Weapon("DiscCometa","Disc de cometa","Bumerang",ChestRarity.Rar);

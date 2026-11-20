@@ -235,3 +235,6 @@ MonoBehaviour:
   - name: Fulles
     color: {r: 0.4, g: 0.85, b: 0.35, a: 1}
     shape: 11
+  - name: Estrelles de colors
+    color: {r: 1, g: 1, b: 1, a: 0.99}
+    shape: 6

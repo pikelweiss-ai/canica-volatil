@@ -29,7 +29,7 @@ public static class Changelog
                 "En cooperatiu, la sala inicial té un cofre comú per a cada jugador.",
                 "ESTÈTICA",
                 "Barrets nous: Mag, Cuiner, Orelles de gat, Cowboy i Antenes. El barret de Pirata és nou.",
-                "Esteles noves: Cors, Flamarada, Floc de neu, Diamants, Fulles i Arc de Sant Martí.",
+                "Esteles noves: Cors, Flamarada, Floc de neu, Diamants, Fulles i Estrelles de colors.",
                 "OPCIONS",
                 "Nova pestanya OPCIONS als Ajustos: cura intel·ligent (sí/no), números de dany, aim amb rebots i tremolor de càmera.",
                 "ONLINE",

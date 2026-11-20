@@ -3,7 +3,7 @@
 - **Sis armes noves:** Bàcul de torreta, Llançamines, Arc de llum (de càrrega), Escut de mirall (reflecteix bales), Vareta curativa (cura companys en cooperatiu) i Ganxo d'abordatge.
 - **Enemics nous:** Gàrgola, Cranc i Fantasma de gel. **Bosses nous:** Reina Aranya (Bosc i Cripta) i Rei de Gel (Neu).
 - **Cofres progressius:** al pis 1 no hi ha armes èpiques ni llegendàries; milloren pis a pis. En cooperatiu, la sala inicial té un cofre comú per a cada jugador.
-- **Barrets nous:** Mag, Cuiner, Orelles de gat, Cowboy i Antenes, i un barret de Pirata redissenyat. **Esteles noves:** Cors, Flamarada, Floc de neu, Diamants, Fulles i Arc de Sant Martí.
+- **Barrets nous:** Mag, Cuiner, Orelles de gat, Cowboy i Antenes, i un barret de Pirata redissenyat. **Esteles noves:** Cors, Flamarada, Floc de neu, Diamants, Fulles i Estrelles de colors.
 - **Nova pestanya OPCIONS** als Ajustos: cura intel·ligent (sí/no), números de dany, aim amb rebots i tremolor de càmera.
 - Protocol online **16**: tots els jugadors han d'usar la v1.3.1.
 
