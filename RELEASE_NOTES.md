@@ -4,7 +4,16 @@
 - Llançaflames amb 300 trets i Minigun amb calor. L'estat de cada arma passa amb ella entre jugadors i pisos.
 - La Ballesta de cristall alenteix, la Vareta d'espores enverina i el Projector de polsos encadena fins a tres salts elèctrics.
 - Bosses amb 25 punts de vida addicionals per pis, un atac més cada tres pisos i projectils més ràpids.
-- Creu groga del Mode Creatiu i esteles darrere de les skins. Protocol online **12**.
+- Creu groga del Mode Creatiu i esteles darrere de les skins.
+- **Skins noves i redissenyades per Ferran:** Llop, Ciclotep i Postal, i Flor i Irisada en el lloc de Corall i Obsidiana. També s'han refet Bombolla, Caramel, Cíclop, Cosmos, Coure, Fantasma, Gota, Llima, Menta, Ninja, Or, Perla, Safir i Vidre (ara semitransparent). Si portaves Corall o Obsidiana, ara portes Flor o Irisada.
+- **Resum de partida** en morir: pis màxim, temps, monedes guanyades, enemics, bosses, arma favorita, sales netejades i cofres oberts.
+- **Rècords** de pis màxim, enemics, bosses i monedes en una partida, separats per a sol i cooperatiu. El Mode Creatiu no compta.
+- En acabar, **Tornar a jugar** o **Menú**. En cooperatiu, tria l'amfitrió (tornar a jugar tots o tornar al lobby).
+- Protocol online **13**: tots els jugadors han d'usar la v1.2.0.
+
+**Descàrregues:** Windows x86_64 (ZIP, obrir `CanicaVolatil.exe`), Ubuntu/Linux x86_64 (TAR.GZ, `./Jugar.sh`), Android 8+ ARM64/ARMv7 (APK amb clau debug de l'Alpha, no és de Google Play), `SHA256SUMS.txt` i `BUILD_INFO.json`.
+
+**Verificació i límits:** Windows, Linux i Android compilen sense errors. La prova individual i les 6 proves online passen en Windows. El binari de Linux i l'APK no s'han executat en una màquina o un telèfon reals des d'aquest PC. La connexió per Internet va pel túnel gratuït (`bore.pub`), que afig retard.
 
 # Alpha v1.1.3
 

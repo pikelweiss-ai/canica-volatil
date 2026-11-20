@@ -34,7 +34,7 @@ foreach($platform in @('Windows','Linux')){
         [IO.File]::WriteAllText((Join-Path $dest 'Jugar.sh'),$launcher,[Text.UTF8Encoding]::new($false))
         $help="Canica Volatil - Alpha v1.2.0`nExtraure i executar ./Jugar.sh o bash Jugar.sh. Ubuntu/Linux x86_64, versio nativa. Execucio real en Ubuntu/Mint pendent de verificacio.`n"
     }
-    $help+="`nOnline: JUGAR > ONLINE > pestanya INTERNET. Crea una sala o tria-la de la llista; tambe amb el codi de 6 lletres. Sense IPs ni ports. Protocol 12; tots amb la v1.2.0.`nGuia: RELEASE_NOTES.md (en este paquet)`n"
+    $help+="`nOnline: JUGAR > ONLINE > pestanya INTERNET. Crea una sala o tria-la de la llista; tambe amb el codi de 6 lletres. Sense IPs ni ports. Protocol 13; tots amb la v1.2.0.`nGuia: RELEASE_NOTES.md (en este paquet)`n"
     [IO.File]::WriteAllText((Join-Path $dest 'LLEGIR.txt'),$help,[Text.UTF8Encoding]::new($false))
     Copy-Item -LiteralPath (Join-Path $project 'RELEASE_NOTES.md') -Destination $dest
     if($platform -eq 'Windows'){
