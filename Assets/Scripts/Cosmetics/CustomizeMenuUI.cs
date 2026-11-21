@@ -243,7 +243,7 @@ public class CustomizeMenuUI : MonoBehaviour
         if (hat.enabled)
         {
             float bodySize = marble.rectTransform.sizeDelta.y, size = bodySize * (h.fullHelmet ? 1.18f : 1.05f);
-            hat.sprite = h.sprite; hat.rectTransform.sizeDelta = Vector2.one * size;
+            hat.sprite = h.sprite; hat.color = Color.white; hat.rectTransform.sizeDelta = Vector2.one * size; // el Picture sense sprite naix transparent
             float lift = h.sprite.name.Contains("Aureola") ? 34f * bodySize / 170f : 0f;
             float top = (HatFit.Top(marble.sprite) - .5f) * bodySize;
             hat.rectTransform.anchoredPosition = h.fullHelmet ? Vector2.zero : new Vector2(0, top - 3 + lift - (HatFit.Bottom(h.sprite) - .5f) * size);
