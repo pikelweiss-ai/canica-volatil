@@ -19,7 +19,7 @@ public partial class DungeonGenerator
         string n = theme != null ? theme.themeName.ToLowerInvariant() : "";
         if (n.Contains("cristall")) return new SceneryKit
         {
-            floors = new[] { "Roca_cova_blava", "Roca_cova_gran" }, walls = new[] { "Mineral_ametista", "Mineral_diamant", "Mineral_maragda", "Mineral_robi" }, wallShare = .15f,
+            walls = new[] { "Mineral_ametista", "Mineral_diamant", "Mineral_maragda" }, wallShare = .05f,
             props = new[] { "Bolet_lluminos", "Bolet_lila", "Roca_petita", "Pedres" }, decals = new[] { "Pedres", "Bolet_lluminos", "Roca_petita" }
         };
         if (n.Contains("cova")) return new SceneryKit
@@ -86,35 +86,78 @@ public partial class DungeonGenerator
     }
 
     // Després de pintar el terra i les parets: algunes rajoles es canvien per variants del tema (sense gastar rng).
+    // Variants d'una rajola del MATEIX tema (més clara, més fosca, amb esquerdes o amb detalls), perquè el terra i les
+    // parets varien sense que cap bloc xoque amb el to dels altres. Es creen a mà a partir del sprite original.
+    static readonly Dictionary<string, Tile> variantTiles = new Dictionary<string, Tile>();
+
+    static Tile VariantOf(Tile source, int kind, Tile.ColliderType collider)
+    {
+        if (source == null || source.sprite == null) return null;
+        var sprite = source.sprite; string key = sprite.GetInstanceID() + "_" + kind + "_" + (int)collider;
+        if (variantTiles.TryGetValue(key, out var cached) && cached != null) return cached;
+        var texture = sprite.texture; if (texture == null || !texture.isReadable) return null;
+        var rect = sprite.rect; int w = (int)rect.width, h = (int)rect.height;
+        var pixels = texture.GetPixels((int)rect.x, (int)rect.y, w, h);
+        var random = new System.Random(key.GetHashCode());
+        void Scale(int index, float factor) { var c = pixels[index]; if (c.a <= 0f) return; pixels[index] = new Color(Mathf.Clamp01(c.r * factor), Mathf.Clamp01(c.g * factor), Mathf.Clamp01(c.b * factor), c.a); }
+        switch (kind)
+        {
+            case 0: for (int i = 0; i < pixels.Length; i++) Scale(i, 1.09f); break;            // més clara
+            case 1: for (int i = 0; i < pixels.Length; i++) Scale(i, .88f); break;             // més fosca
+            case 2:                                                                             // esquerdes: un camí en ziga-zaga fosc
+            {
+                int x = random.Next(3, w - 3), y = h - 1;
+                for (int step = 0; step < h - 1; step++)
+                {
+                    Scale(y * w + x, .62f);
+                    if (random.Next(3) == 0 && x + 1 < w) Scale(y * w + x + 1, .8f);
+                    y--; x = Mathf.Clamp(x + random.Next(-1, 2), 1, w - 2);
+                    if (y < 0) break;
+                }
+                break;
+            }
+            default:                                                                            // detalls: uns quants píxels més clars i més foscos
+                for (int i = 0; i < 5; i++) Scale(random.Next(pixels.Length), 1.2f);
+                for (int i = 0; i < 4; i++) Scale(random.Next(pixels.Length), .84f);
+                break;
+        }
+        var tex = new Texture2D(w, h, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
+        tex.SetPixels(pixels); tex.Apply(false, false);
+        var variant = Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(sprite.pivot.x / rect.width, sprite.pivot.y / rect.height), sprite.pixelsPerUnit);
+        var tile = ScriptableObject.CreateInstance<Tile>(); tile.sprite = variant; tile.name = key; tile.colliderType = collider; tile.color = source.color;
+        variantTiles[key] = tile; return tile;
+    }
+
     void ApplyScenery()
     {
         var kit = Kit(Theme);
-        if (kit.floors.Length > 0)
-            foreach (Room room in Rooms)
-            {
-                if (room.modifier == RoomModifier.Ice || room.type == RoomType.Start || room.type == RoomType.Treasure) continue; // refugi i gel tenen el seu terra
-                foreach (Vector2Int p in room.rect.allPositionsWithin)
-                {
-                    if (!floor.Contains(p) || !InsideShape(room, p)) continue;
-                    int h = PosHash(p, 1);
-                    if (h % 1000 >= kit.floorShare * 1000f) continue;
-                    var tile = BlockTile(kit.floors[(h / 1000) % kit.floors.Length], Tile.ColliderType.None);
-                    if (tile != null) ground.SetTile(ToCell(p), tile);
-                }
-            }
-        if (kit.walls.Length > 0 && walls != null)
+        // Terra: variants de la rajola del tema, repartides per posició (igual a tots els equips)
+        foreach (Room room in Rooms)
         {
-            var original = Theme != null ? Theme.wallTile as Tile : null;
-            var collider = original != null ? original.colliderType : Tile.ColliderType.Grid;
+            if (room.modifier == RoomModifier.Ice || room.type == RoomType.Start || room.type == RoomType.Treasure) continue; // refugi i gel tenen el seu terra
+            foreach (Vector2Int p in room.rect.allPositionsWithin)
+            {
+                if (!floor.Contains(p) || !InsideShape(room, p)) continue;
+                int h = PosHash(p, 1);
+                if (h % 1000 >= 240) continue; // 24 % de les rajoles
+                var cell = ToCell(p);
+                var variant = VariantOf(ground.GetTile(cell) as Tile, (h / 1000) % 4, Tile.ColliderType.None);
+                if (variant != null) ground.SetTile(cell, variant);
+            }
+        }
+        // Parets: variants de la paret del tema; i, només a la cova de cristall, algun mineral encastat (ametista, diamant...)
+        bool crystal = Theme != null && Theme.themeName.ToLowerInvariant().Contains("cristall");
+        if (walls != null)
             foreach (Vector3Int cell in walls.cellBounds.allPositionsWithin)
             {
                 if (!walls.HasTile(cell)) continue;
+                var tile = walls.GetTile(cell) as Tile; if (tile == null) continue;
                 int h = PosHash(new Vector2Int(cell.x, cell.y), 2);
-                if (h % 1000 >= kit.wallShare * 1000f) continue;
-                var tile = BlockTile(kit.walls[(h / 1000) % kit.walls.Length], collider);
-                if (tile != null) walls.SetTile(cell, tile);
+                Tile replacement = null;
+                if (crystal && kit.walls.Length > 0 && h % 1000 < kit.wallShare * 1000f) replacement = BlockTile(kit.walls[(h / 1000) % kit.walls.Length], tile.colliderType);
+                else if (h % 1000 < 200) replacement = VariantOf(tile, (h / 1000) % 4, tile.colliderType);
+                if (replacement != null) walls.SetTile(cell, replacement);
             }
-        }
     }
 
     // Objectes i decoració de les sales (rng compartit: mateix resultat a tots els equips).
@@ -154,6 +197,9 @@ public partial class DungeonGenerator
         var sr = go.AddComponent<SpriteRenderer>(); sr.sprite = sprite; sr.color = kit.tint;
         if (decal) { sr.sortingLayerName = "Shadows"; sr.sortingOrder = 2; if (rng.Next(2) == 0) sr.flipX = true; return; }
         sr.sortingLayerName = "Player"; sr.sortingOrder = Mathf.Clamp(Mathf.RoundToInt(-pos.y * 8f), -30000, 30000);
+        // Ombra semitransparent al peu (bolets, roques, troncs...), igual que la resta d objectes
+        var shadow = Fx.MakeSprite("Ombra", pos + new Vector3(0f, -.24f, 0f), Fx.Disc, new Color(0f, 0f, 0f, .32f), "Shadows", 1);
+        shadow.transform.SetParent(go.transform, true); shadow.transform.localScale = new Vector3(name.StartsWith("Tronc") || name.StartsWith("Roca_gran") ? .85f : .6f, .24f, 1f);
         var box = go.AddComponent<BoxCollider2D>(); box.size = new Vector2(.65f, .55f); box.offset = new Vector2(0, -.1f);
         var b = go.AddComponent<Breakable>();
         bool hard = name.StartsWith("Roca") || name == "Pedres" || name.StartsWith("Soca") || name.StartsWith("Tronc") || name == "Armari_metal" || name == "Llum_peu" || name == "Carro_compra";
