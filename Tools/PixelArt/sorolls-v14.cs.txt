@@ -1,0 +1,70 @@
+﻿using System;
+using System.IO;
+public static class Syn
+{
+    const int SR = 22050;
+    static Random R = new Random(1234);
+    public class Lp { double y; public double Do(double x, double fc) { double a = 1 - Math.Exp(-2 * Math.PI * fc / SR); y += a * (x - y); return y; } }
+    public class Osc { double ph; public double Sin(double f) { ph += 2 * Math.PI * f / SR; return Math.Sin(ph); } public double Saw(double f) { ph += f / SR; ph -= Math.Floor(ph); return 2 * ph - 1; } public double Sq(double f) { ph += f / SR; ph -= Math.Floor(ph); return ph < 0.5 ? 1 : -1; } }
+    static double N() { return R.NextDouble() * 2 - 1; }
+    static double Env(double t, double d, double a, double r) { double v = 1; if (t < a) v = t / a; double rem = d - t; if (rem < r) v *= Math.Max(0, rem / r); return v; }
+    static double Dec(double t, double k) { return Math.Exp(-t * k); }
+    static float[] Gen(double dur, Func<double, double> f) { int n = (int)(dur * SR); var b = new float[n]; for (int i = 0; i < n; i++) b[i] = (float)f(i / (double)SR); return b; }
+    static void Add(float[] dst, float[] src, double at, double gain) { int o = (int)(at * SR); for (int i = 0; i < src.Length && o + i < dst.Length; i++) dst[o + i] += (float)(src[i] * gain); }
+    static void Save(string path, float[] b)
+    {
+        float peak = 0; foreach (var v in b) peak = Math.Max(peak, Math.Abs(v)); float g = peak > 0 ? 0.85f / peak : 1;
+        int fade = (int)(0.008 * SR);
+        using (var w = new BinaryWriter(File.Create(path)))
+        {
+            int n = b.Length; w.Write(new[] { 'R', 'I', 'F', 'F' }); w.Write(36 + n * 2); w.Write(new[] { 'W', 'A', 'V', 'E', 'f', 'm', 't', ' ' }); w.Write(16); w.Write((short)1); w.Write((short)1); w.Write(SR); w.Write(SR * 2); w.Write((short)2); w.Write((short)16); w.Write(new[] { 'd', 'a', 't', 'a' }); w.Write(n * 2);
+            for (int i = 0; i < n; i++) { double v = b[i] * g; if (i < fade) v *= i / (double)fade; if (n - i < fade) v *= (n - i) / (double)fade; w.Write((short)(Math.Max(-1, Math.Min(1, v)) * 32000)); }
+        }
+    }
+    public static void All(string dir)
+    {
+        Directory.CreateDirectory(dir);
+        // Talp: cava (rumor + cruixit) i surt
+        { var o = new Osc(); var lp = new Lp(); var b = Gen(0.6, t => { double cut = 300 + 500 * t; double pulse = 0.5 + 0.5 * Math.Sin(2 * Math.PI * 14 * t); double v = lp.Do(N(), cut) * 3 * pulse * (t < 0.45 ? 1 : 0) * Env(t, 0.45, 0.03, 0.05); return v; });
+          var pop = Gen(0.12, t => new Osc().Sin(200 - 800 * t) * Dec(t, 25)); var o2 = new Osc(); var pop2 = Gen(0.12, t => o2.Sin(240 - 1000 * t) * Dec(t, 28)); Add(b, pop2, 0.46, 1.4); Save(dir + "\\talp_cavar.wav", b); }
+        // Salamandra: flamarada
+        { var lp1 = new Lp(); var lp2 = new Lp(); var b = Gen(0.8, t => { double fc = 500 + 1800 * Math.Sin(Math.PI * Math.Min(1, t / 0.5)); double x = N(); double band = lp1.Do(x, fc) - lp2.Do(x, fc * 0.4); double crackle = (R.NextDouble() < 0.012) ? N() * 1.5 : 0; return (band * 4 + crackle) * Env(t, 0.8, 0.04, 0.35); }); Save(dir + "\\salamandra_flama.wav", b); }
+        // Llimac: xip-xap humit
+        { var o = new Osc(); var m = new Osc(); var lp = new Lp(); var b = Gen(0.45, t => { double f = 420 - 700 * t + 70 * m.Sin(28); double v = o.Sin(f) * 0.7 + lp.Do(N(), 900) * 1.2 * (R.NextDouble() < 0.3 ? 1 : 0.2); return v * Dec(t, 5) * Env(t, 0.45, 0.005, 0.05); }); Save(dir + "\\llimac_xip.wav", b); }
+        // Escorpi: fuet de cua
+        { var lp = new Lp(); var o = new Osc(); var b = Gen(0.3, t => { double hp = N() - lp.Do(N(), 1500 + 6000 * t); double v = hp * Env(t, 0.22, 0.01, 0.15); if (t > 0.2) v += o.Sq(1400) * Dec(t - 0.2, 60) * 0.9; return v; }); Save(dir + "\\escorpi_cua.wav", b); }
+        // Mimic: mossegada doble i grunyit
+        { var b = new float[(int)(0.75 * SR)]; for (int k = 0; k < 2; k++) { var lp = new Lp(); var o = new Osc(); var c = Gen(0.12, t => lp.Do(N(), 1800) * 3 * Dec(t, 28) + o.Sin(130 - 300 * t) * Dec(t, 18)); Add(b, c, 0.0 + k * 0.17, 1.0); }
+          var o3 = new Osc(); var tr = new Osc(); var g = Gen(0.4, t => (o3.Saw(95 - 20 * t) * 0.7) * (0.6 + 0.4 * tr.Sin(24)) * Env(t, 0.4, 0.04, 0.2)); Add(b, g, 0.35, 0.8); Save(dir + "\\mimic_mossegada.wav", b); }
+        // Escut-guerrer: ressò de metall
+        { var n1 = new Osc(); var n2 = new Osc(); var n3 = new Osc(); var n4 = new Osc(); var lp = new Lp(); var b = Gen(0.8, t => (n1.Sin(520) * Dec(t, 5) + n2.Sin(1180) * Dec(t, 8) * 0.8 + n3.Sin(1950) * Dec(t, 12) * 0.6 + n4.Sin(2840) * Dec(t, 18) * 0.4) * 0.5 + (N() - lp.Do(N(), 3000)) * Dec(t, 90)); Save(dir + "\\escut_resso.wav", b); }
+        // Banshee: lament
+        { var o = new Osc(); var h = new Osc(); var v = new Osc(); var lp = new Lp(); var b = Gen(1.1, t => { double s = t / 1.1; double f = 700 + 800 * Math.Sin(Math.PI * s) + 50 * v.Sin(6.5); double x = o.Sin(f) + 0.45 * h.Sin(f * 2) + lp.Do(N(), 3000) * 0.15; return x * Math.Sin(Math.PI * s) * Env(t, 1.1, 0.1, 0.3); }); Save(dir + "\\banshee_lament.wav", b); }
+        // Llop: udol
+        { var o = new Osc(); var h = new Osc(); var h3 = new Osc(); var v = new Osc(); var b = Gen(1.3, t => { double f; if (t < 0.45) f = 300 + 330 * (t / 0.45); else f = 630 - 250 * ((t - 0.45) / 0.85); f += 12 * v.Sin(5.2) * (t > 0.4 ? 1 : 0); double x = o.Sin(f) + 0.5 * h.Sin(f * 2) + 0.25 * h3.Sin(f * 3); return x * Env(t, 1.3, 0.12, 0.45); }); Save(dir + "\\llop_udol.wav", b); }
+        // Bombardier: metxa i explosio
+        { var hp = new Lp(); var b = Gen(0.8, t => { double x = N() - hp.Do(N(), 2500); double c = (R.NextDouble() < 0.03 + 0.12 * t) ? N() * 1.2 : 0; return (x * 0.6 + c) * Env(t, 0.8, 0.02, 0.05) * (0.4 + 0.6 * t); }); Save(dir + "\\bombardier_metxa.wav", b);
+          var lp = new Lp(); var o = new Osc(); var e = Gen(0.8, t => { double cut = 100 + 1600 * Dec(t, 7); double v = lp.Do(N(), cut) * 4 + o.Sin(95 * Math.Exp(-t * 2.2) + 30) * 1.4; return v * Dec(t, 4.5); }); Save(dir + "\\bombardier_explosio.wav", e); }
+        // Franctirador: carrega i tret
+        { var o = new Osc(); var tr = new Osc(); var b = Gen(1.0, t => { double f = 300 * Math.Pow(8, t); return o.Sin(f) * (0.7 + 0.3 * tr.Sin(14)) * (0.2 + 0.8 * t) * Env(t, 1.0, 0.02, 0.03); }); Save(dir + "\\franctirador_carrega.wav", b);
+          var lp = new Lp(); var q = new Osc(); var s = Gen(0.4, t => (N() - lp.Do(N(), 1200)) * Dec(t, 18) * 2 + q.Sq(240 * Math.Exp(-t * 6) + 50) * Dec(t, 12) * 0.9 + (t < 0.01 ? N() * 2 : 0)); Save(dir + "\\franctirador_tret.wav", s); }
+        // Sanador: campaneta
+        { var b = new float[(int)(0.8 * SR)]; double[] nt = { 660, 880, 1320 }; for (int i = 0; i < 3; i++) { double f = nt[i]; var o = new Osc(); var h = new Osc(); var c = Gen(0.4, t => (o.Sin(f) + 0.3 * h.Sin(f * 2.01)) * Dec(t, 8) * Env(t, 0.4, 0.004, 0.02)); Add(b, c, i * 0.12, 0.8); } Save(dir + "\\sanador_cura.wav", b); }
+        // Torreta: servo i tic
+        { var o = new Osc(); var b = Gen(0.6, t => (o.Saw(130 + 60 * Math.Sin(t * 20)) * 0.5) * (0.5 + 0.5 * Math.Sign(Math.Sin(2 * Math.PI * 40 * t))) * Env(t, 0.5, 0.02, 0.1)); for (int k = 0; k < 4; k++) { var q = new Osc(); var c = Gen(0.015, t => q.Sq(800 + 100 * k) * Dec(t, 150)); Add(b, c, 0.1 + k * 0.12, 1.2); } Save(dir + "\\torreta_servo.wav", b); }
+        // Portes
+        { var lp = new Lp(); var o = new Osc(); var f2 = new Osc(); var b = Gen(0.8, t => { double f = 180 + 90 * (t / 0.7); double fr = 0.5 + 0.5 * f2.Saw(31); double v = o.Saw(f) * 0.25 * fr + lp.Do(N(), 600) * 1.2 * fr; return v * Env(t, 0.7, 0.05, 0.15); }); var th = Gen(0.12, t => new Osc().Sin(80) * Dec(t, 30)); var o4 = new Osc(); var th2 = Gen(0.12, t => o4.Sin(70 - 150 * t) * Dec(t, 25)); Add(b, th2, 0.68, 1.2); Save(dir + "\\porta_fusta_obrir.wav", b); }
+        { var lp = new Lp(); var o = new Osc(); var f2 = new Osc(); var b = Gen(0.7, t => { double f = 270 - 90 * (t / 0.6); double fr = 0.5 + 0.5 * f2.Saw(26); double v = o.Saw(f) * 0.25 * fr + lp.Do(N(), 500) * 1.2 * fr; return v * Env(t, 0.55, 0.03, 0.1); }); var o4 = new Osc(); var th = Gen(0.15, t => o4.Sin(110 - 250 * t) * Dec(t, 22) + new Lp().Do(N(), 400) * Dec(t, 30)); Add(b, th, 0.55, 1.6); Save(dir + "\\porta_fusta_tancar.wav", b); }
+        { var lp = new Lp(); var lp2 = new Lp(); var o = new Osc(); var b = Gen(0.7, t => { double x = N(); double band = lp.Do(x, 2200) - lp2.Do(x, 900); double hum = o.Sin(110) * 0.2; return (band * 3 + hum) * Env(t, 0.6, 0.06, 0.12); }); var c1 = Gen(0.1, t => new Osc().Sq(95) * Dec(t, 40) * 0.0); var q = new Osc(); var cl = Gen(0.1, t => q.Sin(150 - 600 * t) * Dec(t, 35) + (t < 0.005 ? N() : 0)); Add(b, cl, 0.0, 0.8); Add(b, cl, 0.62, 1.0); Save(dir + "\\porta_metall_lliscant.wav", b); }
+        { var o = new Osc(); var o2 = new Osc(); var b = Gen(0.5, t => (o.Sin(1600 * Math.Exp(-t * 2.5)) * 0.5 + o2.Sin(2400 * Math.Exp(-t * 2.5)) * 0.3) * Dec(t, 7)); Save(dir + "\\porta_vidre_obrir.wav", b); }
+        // Boss: rugit i xiscle de fase
+        { var o = new Osc(); var m = new Osc(); var lp = new Lp(); var b = Gen(1.3, t => { double f = 75 - 28 * (t / 1.3); double v = o.Saw(f) * 1.0 * (0.7 + 0.3 * m.Sin(21)) + lp.Do(N(), 400) * 1.5 * (0.6 + 0.4 * m.Sin(17)); return v * Env(t, 1.3, 0.12, 0.5); }); Save(dir + "\\boss_rugit.wav", b); }
+        { var o = new Osc(); var o2 = new Osc(); var lp = new Lp(); var b = Gen(0.9, t => { double f = 320 + 700 * Math.Min(1, t / 0.5) + 40 * Math.Sin(60 * t); return (o.Sq(f) * 0.5 + o2.Saw(f * 1.01) * 0.5 + (N() - lp.Do(N(), 2000)) * 0.4) * Env(t, 0.9, 0.02, 0.4); }); Save(dir + "\\boss_fase2.wav", b); }
+        // Microboss: entrada
+        { var b = new float[(int)(1.2 * SR)]; double[] ch = { 110, 165, 220 }; foreach (var f in ch) { var o = new Osc(); var c = Gen(1.1, t => o.Saw(f * (1 + 0.003 * Math.Sin(6 * t))) * 0.4 * (t < 0.3 ? t / 0.3 : 1) * Env(t, 1.1, 0.0, 0.4)); Add(b, c, 0, 1); }
+          var lp = new Lp(); var cy = Gen(0.5, t => (N() - lp.Do(N(), 5000)) * Dec(t, 6)); Add(b, cy, 0.25, 0.7); Save(dir + "\\microboss_entrada.wav", b); }
+        // Sala: avis d'emboscada i botiga
+        { var o = new Osc(); var b = Gen(0.5, t => o.Sq(220 + 220 * ((int)(t * 8) % 2)) * 0.5 * Env(t, 0.5, 0.01, 0.05)); Save(dir + "\\sala_emboscada.wav", b); }
+        { var b = new float[(int)(0.6 * SR)]; double[] nt = { 1046, 1318, 1568 }; for (int i = 0; i < 3; i++) { double f = nt[i]; var o = new Osc(); var c = Gen(0.25, t => o.Sin(f) * Dec(t, 10) * Env(t, 0.25, 0.003, 0.02)); Add(b, c, i * 0.07, 0.8); } Save(dir + "\\sala_monedes.wav", b); }
+    }
+}

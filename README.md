@@ -66,7 +66,7 @@ Unity **6000.0.53f1**, URP 2D, Input Manager. Llegir [AGENTS.md](AGENTS.md). Pro
 ./Tools/Build/package-alpha.ps1
 ```
 
-Instal·lar els mòduls Android i Linux de Unity. El script prepara el sistema d'entrada i reinicia l'Editor abans de compilar cada plataforma. [Guia Android i joc entre plataformes](MOBILE_ALPHA.md) · [Online](ONLINE.md) · [Pla Alpha](ALPHA_PLAN.md) · [Historial](ALPHA_PROGRESS.md).
+Instal·lar els mòduls Android i Linux de Unity. El script prepara el sistema d'entrada i reinicia l'Editor abans de compilar cada plataforma. [Guia Android i joc entre plataformes](MOBILE_ALPHA.md) · [Online](ONLINE.md) · [Pla Alpha](ALPHA_PLAN.md) · [Historial](ALPHA_PROGRESS.md) · [Índex de documentació i d'art](Docs/INDEX.md) · [Disseny v1.4](Docs/Dissenys/v1.4-bosses-enemics-sales.md).
 
 ## Versions anteriors
 

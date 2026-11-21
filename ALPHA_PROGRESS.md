@@ -125,3 +125,13 @@ Verificacio del paquet Windows reanomenat: host i client cooperatius complets PA
   - Sense ports, tallafocs, VPN ni servidor. La IP de l'amfitrió no es publica. Protocol 8 sense canvis.
   - Proves: `test-online.ps1` 6/6, smoke amb l'executable empaquetat i captures reals (`Builds/OnlineShots/v111-sense-ip`). **Partida real entre dues cases superada.**
 - Pendent: rework de la connexió (ping estimat d'uns 300 ms pel túnel) i Linux real. Arreglo del lobby d'Internet (text tapat) en local, commit `295dbf9`, per a la pròxima versió.
+
+## 21 novembre 2026 — preparació de la v1.4 (Claude)
+
+- Sense canvis de codi de joc. Preparat el material per a la v1.4: **626 textures de blocs** (famílies Terres, Parets, Natura, Metall, Moderns, Objectes, Troncs, Vegetació, Escola, Cuina, Bany, Hospital, Oficina, Port i Laboratori), **12 enemics** (16×16), **4 microbosses** (24×24), **8 bosses** (32×32), **32 portes** amb estats (tancada, mitjana, oberta, bloquejada) i **23 sorolls** sintetitzats.
+- Tot a `ArtNou_v1.4/` (fora d'`Assets`, sense importar). Generadors a `Tools/PixelArt/*-v14*.ps1` i `sorolls-v14.cs.txt`.
+- Disseny revisat per a la v1.4: `Docs/Dissenys/v1.4-bosses-enemics-sales.md`, amb la regla de Ferran «enemics originals i no repetits» (canvis: Salamandra amb colp i fugida, Escorpí amb escut frontal, Torreta en graella, Cuc de Sorra que travessa la sala, Rei de les Clavegueres sense àcid).
+- Índex a `Docs/INDEX.md` i traspàs a `TRASPAS_CODEX_V140.md` perquè Codex/ChatGPT continue la v1.4 (generació de sales, sorolls, enemics, microbosses i portes).
+- **No provat dins del joc**: els sorolls i el art són fitxers solts. Sense commit.
+
+- (21 nov, final) Documentacio final de la v1.4.0: Docs/ROADMAP.md, TRASPAS_CODEX_V140.md (5 fases amb criteris d'acceptacio) i PROMPT_CODEX_V140.md. Decidit amb Ferran: la v1.4.0 porta dungeons, sorolls, 6 enemics, portes i Llancaflames sense combustible; l'us dels blocs va a la v1.5. Tot sense codi de joc.
