@@ -425,7 +425,7 @@ public partial class NetBot : MonoBehaviour
         EnemyHealth bossHealth = null;
         yield return SpawnTestBoss(g, bossPrefab, h => bossHealth = h);
         int baseBossHealth = bossPrefab.GetComponent<EnemyHealth>().maxHealth;
-        if (bossHealth == null || bossHealth.maxHealth != Mathf.RoundToInt(baseBossHealth * 1.55f))
+        if (bossHealth == null || bossHealth.maxHealth != Mathf.RoundToInt((baseBossHealth + EnemyBoss.BonusHealth) * 1.55f))
         {
             Fail("vida del boss amb dos jugadors incorrecta");
             yield break;
