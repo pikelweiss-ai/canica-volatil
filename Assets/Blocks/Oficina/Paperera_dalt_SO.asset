@@ -18,7 +18,6 @@ MonoBehaviour:
   theme: Oficina
   sprite: {fileID: 21300000, guid: 762cf961cd302214f931e2265296691d, type: 3}
   scenerySprite: {fileID: 0}
-  rarity: 0
   passable: 0
   blocksBullets: 1
   breakable: 1

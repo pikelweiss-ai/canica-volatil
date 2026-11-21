@@ -116,9 +116,6 @@ public static class BlockCatalogBuilder
             block.family == "Escola" || block.family == "Laboratori" || block.family == "Cuina" ||
                 block.family == "Oficina" || block.family == "Hospital" || block.family == "Bany" ? block.family :
             lower.StartsWith("castell") ? "Cripta" : "General";
-        block.rarity = lower.Contains("diamant") ? ChestRarity.Llegendari :
-            lower.StartsWith("mineral") ? ChestRarity.Epic :
-            block.emitsLight || block.family == "Metall" ? ChestRarity.Rar : ChestRarity.Comu;
     }
 
     static Rect SpriteBounds(Sprite sprite)

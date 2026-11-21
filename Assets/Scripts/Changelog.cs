@@ -20,7 +20,7 @@ public static class Changelog
                 "Busca la clau en una altra sala i du-la fins a la porta marcada al radar.",
                 "AMULETS I BOTIGA",
                 "Setze amulets, tres ranures i una tria al final de cada pis. El mercader també en ven a la sala Botiga.",
-                "La tenda de Personalitzar ven caniques, barrets, esteles, colors i expressions amb les monedes que tens guardades.",
+                "La tenda de Personalitzar ven caniques, barrets i esteles amb les monedes que tens guardades.",
                 "ALMANAC I SELECTOR",
                 "Previsualitzacions animades, filtres i fitxes per als amulets i els 626 blocs. La targeta Creador mostra Pròximament.",
                 "ONLINE",

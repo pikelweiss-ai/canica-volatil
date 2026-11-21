@@ -18,7 +18,6 @@ MonoBehaviour:
   theme: Claveguera
   sprite: {fileID: 21300000, guid: 413fe81bec188cc47940b2ce9dcbeb38, type: 3}
   scenerySprite: {fileID: 0}
-  rarity: 1
   passable: 0
   blocksBullets: 1
   breakable: 1

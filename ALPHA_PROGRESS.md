@@ -6,7 +6,7 @@
 - Fase 1. `bosses150` insta els huit bosses, executa tots els atacs configurats i captura cada boss. La prova LAN veu la barra de vida i els avisos d'atac.
 - Fase 2. `keys150` comprova la porta, la recollida i el consum de la clau. En cooperatiu, el client obri la porta a tots dos processos.
 - Fase 3. `amulets150` comprova 16 efectes, tria i límit de ranures. La prova cooperativa comprova les ranures independents, la tria i el descart validats per l'amfitrió.
-- Fase 4. `store150` comprova compres en cinc categories, les tries antigues i la sala Botiga en Windows i vista mòbil.
+- Fase 4. `store150` comprova compres en tres categories, les tries antigues i la sala Botiga en Windows i vista mòbil.
 - Fase 5. `almanac150` comprova catàleg, filtres, descoberta i targeta Creador en Windows i vista mòbil. `menushot` també passa.
 - Fase 6. Windows, Linux i Android han compilat sense errors. `check-crossplay.ps1` dona PASS amb el protocol 24, 29 armes, 4 cures i el mateix hash de fonts. L'APK porta el codi de versió 16 i conté ARM64 i ARMv7. En Windows, la candidata supera `solo`, `dungeon140`, `phase0`, `bosses150`, `keys150`, `amulets150`, `menushot` i `almanac150`. Android i Linux continuen pendents de prova en equips físics.
 - Online de la candidata. 6/6 amb client mòbil simulat, directori local i túnel real. Amb el directori públic, 4/6 per la quota dels anuncis sense IP. [Detall de la prova](ONLINE.md).

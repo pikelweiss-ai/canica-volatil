@@ -18,7 +18,6 @@ MonoBehaviour:
   theme: Desert
   sprite: {fileID: 21300000, guid: a33ba5294377d324ca7850b82c3cb9fc, type: 3}
   scenerySprite: {fileID: 21300000, guid: a33ba5294377d324ca7850b82c3cb9fc, type: 3}
-  rarity: 0
   passable: 1
   blocksBullets: 0
   breakable: 0

@@ -40,10 +40,19 @@ public partial class NetBot
         BlockData sample = blocks.First(b => !Almanac.HasBlock(b.id));
         AlmanacUI.Open();
         var ui = FindFirstObjectByType<AlmanacUI>();
+        string[] expectedTabs = { "ARMES", "ENEMICS", "BOSSES", "AMULETS", "BLOCS" };
+        var tabs = ui.GetComponentsInChildren<Button>()
+            .Select(b => b.GetComponentInChildren<TMP_Text>()?.text)
+            .Where(expectedTabs.Contains);
+        if (!tabs.SequenceEqual(expectedTabs))
+        { Fail("ordre incorrecte de les pestanyes de l'Almanac"); yield break; }
         ClickAlmanacButton(ui, "BLOCS");
         yield return null;
         if (!ui.GetComponentsInChildren<TMP_Text>().Any(t => t.text == "???"))
         { Fail("els blocs que no has vist han de mostrar una silueta"); yield break; }
+        if (ui.GetComponentsInChildren<TMP_Text>().Any(t => t.text == "Qualitat"))
+        { Fail("l'Almanac de blocs encara mostra un filtre de qualitat"); yield break; }
+        Ok("Amulets va davant de Blocs i els blocs no es filtren per qualitat");
         yield return Shot("fase5-almanac-blocs");
         ClickAlmanacButton(ui, "Família");
         yield return null;
@@ -59,6 +68,8 @@ public partial class NetBot
         yield return null;
         if (!ui.GetComponentsInChildren<TMP_Text>().Any(t => t.text.EndsWith(" / 16")))
         { Fail("falta el catàleg d'amulets"); yield break; }
+        if (!ui.GetComponentsInChildren<TMP_Text>().Any(t => t.text == "Qualitat"))
+        { Fail("falta el filtre de qualitat dels amulets"); yield break; }
         yield return Shot("fase5-almanac-amulets");
         ClickAlmanacButton(ui, "TANCAR");
 

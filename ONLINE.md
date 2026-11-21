@@ -6,7 +6,7 @@ La mateixa suite ha donat **6/6** amb un directori de prova en loopback i el tú
 
 També han passat les quatre proves cooperatives dedicades amb l’executable final i client mòbil simulat: Talp, Mímic, Torreta i paret secreta; avisos i barra dels bosses; recollida i ús de la clau pel client; i tria i descart d’amulets per jugador. Hi ha dos `NETBOT PASS` per prova a `Coop-final`.
 
-**Protocol de treball v1.5 (personalització): 24.** `Hello` i la llista de jugadors porten el color i l’expressió de cada avatar. Les compres es guarden al dispositiu.
+**Protocol de treball v1.5 (personalització): 24.** `Hello` i la llista de jugadors porten la canica, el barret i l’estela de cada avatar. Els dos camps que abans portaven color i expressió queden reservats per mantindre la compatibilitat amb les compilacions anteriors del protocol 24. Les compres es guarden al dispositiu.
 
 **Protocol de treball v1.5 (amulets): 23.** `AmuletState` envia les ranures, les ofertes i els temps de recuperació. L’amfitrió valida les accions `AmuletAction` i aplica el dany d’atac i els efectes d’àrea. Les monedes de la partida viatgen amb la posició per validar la compra d’amulets.
 

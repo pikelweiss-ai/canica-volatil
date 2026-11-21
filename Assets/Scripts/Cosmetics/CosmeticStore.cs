@@ -1,27 +1,17 @@
 using System;
 using UnityEngine;
 
-public enum CosmeticKind { Skins, Hats, Trails, Colors, Expressions }
+public enum CosmeticKind { Skins, Hats, Trails }
 
 public static class CosmeticStore
 {
-    public const string KeyColor = "Cos_Color", KeyExpression = "Cos_Expression";
     const string Migrated = "Cosmetics_Store_v1";
-    static readonly (string name, Color color)[] colors =
-    {
-        ("Natural", Color.white), ("Menta", new Color(.63f, 1f, .78f)), ("Mel", new Color(1f, .83f, .52f)),
-        ("Ametista", new Color(.85f, .65f, 1f)), ("Coral", new Color(1f, .63f, .65f)), ("Aurora", new Color(.55f, .92f, 1f))
-    };
-    static readonly string[] expressions = { "Original", "Somriure", "Clucada", "Sorpresa", "Fúria", "Cors" };
-    static readonly Sprite[] faces = new Sprite[expressions.Length];
-
     public static string Key(CosmeticKind kind) => kind switch
     {
         CosmeticKind.Skins => CosmeticsDatabase.KeySkin,
         CosmeticKind.Hats => CosmeticsDatabase.KeyHat,
         CosmeticKind.Trails => CosmeticsDatabase.KeyTrail,
-        CosmeticKind.Colors => KeyColor,
-        _ => KeyExpression
+        _ => throw new ArgumentOutOfRangeException(nameof(kind))
     };
 
     public static int Count(CosmeticKind kind)
@@ -32,8 +22,7 @@ public static class CosmeticStore
             CosmeticKind.Skins => db?.skins?.Length ?? 0,
             CosmeticKind.Hats => db?.hats?.Length ?? 0,
             CosmeticKind.Trails => db?.trails?.Length ?? 0,
-            CosmeticKind.Colors => colors.Length,
-            _ => expressions.Length
+            _ => 0
         };
     }
 
@@ -47,12 +36,9 @@ public static class CosmeticStore
             CosmeticKind.Skins => index == 0 ? "Original" : db.skins[index].name,
             CosmeticKind.Hats => string.IsNullOrEmpty(db.hats[index].name) ? "Cap" : db.hats[index].name,
             CosmeticKind.Trails => db.trails[index].name,
-            CosmeticKind.Colors => colors[index].name,
-            _ => expressions[index]
+            _ => throw new ArgumentOutOfRangeException(nameof(kind))
         };
     }
-
-    public static Color Tint(int index) => colors[Mathf.Clamp(index, 0, colors.Length - 1)].color;
 
     static bool Valid(CosmeticKind kind, int index) => index >= 0 && index < Count(kind);
 
@@ -138,30 +124,5 @@ public static class CosmeticStore
         return options.Count == 0 ? 0 : options[UnityEngine.Random.Range(0, options.Count)];
     }
 
-    public static Sprite Expression(int index)
-    {
-        if (index <= 0 || index >= faces.Length) return null;
-        if (faces[index] != null) return faces[index];
-        string[][] pixels =
-        {
-            null,
-            new[] { ".#...#.", ".#...#.", ".......", "#.....#", ".#####." },
-            new[] { ".##..#.", "#....#.", ".......", ".....#.", "..###.." },
-            new[] { ".#...#.", ".#...#.", ".......", "...#...", "..#.#..", "...#..." },
-            new[] { "#.....#", ".#...#.", ".......", "..###..", ".#...#." },
-            new[] { "hh.hh.h", "hhh.hhh", ".h...h.", ".......", "..###.." }
-        };
-        var pattern = pixels[index];
-        var tex = new Texture2D(16, 16) { filterMode = FilterMode.Point };
-        tex.SetPixels(new Color[16 * 16]);
-        for (int y = 0; y < pattern.Length; y++)
-            for (int x = 0; x < pattern[y].Length; x++)
-            {
-                char pixel = pattern[y][x];
-                if (pixel != '.') tex.SetPixel(x + 4, 10 - y, pixel == 'h' ? new Color(1f, .18f, .37f) : new Color(.09f, .07f, .13f));
-            }
-        tex.Apply();
-        return faces[index] = Sprite.Create(tex, new Rect(0, 0, 16, 16), Vector2.one * .5f, 16);
-    }
 }
 

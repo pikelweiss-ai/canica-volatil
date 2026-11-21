@@ -15,15 +15,15 @@ public class CustomizeMenuUI : MonoBehaviour
     TMP_InputField nameInput;
     TextMeshProUGUI coinsLabel, gridCount, nameCard, qualityLabel;
     RectTransform track, grid;
-    Image marble, hat, face, qualityBand;
-    readonly Image[] tabIcons = new Image[5];
-    UIKit.UIButton[] tabs = new UIKit.UIButton[5];
+    Image marble, hat, qualityBand;
+    readonly Image[] tabIcons = new Image[3];
+    UIKit.UIButton[] tabs = new UIKit.UIButton[3];
     UIKit.UIButton useButton, storeButton;
     readonly UIKit.UIButton[] filters = new UIKit.UIButton[4];
     int qualityFilter = -1;
     bool store;
     Category category = Category.Skins;
-    int pSkin, pHat, pTrail, pColor, pExpression; // previsualització (encara no aplicada)
+    int pSkin, pHat, pTrail; // previsualització (encara no aplicada)
     readonly List<Sprite> cropped = new List<Sprite>();
 
     public static CustomizeMenuUI Create(TMP_FontAsset font)
@@ -45,8 +45,6 @@ public class CustomizeMenuUI : MonoBehaviour
         pSkin = CosmeticsDatabase.Get(CosmeticsDatabase.KeySkin, db.skins != null ? db.skins.Length : 0);
         pHat = CosmeticsDatabase.Get(CosmeticsDatabase.KeyHat, db.hats != null ? db.hats.Length : 0);
         pTrail = CosmeticsDatabase.Get(CosmeticsDatabase.KeyTrail, db.trails != null ? db.trails.Length : 0);
-        pColor = CosmeticStore.Equipped(Category.Colors);
-        pExpression = CosmeticStore.Equipped(Category.Expressions);
         category = Category.Skins; qualityFilter = -1; store = false; Refresh();
     }
 
@@ -73,13 +71,13 @@ public class CustomizeMenuUI : MonoBehaviour
         coinsLabel.rectTransform.anchoredPosition = new Vector2(447, 400);
 
         // Esquerra: categories (icona a dalt, nom a baix)
-        string[] names = { "CANIQUES", "BARRETS", "ESTELES", "COLORS", "EXPRESSIONS" };
+        string[] names = { "CANIQUES", "BARRETS", "ESTELES" };
         for (int i = 0; i < tabs.Length; i++)
         {
             int c = i;
-            tabs[i] = UIKit.Button(root, names[i], new Vector2(-640, 274 - i * 100), new Vector2(170, 86), () => { category = (Category)c; qualityFilter = -1; Refresh(); }, UIKit.Style.Normal, i == (int)Category.Expressions ? 16 : 20, false);
-            tabs[i].label.rectTransform.anchoredPosition = new Vector2(0, -24);
-            tabIcons[i] = UIKit.Picture(tabs[i].rect, null, new Vector2(0, 13), new Vector2(48, 48));
+            tabs[i] = UIKit.Button(root, names[i], new Vector2(-640, 245 - i * 153), new Vector2(170, 132), () => { category = (Category)c; qualityFilter = -1; Refresh(); }, UIKit.Style.Normal, 20, false);
+            tabs[i].label.rectTransform.anchoredPosition = new Vector2(0, -42);
+            tabIcons[i] = UIKit.Picture(tabs[i].rect, null, new Vector2(0, 15), new Vector2(65, 65));
         }
         UIKit.Text(root, "Nom del jugador", new Vector2(-640, -305), new Vector2(250, 30), 16, TextAlignmentOptions.Center, UIKit.Muted);
         BuildNameField(root);
@@ -94,7 +92,6 @@ public class CustomizeMenuUI : MonoBehaviour
             if (Mathf.Abs(g) <= 4) UIKit.Box(track, new Vector2(0, g * 50), new Vector2(548, 1), new Color(1, 1, 1, .04f), "Linia");
         }
         marble = UIKit.Picture(track, db.playerSprite, Vector2.zero, new Vector2(120, 120));
-        face = UIKit.Picture(marble.transform, null, Vector2.zero, new Vector2(120, 120));
         hat = UIKit.Picture(marble.transform, null, Vector2.zero, new Vector2(120, 120));
         UIKit.Text(root, "WASD o arrossega el ratolí per moure la canica", new Vector2(-170, -165), new Vector2(560, 30), 16, TextAlignmentOptions.Center, UIKit.Dim);
         var card = UIKit.Box(root, new Vector2(-170, -250), new Vector2(480, 110), UIKit.Panel, "Targeta de nom");
@@ -158,8 +155,7 @@ public class CustomizeMenuUI : MonoBehaviour
     {
         get => category switch
         {
-            Category.Skins => pSkin, Category.Hats => pHat, Category.Trails => pTrail,
-            Category.Colors => pColor, _ => pExpression
+            Category.Skins => pSkin, Category.Hats => pHat, _ => pTrail
         };
         set
         {
@@ -168,8 +164,6 @@ public class CustomizeMenuUI : MonoBehaviour
                 case Category.Skins: pSkin = value; break;
                 case Category.Hats: pHat = value; break;
                 case Category.Trails: pTrail = value; break;
-                case Category.Colors: pColor = value; break;
-                default: pExpression = value; break;
             }
         }
     }
@@ -250,10 +244,6 @@ public class CustomizeMenuUI : MonoBehaviour
         var trail = db.trails[Applied(Category.Trails)];
         tabIcons[2].sprite = trail.color.a > 0 ? TrailParticleEmitter.SpriteFor(trail.shape == TrailShape.Ribbon ? TrailShape.Dots : trail.shape) : null;
         tabIcons[2].color = trail.color.a > 0 ? (CosmeticsDatabase.IsRainbow(trail.color) ? Color.HSVToRGB(.6f, .8f, 1f) : trail.color) : new Color(1, 1, 1, 0);
-        tabIcons[3].sprite = db.playerSprite;
-        tabIcons[3].color = CosmeticStore.Tint(pColor == 0 ? 1 : pColor);
-        tabIcons[4].sprite = CosmeticStore.Expression(pExpression == 0 ? 1 : pExpression);
-        tabIcons[4].color = Color.white;
     }
 
     void BuildCard(int i)
@@ -276,17 +266,6 @@ public class CustomizeMenuUI : MonoBehaviour
             var sprite = db.hats[i].sprite;
             if (sprite != null) UIKit.Picture(inner, Crop(sprite), new Vector2(0, 14), new Vector2(78, 78));
             else UIKit.Text(inner, "—", new Vector2(0, 14), new Vector2(78, 78), 44, TextAlignmentOptions.Center, UIKit.Dim);
-        }
-        else if (category == Category.Colors)
-        {
-            var sample = UIKit.Picture(inner, db.playerSprite, new Vector2(0, 14), new Vector2(65, 65));
-            sample.color = CosmeticStore.Tint(i);
-        }
-        else if (category == Category.Expressions)
-        {
-            UIKit.Picture(inner, db.playerSprite, new Vector2(0, 14), new Vector2(65, 65));
-            var expression = CosmeticStore.Expression(i);
-            if (expression != null) UIKit.Picture(inner, expression, new Vector2(0, 14), new Vector2(65, 65));
         }
         else
         {
@@ -328,10 +307,6 @@ public class CustomizeMenuUI : MonoBehaviour
             float top = (HatFit.Top(marble.sprite) - .5f) * bodySize;
             hat.rectTransform.anchoredPosition = h.fullHelmet ? Vector2.zero : new Vector2(0, top - 3 + lift - (HatFit.Bottom(h.sprite) - .5f) * size);
         }
-        marble.color = CosmeticStore.Tint(pColor);
-        face.sprite = CosmeticStore.Expression(pExpression);
-        face.color = Color.white;
-        face.enabled = face.sprite != null;
         nameCard.text = NameOf(Selected);
         var quality = CosmeticStore.Quality(category, Selected);
         qualityBand.color = ItemGraphics.RarityColor(quality);

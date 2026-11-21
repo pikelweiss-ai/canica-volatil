@@ -18,7 +18,6 @@ MonoBehaviour:
   theme: Bosc
   sprite: {fileID: 21300000, guid: c43ae27da53601d43987ea621e11142c, type: 3}
   scenerySprite: {fileID: 21300000, guid: c43ae27da53601d43987ea621e11142c, type: 3}
-  rarity: 0
   passable: 0
   blocksBullets: 1
   breakable: 0

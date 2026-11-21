@@ -84,7 +84,7 @@ public static class Almanac
 // Llibre de descobriments. La vista prèvia és una animació de la fitxa i no executa combat.
 public class AlmanacUI : MonoBehaviour
 {
-    enum Tab { Weapons, Enemies, Bosses, Blocks, Amulets }
+    enum Tab { Weapons, Enemies, Bosses, Amulets, Blocks }
     class Entry
     {
         public string id, name, stats, text, family;
@@ -129,7 +129,7 @@ public class AlmanacUI : MonoBehaviour
         UIKit.Text(canvas.transform, "ALMANAC", new Vector2(0, 400), new Vector2(700, 70), 48, TextAlignmentOptions.Center, UIKit.Gold);
         UIKit.Button(canvas.transform, "TANCAR", new Vector2(-640, 400), new Vector2(240, 62), Close, UIKit.Style.Danger, 28);
         counter = UIKit.Text(canvas.transform, "", new Vector2(540, 400), new Vector2(420, 40), 24, TextAlignmentOptions.MidlineRight, UIKit.Muted);
-        string[] names = { "ARMES", "ENEMICS", "BOSSES", "BLOCS", "AMULETS" };
+        string[] names = { "ARMES", "ENEMICS", "BOSSES", "AMULETS", "BLOCS" };
         for (int i = 0; i < tabs.Length; i++)
         {
             var current = (Tab)i;
@@ -203,6 +203,7 @@ public class AlmanacUI : MonoBehaviour
         for (int i = 0; i < tabs.Length; i++)
             tabs[i].SetStyle(i == (int)tab ? UIKit.Style.Primary : UIKit.Style.Normal);
         familyButton.rect.gameObject.SetActive(tab == Tab.Blocks);
+        rarityButton.rect.gameObject.SetActive(tab != Tab.Blocks);
         themeButton.rect.gameObject.SetActive(tab == Tab.Blocks || tab == Tab.Enemies || tab == Tab.Bosses);
         ApplyFilters();
     }
@@ -214,9 +215,9 @@ public class AlmanacUI : MonoBehaviour
                 .OrderBy(block => block.family).ThenBy(block => block.displayName)
                 .Select(block => new Entry
                 {
-                    id = block.id, name = block.displayName, icon = block.sprite, rarity = block.rarity, family = block.family,
+                    id = block.id, name = block.displayName, icon = block.sprite, family = block.family,
                     themes = new[] { block.theme }, unlocked = Almanac.HasBlock(block.id),
-                    stats = block.family + " · " + block.theme + " · " + CosmeticStore.QualityName(block.rarity),
+                    stats = block.family + " · " + block.theme,
                     text = Properties(block)
                 }).ToList();
 

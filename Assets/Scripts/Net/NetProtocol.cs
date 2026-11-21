@@ -11,7 +11,7 @@ using System.Text;
 // El mateix format serveix per a parlar amb l'amfitrio (LAN/IP) i amb el servidor de sales (Internet).
 public static class NetProtocol
 {
-    public const int Version = 24; // Aparenca dels avatars: color i expressio.
+    public const int Version = 24; // Manté els dos camps reservats de l’aparença dels avatars.
     public const int GamePort = 7777;      // TCP: l'amfitrio escolta ací (prova 7777..7787)
     public const int DiscoveryPort = 7778; // UDP: descobriment de sales en LAN
     public const int RelayPort = 7780;     // TCP: servidor de sales d'Internet
@@ -258,7 +258,7 @@ public class NetPlayer
 {
     public int id;
     public string name = "Jugador";
-    public int skin, hat, trail, color, expression;
+    public int skin, hat, trail;
     public bool ready, isHost;
     public int ping;
     // Posicio (es rep pels snapshots)
@@ -286,12 +286,36 @@ public class NetPlayer
 
     public void Write(BinaryWriter w)
     {
-        w.Write(id); w.Write(name); w.Write((short)skin); w.Write((short)hat); w.Write((short)trail); w.Write((short)color); w.Write((short)expression);
+        w.Write(id); w.Write(name); WriteCosmetics(w);
         w.Write(ready); w.Write(isHost); w.Write((short)Math.Min(ping, 9999));
+    }
+
+    public void WriteCosmetics(BinaryWriter w)
+    {
+        w.Write((short)skin);
+        w.Write((short)hat);
+        w.Write((short)trail);
+        // Camps reservats del protocol 24.
+        w.Write((short)0);
+        w.Write((short)0);
+    }
+
+    public static void ReadCosmetics(BinaryReader r, out int skin, out int hat, out int trail)
+    {
+        skin = r.ReadInt16();
+        hat = r.ReadInt16();
+        trail = r.ReadInt16();
+        r.ReadInt16();
+        r.ReadInt16();
     }
 
     public static NetPlayer Read(BinaryReader r)
     {
-        return new NetPlayer { id = r.ReadInt32(), name = r.ReadString(), skin = r.ReadInt16(), hat = r.ReadInt16(), trail = r.ReadInt16(), color = r.ReadInt16(), expression = r.ReadInt16(), ready = r.ReadBoolean(), isHost = r.ReadBoolean(), ping = r.ReadInt16() };
+        var player = new NetPlayer { id = r.ReadInt32(), name = r.ReadString() };
+        ReadCosmetics(r, out player.skin, out player.hat, out player.trail);
+        player.ready = r.ReadBoolean();
+        player.isHost = r.ReadBoolean();
+        player.ping = r.ReadInt16();
+        return player;
     }
 }

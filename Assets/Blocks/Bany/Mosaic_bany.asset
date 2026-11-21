@@ -18,7 +18,6 @@ MonoBehaviour:
   theme: Bany
   sprite: {fileID: 21300000, guid: 0e8257009b9e42946af81ec94ecea324, type: 3}
   scenerySprite: {fileID: 0}
-  rarity: 0
   passable: 0
   blocksBullets: 1
   breakable: 1

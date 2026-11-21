@@ -18,7 +18,6 @@ MonoBehaviour:
   theme: "Volc\xE0"
   sprite: {fileID: 21300000, guid: 3e7b287524c820342b93e0e9b1e42c0d, type: 3}
   scenerySprite: {fileID: 0}
-  rarity: 0
   passable: 1
   blocksBullets: 0
   breakable: 0

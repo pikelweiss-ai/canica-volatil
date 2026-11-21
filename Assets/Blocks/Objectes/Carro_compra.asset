@@ -18,7 +18,6 @@ MonoBehaviour:
   theme: General
   sprite: {fileID: 21300000, guid: e42ba25b6be2dfd4b84ad61f72144b16, type: 3}
   scenerySprite: {fileID: 21300000, guid: e42ba25b6be2dfd4b84ad61f72144b16, type: 3}
-  rarity: 0
   passable: 0
   blocksBullets: 1
   breakable: 1

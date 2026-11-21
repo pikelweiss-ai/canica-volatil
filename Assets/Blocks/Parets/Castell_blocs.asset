@@ -18,7 +18,6 @@ MonoBehaviour:
   theme: Cripta
   sprite: {fileID: 21300000, guid: 6b494e2d065202544b3408f1d07e4152, type: 3}
   scenerySprite: {fileID: 21300000, guid: 6b494e2d065202544b3408f1d07e4152, type: 3}
-  rarity: 0
   passable: 0
   blocksBullets: 1
   breakable: 0

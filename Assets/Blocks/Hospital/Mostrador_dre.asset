@@ -18,7 +18,6 @@ MonoBehaviour:
   theme: Hospital
   sprite: {fileID: 21300000, guid: 05faf14521babbc409e50dbdfdc0dc24, type: 3}
   scenerySprite: {fileID: 0}
-  rarity: 0
   passable: 0
   blocksBullets: 1
   breakable: 1

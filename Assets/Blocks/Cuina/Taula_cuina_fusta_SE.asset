@@ -18,7 +18,6 @@ MonoBehaviour:
   theme: Cuina
   sprite: {fileID: 21300000, guid: 85573e1761c86cd4e95efc6e09005d5e, type: 3}
   scenerySprite: {fileID: 0}
-  rarity: 0
   passable: 0
   blocksBullets: 1
   breakable: 1

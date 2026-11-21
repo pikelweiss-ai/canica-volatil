@@ -83,7 +83,7 @@ public class RemoteAvatar : MonoBehaviour
 
         // Skin, barret i estela del company (el mateix codi que per al jugador local)
         var cos = go.AddComponent<PlayerCosmetics>();
-        cos.skinOverride = pl.skin; cos.hatOverride = pl.hat; cos.trailOverride = pl.trail; cos.colorOverride = pl.color; cos.expressionOverride = pl.expression;
+        cos.skinOverride = pl.skin; cos.hatOverride = pl.hat; cos.trailOverride = pl.trail;
 
         // Ombra: copia de la del jugador local
         foreach (Transform child in reference.transform)

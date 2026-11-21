@@ -363,8 +363,6 @@ public class NetSession : MonoBehaviour
             skin = db != null && db.skins != null ? CosmeticsDatabase.Get(CosmeticsDatabase.KeySkin, db.skins.Length) : 0,
             hat = db != null && db.hats != null ? CosmeticsDatabase.Get(CosmeticsDatabase.KeyHat, db.hats.Length) : 0,
             trail = db != null && db.trails != null ? CosmeticsDatabase.Get(CosmeticsDatabase.KeyTrail, db.trails.Length) : 0,
-            color = CosmeticStore.Equipped(CosmeticKind.Colors),
-            expression = CosmeticStore.Equipped(CosmeticKind.Expressions),
         };
     }
 
@@ -455,7 +453,7 @@ public class NetSession : MonoBehaviour
         link.Send(NetProtocol.Frame(Msg.Hello, w =>
         {
             w.Write(NetProtocol.Version); w.Write(GameVersion.Package); w.Write(me.name);
-            w.Write((short)me.skin); w.Write((short)me.hat); w.Write((short)me.trail); w.Write((short)me.color); w.Write((short)me.expression); w.Write(hash);
+            me.WriteCosmetics(w); w.Write(hash);
         }));
         welcomed = false;
     }
@@ -785,12 +783,12 @@ public class NetSession : MonoBehaviour
         {
             if (type != Msg.Hello) return;
             int version = r.ReadInt32(); string package = r.ReadString(); string name = CleanName(r.ReadString());
-            int skin = 0, hat = 0, trail = 0, color = 0, expression = 0;
+            int skin = 0, hat = 0, trail = 0;
             string hash = "";
             if (version == NetProtocol.Version)
             {
-                skin = r.ReadInt16(); hat = r.ReadInt16(); trail = r.ReadInt16();
-                color = r.ReadInt16(); expression = r.ReadInt16(); hash = r.ReadString();
+                NetPlayer.ReadCosmetics(r, out skin, out hat, out trail);
+                hash = r.ReadString();
             }
             string reject = null; int kind = 0;
             if (version != NetProtocol.Version) { reject = "Versió diferent: la sala és " + GameVersion.Label + " i tu tens " + package + " (protocols " + NetProtocol.Version + " i " + version + ")."; kind = 3; }
@@ -805,7 +803,7 @@ public class NetSession : MonoBehaviour
                 return;
             }
             name = UniqueName(name);
-            var pl = new NetPlayer { id = nextId++, name = name, skin = skin, hat = hat, trail = trail, color = color, expression = expression };
+            var pl = new NetPlayer { id = nextId++, name = name, skin = skin, hat = hat, trail = trail };
             p.player = pl; Players[pl.id] = pl;
             p.link.Send(NetProtocol.Frame(Msg.Welcome, w => w.Write(pl.id)));
             // L'historial recent del xat, perque no entre "a cegues"

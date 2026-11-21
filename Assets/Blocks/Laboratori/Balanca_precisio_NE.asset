@@ -18,7 +18,6 @@ MonoBehaviour:
   theme: Laboratori
   sprite: {fileID: 21300000, guid: 2cecf917262360b4b9453db36b72df28, type: 3}
   scenerySprite: {fileID: 0}
-  rarity: 0
   passable: 0
   blocksBullets: 1
   breakable: 1

@@ -22,7 +22,7 @@ public partial class NetBot
         try
         {
             PlayerPrefs.SetInt("Cosmetics_Store_v1", 0);
-            foreach (var kind in new[] { CosmeticKind.Skins, CosmeticKind.Hats, CosmeticKind.Trails, CosmeticKind.Colors, CosmeticKind.Expressions })
+            foreach (var kind in new[] { CosmeticKind.Skins, CosmeticKind.Hats, CosmeticKind.Trails })
             {
                 Save(CosmeticStore.Key(kind));
                 int index = Mathf.Clamp(2, 0, CosmeticStore.Count(kind) - 1);
@@ -35,7 +35,7 @@ public partial class NetBot
                 { Fail("la tenda ha perdut la tria antiga de " + kind); yield break; }
             Ok("conserva les claus i tries antigues de canica, barret i estela");
 
-            foreach (var kind in new[] { CosmeticKind.Skins, CosmeticKind.Hats, CosmeticKind.Trails, CosmeticKind.Colors, CosmeticKind.Expressions })
+            foreach (var kind in new[] { CosmeticKind.Skins, CosmeticKind.Hats, CosmeticKind.Trails })
             {
                 int index = CosmeticStore.Count(kind) - 1;
                 var key = OwnerKey(kind, index);
@@ -55,13 +55,20 @@ public partial class NetBot
 
             var ui = CustomizeMenuUI.Create(null);
             ui.Show();
+            string[] categoryNames = { "CANIQUES", "BARRETS", "ESTELES", "COLORS", "EXPRESSIONS" };
+            var tabs = ui.GetComponentsInChildren<TMPro.TMP_Text>()
+                .Select(label => label.text)
+                .Where(categoryNames.Contains);
+            if (!tabs.SequenceEqual(categoryNames.Take(3)))
+            { Fail("Personalitzar ha de mostrar caniques, barrets i esteles"); yield break; }
+            Ok("Personalitzar mostra les tres categories");
             var field = typeof(CustomizeMenuUI).GetField("store", BindingFlags.Instance | BindingFlags.NonPublic);
             field.SetValue(ui, true);
             typeof(CustomizeMenuUI).GetMethod("Refresh", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(ui, null);
             yield return Shot("fase4-tenda");
             Destroy(ui.gameObject);
 
-            var avatar = new NetPlayer { id = 2, name = "Bot", color = 3, expression = 4 };
+            var avatar = new NetPlayer { id = 2, name = "Bot", skin = 3, hat = 4, trail = 5, ready = true, ping = 17 };
             using (var stream = new MemoryStream())
             {
                 using var output = new BinaryWriter(stream);
@@ -69,8 +76,8 @@ public partial class NetBot
                 stream.Position = 0;
                 using var input = new BinaryReader(stream);
                 var copy = NetPlayer.Read(input);
-                if (copy.color != 3 || copy.expression != 4)
-                { Fail("el color i l’expressió s’han perdut al protocol"); yield break; }
+                if (copy.skin != 3 || copy.hat != 4 || copy.trail != 5 || !copy.ready || copy.ping != 17)
+                { Fail("els cosmètics s’han perdut al protocol"); yield break; }
             }
 
             RunState.Reset(); RunState.Active = true; RunState.Seed = 154;

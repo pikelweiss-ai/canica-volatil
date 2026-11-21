@@ -18,7 +18,6 @@ MonoBehaviour:
   theme: Escola
   sprite: {fileID: 21300000, guid: fb5448eb234ae164f9b994dec44650ae, type: 3}
   scenerySprite: {fileID: 0}
-  rarity: 0
   passable: 0
   blocksBullets: 1
   breakable: 1
