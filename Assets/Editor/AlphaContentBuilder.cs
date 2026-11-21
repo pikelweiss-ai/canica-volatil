@@ -109,6 +109,22 @@ public static class AlphaContentBuilder
         }
         var spiderQueen=NewBoss("ReinaAranya","Reina Aranya",80,1.8f,new[]{EnemyBoss.Attack.Summon,EnemyBoss.Attack.Fan,EnemyBoss.Attack.Jump,EnemyBoss.Attack.Charge},"Aranya",new Color(.75f,.4f,1f),new Color(.5f,.3f,.7f));
         var iceKing=NewBoss("ReiGel","Rei de Gel",85,1.5f,new[]{EnemyBoss.Attack.Ring,EnemyBoss.Attack.Spiral,EnemyBoss.Attack.Charge,EnemyBoss.Attack.Fan},"FantasmaGel",new Color(.65f,.9f,1f),new Color(.7f,.85f,1f));
+        // ---- v1.4.0 fase 3: sis enemics nous (el comportament és a EnemyV140) ----
+        GameObject NewKind(string id,EnemyV140.Kind kind,int hp,float speed,int contact)
+        {
+            var root=Enemy(id,"Malo");root.GetComponent<EnemyHealth>().maxHealth=hp;
+            var ai=root.GetComponent<EnemyPathfindingAI>();if(ai!=null)ai.moveSpeed=speed;
+            var dmg=root.GetComponent<EnemyDamage>();if(dmg!=null)dmg.damage=contact;
+            var v=root.GetComponent<EnemyV140>();if(v==null)v=root.AddComponent<EnemyV140>();
+            v.kind=kind;if(kind==EnemyV140.Kind.Mimic)v.disguise=S("Cofres/Cofre_Comu");
+            SaveEnemy(root,id);return AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Enemics/"+id+".prefab");
+        }
+        var mimicEnemy=NewKind("Mimic",EnemyV140.Kind.Mimic,14,2.2f,0);
+        var healerEnemy=NewKind("Sanador",EnemyV140.Kind.Healer,6,1.8f,0);
+        var shieldEnemy=NewKind("EscutGuerrer",EnemyV140.Kind.Shield,10,1.5f,1);
+        var moleEnemy=NewKind("Talp",EnemyV140.Kind.Mole,6,2f,0);
+        var sniperEnemy=NewKind("FranctiradorCristall",EnemyV140.Kind.Sniper,4,1.6f,0);
+        var bansheeEnemy=NewKind("Banshee",EnemyV140.Kind.Banshee,5,2f,0);
         var bush=Prop("ArbustBaies","Arbust de baies",false);
         var mushroom=Prop("BoletLluminós","Bolet lluminós",true);
         foreach(string path in Directory.GetFiles("Assets/Dungeon/Temes","*.asset"))
@@ -124,6 +140,14 @@ public static class AlphaContentBuilder
             if(path.Contains("Neu")||path.Contains("Cristall")||path.Contains("Cripta"))AddEnemy("FantasmaGel");
             if(path.Contains("Bosc")||path.Contains("Cripta"))theme.boss=spiderQueen;
             if(path.Contains("Neu"))theme.boss=iceKing;
+            // v1.4.0: enemics nous per tema (taula del disseny §1)
+            void AddNew(GameObject p){if(p!=null&&!list.Contains(p))list.Add(p);}
+            if(path.Contains("Cova")||path.Contains("Desert"))AddNew(moleEnemy);
+            if(path.Contains("Bosc")||path.Contains("Cripta"))AddNew(healerEnemy);
+            if(path.Contains("Cripta")||path.Contains("Cristall"))AddNew(shieldEnemy);
+            if(path.Contains("Cripta"))AddNew(bansheeEnemy);
+            if(path.Contains("Cristall"))AddNew(sniperEnemy);
+            theme.mimic=mimicEnemy;
             theme.enemies=list.ToArray();EditorUtility.SetDirty(theme);
         }
         AssetDatabase.SaveAssets();Validate();Debug.Log("ALPHA_CONTENT: cares, 4 barrets, 6 esteles, 5 armes, 2 enemics i 2 objectes preparats.");

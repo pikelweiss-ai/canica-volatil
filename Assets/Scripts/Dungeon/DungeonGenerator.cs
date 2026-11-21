@@ -519,6 +519,13 @@ public partial class DungeonGenerator : MonoBehaviour
                 ChestRarity rarity = TreasureRarity();
                 r.ambushRarity = rarity;
                 SpawnChest(rarity, r.Center);
+                // v1.4.0: a vegades, un cofre fals (Mimic) a la sala de tresor, des del pis 2
+                if (r.type == RoomType.Treasure && Theme != null && Theme.mimic != null && RunState.Floor >= 2 && rng.NextDouble() < 0.3)
+                    for (int tries = 0; tries < 30; tries++)
+                    {
+                        var mimicCell = RandomCell(r); if (!FreeForDecor(r, mimicCell, 2)) continue;
+                        reserved.Add(mimicCell); Spawn(Theme.mimic, mimicCell); break;
+                    }
             }
             else if (r.type == RoomType.Start)
             {

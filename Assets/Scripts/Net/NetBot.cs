@@ -916,6 +916,8 @@ public partial class NetBot : MonoBehaviour
         attack.hotbarSlots[0] = null;
         cooldowns[0] = 0f;
 
+        // v1.4.0: les sales amb gel (modificador) alenteixen l'acceleracio; esta prova mesura el lliscament al mur, no el gel
+        foreach (var iceRoom in dungeon.Rooms) if (iceRoom.modifier == DungeonGenerator.RoomModifier.Ice) iceRoom.modifier = DungeonGenerator.RoomModifier.None;
         var movementController = player.GetComponent<PlayerMovement>();
         var moveInput = typeof(PlayerMovement).GetField("movement", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
         var movementStep = typeof(PlayerMovement).GetMethod("FixedUpdate", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
@@ -1136,6 +1138,7 @@ public partial class NetBot : MonoBehaviour
             var hurt = player.GetComponent<PlayerHealth>(); if (hurt != null) hurt.currentHealth = hurt.maxHealth;
             Ok("enemic nou: " + id);
         }
+        yield return Enemies140(origin, player, body, catalog);
     }
 
     // v1.3.1: les sis armes noves fan el que diuen

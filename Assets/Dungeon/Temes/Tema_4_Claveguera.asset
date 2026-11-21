@@ -34,4 +34,5 @@ MonoBehaviour:
   - {fileID: 5870496072010164621, guid: 0e33aff4c4463254fb3ef5fd4621cade, type: 3}
   - {fileID: 6155995179530356856, guid: fde01ca30c3c8814d9a274a7a9ceb587, type: 3}
   - {fileID: 2686201081134734275, guid: f290dd09e96817f40a337acd6a111e10, type: 3}
+  mimic: {fileID: 8254766765077702423, guid: 165f3351b0dc8394da6aa67fe5476266, type: 3}
   boss: {fileID: 2767157674481483285, guid: cbdd44b94b39d164ca13361ea498d1de, type: 3}

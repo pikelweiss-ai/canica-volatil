@@ -186,6 +186,14 @@ public static class NetCoop
         if (av != null && IsHost) S.SendTo(av.playerId, NetProtocol.Frame(Msg.Hurt, w => w.Write(damage)));
     }
 
+    // v1.4.0: empenta (Banshee). Al jugador local li fa un dash curt; als companys nomes els arriba el dany (sense missatge nou)
+    public static void PushPlayer(Transform target, Vector2 direction, float distance)
+    {
+        if (target == null) return;
+        var pm = target.GetComponent<PlayerMovement>();
+        if (pm != null) pm.Dash(direction, distance);
+    }
+
     // Explosions amb dany al jugador (kamikazes...): tambe als companys, i tots la veuen
     public static void Exploded(Vector2 pos, float radius, int playerDamage)
     {
@@ -630,9 +638,13 @@ public static class NetCoop
                 {
                     int id = r.ReadInt32(); float x = r.ReadSingle(), y = r.ReadSingle(); int hp = r.ReadInt32(); bool flip = r.ReadBoolean();
                     var col = new Color32(r.ReadByte(), r.ReadByte(), r.ReadByte(), r.ReadByte()); float scale = r.ReadSingle();
+                    byte vstate = r.ReadByte(); Vector2 vaim = default, vface = default;
+                    if ((vstate & 128) != 0) { vaim = new Vector2(r.ReadSingle(), r.ReadSingle()); vface = new Vector2(r.ReadSingle(), r.ReadSingle()); }
                     if (token != Token || !enemies.TryGetValue(id, out var h) || h == null) continue;
                     var proxy = h.GetComponent<NetEnemyProxy>();
                     if (proxy != null) { proxy.target = new Vector2(x, y); proxy.flip = flip; proxy.scale = scale; if (!proxy.color.Equals(col)) { proxy.color = col; var psr = h.GetComponent<SpriteRenderer>(); if (psr != null) psr.color = col; } }
+                    var v140p = h.GetComponent<EnemyV140>();
+                    if (v140p != null) v140p.ApplyVisualState((byte)(vstate & 127), vaim, vface);
                     h.currentHealth = hp;
                 }
                 break;
@@ -812,6 +824,9 @@ public static class NetCoop
                     w.Write(h.netId); w.Write(p.x); w.Write(p.y); w.Write(h.currentHealth); w.Write(sr != null && sr.flipX);
                     Color32 col = sr != null ? (Color32)sr.color : new Color32(255, 255, 255, 255);
                     w.Write(col.r); w.Write(col.g); w.Write(col.b); w.Write(col.a); w.Write(h.transform.localScale.x);
+                    var v140 = h.GetComponent<EnemyV140>();
+                    w.Write(v140 != null ? (byte)(v140.VisualState | 128) : (byte)0);
+                    if (v140 != null) { w.Write(v140.Aim.x); w.Write(v140.Aim.y); w.Write(v140.Facing.x); w.Write(v140.Facing.y); }
                 }
             }));
         }

@@ -8,6 +8,8 @@ public class EnemyHealth : MonoBehaviour
 {
     public int maxHealth = 5;
     public int currentHealth;
+    EnemyV140 v140; bool v140Looked, skipBlock;
+    EnemyV140 V140 { get { if (!v140Looked) { v140 = GetComponent<EnemyV140>(); v140Looked = true; } return v140; } }
 
     public AudioSource damageAudioSource;
     public AudioClip[] damageSounds;
@@ -72,12 +74,13 @@ public class EnemyHealth : MonoBehaviour
     {
         if (isDead) return;
         NoteHitter();
+        if (!netProxy && V140 != null && V140.BlockHit(knockback, false, true)) return;
         if (netProxy && effect != ProjectileEffect.None)
         {
             NetCoop.ProxyHit(this, damage, knockback, effect);
             return;
         }
-        TakeHit(damage, knockback);
+        skipBlock = true; TakeHit(damage, knockback); skipBlock = false;
         if (effect == ProjectileEffect.Chain) ChainLightning();
         if (isDead) return;
         if (effect == ProjectileEffect.Slow) slowedUntil = Time.time + 1.5f; // v1.3: durant 1,5 s
@@ -128,6 +131,7 @@ public class EnemyHealth : MonoBehaviour
     {
         if (isDead) return;
         NoteHitter();
+        if (!netProxy && !skipBlock && V140 != null && V140.BlockHit(knockback, knockback.sqrMagnitude > .001f, false)) return;
 
         // Copia online: es veu el colp ací, pero el dany el decideix l'amfitrio
         if (netProxy)
@@ -165,6 +169,7 @@ public class EnemyHealth : MonoBehaviour
         if (netProxy) { NetCoop.ProxyHit(this, damage, Vector2.zero); return; }
 
         currentHealth -= damage;
+        if (V140 != null) V140.Damaged();
 
         PlayRandomDamageSound();
 

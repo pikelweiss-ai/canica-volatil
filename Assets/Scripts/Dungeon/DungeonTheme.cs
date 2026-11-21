@@ -20,5 +20,6 @@ public class DungeonTheme : ScriptableObject
 
     [Header("Enemics d'este tema (si està buit, els de la masmorra)")]
     public GameObject[] enemies;
+    public GameObject mimic;               // v1.4.0: cofre fals que apareix a les sales de tresor des del pis 2
     public GameObject boss;                // Si està buit, el boss per defecte
 }
