@@ -1,4 +1,4 @@
-# Canica Volàtil · Alpha v1.4.1
+# Canica Volàtil · Alpha v1.4.2
 
 Protocol online **19**. Tots els participants han d'usar la mateixa compilació.
 
@@ -6,15 +6,15 @@ Joc 2D de caniques, combat i masmorres fet amb Unity. Explora huit ambients, com
 
 ## Descarregar i jugar
 
-[**Descarregar Alpha v1.4.1**](https://github.com/pikelweiss-ai/canica-volatil/releases/tag/v1.4.1-alpha)
+[**Descarregar Alpha v1.4.2**](https://github.com/pikelweiss-ai/canica-volatil/releases/tag/v1.4.2-alpha)
 
 | Sistema | Paquet | Com començar |
 |---|---|---|
-| Windows x86_64 | [ZIP](https://github.com/pikelweiss-ai/canica-volatil/releases/download/v1.4.1-alpha/CanicaVolatil-Alpha-v1.4.1-Windows-x86_64.zip) | Extraure tota la carpeta i obrir `CanicaVolatil.exe`. |
-| Ubuntu / Linux x86_64 | [TAR.GZ](https://github.com/pikelweiss-ai/canica-volatil/releases/download/v1.4.1-alpha/CanicaVolatil-Alpha-v1.4.1-Ubuntu-Linux-x86_64.tar.gz) | Extraure i executar `./Jugar.sh`; alternativa: `bash Jugar.sh`. |
-| Android 8+ ARM64/ARMv7 | [APK](https://github.com/pikelweiss-ai/canica-volatil/releases/download/v1.4.1-alpha/CanicaVolatil-Alpha-v1.4.1-Android.apk) | Instal·lar l'APK i jugar en horitzontal amb dos joysticks. |
+| Windows x86_64 | [ZIP](https://github.com/pikelweiss-ai/canica-volatil/releases/download/v1.4.2-alpha/CanicaVolatil-Alpha-v1.4.2-Windows-x86_64.zip) | Extraure tota la carpeta i obrir `CanicaVolatil.exe`. |
+| Ubuntu / Linux x86_64 | [TAR.GZ](https://github.com/pikelweiss-ai/canica-volatil/releases/download/v1.4.2-alpha/CanicaVolatil-Alpha-v1.4.2-Ubuntu-Linux-x86_64.tar.gz) | Extraure i executar `./Jugar.sh`; alternativa: `bash Jugar.sh`. |
+| Android 8+ ARM64/ARMv7 | [APK](https://github.com/pikelweiss-ai/canica-volatil/releases/download/v1.4.2-alpha/CanicaVolatil-Alpha-v1.4.2-Android.apk) | Instal·lar l'APK i jugar en horitzontal amb dos joysticks. |
 
-No cal instal·lar Unity. Mantín l'executable de PC amb les seues carpetes i biblioteques. La publicació inclou [les sumes SHA256](https://github.com/pikelweiss-ai/canica-volatil/releases/download/v1.4.1-alpha/SHA256SUMS.txt). Els paquets «Source code» contenen el projecte Unity.
+No cal instal·lar Unity. Mantín l'executable de PC amb les seues carpetes i biblioteques. La publicació inclou [les sumes SHA256](https://github.com/pikelweiss-ai/canica-volatil/releases/download/v1.4.2-alpha/SHA256SUMS.txt). Els paquets «Source code» contenen el projecte Unity.
 
 ## Jugar amb amics (sense IP)
 

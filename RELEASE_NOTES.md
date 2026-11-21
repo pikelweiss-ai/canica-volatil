@@ -1,3 +1,12 @@
+# Alpha v1.4.2
+
+- **Teranyines que frenen.** Les teranyines dels racons de les sales ara frenen molt qui les xafa i es poden trencar a colps o amb trets. Tota la resta és igual que la v1.4.1.
+- **Online.** El protocol continua sent el **19**: la v1.4.2 pot jugar amb la v1.4.1.
+
+**Paquets:** Windows x86_64 (ZIP, obri `CanicaVolatil.exe`), Linux x86_64 (TAR.GZ, executa `./Jugar.sh`), Android 8+ ARM64/ARMv7 (APK) i sumes `SHA256SUMS.txt`.
+
+**Verificació:** els bots del menú, d'una masmorra, individual complet i de contingut nou passen en Windows. Queda pendent provar Linux i Android en dispositius reals.
+
 # Alpha v1.4.1
 
 - **Sis enemics més i quatre microbosses.** Salamandra, Llimac àcid, Escorpí, Llop de neu (en manada de tres amb líder) i Bombardier, més la Torreta antiga. Els microbosses tenen barra de vida i apareixen des del pis 3: Escarabat Daurat, Ull Flotant, Granota Gegant i Mag de Cendra.

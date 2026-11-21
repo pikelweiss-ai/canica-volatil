@@ -291,6 +291,10 @@ public partial class DungeonGenerator
                 if (PosHash(p, 9) % 100 >= 45) continue;                   // no tots els racons
                 var go = new GameObject("Teranyina"); go.transform.position = ground.GetCellCenterWorld(cell); go.transform.SetParent(transform);
                 var sr = go.AddComponent<SpriteRenderer>(); sr.sprite = Cobweb; sr.sortingLayerName = "Shadows"; sr.sortingOrder = 3;
+                // v1.4.2: la teranyina de racó frena (x0,35) a qui la xafa i es pot trencar a colps o amb trets (2 impactes)
+                var hitArea = go.AddComponent<CircleCollider2D>(); hitArea.isTrigger = true; hitArea.radius = .5f;
+                var webBreakable = go.AddComponent<Breakable>(); webBreakable.health = 2; webBreakable.coinChance = 0f; webBreakable.healChance = 0f; webBreakable.debrisColor = new Color(.92f, .92f, .98f);
+                go.AddComponent<CobwebSlow>();
                 sr.flipX = right; sr.flipY = down;
             }
         }
@@ -317,5 +321,15 @@ public partial class DungeonGenerator
         b.debrisColor = name.StartsWith("Roca") || name == "Pedres" || name == "Armari_metal" || name == "Paperera" ? new Color(.55f, .55f, .6f)
             : name.StartsWith("Tronc") || name == "Soca" || name == "Carro_compra" || name == "Taula_fusta" ? new Color(.45f, .3f, .15f)
             : mushroom ? new Color(.8f, .4f, .5f) : new Color(.3f, .65f, .3f);
+    }
+}
+
+// Teranyina de racó: ralentitza el jugador que hi passa per damunt (cada equip, el seu). Es trenca amb Breakable.
+public class CobwebSlow : MonoBehaviour
+{
+    void OnTriggerStay2D(Collider2D other)
+    {
+        var movement = other.GetComponentInParent<PlayerMovement>();
+        if (movement != null) movement.BoostSpeed(0.35f, 0.15f);
     }
 }

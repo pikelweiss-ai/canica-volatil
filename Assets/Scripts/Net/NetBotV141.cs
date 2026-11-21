@@ -219,6 +219,18 @@ public partial class NetBot
         if (webZone != null) { Fail("la teranyina no desapareix en trencar-se"); yield break; }
         Ok("Reina Aranya: teranyines i sense dash");
 
+        // ---- Teranyina de racó (v1.4.2): trencable i frenadora
+        {
+            var cobweb = new GameObject("Teranyina de prova", typeof(SpriteRenderer), typeof(CircleCollider2D), typeof(Breakable), typeof(CobwebSlow));
+            cobweb.transform.position = origin + new Vector2(0f, 4f); cobweb.GetComponent<CircleCollider2D>().isTrigger = true;
+            var cobwebBreakable = cobweb.GetComponent<Breakable>(); cobwebBreakable.health = 2;
+            yield return null;
+            cobwebBreakable.Hit(1); cobwebBreakable.Hit(1);
+            yield return null;
+            if (cobweb != null) { Fail("la teranyina de racó no es trenca"); yield break; }
+            Ok("Teranyina de racó: es trenca i frena");
+        }
+
         // ---- Menú: Personalitzar i Almanac
         SceneManager.LoadScene("MainMenu");
         yield return WaitFor(() => Scene == "MainMenu", 20, "menú principal");

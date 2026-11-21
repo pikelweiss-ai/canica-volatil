@@ -1,5 +1,9 @@
 # Canica Volàtil · Progrés de l'Alpha
 
+## v1.4.2 · 21 de novembre de 2026
+
+- Teranyines de racó que frenen i es poden trencar (`CobwebSlow`). Protocol 19, igual que la v1.4.1.
+
 ## v1.4.1 · 21 de novembre de 2026
 
 - Publicada a `main` amb l'etiqueta `v1.4.1-alpha`; protocol **19**. Contingut: 6 enemics nous (`EnemyV140`: Salamandra, Llimac àcid, Escorpí, Llop de neu, Bombardier, Torreta antiga), 4 microbosses amb `MicrobossBar` (Escarabat Daurat, Ull Flotant, Granota Gegant, Mag de Cendra), `HazardZone` (foc, àcid, bomba), mercader i màquina expenedora (`Shop`, `ShopUI`), pantalla Personalitzar nova (`CustomizeMenuUI`) i Almanac fase 1 (`Almanac.cs`).

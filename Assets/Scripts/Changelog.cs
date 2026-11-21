@@ -12,6 +12,15 @@ public static class Changelog
     {
         new Entry
         {
+            version = "Alpha v1.4.2", title = "Teranyines que frenen",
+            lines = new[]
+            {
+                "ARREGLOS",
+                "Les teranyines dels racons de les sales ara frenen molt qui les xafa i es poden trencar a colps o amb trets.",
+            }
+        },
+        new Entry
+        {
             version = "Alpha v1.4.1", title = "Més enemics, botiga i Almanac",
             lines = new[]
             {
