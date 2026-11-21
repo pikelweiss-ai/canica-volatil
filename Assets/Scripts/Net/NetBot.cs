@@ -761,6 +761,23 @@ public partial class NetBot : MonoBehaviour
         yield return Shot("m-novetats-completes", Screen.width, Screen.height);
         ClickButton("TANCAR");
         yield return WaitFor(() => FindFirstObjectByType<ChangelogUI>() == null, 3, "Novetats es tanca i torna al menú");
+        if (failed) yield break;
+
+        ClickButton("JUGAR");
+        yield return WaitFor(() => FindFirstObjectByType<MapSelectUI>() != null, 3, "Jugar obri el selector d'expedicions");
+        if (failed) yield break;
+        var covers = new System.Collections.Generic.HashSet<Sprite>();
+        foreach (string scene in new[] { "Dungeon", "GameScene", "Lobby" })
+        {
+            var card = GameObject.Find("Mapa " + scene)?.GetComponent<UnityEngine.UI.Button>();
+            var image = card != null ? card.transform.Find("Portada/Imatge")?.GetComponent<UnityEngine.UI.Image>() : null;
+            if (card == null || !card.interactable || image == null || image.sprite == null || !covers.Add(image.sprite))
+            { Fail("falta una portada pròpia i activa al selector: " + scene); yield break; }
+        }
+        Ok("Masmorra, Mapa de proves i Online tenen portades diferents");
+        yield return Shot("m-expedicions", Screen.width, Screen.height);
+        ClickButton("TORNAR");
+        yield return WaitFor(() => FindFirstObjectByType<MapSelectUI>() == null, 3, "Tornar tanca el selector d'expedicions");
         if (!failed) Pass();
     }
 
