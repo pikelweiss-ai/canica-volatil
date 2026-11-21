@@ -1,9 +1,9 @@
 # GitHub de Canica Volàtil
 
 Repositori públic: https://github.com/pikelweiss-ai/canica-volatil
-Branca principal: main. Alpha oficial: **Alpha v1.1.1**, etiqueta `v1.1.1-alpha` (les anteriors es conserven: `v1.1.0-alpha`, `v1.0.0-alpha`).
+Branca principal: main. Alpha oficial: **Alpha v1.4.1**, etiqueta `v1.4.1-alpha` (les anteriors es conserven, fins a `v1.0.0-alpha`).
 
-Descàrregues: https://github.com/pikelweiss-ai/canica-volatil/releases/tag/v1.1.1-alpha
+Descàrregues: https://github.com/pikelweiss-ai/canica-volatil/releases/tag/v1.4.1-alpha
 
 - Windows x86_64: ZIP amb totes les dependències; executar CanicaVolatil.exe.
 - Ubuntu/Linux x86_64: TAR.GZ amb permisos Unix i Jugar.sh.

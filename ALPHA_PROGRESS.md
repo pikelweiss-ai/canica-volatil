@@ -1,10 +1,11 @@
 # Canica Volàtil · Progrés de l'Alpha
 
-## v1.4.1 · 21 de novembre de 2026 (en desenvolupament, sense publicar)
+## v1.4.1 · 21 de novembre de 2026
 
-- Branca `alpha/arsenal`, protocol **19**. Contingut: 6 enemics nous (`EnemyV140`: Salamandra, Llimac àcid, Escorpí, Llop de neu, Bombardier, Torreta antiga), 4 microbosses amb `MicrobossBar` (Escarabat Daurat, Ull Flotant, Granota Gegant, Mag de Cendra), `HazardZone` (foc, àcid, bomba), mercader i màquina expenedora (`Shop`, `ShopUI`), pantalla Personalitzar nova (`CustomizeMenuUI`) i Almanac fase 1 (`Almanac.cs`).
+- Publicada a `main` amb l'etiqueta `v1.4.1-alpha`; protocol **19**. Contingut: 6 enemics nous (`EnemyV140`: Salamandra, Llimac àcid, Escorpí, Llop de neu, Bombardier, Torreta antiga), 4 microbosses amb `MicrobossBar` (Escarabat Daurat, Ull Flotant, Granota Gegant, Mag de Cendra), `HazardZone` (foc, àcid, bomba), mercader i màquina expenedora (`Shop`, `ShopUI`), pantalla Personalitzar nova (`CustomizeMenuUI`) i Almanac fase 1 (`Almanac.cs`).
 - Arreglos i balanç de Ferran: mira sota barret/arma, nom de la hotbar, seguiment suau de càmera, Bàcul i Llançamines (3 càrregues), gel rar des del pis 3, Vareta curativa només en cooperatiu, SMG/Polsos/Martell/Espasa/Arc/Ganxo, Mode Creatiu (sense enemic solt, TREURE COFRES, roda), Talp sense tirs fantasma.
 - Contingut generat per `Canica > Contingut v1.4.1` (`Assets/Editor/V141ContentBuilder.cs`).
+- Afegit després: masmorres amb varietat de blocs (`DungeonScenery.cs`, 94 textures a `Assets/Resources/Pixel/Blocs`), bosses +20 de vida i cures, Reina Aranya amb teranyines, Rei de Gel amb subdits i boles que frenen, Escut de mirall amb energia i detector d'encallament dels bosses. Bots `menushot`, `dungeon140`, `solo`, `v141` i `scenery` en PASS.
 
 ## v1.4.0 · 21 de novembre de 2026
 

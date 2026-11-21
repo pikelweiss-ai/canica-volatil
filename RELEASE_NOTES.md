@@ -1,3 +1,18 @@
+# Alpha v1.4.1
+
+- **Sis enemics més i quatre microbosses.** Salamandra, Llimac àcid, Escorpí, Llop de neu (en manada de tres amb líder) i Bombardier, més la Torreta antiga. Els microbosses tenen barra de vida i apareixen des del pis 3: Escarabat Daurat, Ull Flotant, Granota Gegant i Mag de Cendra.
+- **Mercader i màquina expenedora** a la sala de tresor, amb interfície pròpia, ofertes, frases del mercader i compra sincronitzada en cooperatiu. Es gasten les monedes de la partida.
+- **Personalitzar nou** amb pista per veure l'estela en moviment i quadrícula de canigues, barrets i esteles, i **Almanac** al menú amb les armes, enemics i bosses que vas trobant.
+- **Masmorres més guapes.** Cada ambient té terra i parets amb variants del seu to, un estil alternatiu per partida (amb textures de Ferran), objectes i decoració pròpies, teranyines als racons i nenúfars només sobre l'aigua.
+- **Bosses.** +20 de vida i deixen cures en lloc d'un cofre. La Reina Aranya llança teranyines que frenen i es poden trencar. El Rei de Gel invoca subdits i les seues boles ralentixen, amb tres patrons nous. Si un boss s'encalla als blocs, es mou cap a una posició lliure.
+- **Armes.** Escut de mirall amb barra d'energia i 3 de mal per segon a l'àrea. Ganxo d'abordatge èpic i amb un 20 % més de camp de vista. Bàcul de torreta i Llançamines carreguen guardats (el Llançamines té 3 càrregues). SMG, Projector de polsos, Martell orbital, Espasa de vidre i Arc de llum reequilibrats. Shuriken de qualitat verda. Vareta curativa només ix en cooperatiu.
+- **Altres canvis.** La mira queda sota la canica, el barret i l'arma. Opció «Seguiment suau de càmera». El gel és més rar i des del pis 3. Mode Creatiu amb botó per a treure cofres. Millores a la hotbar i al mapa.
+- **Online.** Protocol **19**. Tots els participants han d'usar la mateixa compilació.
+
+**Paquets:** Windows x86_64 (ZIP, obri `CanicaVolatil.exe`), Linux x86_64 (TAR.GZ, executa `./Jugar.sh`), Android 8+ ARM64/ARMv7 (APK) i sumes `SHA256SUMS.txt`.
+
+**Verificació i límits:** els bots del menú, d'una masmorra, individual complet i de contingut nou passen en Windows. Queda pendent provar Linux i Android en dispositius reals, la suite online amb la v1.4.1 i el balanç dels bosses nous jugant.
+
 # Alpha v1.4.0
 
 - **Menú principal renovat.** Fons del portal més nítid, la canica original, botons amb tipografia Chakra Petch i el botó **Novetats** davall de **Controls**. Les tres expedicions tenen portades il·lustrades a partir dels sprites del joc.

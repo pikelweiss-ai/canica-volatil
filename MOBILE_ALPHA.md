@@ -1,10 +1,10 @@
 # Alpha Android i joc entre plataformes
 
-Windows, Linux i Android es compilen des del mateix projecte, amb el mateix catàleg d'armes i cures. **Alpha v1.4.0, protocol 18.** Tots els jugadors han d'usar la mateixa compilació.
+Windows, Linux i Android es compilen des del mateix projecte, amb el mateix catàleg d'armes i cures. **Alpha v1.4.1, protocol 19.** Tots els jugadors han d'usar la mateixa compilació.
 
 ## Jugar
 
-1. Android: instal·lar `CanicaVolatil-Alpha-v1.4.0-Android.apk` de la [publicació](https://github.com/pikelweiss-ai/canica-volatil/releases/tag/v1.4.0-alpha). Android 8 o posterior, ARM64/ARMv7 i orientació horitzontal. APK signada amb la clau de depuració de l'Alpha.
+1. Android: instal·lar `CanicaVolatil-Alpha-v1.4.1-Android.apk` de la [publicació](https://github.com/pikelweiss-ai/canica-volatil/releases/tag/v1.4.1-alpha). Android 8 o posterior, ARM64/ARMv7 i orientació horitzontal. APK signada amb la clau de depuració de l'Alpha.
 2. PC: extraure el paquet de Windows o Linux de la mateixa publicació. En Windows, obri `CanicaVolatil.exe`. En Linux, executa `./Jugar.sh`.
 3. **Internet (sense IP):** JUGAR > ONLINE > pestanya INTERNET. Un jugador fa CREAR SALA (Internet ja ve triat); els altres la trien de la llista o entren amb el codi de 6 lletres. Sense ports, VPN ni servidor. Funciona amb wifi o dades mobils, des de cases diferents; Android, Windows i Linux usen el mateix protocol i poden jugar junts (Linux encara sense provar en una maquina real).
 4. Mateixa Wi-Fi/xarxa (menys retard): pestanya XARXA LOCAL. Una Wi-Fi de convidats amb aillament de dispositius pot impedir la connexio local. El servidor de sales propi (`-batchmode -nographics -canicaServer 7780`) continua com a opcio avançada.

@@ -1,20 +1,20 @@
-# Canica Volàtil · Alpha v1.4.0
+# Canica Volàtil · Alpha v1.4.1
 
-Protocol online **18**. Tots els participants han d'usar la mateixa compilació.
+Protocol online **19**. Tots els participants han d'usar la mateixa compilació.
 
 Joc 2D de caniques, combat i masmorres fet amb Unity. Explora huit ambients, combina armes i juga en solitari o en cooperatiu **per Internet sense escriure cap IP**.
 
 ## Descarregar i jugar
 
-[**Descarregar Alpha v1.4.0**](https://github.com/pikelweiss-ai/canica-volatil/releases/tag/v1.4.0-alpha)
+[**Descarregar Alpha v1.4.1**](https://github.com/pikelweiss-ai/canica-volatil/releases/tag/v1.4.1-alpha)
 
 | Sistema | Paquet | Com començar |
 |---|---|---|
-| Windows x86_64 | [ZIP](https://github.com/pikelweiss-ai/canica-volatil/releases/download/v1.4.0-alpha/CanicaVolatil-Alpha-v1.4.0-Windows-x86_64.zip) | Extraure tota la carpeta i obrir `CanicaVolatil.exe`. |
-| Ubuntu / Linux x86_64 | [TAR.GZ](https://github.com/pikelweiss-ai/canica-volatil/releases/download/v1.4.0-alpha/CanicaVolatil-Alpha-v1.4.0-Ubuntu-Linux-x86_64.tar.gz) | Extraure i executar `./Jugar.sh`; alternativa: `bash Jugar.sh`. |
-| Android 8+ ARM64/ARMv7 | [APK](https://github.com/pikelweiss-ai/canica-volatil/releases/download/v1.4.0-alpha/CanicaVolatil-Alpha-v1.4.0-Android.apk) | Instal·lar l'APK i jugar en horitzontal amb dos joysticks. |
+| Windows x86_64 | [ZIP](https://github.com/pikelweiss-ai/canica-volatil/releases/download/v1.4.1-alpha/CanicaVolatil-Alpha-v1.4.1-Windows-x86_64.zip) | Extraure tota la carpeta i obrir `CanicaVolatil.exe`. |
+| Ubuntu / Linux x86_64 | [TAR.GZ](https://github.com/pikelweiss-ai/canica-volatil/releases/download/v1.4.1-alpha/CanicaVolatil-Alpha-v1.4.1-Ubuntu-Linux-x86_64.tar.gz) | Extraure i executar `./Jugar.sh`; alternativa: `bash Jugar.sh`. |
+| Android 8+ ARM64/ARMv7 | [APK](https://github.com/pikelweiss-ai/canica-volatil/releases/download/v1.4.1-alpha/CanicaVolatil-Alpha-v1.4.1-Android.apk) | Instal·lar l'APK i jugar en horitzontal amb dos joysticks. |
 
-No cal instal·lar Unity. Mantín l'executable de PC amb les seues carpetes i biblioteques. La publicació inclou [les sumes SHA256](https://github.com/pikelweiss-ai/canica-volatil/releases/download/v1.4.0-alpha/SHA256SUMS.txt). Els paquets «Source code» contenen el projecte Unity.
+No cal instal·lar Unity. Mantín l'executable de PC amb les seues carpetes i biblioteques. La publicació inclou [les sumes SHA256](https://github.com/pikelweiss-ai/canica-volatil/releases/download/v1.4.1-alpha/SHA256SUMS.txt). Els paquets «Source code» contenen el projecte Unity.
 
 ## Jugar amb amics (sense IP)
 
@@ -31,6 +31,7 @@ Per a jugar a la mateixa wifi amb menys retard, hi ha la pestanya **XARXA LOCAL*
 - Masmorres procedurals, huit ambients, enemics, onades, bosses més durs a cada planta, sala d'elit i cambra de ressonància.
 - Sales amb formes noves, rutes alternatives, emboscades, arenes de tres onades i sales secretes. Sis enemics nous i portes que s'animen en acostar-t'hi.
 - 29 armes, rareses, armes cos a cos, dash i projectils de retorn. L'historial s'obri amb el botó **Novetats**.
+- **Dotze enemics nous i quatre microbosses** amb barra de vida, **mercader i màquina expenedora** a la sala de tresor, pantalla **Personalitzar** nova i **Almanac** (armes, enemics i bosses). Cada ambient té terra, parets i objectes propis.
 - 28 skins (moltes redissenyades per Ferran a la v1.2.0), barrets i esteles, amb opcions sense accessori.
 - **Resum de partida** en morir (pis, temps, monedes, enemics, bosses, arma favorita, sales i cofres) i **rècords** de pis, enemics, bosses i monedes, separats per a sol i cooperatiu.
 - **Mode Creatiu** al mapa lliure: agafar qualsevol arma o menjar i crear enemics, bosses i cofres. En eixir no es guarda res.
