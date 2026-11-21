@@ -132,6 +132,7 @@ public partial class PlayerAttack : MonoBehaviour
             : ReadDesktopAttack(Input.GetMouseButtonDown(0), Input.GetMouseButton(0), Input.mousePosition,
                 GameControls.Key(4) == KeyCode.Mouse0 || GameControls.Key(4, 1) == KeyCode.Mouse0, GameControls.AttackHeld(true));
         TickAttack(attackPressed);
+        TickShieldEnergy(); // v1.4.1: recàrrega de l escut
         for (int i = 0; i < hotbarSlots.Length; i++)
         {
             var weapon = hotbarSlots[i];
@@ -143,6 +144,7 @@ public partial class PlayerAttack : MonoBehaviour
                 progress = slotCooldown[i] > 0f ? 1f - Mathf.Clamp01(slotCooldown[i] / weapon.cooldown) : -1f;
             // Llançamines: la barra és la càrrega que s'està recuperant i el text, les que tens («2/3»)
             bool mines = weapon != null && weapon.special == SpecialKind.Mine;
+            if (weapon != null && weapon.special == SpecialKind.Shield) progress = ShieldEnergyFraction; // barra d energia de l escut
             if (mines) { float missing = conditions[i].Heat; progress = missing > 0f ? 1f - (missing - Mathf.Floor(missing - 0.0001f)) : -1f; }
             hotbarUI.SetCharges(i, mines ? MinesReady(conditions[i]) + "/" + MineCharges : null);
             hotbarUI.SetWeaponCondition(i, progress, weapon != null && weapon.heatLimit > 0);
@@ -679,7 +681,7 @@ public partial class PlayerAttack : MonoBehaviour
             return;
         }
 
-        handSprite.enabled = true;
+        handSprite.enabled = !(weapon.special == SpecialKind.Shield && ShieldIsUp); // amb l'escut alçat sols es veu l'escut (no dos)
         handSprite.sprite = weapon.icon;
         handSprite.flipY = aimDirection.x < 0f;
 

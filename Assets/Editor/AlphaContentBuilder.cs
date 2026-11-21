@@ -109,7 +109,8 @@ public static class AlphaContentBuilder
             return AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Enemics/"+id+".prefab");
         }
         var spiderQueen=NewBoss("ReinaAranya","Reina Aranya",80,1.8f,new[]{EnemyBoss.Attack.Summon,EnemyBoss.Attack.Fan,EnemyBoss.Attack.Jump,EnemyBoss.Attack.Web},"Aranya",new Color(.75f,.4f,1f),new Color(.5f,.3f,.7f));
-        var iceKing=NewBoss("ReiGel","Rei de Gel",85,1.5f,new[]{EnemyBoss.Attack.Ring,EnemyBoss.Attack.Spiral,EnemyBoss.Attack.Charge,EnemyBoss.Attack.Fan},"FantasmaGel",new Color(.65f,.9f,1f),new Color(.7f,.85f,1f));
+        var iceKing=NewBoss("ReiGel","Rei de Gel",85,1.5f,new[]{EnemyBoss.Attack.Summon,EnemyBoss.Attack.Snowflake,EnemyBoss.Attack.IceCone,EnemyBoss.Attack.SlowSpiral,EnemyBoss.Attack.Ring,EnemyBoss.Attack.Charge},"FantasmaGel",new Color(.65f,.9f,1f),new Color(.7f,.85f,1f));
+        { var iceBoss=iceKing.GetComponent<EnemyBoss>(); iceBoss.maxMinions=4; iceBoss.summonCount=3; EditorUtility.SetDirty(iceKing); } // v1.4.1: subdits de gel, sense acumular-se
         // ---- v1.4.0 fase 3: sis enemics nous (el comportament és a EnemyV140) ----
         GameObject NewKind(string id,EnemyV140.Kind kind,int hp,float speed,int contact)
         {

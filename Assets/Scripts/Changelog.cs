@@ -34,6 +34,7 @@ public static class Changelog
                 "Gel: ara és més rar, des del pis 3 i amb rajoles de gel. Mode Creatiu: botó per a treure cofres i la roda ja no canvia l'arma.",
                 "MASMORRES MÉS GUAPES",
                 "Cada tema té terra, parets i objectes propis: flors i troncs al bosc, cactus al desert, ametistes i bolets que brillen a la cova de cristall...",
+                "Escut de mirall: un sol escut més gran, barra d'energia de 5 s i 3 de mal per segon a qui entra a l'àrea. Rei de Gel: invoca subdits de gel i les seues boles et ralentixen, amb tres patrons nous. Els bosses ja no s'encallen als blocs.",
                 "Reina Aranya: sense dash; llança teranyines que et frenen molt i es poden trencar a colps. Terra i parets amb estil alternatiu a cada partida, teranyines als racons i nenúfars només sobre l'aigua.",
                 "Bosses: +20 de vida i deixen cures en lloc d'un cofre. Shuriken passa a qualitat verda. A l'Almanac, les verdes van entre les grises i les blaves, i el Creatiu ja no hi apunta res.",
             }

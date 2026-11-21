@@ -7,6 +7,7 @@ public class EnemyBullet : MonoBehaviour
 
     private Vector2 velocity;
     private int damage;
+    bool slows; // v1.4.1: boles de gel (color blau pàl·lid): en tocar-te et ralentixen ~2 s
     private float life;
     private Transform owner;
 
@@ -21,6 +22,7 @@ public class EnemyBullet : MonoBehaviour
         EnemyBullet b = sr.gameObject.AddComponent<EnemyBullet>();
         b.velocity = dir.normalized * speed;
         b.damage = damage;
+        b.slows = tint.HasValue && Mathf.Abs(tint.Value.r - .65f) < .03f && Mathf.Abs(tint.Value.g - .9f) < .03f && Mathf.Abs(tint.Value.b - 1f) < .03f;
         b.owner = owner;
         b.life = 6f;
         NetCoop.EnemyBulletFired(pos, b.velocity, damage, scale, tint);
@@ -43,6 +45,7 @@ public class EnemyBullet : MonoBehaviour
             if (p != null)
             {
                 p.TakeDamage(damage);
+                if (slows) p.GetComponent<PlayerMovement>()?.BoostSpeed(0.6f, 2f);
                 Pop();
                 return;
             }

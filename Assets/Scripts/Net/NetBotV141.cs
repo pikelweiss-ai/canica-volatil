@@ -152,6 +152,58 @@ public partial class NetBot
         if (GameControls.Editing) { Fail("la botiga deixa els controls bloquejats"); yield break; }
         Ok("Mercader i màquina: estoc, compra una sola vegada i interfície");
 
+        // ---- Escut de mirall: un sol escut, 3 de mal per segon i barra d'energia de 5 s
+        {
+            var attackShield = player.GetComponent<PlayerAttack>();
+            const System.Reflection.BindingFlags priv = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var aimShield = typeof(PlayerAttack).GetField("aimDirection", priv);
+            var tickShield0 = typeof(PlayerAttack).GetMethod("TickAttack", priv);
+            var tickEnergy = typeof(PlayerAttack).GetMethod("TickShieldEnergy", priv);
+            attackShield.enabled = false; // el bot porta el temps de l escut a mà (si no, l Update normal el baixa cada fotograma)
+            void Step(bool held) { tickShield0.Invoke(attackShield, new object[] { held }); tickEnergy.Invoke(attackShield, null); }
+            attackShield.hotbarSlots[0] = NetCoop.Weapon("EscutMirall"); attackShield.SelectSlot(0);
+            Place(origin + new Vector2(-2f, 0f)); aimShield.SetValue(attackShield, Vector2.right);
+            var dummy = Instantiate(Prefab("TorretaAntiga"), origin + new Vector2(-.8f, 0f), Quaternion.identity);
+            var dummyHealth = dummy.GetComponent<EnemyHealth>(); dummyHealth.maxHealth = 40; dummyHealth.currentHealth = 40;
+            dummy.GetComponent<EnemyV140>().enabled = false;
+            for (float t = 0; t < 1.3f; t += Time.deltaTime) { Step(true); yield return null; }
+            if (!attackShield.ShieldIsUp) { Fail("l'escut no s'alça"); yield break; }
+            if (dummyHealth.currentHealth > 40 - 3) { Fail("l'escut no fa mal a l'àrea: " + dummyHealth.currentHealth); yield break; }
+            for (float t = 0; t < 6f && attackShield.ShieldEnergyFraction > .02f; t += Time.deltaTime) { Heal(); Step(true); yield return null; }
+            if (attackShield.ShieldEnergyFraction > .05f) { Fail("l'escut no gasta energia: " + attackShield.ShieldEnergyFraction); yield break; }
+            for (float t = 0; t < .6f; t += Time.deltaTime) { Step(true); yield return null; } // acaba de gastar-se i es baixa sol
+            if (attackShield.ShieldIsUp) { Fail("l'escut continua alçat sense energia"); yield break; }
+            for (float t = 0; t < 1.2f; t += Time.deltaTime) { Step(false); yield return null; }
+            if (attackShield.ShieldEnergyFraction < .2f) { Fail("l'escut no es recarrega"); yield break; }
+            attackShield.enabled = true; attackShield.hotbarSlots[0] = null; Destroy(dummy); Heal();
+            Ok("Escut de mirall: energia, mal a l'àrea i un sol escut");
+        }
+
+        // ---- Rei de Gel: subdits i patrons nous
+        {
+            var iceKingPrefab = Prefab("ReiGel").GetComponent<EnemyBoss>();
+            if (!iceKingPrefab.attacks.Contains(EnemyBoss.Attack.Summon) || !iceKingPrefab.attacks.Contains(EnemyBoss.Attack.Snowflake) ||
+                !iceKingPrefab.attacks.Contains(EnemyBoss.Attack.IceCone) || !iceKingPrefab.attacks.Contains(EnemyBoss.Attack.SlowSpiral) || iceKingPrefab.maxMinions <= 0)
+            { Fail("el Rei de Gel no té els atacs nous"); yield break; }
+            Place(origin + new Vector2(-3f, 0f));
+            var king = Instantiate(Prefab("ReiGel"), origin + new Vector2(3f, 0f), Quaternion.identity);
+            var kingBoss = king.GetComponent<EnemyBoss>();
+            yield return new WaitForSeconds(.3f);
+            var run = typeof(EnemyBoss).GetMethod("Snowflake", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            king.GetComponent<EnemyHealth>().currentHealth = king.GetComponent<EnemyHealth>().maxHealth;
+            kingBoss.StartCoroutine((IEnumerator)run.Invoke(kingBoss, null));
+            yield return new WaitForSeconds(1.2f);
+            int bullets = FindObjectsByType<EnemyBullet>(FindObjectsSortMode.None).Length;
+            if (bullets < 20) { Fail("el floc de neu no llança boles (" + bullets + ")"); yield break; }
+            yield return Shot("v141-floc-de-neu");
+            foreach (var b in FindObjectsByType<EnemyBullet>(FindObjectsSortMode.None)) Destroy(b.gameObject);
+            // detector d'encallament: l'eixida no ha de petar ni deixar el boss a un lloc ocupat
+            var unstick = typeof(EnemyBoss).GetMethod("Unstick", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            unstick.Invoke(kingBoss, null); yield return null;
+            Destroy(king); Heal();
+            Ok("Rei de Gel: subdits, patrons nous i eixida d'encallaments");
+        }
+
         // ---- Reina Aranya: sense dash i amb teranyines que frenen
         var queenPrefab = Prefab("ReinaAranya");
         if (queenPrefab == null || !queenPrefab.GetComponent<EnemyBoss>().attacks.Contains(EnemyBoss.Attack.Web) || queenPrefab.GetComponent<EnemyBoss>().attacks.Contains(EnemyBoss.Attack.Charge))

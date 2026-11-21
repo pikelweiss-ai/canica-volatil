@@ -38,8 +38,8 @@ public partial class PlayerAttack
         }
 
         chargeTime = 0f;
-        if (w.special == SpecialKind.Shield) UpdateShield(w, attackPressed);
-        else HideShield();
+        if (w.special == SpecialKind.Shield) { UpdateShield(w, attackPressed); return true; } // l escut no colpeja: v1.4.1, DPS a l àrea
+        HideShield();
         return false;
     }
 
@@ -197,18 +197,51 @@ public partial class PlayerAttack
     }
 
     // ------------------------------------------------------------ Escut de mirall
+    // v1.4.1: l'escut té una barra d'energia (5 s seguits). Alçat, gasta; quan no, es recarrega al mateix ritme (1:1) i no
+    // es recarrega mentre està alçat. Si s'esgota, no es pot tornar a alçar fins que torna al 20 %.
+    // Qui entra a l'àrea de l'escut rep 3 de mal per segon (1 cada 0,33 s). Només es veu UN escut, més gran.
+    public const float ShieldMaxEnergy = 5f;
+    float shieldEnergy = ShieldMaxEnergy, shieldTick;
+    bool shieldLocked, shieldRaised;
+    public float ShieldEnergyFraction => shieldEnergy / ShieldMaxEnergy;
+    bool shieldShown;
+    public bool ShieldIsUp => shieldShown;
+
+    void TickShieldEnergy()
+    {
+        if (!shieldRaised) shieldEnergy = Mathf.Min(ShieldMaxEnergy, shieldEnergy + Time.deltaTime);
+        if (shieldLocked && shieldEnergy >= ShieldMaxEnergy * 0.2f) shieldLocked = false;
+        shieldRaised = false; // UpdateShield el torna a marcar si continua alçat
+    }
+
     void UpdateShield(WeaponData w, bool pressed)
     {
-        if (!pressed) { HideShield(); return; }
+        if (pressed && !shieldLocked && shieldEnergy > 0f)
+        {
+            shieldEnergy = Mathf.Max(0f, shieldEnergy - Time.deltaTime);
+            if (shieldEnergy <= 0f) { shieldLocked = true; Fx.Text(transform.position, "Escut esgotat", new Color(1f, .5f, .4f)); HideShield(); return; }
+        }
+        else { if (pressed && shieldEnergy <= 0f) shieldLocked = true; HideShield(); return; }
+        shieldRaised = true; shieldShown = true;
+
         if (shieldVisual == null)
         {
             var sr = Fx.MakeSprite("Escut de mirall", transform.position, w.icon != null ? w.icon : Fx.Disc, Color.white, "Player", 9);
-            sr.transform.localScale = Vector3.one * 0.7f;
+            sr.transform.localScale = Vector3.one * 1.1f; // un sol escut, més gran
             shieldVisual = sr.gameObject;
         }
         shieldVisual.SetActive(true);
         Vector2 centre = (Vector2)transform.position + aimDirection * 0.85f;
         shieldVisual.transform.position = centre;
+        var visual = shieldVisual.GetComponent<SpriteRenderer>();
+        visual.flipY = aimDirection.x < 0f;
+        shieldVisual.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(aimDirection.y, aimDirection.x) * Mathf.Rad2Deg);
+        // Capes: darrere del jugador si apuntes cap amunt, davant en la resta (igual que l'arma a la mà)
+        if (playerSprite != null)
+        {
+            visual.sortingLayerID = playerSprite.sortingLayerID;
+            visual.sortingOrder = aimDirection.y > 0.35f ? playerSprite.sortingOrder - 1 : playerSprite.sortingOrder + 1;
+        }
         GetComponent<PlayerMovement>()?.BoostSpeed(0.7f, 0.1f); // amb l'escut alçat vas més a poc a poc
 
         float arc = w.specialValue > 0f ? w.specialValue : 120f;
@@ -217,6 +250,20 @@ public partial class PlayerAttack
             Vector2 delta = (Vector2)bullet.transform.position - (Vector2)transform.position;
             if (delta.magnitude > 1.5f || Vector2.Angle(aimDirection, delta) > arc * 0.5f) continue;
             ReflectBullet(bullet);
+        }
+
+        // 3 de mal per segon als enemics de dins l'àrea (també als bosses)
+        shieldTick -= Time.deltaTime;
+        if (shieldTick > 0f) return;
+        shieldTick = 1f / 3f;
+        var seen = new HashSet<EnemyHealth>();
+        foreach (var hit in Physics2D.OverlapCircleAll(transform.position, 1.5f))
+        {
+            var enemy = hit.GetComponentInParent<EnemyHealth>();
+            if (enemy == null || enemy.IsDead || !seen.Add(enemy)) continue;
+            Vector2 delta = (Vector2)enemy.transform.position - (Vector2)transform.position;
+            if (Vector2.Angle(aimDirection, delta) > arc * 0.5f) continue;
+            enemy.TakeHit(1, aimDirection * 1.5f);
         }
     }
 
@@ -235,7 +282,7 @@ public partial class PlayerAttack
         Fx.Burst(position, new Color(0.7f, 0.9f, 1f), 6, 2f);
     }
 
-    void HideShield() { if (shieldVisual != null && shieldVisual.activeSelf) shieldVisual.SetActive(false); }
+    void HideShield() { shieldShown = false; if (shieldVisual != null && shieldVisual.activeSelf) shieldVisual.SetActive(false); }
 }
 
 // ---------------------------------------------------------------- Torreta

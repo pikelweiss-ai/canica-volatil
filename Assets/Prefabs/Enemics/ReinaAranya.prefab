@@ -349,6 +349,8 @@ MonoBehaviour:
   bulletSpeed: 5
   attacks: 02000000070000000100000008000000
   calmAttacks: 2
+  maxMinions: 0
+  summonCount: 0
   useBulletColor: 1
   bulletColor: {r: 0.75, g: 0.4, b: 1, a: 1}
   dustColor: {r: 0.5, g: 0.3, b: 0.7, a: 1}

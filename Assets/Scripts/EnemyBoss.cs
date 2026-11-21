@@ -13,7 +13,7 @@ using UnityEngine.UI;
 [RequireComponent(typeof(EnemyPathfindingAI), typeof(EnemyHealth))]
 public class EnemyBoss : MonoBehaviour
 {
-    public enum Attack { Ring, Jump, Summon, Spiral, Charge, RockRain, Teleport, Fan, Web }
+    public enum Attack { Ring, Jump, Summon, Spiral, Charge, RockRain, Teleport, Fan, Web, Snowflake, IceCone, SlowSpiral }
 
     public const int BonusHealth = 20; // v1.4.1: tots els bosses +20 de vida (s aplica en crear-los a la masmorra)
     public string bossName = "Rei Llim";
@@ -23,6 +23,8 @@ public class EnemyBoss : MonoBehaviour
     [Tooltip("Atacs del boss. Els 'calmAttacks' primers els fa des del principi; la resta, quan està furiós (mitja vida).")]
     public Attack[] attacks = { Attack.Ring, Attack.Jump, Attack.Summon, Attack.Spiral };
     public int calmAttacks = 2;
+    [Tooltip("Màxim de subdits vius a la vegada (0 = sense límit) i quants en crea cada vegada (0 = pel pis).")]
+    public int maxMinions = 0, summonCount = 0;
     public bool useBulletColor = false;
     public Color bulletColor = Color.white;
     public Color dustColor = new Color(0.6f, 0.9f, 0.35f);
@@ -55,6 +57,7 @@ public class EnemyBoss : MonoBehaviour
     void Update()
     {
         UpdateBar();
+        if (!health.IsNetProxy) CheckStuck(); // v1.4.1: si s encalla als blocs o no pot arribar-te, busca com eixir
         if (attacking || ai.Player == null || !ai.HasAggro) return;
 
         if (!enraged && health.currentHealth <= health.maxHealth / 2)
@@ -92,6 +95,9 @@ public class EnemyBoss : MonoBehaviour
             case Attack.Teleport: yield return Teleport(); break;
             case Attack.Fan: yield return Fan(); break;
             case Attack.Web: yield return Web(); break;
+            case Attack.Snowflake: yield return Snowflake(); break;
+            case Attack.IceCone: yield return IceCone(); break;
+            case Attack.SlowSpiral: yield return SlowSpiral(); break;
         }
 
         ai.mode = EnemyPathfindingAI.Mode.Chase;
@@ -176,7 +182,14 @@ public class EnemyBoss : MonoBehaviour
     {
         if (minionPrefab == null) { yield return Ring(); yield break; }
         yield return Telegraph(0.6f);
-        int count = 3 + Mathf.Clamp((RunState.Floor - 1) / 2, 0, 5);
+        int count = summonCount > 0 ? summonCount : 3 + Mathf.Clamp((RunState.Floor - 1) / 2, 0, 5);
+        if (maxMinions > 0)
+        {   // no s acumulen: descomptem els que ja hi ha vius
+            int alive = 0;
+            foreach (var other in FindObjectsByType<EnemyHealth>(FindObjectsSortMode.None)) if (other != null && !other.IsDead && other.name.StartsWith(minionPrefab.name)) alive++;
+            count = Mathf.Min(count, maxMinions - alive);
+            if (count <= 0) { yield return Ring(); yield break; }
+        }
         for (int i = 0; i < count; i++)
         {
             Vector2 pos = (Vector2)transform.position + Random.insideUnitCircle.normalized * 1.6f;
@@ -243,6 +256,102 @@ public class EnemyBoss : MonoBehaviour
     }
 
     // Pluja de roques: marques roges al voltant teu i, després, cauen
+    // ---- Detector d'encallament (v1.4.1): si el boss està lluny de tu, no atacant i no s'ha mogut en 1,5 s (columnes dels
+    // racons, buits massa estrets, camí tancat...), busca una posició lliure on càpiga, preferint les que s'acosten a tu.
+    Vector2 stuckAnchor; float stuckFor, nextUnstick;
+
+    void CheckStuck()
+    {
+        if (attacking || ai.Player == null || !ai.HasAggro || health.IsDead) { stuckFor = 0f; stuckAnchor = transform.position; return; }
+        float distance = Vector2.Distance(transform.position, ai.Player.position);
+        if (distance < 2.5f || Vector2.Distance(transform.position, stuckAnchor) > .35f) { stuckFor = 0f; stuckAnchor = transform.position; return; }
+        stuckFor += Time.deltaTime;
+        if (stuckFor < 1.5f || Time.time < nextUnstick) return;
+        stuckFor = 0f; nextUnstick = Time.time + 2f; stuckAnchor = transform.position;
+        Unstick();
+    }
+
+    void Unstick()
+    {
+        if (TileNav.Ground == null) return;
+        Vector2 here = transform.position, player = ai.Player.position;
+        Vector2 toward = (player - here).normalized;
+        float radius = Mathf.Max(.45f, ai.bodyRadius * Mathf.Max(1f, transform.localScale.x) + .1f);
+        Vector2? best = null; float bestScore = float.MaxValue;
+        foreach (float dist in new[] { 2f, 3f, 4f, 5.5f })
+            for (int step = 0; step <= 12; step++)
+            {
+                float angle = (step % 2 == 0 ? 1 : -1) * ((step + 1) / 2) * 30f; // 0, +30, -30, +60, ...
+                Vector2 dir = Quaternion.Euler(0, 0, angle) * toward;
+                Vector2 candidate = here + dir * dist;
+                if (!TileNav.CircleFree(candidate, radius)) continue;
+                float score = Vector2.Distance(candidate, player) + Mathf.Abs(angle) * .01f;
+                if (score < bestScore) { bestScore = score; best = candidate; }
+            }
+        if (best == null)
+        {   // res lliure al voltant: la casella lliure més pròxima a tu
+            var cell = TileNav.NearestFree(TileNav.Cell(player), 4);
+            best = TileNav.Center(cell);
+        }
+        if (Vector2.Distance(best.Value, player) >= Vector2.Distance(here, player) + 1f) return; // no ens allunya
+        Fx.Burst(here, dustColor, 10, 3f);
+        transform.position = best.Value;
+        var body = GetComponent<Rigidbody2D>(); if (body != null) body.position = best.Value;
+        Fx.Burst(best.Value, dustColor, 10, 3f);
+        MobSounds.Play("boss_fase2", best.Value, .25f);
+    }
+
+    // ---- Rei de Gel (v1.4.1): tres patrons de boles de gel que ralentixen
+    // Floc de neu: 6 braços de tres boles en línia amb dues boles laterals (un rosetó), dues voltes girades 30°.
+    IEnumerator Snowflake()
+    {
+        yield return Telegraph(0.5f);
+        for (int wave = 0; wave < (enraged ? 3 : 2); wave++)
+        {
+            float off = wave * 30f + Random.Range(0f, 10f);
+            for (int arm = 0; arm < 6; arm++)
+            {
+                float a = off + arm * 60f;
+                for (int k = 0; k < 3; k++) Fire(Dir(a), .6f + .3f * k);
+                Fire(Dir(a + 14f), 0.9f); Fire(Dir(a - 14f), 0.9f);
+            }
+            GameAudio.Enemy(Fx.Pew, 0.5f);
+            yield return new WaitForSeconds(0.55f);
+        }
+    }
+
+    // Con de gel: 20 boles que s'obrin en ventall cap a tu, en dues rafegades.
+    IEnumerator IceCone()
+    {
+        if (ai.Player == null) yield break;
+        yield return Telegraph(0.45f);
+        for (int burst = 0; burst < 2; burst++)
+        {
+            Vector2 toward = ((Vector2)ai.Player.position - (Vector2)transform.position).normalized;
+            float centre = Mathf.Atan2(toward.y, toward.x) * Mathf.Rad2Deg;
+            for (int i = 0; i < 20; i++)
+                Fire(Dir(centre + Mathf.Lerp(-40f, 40f, i / 19f)), 1.15f + .12f * (i % 3));
+            GameAudio.Enemy(Fx.Pew, 0.5f);
+            yield return new WaitForSeconds(0.8f);
+        }
+    }
+
+    // Espiral lenta: tres braços de boles lentes que giren durant uns 3,5 s.
+    IEnumerator SlowSpiral()
+    {
+        yield return Telegraph(0.4f);
+        float ang = 0f;
+        for (int i = 0; i < 28; i++)
+        {
+            for (int arm = 0; arm < 3; arm++) Fire(Dir(ang + arm * 120f), 0.55f);
+            if (i % 4 == 0) GameAudio.Enemy(Fx.Pew, 0.2f);
+            ang += 17f;
+            yield return new WaitForSeconds(0.12f);
+        }
+    }
+
+    static Vector2 Dir(float degrees) { float r = degrees * Mathf.Deg2Rad; return new Vector2(Mathf.Cos(r), Mathf.Sin(r)); }
+
     // v1.4.1 (Reina Aranya): llança teranyines que deixen zones on et mous molt a poc a poc (x0,4 durant 6 s).
     // Cada una avisa amb un cercle abans de caure; les zones desapareixen soles.
     IEnumerator Web()
