@@ -51,7 +51,7 @@ public partial class NetBot : MonoBehaviour
 
     void Start()
     {
-        StartCoroutine(role == "audio140" ? Audio140() : role == "v141" ? V141() : role == "dungeon140" ? Dungeon140() : role == "solo" ? SoloCombat() : role == "menushot" ? MenuShots() : role == "weaponshots" ? WeaponShots() : role == "trails" ? TrailGallery() : role == "host" ? Host() : Join());
+        StartCoroutine(role == "audio140" ? Audio140() : role == "scenery" ? Scenery141() : role == "v141" ? V141() : role == "dungeon140" ? Dungeon140() : role == "solo" ? SoloCombat() : role == "menushot" ? MenuShots() : role == "weaponshots" ? WeaponShots() : role == "trails" ? TrailGallery() : role == "host" ? Host() : Join());
         StartCoroutine(Watchdog());
     }
 
@@ -1075,7 +1075,7 @@ public partial class NetBot : MonoBehaviour
             var prefab = dungeon.themes[i].boss;
             EnemyHealth bossHealth = null;
             yield return SpawnTestBoss(dungeon, prefab, h => bossHealth = h);
-            int expected = prefab.GetComponent<EnemyHealth>().maxHealth + 25 * i;
+            int expected = prefab.GetComponent<EnemyHealth>().maxHealth + EnemyBoss.BonusHealth + 25 * i;
             if (bossHealth == null || bossHealth.currentHealth != expected)
             {
                 Fail("vida de boss individual incorrecta al pis " + RunState.Floor);

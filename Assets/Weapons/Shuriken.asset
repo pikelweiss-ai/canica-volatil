@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weaponName: Shurikens
   icon: {fileID: 21300000, guid: 3754dbbbbb1257f4d8159bcfda1b806a, type: 3}
-  rarity: 0
+  rarity: 4
   handScale: 0.75
   damage: 1
   cooldown: 0.45

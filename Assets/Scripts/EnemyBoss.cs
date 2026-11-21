@@ -15,6 +15,7 @@ public class EnemyBoss : MonoBehaviour
 {
     public enum Attack { Ring, Jump, Summon, Spiral, Charge, RockRain, Teleport, Fan }
 
+    public const int BonusHealth = 20; // v1.4.1: tots els bosses +20 de vida (s aplica en crear-los a la masmorra)
     public string bossName = "Rei Llim";
     public GameObject minionPrefab;
     public float timeBetweenAttacks = 1.4f;

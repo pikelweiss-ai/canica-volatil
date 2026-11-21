@@ -26,19 +26,19 @@ public static class Almanac
 
     public static void PickedWeapon(WeaponData weapon)
     {
-        if (weapon == null) return; weapons ??= Load(WeaponsKey);
+        if (weapon == null || !RunState.Active) return; weapons ??= Load(WeaponsKey); // només compta en partides de masmorra: ni Creatiu ni mapa lliure
         if (weapons.Add(weapon.name)) Save(WeaponsKey, weapons);
     }
 
     public static void SawEnemy(string prefabName)
     {
-        seen ??= Load(SeenKey); string id = Clean(prefabName);
+        if (!RunState.Active) return; seen ??= Load(SeenKey); string id = Clean(prefabName);
         if (seen.Add(id)) Save(SeenKey, seen);
     }
 
     public static void DefeatedEnemy(string prefabName)
     {
-        defeated ??= Load(DefeatedKey); string id = Clean(prefabName);
+        if (!RunState.Active) return; defeated ??= Load(DefeatedKey); string id = Clean(prefabName);
         if (defeated.Add(id)) Save(DefeatedKey, defeated);
     }
 
@@ -124,7 +124,7 @@ public class AlmanacUI : MonoBehaviour
         if (catalog == null) return list;
         if (tab == Tab.Weapons)
         {
-            foreach (var w in catalog.weapons.Where(w => w != null).OrderBy(w => w.rarity).ThenBy(w => w.weaponName))
+            foreach (var w in catalog.weapons.Where(w => w != null).OrderBy(w => w.rarity == ChestRarity.PocComu ? 0.5f : (float)w.rarity).ThenBy(w => w.weaponName)) // verdes entre grises i blaves
             {
                 bool got = Almanac.HasWeapon(w.name);
                 list.Add(new Entry { id = w.name, name = w.weaponName, icon = w.icon, rarity = w.rarity, unlocked = got,
@@ -143,7 +143,7 @@ public class AlmanacUI : MonoBehaviour
                 bool open = tab == Tab.Bosses ? won : saw;
                 Almanac.Notes.TryGetValue(prefab.name, out var note);
                 list.Add(new Entry { id = prefab.name, name = boss ? prefab.GetComponent<EnemyBoss>().bossName : prefab.name, icon = sr != null ? sr.sprite : null, unlocked = open, silhouette = tab == Tab.Bosses && saw && !won,
-                    stats = "Vida " + (health != null ? health.maxHealth : 0),
+                    stats = "Vida " + (health != null ? health.maxHealth + (boss ? EnemyBoss.BonusHealth : 0) : 0),
                     text = note ?? "Enemic de la masmorra. Vida " + (health != null ? health.maxHealth : 0) + "." });
             }
             list = list.OrderBy(e => e.name).ToList();

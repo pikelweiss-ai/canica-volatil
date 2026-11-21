@@ -517,6 +517,7 @@ public partial class DungeonGenerator : MonoBehaviour
                 }
 
         foreach (Vector2Int p in solid) walls.SetTile(ToCell(p), wall);
+        ApplyScenery(); // v1.4.1: variants de terra i parets del tema
 
         if (liquid != null && Theme != null && Theme.liquidTile != null)
             foreach (Vector2Int p in poolCells) liquid.SetTile(ToCell(p), Theme.liquidTile);
@@ -537,6 +538,7 @@ public partial class DungeonGenerator : MonoBehaviour
         foreach (Vector2Int p in cratesToSpawn) if (occupied.Add(p)) Spawn(cratePrefab, p);
         foreach (Vector2Int p in barrelsToSpawn) if (occupied.Add(p)) Spawn(barrelPrefab, p);
         foreach (Vector2Int p in spikesToSpawn) if (occupied.Add(p)) Spawn(spikePrefab, p);
+        ScatterScenery(); // v1.4.1: objectes i decoració del tema
 
         foreach (Room r in Rooms)
         {
@@ -887,9 +889,15 @@ public partial class DungeonGenerator : MonoBehaviour
             yield return WaitClear(r);
             // Recompensa: cofre llegendari i portal
             Vector2Int bossChest = BossChestCell(r); // BUG-022: lluny de qualsevol jugador
-            ChestRarity bossRarity = BossRarity();
-            SpawnChest(bossRarity, bossChest);
-            NetCoop.ChestSpawned((int)bossRarity, bossChest);
+            // v1.4.1 (Ferran): el boss deixa CURES en lloc del cofre d'armes. Més i millors cada pis.
+            Vector3 bossSpot = ground.GetCellCenterWorld(ToCell(bossChest));
+            int heals = 3 + RunState.Floor / 2 + (NetCoop.PlayerCount - 1);
+            for (int h = 0; h < heals; h++)
+            {
+                HealItem drop = HealItem.Random(BossRarity());
+                if (drop == null) continue;
+                HealPickup.Spawn(drop, bossSpot, bossSpot + (Vector3)(Random.insideUnitCircle.normalized * Random.Range(.7f, 1.6f)));
+            }
             SpawnPortal(r.Center + NextPortalOffset);
             NetCoop.PortalSpawned(r.Center + NextPortalOffset);
         }
@@ -1073,7 +1081,7 @@ public partial class DungeonGenerator : MonoBehaviour
             if (r.type == RoomType.Boss)
             {
                 float partyMultiplier = 1f + 0.55f * (NetCoop.PlayerCount - 1);
-                h.maxHealth = Mathf.RoundToInt((h.maxHealth + 25 * (RunState.Floor - 1)) * partyMultiplier);
+                h.maxHealth = Mathf.RoundToInt((h.maxHealth + EnemyBoss.BonusHealth + 25 * (RunState.Floor - 1)) * partyMultiplier);
             }
             else
             {

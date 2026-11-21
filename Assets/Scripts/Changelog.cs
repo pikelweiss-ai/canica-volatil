@@ -32,6 +32,9 @@ public static class Changelog
                 "La mira queda sempre davall de la canica, el barret i l'arma. Els noms llargs de la hotbar ja no tapen l'arma.",
                 "Opció «Seguiment suau de càmera». Sales amb cofre ixen marrons al mapa. Tirs fantasma del Talp arreglats.",
                 "Gel: ara és més rar, des del pis 3 i amb rajoles de gel. Mode Creatiu: botó per a treure cofres i la roda ja no canvia l'arma.",
+                "MASMORRES MÉS GUAPES",
+                "Cada tema té terra, parets i objectes propis: flors i troncs al bosc, cactus al desert, ametistes i bolets que brillen a la cova de cristall...",
+                "Bosses: +20 de vida i deixen cures en lloc d'un cofre. Shuriken passa a qualitat verda. A l'Almanac, les verdes van entre les grises i les blaves, i el Creatiu ja no hi apunta res.",
             }
         },
         new Entry

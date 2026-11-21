@@ -166,3 +166,26 @@ public partial class NetBot
         Pass();
     }
 }
+
+// v1.4.1: una captura d'una sala de combat de cada tema, per a revisar la varietat de blocs
+public partial class NetBot
+{
+    IEnumerator Scenery141()
+    {
+        for (int floorNumber = 1; floorNumber <= 8; floorNumber++)
+        {
+            RunState.Reset(); RunState.Active = true; RunState.Seed = 77; RunState.Floor = floorNumber;
+            SceneManager.LoadScene("Dungeon");
+            yield return WaitFor(() => Scene == "Dungeon" && DungeonGenerator.Instance != null, 15, "pis " + floorNumber);
+            if (failed) yield break;
+            yield return new WaitForSeconds(.5f);
+            var g = DungeonGenerator.Instance; var player = g.player; var body = player.GetComponent<Rigidbody2D>();
+            var room = g.Rooms.FirstOrDefault(r => r.type == DungeonGenerator.RoomType.Combat && r.rect.width * r.rect.height > 80) ?? g.Rooms.First(r => r.type == DungeonGenerator.RoomType.Combat);
+            player.position = g.ground.GetCellCenterWorld(new Vector3Int(room.Center.x, room.Center.y, 0)); body.position = player.position;
+            player.GetComponent<PlayerHealth>().currentHealth = 99;
+            yield return new WaitForSeconds(.6f);
+            yield return Shot("escenari-pis" + floorNumber);
+        }
+        Ok("captures dels vuit temes"); Pass();
+    }
+}
