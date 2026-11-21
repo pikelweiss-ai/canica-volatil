@@ -26,11 +26,13 @@ Fora de la v1.4.0: tot el que hi ha a sota.
 - **Nova pantalla PERSONALITZAR** (Canigues, Barrets, Esteles) estil Stumble Guys.
 - **Almanac** fase 1 (llistes d'armes i d'enemics).
 
-## v1.4.3 (proposta)
 - Els deu pendents de [Docs/PENDENTS_APUNTATS.md](PENDENTS_APUNTATS.md): arreglos petits, microbosses des del pis 2 i bugs d'online.
 
-## v1.5
-- **Catàleg de blocs** (ús de les 626 textures), **mode creador de mapes** (guardar i carregar), plantilles de sala, plantes temàtiques.
-- **Amulets** (3 ranures a la hotbar) i **tenda** de cosmètics amb qualitats.
-- Almanac fase 2 (animacions, amulets i blocs).
-- **Bosses nous** (Cor de Cristall, Cavaller Corrupte, Cuc de Sorra, Fènix, Hidra, Rei de les Clavegueres, Cuiner Boig, Professor Infernal): ací o en una v1.4.2, segons com avance.
+## v1.5 (decidit amb Ferran, 2026-11-21)
+- **Els vuit bosses nous, tots de colp** (Cor de Cristall, Cavaller Corrupte, Cuc de Sorra, Fènix, Hidra del Llac, Rei de les Clavegueres, Cuiner Boig, Professor Infernal). Disseny a `Docs/Dissenys/v1.4-bosses-enemics-sales.md` §3.
+- **Portes amb clau.** La porta de la sala del boss està tancada amb clau, i **la clau s'ha d'anar a buscar a una sala aleatòria** de la planta (sala de clau; pot estar vigilada). Cal sistema de claus (recollir, gastar, mostrar a la HUD), sincronització online i que el mapa marque on és la porta. Disseny de portes a `v1.4-bosses-enemics-sales.md` §5 i §8.
+- Els deu pendents de [Docs/PENDENTS_APUNTATS.md](PENDENTS_APUNTATS.md) (abans «v1.4.3»): arreglos petits, microbosses des del pis 2 i bugs d'online.
+- **Catàleg de blocs i mode creador de mapes.** Cada bloc és un `ScriptableObject` (nom, família, sprite, travessable, bloqueja bala, fa mal, so, ocupa el bloc complet, es pot amagar dins, peça de 2 blocs, emet llum, capa sota/sobre el jugador). Es guarden els mapes **per nom de bloc**, amb **rotació** (0/90/180/270 i flip) per bloc. Editor bàsic: pintar, guardar i carregar; després objectes i kits (Castell, Casa, Supermercat) i compartir mapes. Autotile per a catifes i camins. Plantilles de sala i plantes temàtiques. Usa les 626 textures.
+- **Amulets** (16, 3 ranures a la hotbar, tria 1 de 3 en acabar cada pis, sincronització online) i **tenda de cosmètics** amb qualitats; ranura d'amulet i sala Botiga al mercader.
+- **Almanac fase 2** (animacions, filtres, amulets i blocs).
+
