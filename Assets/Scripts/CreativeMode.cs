@@ -18,6 +18,9 @@ public class CreativeMode : MonoBehaviour
     public static CreativeMode Instance { get; private set; }
     // PlayerAttack i HealInventory no fan res mentre col·loques (si no, el clic també dispararia)
     public static bool Placing => Instance != null && (Instance.placing != null || Time.frameCount <= Instance.placedFrame + 1);
+    // v1.4.1: amb el ratolí damunt del panell Creatiu, la roda sols fa scroll de la llista (no canvia d'arma ni de cura)
+    public static bool PointerOverPanel => Instance != null && Instance.panel != null && Instance.panel.activeInHierarchy &&
+        RectTransformUtility.RectangleContainsScreenPoint((RectTransform)Instance.panel.transform, Input.mousePosition, null);
 
     enum Tab { Armes, Menjar, Enemics, Cofres }
     class Entry { public string name, info; public Sprite icon; public Color tint = Color.white; public WeaponData weapon; public HealItem heal; public GameObject prefab; public bool chest; }
@@ -102,9 +105,11 @@ public class CreativeMode : MonoBehaviour
         }
         list = UIKit.ScrollList(p, new Vector2(0, -35), new Vector2(420, 420), out _, 4);
         hint = UIKit.Text(p, "", new Vector2(0, -268), new Vector2(420, 40), 15, TextAlignmentOptions.Center, UIKit.Muted);
-        UIKit.Button(p, "TREURE ENEMICS", new Vector2(-143, -287), new Vector2(134, 34), ClearEnemies, UIKit.Style.Danger, 13, false);
-        UIKit.Button(p, "TREURE OBJECTES", new Vector2(0, -287), new Vector2(134, 34), ClearItems, UIKit.Style.Danger, 13, false);
-        UIKit.Button(p, "TANCAR (C)", new Vector2(143, -287), new Vector2(134, 34), Toggle, UIKit.Style.Normal, 13, false);
+        // v1.4.1: quatre botons (afegit TREURE COFRES), amb la mateixa separació que les pestanyes
+        UIKit.Button(p, "TREURE ENEMICS", new Vector2(-159, -287), new Vector2(100, 34), ClearEnemies, UIKit.Style.Danger, 11, false);
+        UIKit.Button(p, "TREURE OBJECTES", new Vector2(-53, -287), new Vector2(100, 34), ClearItems, UIKit.Style.Danger, 11, false);
+        UIKit.Button(p, "TREURE COFRES", new Vector2(53, -287), new Vector2(100, 34), ClearChests, UIKit.Style.Danger, 11, false);
+        UIKit.Button(p, "TANCAR (C)", new Vector2(159, -287), new Vector2(100, 34), Toggle, UIKit.Style.Normal, 11, false);
         Fill();
     }
 
@@ -261,6 +266,26 @@ public class CreativeMode : MonoBehaviour
         foreach (var it in FindObjectsByType<CoinDrop>(FindObjectsSortMode.None)) { NetShared.HostRemove(it); n++; }
         var player = GameObject.FindWithTag("Player");
         if (player != null) Fx.Text(player.transform.position, n > 0 ? n + " objectes fora" : "No n'hi ha", UIKit.Muted);
+    }
+
+    // v1.4.1: lleva tots els cofres del mapa (els de l'escena i els posats amb el Creatiu)
+    void ClearChests()
+    {
+        int n = DestroyAllChests();
+        NetCoop.ChestsCleared(); // online: també als altres i als que entren tard
+        var player = GameObject.FindWithTag("Player");
+        if (player != null) Fx.Text(player.transform.position, n > 0 ? n + " cofres fora" : "No n'hi ha", UIKit.Muted);
+    }
+
+    public static int DestroyAllChests()
+    {
+        int n = 0;
+        foreach (var c in FindObjectsByType<Chest>(FindObjectsSortMode.None))
+        {
+            Fx.Burst(c.transform.position, new Color(.7f, .9f, 1f), 4, 1.5f);
+            Destroy(c.gameObject); n++;
+        }
+        return n;
     }
 
     void ClearEnemies()

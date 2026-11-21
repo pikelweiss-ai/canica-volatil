@@ -599,6 +599,9 @@ public class NetSession : MonoBehaviour
     }
     bool welcomedOrHost => role == Role.Host || welcomed;
 
+    // v1.4.1: línia de xat només per a mi (el mercader parla a cada jugador per separat)
+    public void LocalNotice(string text) => AddSystem(text, false);
+
     void AddSystem(string text, bool broadcast = false)
     {
         var line = new ChatLine { from = 0, name = "", text = text, system = true, localOnly = !broadcast, time = Time.realtimeSinceStartup };

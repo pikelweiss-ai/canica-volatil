@@ -33,6 +33,10 @@ MonoBehaviour:
   - {fileID: 2847130976800753693, guid: 6802641d1284673459d29ac18618585f, type: 3}
   - {fileID: 7911894285281348374, guid: 87f834de0003f14418bdefdd18c12146, type: 3}
   - {fileID: 1479281401378128123, guid: 8aab5fb1a9c8f6b43870a9bb810ed0d3, type: 3}
+  - {fileID: 5484373604362342456, guid: 1f6b446d7de975446bd6610bdb5a4615, type: 3}
+  - {fileID: 224165309220206571, guid: 6075750f3730f1648be72c4d3293fa6c, type: 3}
   doorStyle: lab_metall
   mimic: {fileID: 8254766765077702423, guid: 165f3351b0dc8394da6aa67fe5476266, type: 3}
+  microbosses:
+  - {fileID: 4071329484018601251, guid: 2ee0c3b41f0afd442a71d70649a27bf2, type: 3}
   boss: {fileID: 2174415939430943108, guid: ae944127ee584cc499d757efec0b37c6, type: 3}

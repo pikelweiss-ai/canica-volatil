@@ -64,11 +64,12 @@ public class SettingsUI : MonoBehaviour
         else if(page==4)
         {
             // v1.3.1: opcions de joc
-            Button("CURA INTEL·LIGENT (CLIC DRET): "+(GameOptions.SmartHeal?"SÍ":"NO"),new Vector2(0,120),new Vector2(1200,70),()=>{GameOptions.SmartHeal=!GameOptions.SmartHeal;Build();});
-            Button("NÚMEROS DE DANY: "+(GameOptions.DamageNumbers?"SÍ":"NO"),new Vector2(0,35),new Vector2(1200,70),()=>{GameOptions.DamageNumbers=!GameOptions.DamageNumbers;Build();});
-            Button("AIM AMB REBOTS (DISC): "+(GameOptions.BounceAim?"SÍ":"NO"),new Vector2(0,-50),new Vector2(1200,70),()=>{GameOptions.BounceAim=!GameOptions.BounceAim;Build();});
-            Row("Tremolor de càmera",-150,0,1,GameOptions.Shake,v=>GameOptions.Shake=v,2);
-            Text("Clic dret: la cura intel·ligent tria la que encaixa amb la vida que et falta.",panel.transform,new Vector2(0,-235),new Vector2(1350,60),22);
+            Button("CURA INTEL·LIGENT (CLIC DRET): "+(GameOptions.SmartHeal?"SÍ":"NO"),new Vector2(0,160),new Vector2(1200,70),()=>{GameOptions.SmartHeal=!GameOptions.SmartHeal;Build();});
+            Button("NÚMEROS DE DANY: "+(GameOptions.DamageNumbers?"SÍ":"NO"),new Vector2(0,80),new Vector2(1200,70),()=>{GameOptions.DamageNumbers=!GameOptions.DamageNumbers;Build();});
+            Button("AIM AMB REBOTS (DISC): "+(GameOptions.BounceAim?"SÍ":"NO"),new Vector2(0,0),new Vector2(1200,70),()=>{GameOptions.BounceAim=!GameOptions.BounceAim;Build();});
+            Row("Tremolor de càmera",-90,0,1,GameOptions.Shake,v=>GameOptions.Shake=v,2);
+            Row("Seguiment suau de càmera",-175,0,1,GameOptions.CameraSmooth,v=>GameOptions.CameraSmooth=v,2); // v1.4.1
+            Text("Clic dret: la cura intel·ligent tria la que encaixa amb la vida que et falta.\nSeguiment suau a 0: la càmera va enganxada a la canica (millor per a apuntar).",panel.transform,new Vector2(0,-262),new Vector2(1350,70),20);
         }
         else if(page==2 && MobileInput.Active)
         {

@@ -323,7 +323,14 @@ public class Chest : MonoBehaviour
     {
         if (lootTable == null || lootTable.Length == 0) return;
 
-        WeaponData weapon = lootTable[Random.Range(0, lootTable.Length)];
+        // v1.4.1: jugant sol, la Vareta curativa no ix (sols cura companys); es tria entre la resta
+        WeaponData[] pool = lootTable;
+        if (!NetCoop.Online)
+        {
+            var solo = System.Array.FindAll(lootTable, w => w != null && w.special != SpecialKind.HealBolt);
+            if (solo.Length > 0) pool = solo;
+        }
+        WeaponData weapon = pool[Random.Range(0, pool.Length)];
         if (weapon == null) return;
 
         Vector3 from = transform.position + Vector3.up * 0.1f;

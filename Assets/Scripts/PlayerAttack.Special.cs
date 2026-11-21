@@ -81,11 +81,16 @@ public partial class PlayerAttack
 
     Vector3 SpotInFront(float distance) => TileNav.DropDestination(transform.position, transform.position + (Vector3)(aimDirection * distance));
 
+    // v1.4.1: a quina distància cau l'objecte de les armes de col·locar (l'aim l'usa per a acabar ahí); 0 = no és de col·locar
+    const float TurretDistance = 1.2f, MineDistance = 0.9f;
+    static float PlaceDistance(WeaponData w) =>
+        w == null ? 0f : w.special == SpecialKind.Turret ? TurretDistance : w.special == SpecialKind.Mine ? MineDistance : 0f;
+
     void PlaceTurret(WeaponData w)
     {
         if (turret != null) turret.Expire();
         var go = new GameObject("Torreta");
-        go.transform.position = SpotInFront(1.2f);
+        go.transform.position = SpotInFront(TurretDistance);
         turret = go.AddComponent<TurretUnit>();
         turret.Setup(w, transform, Mathf.Max(3f, w.specialValue));
     }
@@ -95,7 +100,7 @@ public partial class PlayerAttack
         mines.RemoveAll(m => m == null);
         while (mines.Count >= 3) { mines[0].Expire(); mines.RemoveAt(0); }
         var go = new GameObject("Mina");
-        go.transform.position = SpotInFront(0.9f);
+        go.transform.position = SpotInFront(MineDistance);
         var mine = go.AddComponent<MineUnit>();
         mine.Setup(w, transform, w.specialValue > 0f ? w.specialValue : 1.5f);
         mines.Add(mine);

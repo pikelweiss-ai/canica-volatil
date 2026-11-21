@@ -48,7 +48,7 @@ public static class AlphaContentBuilder
         var spores=Weapon("VaretaEspores","Vareta d'espores","Vareta",ChestRarity.Rar);
         spores.damage=1;spores.pellets=3;spores.fixedSpread=true;spores.spreadAngle=10;spores.cooldown=1f;spores.homing=0;spores.projectileSpeed=11;spores.projectileEffect=ProjectileEffect.Poison;spores.range=7;spores.projectileColor=new Color(.6f,1,.4f);spores.tintProjectileSprite=true;EditorUtility.SetDirty(spores);
         var pulse = Weapon("ProjectorPolsos", "Projector de polsos", "Llancagranades", ChestRarity.Rar);
-        pulse.damage = 3; pulse.cooldown = 0.8f; pulse.range = 6.5f; pulse.projectileSpeed = 8f;
+        pulse.damage = 3; pulse.cooldown = 0.727f; /* v1.4.1: +10 % de cadencia */ pulse.range = 6.5f; pulse.projectileSpeed = 8f;
         pulse.explosionRadius = 0f; pulse.explosionDamage = 0; pulse.projectileEffect = ProjectileEffect.Chain;
         pulse.sound = WeaponSound.Electricitat; pulse.projectileSprite = null; pulse.projectileColor = new Color(.3f, .72f, 1f);
         EditorUtility.SetDirty(pulse);
@@ -64,11 +64,11 @@ public static class AlphaContentBuilder
         turretStaff.special = SpecialKind.Turret; turretStaff.specialValue = 9f; turretStaff.damage = 1; turretStaff.cooldown = 10f;
         turretStaff.range = 7f; turretStaff.homing = 0f; turretStaff.zoomRange = 0f; turretStaff.spreadAngle = 0f; turretStaff.specialSprite = S("Armes/TorretaCos"); turretStaff.specialSprite2 = S("Armes/TorretaCano"); EditorUtility.SetDirty(turretStaff);
         var minelauncher = Weapon("Llancamines", "Llançamines", "Llancagranades", ChestRarity.Rar);
-        minelauncher.special = SpecialKind.Mine; minelauncher.specialValue = 1.5f; minelauncher.damage = 4; minelauncher.cooldown = 0.8f;
+        minelauncher.special = SpecialKind.Mine; minelauncher.specialValue = 1.5f; minelauncher.damage = 4; minelauncher.cooldown = 0.25f; /* v1.4.1: 3 carregues de 1,5 s (PlayerAttack) */
         minelauncher.explosionRadius = 0f; minelauncher.zoomRange = 0f; minelauncher.spreadAngle = 0f; minelauncher.specialSprite = S("Armes/MinaCos"); minelauncher.specialSprite2 = S("Armes/MinaLlum"); EditorUtility.SetDirty(minelauncher);
         var lightBow = Weapon("ArcLlum", "Arc de llum", "Ballesta", ChestRarity.Epic);
         lightBow.special = SpecialKind.Charge; lightBow.specialValue = 1.2f; lightBow.damage = 2; lightBow.cooldown = 0.3f;
-        lightBow.pierce = 3; lightBow.projectileSpeed = 26f; lightBow.range = 10f; lightBow.zoomRange = 0f; lightBow.pellets = 1; lightBow.spreadAngle = 0f;
+        lightBow.pierce = 3; lightBow.projectileSpeed = 26f; lightBow.range = 10f; lightBow.zoomRange = 9f; /* v1.4.1: mateixa camera que el Laser */ lightBow.pellets = 1; lightBow.spreadAngle = 0f;
         lightBow.projectileSprite = S("Armes/Fletxa"); lightBow.tintProjectileSprite = true; lightBow.projectileColor = new Color(1f, .92f, .55f);
         lightBow.sound = WeaponSound.Cristall; EditorUtility.SetDirty(lightBow);
         var mirrorShield = Weapon("EscutMirall", "Escut de mirall", "EspasaVidre", ChestRarity.Epic);
@@ -77,11 +77,11 @@ public static class AlphaContentBuilder
         mirrorShield.meleeDashDistance = 0f; mirrorShield.alternateSwing = false; mirrorShield.projectileColor = new Color(.7f, .9f, 1f);
         EditorUtility.SetDirty(mirrorShield);
         var healWand = Weapon("VaretaCurativa", "Vareta curativa", "Vareta", ChestRarity.Rar);
-        healWand.special = SpecialKind.HealBolt; healWand.specialValue = 7f; healWand.damage = 1; healWand.cooldown = 1.1f; healWand.homing = 0f;
+        healWand.special = SpecialKind.HealBolt; healWand.specialValue = 7f; healWand.damage = 1; healWand.cooldown = 2.5f; /* v1.4.1: abans 1,1 */ healWand.homing = 0f;
         healWand.range = 7f; healWand.projectileColor = new Color(.45f, 1f, .5f); healWand.zoomRange = 0f; healWand.spreadAngle = 0f; healWand.projectileSprite = S("Armes/CuraBala"); healWand.tintProjectileSprite = false; healWand.projectileSpriteScale = 0.9f; EditorUtility.SetDirty(healWand);
-        var grapple = Weapon("Ganxo", "Ganxo d'abordatge", "Pistola", ChestRarity.Comu);
+        var grapple = Weapon("Ganxo", "Ganxo d'abordatge", "Pistola", ChestRarity.Epic);
         grapple.special = SpecialKind.Grapple; grapple.specialValue = 1.1f; grapple.damage = 2; grapple.cooldown = 1.6f; grapple.range = 6f;
-        grapple.zoomRange = 0f; grapple.spreadAngle = 0f; grapple.specialSprite = S("Armes/GanxoHarpo"); EditorUtility.SetDirty(grapple);
+        grapple.zoomRange = 0f; grapple.zoomMultiplier = 1.2f; /* v1.4.1: +20 % de camp de vista */ grapple.spreadAngle = 0f; grapple.specialSprite = S("Armes/GanxoHarpo"); EditorUtility.SetDirty(grapple);
 
         foreach(string path in Directory.GetFiles("Assets/Prefabs/Cofres","*.prefab"))
         {

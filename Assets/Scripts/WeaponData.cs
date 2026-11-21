@@ -33,6 +33,7 @@ public class WeaponData : ScriptableObject
     public float projectileSpeed = 12f;
     public float range = 6f;            // Distància màxima del projectil
     public float zoomRange = -1f;       // Abast que compta per a l'allunyament de la càmera: -1 = l'abast (màx. 10), 0 = no allunya
+    [Min(1f)] public float zoomMultiplier = 1f; // v1.4.1: camp de vista mínim amb l'arma a la mà (Ganxo: 1,2 = +20 %)
     public float projectileSize = 0.3f; // Mida de la hitbox (i de la boleta si no hi ha sprite)
     public Color projectileColor = Color.white;
     public bool tintProjectileSprite;

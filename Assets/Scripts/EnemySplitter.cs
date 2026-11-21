@@ -7,6 +7,7 @@ public class EnemySplitter : MonoBehaviour
     public int pieces = 2;
     public int maxGenerations = 1;
     public float childScale = 0.65f;
+    public int childHealth = 0;          // v1.4.1: > 0 = vida fixa dels fills (Llimac àcid: 2)
     [HideInInspector] public int generation = 0;
 
     void Start()
@@ -39,7 +40,7 @@ public class EnemySplitter : MonoBehaviour
             s.generation = generation + 1;
 
             EnemyHealth ch = child.GetComponent<EnemyHealth>();
-            ch.maxHealth = Mathf.Max(1, h.maxHealth / 2);
+            ch.maxHealth = childHealth > 0 ? childHealth : Mathf.Max(1, h.maxHealth / 2);
             ch.currentHealth = ch.maxHealth;
             ch.coinsMax = 1;
 

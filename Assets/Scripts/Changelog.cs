@@ -12,6 +12,30 @@ public static class Changelog
     {
         new Entry
         {
+            version = "Alpha v1.4.1", title = "Més enemics, botiga i Almanac",
+            lines = new[]
+            {
+                "ENEMICS",
+                "Sis enemics nous: Salamandra, Llimac àcid, Escorpí, Llop de neu (en manada), Bombardier i Torreta antiga.",
+                "Quatre microbosses amb barra de vida: Escarabat Daurat, Ull Flotant, Granota Gegant i Mag de Cendra (des del pis 3).",
+                "BOTIGA",
+                "A la sala de tresor, un mercader amb taulell i una màquina expenedora. Gasta les monedes de la partida (E per a obrir).",
+                "PERSONALITZAR I ALMANAC",
+                "Pantalla Personalitzar nova: pista per a veure l'estela en moviment i quadrícula de canigues, barrets i esteles.",
+                "Almanac nou al menú: totes les armes i els enemics que vas trobant.",
+                "ARMES",
+                "SMG: -10 % de cadència, -10 % d'abast i V un 10 % més oberta. Projector de polsos: +10 % de cadència.",
+                "Martell orbital: recarrega un 15 % més lent que abans. Ganxo d'abordatge: ara és èpic i amplia el camp de vista un 20 %.",
+                "Arc de llum: mateixa càmera que el Làser. Bàcul de torreta: carrega també guardat, amb barra a la hotbar i l'aim acaba on cau.",
+                "Llançamines: 3 càrregues que es recuperen en 1,5 s. Vareta curativa: només ix en cooperatiu, i recarrega més lenta.",
+                "ARREGLOS I OPCIONS",
+                "La mira queda sempre davall de la canica, el barret i l'arma. Els noms llargs de la hotbar ja no tapen l'arma.",
+                "Opció «Seguiment suau de càmera». Sales amb cofre ixen marrons al mapa. Tirs fantasma del Talp arreglats.",
+                "Gel: ara és més rar, des del pis 3 i amb rajoles de gel. Mode Creatiu: botó per a treure cofres i la roda ja no canvia l'arma.",
+            }
+        },
+        new Entry
+        {
             version = "Alpha v1.4.0", title = "Menú nou i masmorres més variades",
             lines = new[]
             {

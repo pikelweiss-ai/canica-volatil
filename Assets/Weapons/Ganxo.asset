@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weaponName: Ganxo d'abordatge
   icon: {fileID: 21300000, guid: d223520e0290c9f4e959ac75119c40be, type: 3}
-  rarity: 0
+  rarity: 2
   handScale: 0.7
   damage: 2
   closeDamageRange: 0
@@ -26,6 +26,7 @@ MonoBehaviour:
   projectileSpeed: 16
   range: 6
   zoomRange: 0
+  zoomMultiplier: 1.2
   projectileSize: 0.15
   projectileColor: {r: 1, g: 0.85, b: 0.3, a: 1}
   tintProjectileSprite: 0

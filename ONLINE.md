@@ -2,6 +2,8 @@
 
 `MobSound` (99, protocol 17): l'amfitrió envia identificador de clip, posició i volum; cada participant aplica la distància i el volum de la categoria Enemics.
 
+**Protocol de treball v1.4.1: 19.** Missatges nous: `ChestClear` (100, el Creatiu de l'amfitrió lleva els cofres del mapa lliure), `ZoneFx` (101: estil i posició d'una zona de perill; cada equip fa el mal al SEU jugador i l'amfitrió, a la resta d'enemics), `ShopReq` (102, client → amfitrió: ranura que vol comprar) i `ShopSold` (103, amfitrió → tots: ranura venuda i comprador; el comprador cobra amb les seues monedes i l'article cau al seu voltant). L'estoc del mercader i de la màquina ix d'una llavor compartida (no s'envia). Els enemics nous reutilitzen l'estat visual d'`EnemyV140` (bit 128 = líder dels llops). Cal que tots usen la mateixa compilació.
+
 **Protocol de treball v1.4.0: 18.** Generació determinista amb formes i anells, incloses les arenes i la cobertura de les sales circulars grans. `RoomState` inclou l'onada actual de l'arena, també en resincronitzar. L'emboscada conserva l'estat 7 quan s'activa. `BreakableHit` incorpora un booleà que distingeix cos a cos/mina de bales per a les parets esquerdades. L'amfitrió controla onades i flames. Cal que tots els participants usen la mateixa compilació.
 
 La compilació de la [v1.4.0](https://github.com/pikelweiss-ai/canica-volatil/releases/tag/v1.4.0-alpha) ha passat **6/6** en Windows amb `test-online.ps1 -MobileClient`, inclosos els dos casos sense IP. El client mòbil era simulat i els manifests de Windows, Linux i Android coincideixen. Queda pendent una partida entre dispositius reals amb esta compilació.

@@ -18,7 +18,7 @@ MonoBehaviour:
   handScale: 0.75
   damage: 3
   closeDamageRange: 0
-  cooldown: 0.8
+  cooldown: 0.727
   knockbackForce: 3
   projectilePrefab: {fileID: 0}
   projectileSprite: {fileID: 0}
@@ -26,6 +26,7 @@ MonoBehaviour:
   projectileSpeed: 8
   range: 6.5
   zoomRange: -1
+  zoomMultiplier: 1
   projectileSize: 0.25
   projectileColor: {r: 0.3, g: 0.72, b: 1, a: 1}
   tintProjectileSprite: 0

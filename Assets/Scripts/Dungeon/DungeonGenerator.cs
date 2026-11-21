@@ -256,7 +256,12 @@ public partial class DungeonGenerator : MonoBehaviour
                 r.shape = (RoomShape)rng.Next(7);
                 if (r.type == RoomType.Arena)
                     r.shape = (int)r.shape % 2 == 0 ? RoomShape.Circle : RoomShape.Octagon;
-                if (r != ProgressionRoom) r.modifier = (RoomModifier)rng.Next(4);
+                if (r != ProgressionRoom)
+                {
+                    r.modifier = (RoomModifier)rng.Next(4);
+                    // v1.4.1: el gel és rar i sols des del pis 3 (abans 1 de cada 4 sales des del pis 1); si no toca, sala normal
+                    if (r.modifier == RoomModifier.Ice && (RunState.Floor < IceMinFloor || rng.Next(3) != 0)) r.modifier = RoomModifier.None;
+                }
             }
         }
     }
@@ -484,11 +489,22 @@ public partial class DungeonGenerator : MonoBehaviour
                     foreach(Vector2Int p in room.rect.allPositionsWithin)
                         if(floor.Contains(p)) ground.SetTile(ToCell(p),Theme.refugeFloor);
 
+        // v1.4.1: les sales de gel usen les rajoles de gel de l'art nou (Resources/Pixel/Gel); si faltaren, el tint de sempre
+        TileBase[] ice = IceTiles();
         foreach (Room room in Rooms)
             if (room.modifier == RoomModifier.Ice)
                 foreach (Vector2Int p in room.rect.allPositionsWithin)
                     if (floor.Contains(p))
-                    { ground.SetTileFlags(ToCell(p), TileFlags.None); ground.SetColor(ToCell(p), new Color(.65f, .85f, 1f)); }
+                    {
+                        if (ice.Length > 0)
+                        {
+                            // La variant depén de la posició (igual a l'amfitrió i als clients); 3 de cada 4 rajoles són gel net
+                            int h = (p.x * 73856093) ^ (p.y * 19349663);
+                            h = (h ^ (h >> 13)) & 0x7fffffff;
+                            ground.SetTile(ToCell(p), h % 4 != 0 || ice.Length == 1 ? ice[0] : ice[1 + h / 4 % (ice.Length - 1)]);
+                        }
+                        else { ground.SetTileFlags(ToCell(p), TileFlags.None); ground.SetColor(ToCell(p), new Color(.65f, .85f, 1f)); }
+                    }
 
         // Parets: tot el que toca terra (també en diagonal) i no és terra
         TileBase wall = Theme != null ? Theme.wallTile : null;
@@ -529,6 +545,22 @@ public partial class DungeonGenerator : MonoBehaviour
                 ChestRarity rarity = TreasureRarity();
                 r.ambushRarity = rarity;
                 SpawnChest(rarity, r.Center);
+                // v1.4.1: mercader amb taulell i màquina expenedora a la sala de tresor (fora de la creu central)
+                if (r.type == RoomType.Treasure)
+                {
+                    double shopChance = RunState.Floor <= 1 ? .6 : RunState.Floor <= 4 ? .8 : 1.0;
+                    if (rng.NextDouble() < shopChance)
+                    {
+                        int shopSeed = (NetSession.Active && NetSession.Instance.Seed != 0 ? NetSession.Instance.Seed : RunState.Seed) + RunState.Floor * 7919;
+                        var merchantCell = r.Center + new Vector2Int(-3, 3); var tableCell = r.Center + new Vector2Int(-3, 2); var vendingCell = r.Center + new Vector2Int(3, 3);
+                        if (floor.Contains(merchantCell) && floor.Contains(tableCell) && floor.Contains(vendingCell))
+                        {
+                            reserved.Add(merchantCell); reserved.Add(tableCell); reserved.Add(vendingCell);
+                            Shop.Spawn(ground.GetCellCenterWorld(ToCell(merchantCell)), Shop.MerchantKind, shopSeed);
+                            Shop.Spawn(ground.GetCellCenterWorld(ToCell(vendingCell)), Shop.VendingKind, shopSeed);
+                        }
+                    }
+                }
                 // v1.4.0: a vegades, un cofre fals (Mimic) a la sala de tresor, des del pis 2
                 if (r.type == RoomType.Treasure && Theme != null && Theme.mimic != null && RunState.Floor >= 2 && rng.NextDouble() < 0.3)
                     for (int tries = 0; tries < 30; tries++)
@@ -875,8 +907,16 @@ public partial class DungeonGenerator : MonoBehaviour
                 for (int i = 0; i < count; i++)
                 {
                     bool elite = r == ProgressionRoom && w == 0 && i == 0;
-                    StartCoroutine(SpawnEnemy(elite ? PickElite() : PickEnemy(), RandomSpawnCell(r), r, elite ? 1.25f : 0f));
+                    GameObject chosen = elite ? PickElite() : PickEnemy();
+                    StartCoroutine(SpawnEnemy(chosen, RandomSpawnCell(r), r, elite ? 1.25f : 0f));
+                    // v1.4.1: els llops de neu venen en manada de tres
+                    if (!elite && chosen != null && chosen.TryGetComponent<EnemyV140>(out var pack) && pack.kind == EnemyV140.Kind.SnowWolf)
+                        for (int extra = 0; extra < 2; extra++) StartCoroutine(SpawnEnemy(chosen, RandomSpawnCell(r), r, 0f));
                 }
+                // v1.4.1: des del pis 3, de vegades un microboss (barra de vida) a la primera onada d'una sala de combat normal
+                if (w == 0 && r.type == RoomType.Combat && r != ProgressionRoom && RunState.Floor >= 3 &&
+                    Theme != null && Theme.microbosses != null && Theme.microbosses.Length > 0 && rng.NextDouble() < 0.25)
+                    StartCoroutine(SpawnEnemy(Theme.microbosses[rng.Next(Theme.microbosses.Length)], RandomSpawnCell(r), r, 0f));
                 yield return new WaitForSeconds(0.9f);
                 yield return WaitClear(r);
                 if (w < waves - 1) yield return new WaitForSeconds(0.6f);
@@ -1040,6 +1080,9 @@ public partial class DungeonGenerator : MonoBehaviour
                 if (scaleBonus > 0f) mult *= 1.5f;
                 h.maxHealth = Mathf.RoundToInt(h.maxHealth * mult);
             }
+            // v1.4.1: microboss en cooperatiu: vida x(1 + 0,5 per jugador extra)
+            if (e.TryGetComponent<EnemyV140>(out var micro) && micro.IsMicroboss)
+                h.maxHealth = Mathf.RoundToInt(h.maxHealth * (1f + 0.5f * (NetCoop.PlayerCount - 1)));
             h.currentHealth = h.maxHealth;
             r.alive.Add(h);
         }

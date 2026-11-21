@@ -252,6 +252,34 @@ public static class NetCoop
         S.SendAll(NetProtocol.Frame(Msg.ChestSpawn, w => { w.Write(Token); w.Write(rarity); w.Write(cell.x); w.Write(cell.y); }));
     }
 
+    // v1.4.1: mercader i màquina. El client demana; l'amfitrió decideix qui compra primer i ho diu a tots.
+    public static void ShopBuyRequest(int kind, int slot)
+    {
+        if (!IsClient) return;
+        S.SendToHost(NetProtocol.Frame(Msg.ShopReq, w => { w.Write(Token); w.Write(kind); w.Write(slot); }));
+    }
+
+    public static void ShopSoldBroadcast(int kind, int slot, int buyer)
+    {
+        if (!IsHost) return;
+        S.SendAll(NetProtocol.Frame(Msg.ShopSold, w => { w.Write(Token); w.Write(kind); w.Write(slot); w.Write(buyer); }));
+    }
+
+    // v1.4.1: zona de perill (HazardZone) nova; l'amfitrió la fa arribar als clients
+    public static void ZoneSpawned(byte style, Vector2 pos)
+    {
+        if (!IsHost) return;
+        S.SendAll(NetProtocol.Frame(Msg.ZoneFx, w => { w.Write(Token); w.Write(style); w.Write(pos.x); w.Write(pos.y); }));
+    }
+
+    // v1.4.1: el Creatiu de l'amfitrió ha llevat tots els cofres del mapa lliure
+    public static void ChestsCleared()
+    {
+        if (!IsHost) return;
+        extraChests.Clear();
+        S.SendAll(NetProtocol.Frame(Msg.ChestClear, w => w.Write(Token)));
+    }
+
     public static void PortalSpawned(Vector2Int cell)
     {
         if (!IsHost) return;
@@ -506,6 +534,12 @@ public static class NetCoop
                 else S.SendTo(target, NetProtocol.Frame(Msg.HealAlly, w => w.Write(token)));
                 break;
             }
+            case Msg.ShopReq:
+            {
+                int token = r.ReadInt32(); int kind = r.ReadInt32(); int slot = r.ReadInt32();
+                if (token == Token) Shop.HostResolve(kind, slot, from.id);
+                break;
+            }
             case Msg.ChestReq:
             {
                 int token = r.ReadInt32(); int key = r.ReadInt32();
@@ -680,6 +714,24 @@ public static class NetCoop
                 int token = r.ReadInt32(); int rarity = r.ReadInt32(); var cell = new Vector2Int(r.ReadInt32(), r.ReadInt32());
                 if (token == Token && gen != null) gen.NetSpawnChest(rarity, cell);
                 else if (token == Token) CreativeMode.CreateChest(rarity, cell); // mapa lliure: cofre del Creatiu (cel·la = posicio x4)
+                break;
+            }
+            case Msg.ShopSold:
+            {
+                int token = r.ReadInt32(); int kind = r.ReadInt32(); int slot = r.ReadInt32(); int buyer = r.ReadInt32();
+                if (token == Token) Shop.OnSold(kind, slot, buyer);
+                break;
+            }
+            case Msg.ZoneFx:
+            {
+                int token = r.ReadInt32(); byte style = r.ReadByte(); var p = new Vector2(r.ReadSingle(), r.ReadSingle());
+                if (token == Token && style <= (byte)HazardZone.Style.Bomb) HazardZone.Create((HazardZone.Style)style, p);
+                break;
+            }
+            case Msg.ChestClear:
+            {
+                int token = r.ReadInt32();
+                if (token == Token && gen == null) CreativeMode.DestroyAllChests(); // sols al mapa lliure
                 break;
             }
             case Msg.ChestOpened:

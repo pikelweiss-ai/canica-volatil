@@ -346,6 +346,7 @@ MonoBehaviour:
   kind: 1
   disguise: {fileID: 0}
   rewardRarity: 1
+  minion: {fileID: 0}
 --- !u!1 &8685216902031945803
 GameObject:
   m_ObjectHideFlags: 0

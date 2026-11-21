@@ -18,4 +18,10 @@ public static class GameOptions
         get { try { return Mathf.Clamp01(PlayerPrefs.GetFloat("Opt_Shake", 1f)); } catch { return 1f; } }
         set { try { PlayerPrefs.SetFloat("Opt_Shake", Mathf.Clamp01(value)); PlayerPrefs.Save(); } catch { } }
     }
+    // v1.4.1: com de suau segueix la càmera al jugador, de 0 (enganxada) a 1 (suau, com abans)
+    public static float CameraSmooth
+    {
+        get { try { return Mathf.Clamp01(PlayerPrefs.GetFloat("Opt_CameraSmooth", 1f)); } catch { return 1f; } }
+        set { try { PlayerPrefs.SetFloat("Opt_CameraSmooth", Mathf.Clamp01(value)); PlayerPrefs.Save(); } catch { } }
+    }
 }

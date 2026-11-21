@@ -25,6 +25,14 @@ public class CoinCounter : MonoBehaviour
         UpdateText();
     }
 
+    // v1.4.1: gastar monedes de la partida (mercader i màquina); no toca el total guardat per a cosmètics (CoinBank)
+    public static bool Spend(int amount)
+    {
+        if (instance == null || instance.currentCoins < amount) return false;
+        instance.currentCoins -= amount; RunState.Coins = instance.currentCoins; instance.UpdateText();
+        return true;
+    }
+
     public void AddCoin()
     {
         currentCoins++;

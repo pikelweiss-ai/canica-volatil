@@ -53,6 +53,7 @@ public class CameraFollow : MonoBehaviour
                 float range = zoom / Mathf.Cos(weapon.spreadAngle * Mathf.Deg2Rad) + 1f;
                 size = Mathf.Max(normalSize, range / Mathf.Min(1f, view.aspect));
             }
+            if (weapon != null && weapon.zoomMultiplier > 1f) size = Mathf.Max(size, normalSize * weapon.zoomMultiplier);
             view.orthographicSize = Mathf.MoveTowards(view.orthographicSize, size, 18f * Time.deltaTime);
         }
         Vector3 targetCamPos = target.position + offset;
@@ -69,7 +70,10 @@ public class CameraFollow : MonoBehaviour
             shakeDuration -= Time.deltaTime;
         }
 
-        transform.position = Vector3.SmoothDamp(transform.position, targetCamPos, ref velocity, 0.2f / Mathf.Max(.01f,smoothing),Mathf.Infinity,Time.deltaTime);
+        // v1.4.1: l'opció «Seguiment suau» escala el retard; a 0 la càmera va enganxada (millor per a apuntar)
+        float smoothTime = 0.2f / Mathf.Max(.01f, smoothing) * GameOptions.CameraSmooth;
+        if (smoothTime < 0.005f) { transform.position = targetCamPos; velocity = Vector3.zero; }
+        else transform.position = Vector3.SmoothDamp(transform.position, targetCamPos, ref velocity, smoothTime, Mathf.Infinity, Time.deltaTime);
         FitSky();
     }
 

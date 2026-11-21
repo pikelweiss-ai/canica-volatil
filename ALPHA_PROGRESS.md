@@ -1,5 +1,11 @@
 # Canica Volàtil · Progrés de l'Alpha
 
+## v1.4.1 · 21 de novembre de 2026 (en desenvolupament, sense publicar)
+
+- Branca `alpha/arsenal`, protocol **19**. Contingut: 6 enemics nous (`EnemyV140`: Salamandra, Llimac àcid, Escorpí, Llop de neu, Bombardier, Torreta antiga), 4 microbosses amb `MicrobossBar` (Escarabat Daurat, Ull Flotant, Granota Gegant, Mag de Cendra), `HazardZone` (foc, àcid, bomba), mercader i màquina expenedora (`Shop`, `ShopUI`), pantalla Personalitzar nova (`CustomizeMenuUI`) i Almanac fase 1 (`Almanac.cs`).
+- Arreglos i balanç de Ferran: mira sota barret/arma, nom de la hotbar, seguiment suau de càmera, Bàcul i Llançamines (3 càrregues), gel rar des del pis 3, Vareta curativa només en cooperatiu, SMG/Polsos/Martell/Espasa/Arc/Ganxo, Mode Creatiu (sense enemic solt, TREURE COFRES, roda), Talp sense tirs fantasma.
+- Contingut generat per `Canica > Contingut v1.4.1` (`Assets/Editor/V141ContentBuilder.cs`).
+
 ## v1.4.0 · 21 de novembre de 2026
 
 - [Publicació i notes](https://github.com/pikelweiss-ai/canica-volatil/releases/tag/v1.4.0-alpha) amb paquets Windows, Linux i Android. Protocol 18 i manifests coincidents.

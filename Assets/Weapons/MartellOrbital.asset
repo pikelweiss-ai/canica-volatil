@@ -17,7 +17,7 @@ MonoBehaviour:
   rarity: 2
   handScale: 0.75
   damage: 5
-  cooldown: 1.1
+  cooldown: 1.262
   knockbackForce: 5
   projectilePrefab: {fileID: 0}
   projectileSprite: {fileID: 0}

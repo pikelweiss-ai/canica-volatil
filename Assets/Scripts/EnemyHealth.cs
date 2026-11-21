@@ -55,6 +55,9 @@ public class EnemyHealth : MonoBehaviour
     {
         GameAudio.Track(damageAudioSource,SoundCategory.Enemies);
         if (currentHealth <= 0) currentHealth = maxHealth;
+        // v1.4.1: l'Almanac apunta els enemics que veus i els que derrotes (a cada equip, el seu)
+        Almanac.SawEnemy(gameObject.name);
+        Died += dead => Almanac.DefeatedEnemy(dead.gameObject.name);
 
         spriteRenderer = GetComponent<SpriteRenderer>();
         if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();

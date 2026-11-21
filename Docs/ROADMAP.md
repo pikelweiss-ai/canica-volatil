@@ -19,7 +19,7 @@
 Fora de la v1.4.0: tot el que hi ha a sota.
 **Blocs nous**: la v1.4.0 **no** té catàleg. Només, **si queda temps**, 2-3 variants de terra i 3-4 decoracions per tema (`v1.4-bosses-enemics-sales.md` §9 punt 4). **Tot l'ús dels blocs va a la v1.5** (decisió de Ferran).
 
-## v1.4.1
+## v1.4.1 (feta, pendent de provar i publicar)
 - Els altres 6 enemics (Salamandra, Llimac àcid, Escorpí, Llop de neu, Bombardier, Torreta antiga) i els **4 microbosses** amb barra de vida.
 - **Mercader** i màquina expenedora a la sala de tresor, amb la seua interfície i missatges al xat.
 - **Nova pantalla PERSONALITZAR** (Canigues, Barrets, Esteles) estil Stumble Guys.

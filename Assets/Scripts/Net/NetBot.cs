@@ -51,7 +51,7 @@ public partial class NetBot : MonoBehaviour
 
     void Start()
     {
-        StartCoroutine(role == "audio140" ? Audio140() : role == "dungeon140" ? Dungeon140() : role == "solo" ? SoloCombat() : role == "menushot" ? MenuShots() : role == "weaponshots" ? WeaponShots() : role == "trails" ? TrailGallery() : role == "host" ? Host() : Join());
+        StartCoroutine(role == "audio140" ? Audio140() : role == "v141" ? V141() : role == "dungeon140" ? Dungeon140() : role == "solo" ? SoloCombat() : role == "menushot" ? MenuShots() : role == "weaponshots" ? WeaponShots() : role == "trails" ? TrailGallery() : role == "host" ? Host() : Join());
         StartCoroutine(Watchdog());
     }
 
@@ -871,6 +871,8 @@ public partial class NetBot : MonoBehaviour
         if (failed) yield break;
 
         var camera = Camera.main;
+        attack.hotbarSlots[0] = null; attack.SelectSlot(0);
+        yield return new WaitForSeconds(1.5f); // v1.4.1: el Ganxo (camp +20 %) pot haver deixat la càmera allunyada
         float normalSize = camera.orthographicSize;
         foreach (string id in new[] { "Sniper", "Laser" })
         {
@@ -1297,7 +1299,7 @@ public partial class NetBot : MonoBehaviour
             return chest != null && chest.lootTable != null && System.Array.IndexOf(chest.lootTable, NetCoop.Weapon(id)) >= 0;
         }
         foreach (var entry in new[] { (ChestRarity.Rar, "BaculTorreta"), (ChestRarity.Rar, "Llancamines"), (ChestRarity.Rar, "VaretaCurativa"),
-                                      (ChestRarity.Epic, "ArcLlum"), (ChestRarity.Epic, "EscutMirall"), (ChestRarity.Comu, "Ganxo") })
+                                      (ChestRarity.Epic, "ArcLlum"), (ChestRarity.Epic, "EscutMirall"), (ChestRarity.Epic, "Ganxo") }) // v1.4.1: el Ganxo passa a èpic
             if (!InChest(entry.Item1, entry.Item2)) { Fail(entry.Item2 + " no ix dels cofres " + entry.Item1); yield break; }
         Ok("les armes noves ixen dels cofres");
 

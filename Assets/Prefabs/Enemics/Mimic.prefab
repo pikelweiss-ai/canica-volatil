@@ -433,3 +433,4 @@ MonoBehaviour:
   kind: 0
   disguise: {fileID: 21300000, guid: 9ab9bd2806a4d244daee86d15d38430b, type: 3}
   rewardRarity: 1
+  minion: {fileID: 0}

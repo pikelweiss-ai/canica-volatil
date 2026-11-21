@@ -74,10 +74,28 @@ public partial class DungeonGenerator
             Vector2Int hint = neighbour.Center + direction * 2;
             var sign = new GameObject("Pista sala secreta", typeof(TextMeshPro)); sign.transform.SetParent(transform);
             sign.transform.position = ground.GetCellCenterWorld(ToCell(hint));
-            var label = sign.GetComponent<TextMeshPro>(); label.text = "Una paret sona buida..."; label.fontSize = 2;
-            label.alignment = TextAlignmentOptions.Center; label.rectTransform.sizeDelta = new Vector2(6, 1);
+            var label = sign.GetComponent<TextMeshPro>(); label.text = "Paret esquerdada a prop!\nTrenca-la a colps o amb una mina"; label.fontSize = 2; // v1.4.1: abans «Una paret sona buida...»
+            label.alignment = TextAlignmentOptions.Center; label.rectTransform.sizeDelta = new Vector2(7, 2);
             label.GetComponent<MeshRenderer>().sortingLayerName = "Player";
         }
+    }
+
+    const int IceMinFloor = 3;
+    static UnityEngine.Tilemaps.TileBase[] iceTiles;
+    // Gel_net primer (és el que més ix) i després les variants amb bombolles i esquerdes
+    static UnityEngine.Tilemaps.TileBase[] IceTiles()
+    {
+        if (iceTiles != null) return iceTiles;
+        var list = new System.Collections.Generic.List<UnityEngine.Tilemaps.TileBase>();
+        foreach (string name in new[] { "Gel_net", "Gel_bombolles", "Gel_esquerdat", "Gel_esquerdat_llarga", "Gel_esquerdat_estrella" })
+        {
+            var sprite = Resources.Load<Sprite>("Pixel/Gel/" + name);
+            if (sprite == null) continue;
+            var tile = ScriptableObject.CreateInstance<UnityEngine.Tilemaps.Tile>();
+            tile.sprite = sprite; tile.name = name; tile.colliderType = UnityEngine.Tilemaps.Tile.ColliderType.None;
+            list.Add(tile);
+        }
+        return iceTiles = list.ToArray();
     }
 
     public bool IsIceAt(Vector3 position)

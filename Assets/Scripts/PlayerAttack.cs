@@ -110,9 +110,17 @@ public partial class PlayerAttack : MonoBehaviour
         HandleSlotSelection();
         // v1.3: com abans de la v1.2.1, nomes baixa el cooldown de l'arma que tens a la ma;
         // les armes guardades es queden congelades, llevat de les de cos a cos (i l'escalfament, mes avall).
+        // v1.4.1: el Bàcul de torreta també es carrega guardat, però al 80 % del ritme (10 s -> 12,5 s)
         for (int s = 0; s < slotCooldown.Length; s++)
-            if (s == selectedSlot || (hotbarSlots[s] != null && hotbarSlots[s].melee))
-                slotCooldown[s] = Mathf.Max(0f, slotCooldown[s] - Time.deltaTime);
+        {
+            bool turretStowed = s != selectedSlot && hotbarSlots[s] != null && hotbarSlots[s].special == SpecialKind.Turret;
+            if (s == selectedSlot || (hotbarSlots[s] != null && hotbarSlots[s].melee) || turretStowed)
+                slotCooldown[s] = Mathf.Max(0f, slotCooldown[s] - Time.deltaTime * (turretStowed ? StowedTurretRate : 1f));
+            // v1.4.1: Llançamines amb càrregues. conditions[s].Heat = càrregues que falten (0 = totes plenes).
+            // Cada una es recupera en 1,5 s a la mà i en ~1,9 s guardat (80 %), una darrere de l'altra.
+            if (hotbarSlots[s] != null && hotbarSlots[s].special == SpecialKind.Mine)
+                conditions[s].Heat = Mathf.Max(0f, conditions[s].Heat - Time.deltaTime * (s == selectedSlot ? 1f : StowedTurretRate) / MineRecharge);
+        }
         UpdateAim();
         UpdateHand();
 
@@ -130,10 +138,38 @@ public partial class PlayerAttack : MonoBehaviour
             float progress = weapon == null ? -1f : weapon.maxShots > 0 ?
                 1f - conditions[i].ShotsUsed / (float)weapon.maxShots : weapon.heatLimit > 0 ?
                 conditions[i].Heat / weapon.heatLimit : -1f;
+            // v1.4.1: el Bàcul ensenya a la casella com va la recàrrega (roig -> verd; desapareix quan està llest)
+            if (weapon != null && weapon.special == SpecialKind.Turret && weapon.cooldown > 0f)
+                progress = slotCooldown[i] > 0f ? 1f - Mathf.Clamp01(slotCooldown[i] / weapon.cooldown) : -1f;
+            // Llançamines: la barra és la càrrega que s'està recuperant i el text, les que tens («2/3»)
+            bool mines = weapon != null && weapon.special == SpecialKind.Mine;
+            if (mines) { float missing = conditions[i].Heat; progress = missing > 0f ? 1f - (missing - Mathf.Floor(missing - 0.0001f)) : -1f; }
+            hotbarUI.SetCharges(i, mines ? MinesReady(conditions[i]) + "/" + MineCharges : null);
             hotbarUI.SetWeaponCondition(i, progress, weapon != null && weapon.heatLimit > 0);
         }
     }
 
+    // v1.4.1: servei «Recarregar combustible» del mercader. Fracció gastada (0-1) de l'arma de trets limitats que més n'ha gastat; -1 si no en portes cap.
+    public float FuelUsedFraction()
+    {
+        float worst = -1f;
+        for (int i = 0; i < hotbarSlots.Length; i++)
+            if (hotbarSlots[i] != null && hotbarSlots[i].maxShots > 0)
+                worst = Mathf.Max(worst, conditions[i].ShotsUsed / (float)hotbarSlots[i].maxShots);
+        return worst;
+    }
+
+    public void RefuelAll()
+    {
+        for (int i = 0; i < hotbarSlots.Length; i++)
+            if (hotbarSlots[i] != null && hotbarSlots[i].maxShots > 0) conditions[i].ShotsUsed = 0;
+        hotbarUI.Refresh(hotbarSlots, selectedSlot);
+    }
+
+    const float StowedTurretRate = 0.8f; // també per a les càrregues del Llançamines
+    const int MineCharges = 3;
+    const float MineRecharge = 1.5f;
+    public static int MinesReady(WeaponCondition c) => Mathf.Clamp(MineCharges - Mathf.CeilToInt(c.Heat - 0.0001f), 0, MineCharges);
     float noFuelAt = -10f;
     void NoFuel()
     {
@@ -181,11 +217,16 @@ public partial class PlayerAttack : MonoBehaviour
             {
                 NoFuel(); // v1.4.0: l'arma no desapareix; es queda buida
             }
+            else if (weapon.special == SpecialKind.Mine && MinesReady(conditions[selectedSlot]) <= 0)
+            {
+                slotCooldown[selectedSlot] = 0.1f; // sense càrregues: espera que se'n recupere una
+            }
             else
             {
                 Shoot(weapon);
                 slotCooldown[selectedSlot] = weapon.cooldown;
                 ref WeaponCondition condition = ref conditions[selectedSlot];
+                if (weapon.special == SpecialKind.Mine) condition.Heat = Mathf.Min(MineCharges, condition.Heat + 1f); // gasta una càrrega
                 if (weapon.heatLimit > 0 && ++condition.Heat >= weapon.heatLimit)
                 {
                     condition.Heat = weapon.heatLimit;
@@ -238,6 +279,7 @@ public partial class PlayerAttack : MonoBehaviour
             return;
 
         aimLine.enabled = showAimLine;
+        SyncAimSorting();
 
         // Rectangle: per al puny, tan ample i llarg com la zona del colp;
         // per a les armes, tan ample com el projectil i llarg com l'abast
@@ -263,6 +305,14 @@ public partial class PlayerAttack : MonoBehaviour
 
         Vector2 start = transform.position;
         Vector2 end = start + aimDirection * length;
+        // v1.4.1: armes de col·locar (Torreta, Mines): l'aim acaba on cau l'objecte i el marca amb un cercle
+        bool placer = PlaceDistance(weapon) > 0f;
+        if (placer)
+        {
+            end = SpotInFront(PlaceDistance(weapon));
+            length = Mathf.Max(0.05f, Vector2.Distance(start, end));
+            width = endWidth = 0.12f;
+        }
 
         // Fons: mentre carrega és més fluix; quan està llest, color normal
         Color baseColor = aimColor;
@@ -278,6 +328,12 @@ public partial class PlayerAttack : MonoBehaviour
         }
         else SetLine(aimLine, start, end, width, endWidth, baseColor);
         if (aimBounce != null && !(weapon != null && !weapon.melee && weapon.wallBounces > 0 && GameOptions.BounceAim)) aimBounce.enabled = false;
+        if (placer && aimSpot == null) aimSpot = CreateLine("AimSpot", aimLine.sharedMaterial, -3);
+        if (aimSpot != null)
+        {
+            aimSpot.enabled = placer && showAimLine;
+            if (aimSpot.enabled) { SortLine(aimSpot, playerSprite != null ? playerSprite.sortingOrder - 3 : 0); SetAimCircle(aimSpot, end, 0.35f, 1f, baseColor); }
+        }
 
         // Part carregada: creix des del jugador cap a fora amb el color normal
         // (l'opacitat es calcula perquè, sumada al fons, done just aimColor i no faça salt en acabar)
@@ -294,7 +350,7 @@ public partial class PlayerAttack : MonoBehaviour
 
     // Disc (v1.3): l'aim ensenya tots els rebots que farà, com el Rico del Brawl Stars.
     // Cada rebot allarga el recorregut un 15 % de l'abast (bounceRangeBonus).
-    LineRenderer aimBounce;
+    LineRenderer aimBounce, aimSpot;
     void DrawBouncePath(WeaponData w, Vector2 start, Color color, float width)
     {
         if (aimBounce == null) aimBounce = CreateLine("AimBounce", aimLine.sharedMaterial, -2);
@@ -360,6 +416,22 @@ public partial class PlayerAttack : MonoBehaviour
         aimFill.enabled = false;
     }
 
+    // v1.4.1: el cos canvia d'ordre cada frame segons la Y (PlayerCosmetics), aixi que l'aim
+    // l'ha de seguir: sempre davall de canica, barret i arma, pero damunt de l'ombra (capa Shadows).
+    void SyncAimSorting()
+    {
+        if (playerSprite == null) return;
+        int body = playerSprite.sortingOrder;
+        SortLine(aimLine, body - 3); SortLine(aimBounce, body - 3); SortLine(aimFill, body - 2);
+    }
+
+    void SortLine(LineRenderer line, int order)
+    {
+        if (line == null) return;
+        line.sortingLayerID = playerSprite.sortingLayerID;
+        line.sortingOrder = order;
+    }
+
     LineRenderer CreateLine(string name, Material material, int orderOffset)
     {
         // L'aim és NOMÉS visual: un LineRenderer sense collider (no té hitbox, no bloqueja
@@ -394,7 +466,7 @@ public partial class PlayerAttack : MonoBehaviour
                 newSlot = i;
         }
 
-        float scroll = GameControls.Wheel == 3 || GameControls.WheelHeals ? 0f : Input.mouseScrollDelta.y;
+        float scroll = GameControls.Wheel == 3 || GameControls.WheelHeals || CreativeMode.PointerOverPanel ? 0f : Input.mouseScrollDelta.y;
         if (scroll < 0f) newSlot = (selectedSlot + 1) % hotbarSlots.Length;
         if (scroll > 0f) newSlot = (selectedSlot - 1 + hotbarSlots.Length) % hotbarSlots.Length;
 
@@ -414,10 +486,10 @@ public partial class PlayerAttack : MonoBehaviour
         {
             if (hotbarSlots[i] == null)
             {
-                hotbarSlots[i] = weapon;
+                hotbarSlots[i] = weapon; Almanac.PickedWeapon(weapon); // v1.4.1: l Almanac guarda l arma
                 slotCooldown[i] = Mathf.Clamp(cooldownRemaining, 0f, Mathf.Max(weapon.cooldown, weapon.overheatCooldown));
                 conditions[i] = new WeaponCondition(Mathf.Clamp(condition.ShotsUsed, 0, Mathf.Max(0, weapon.maxShots)),
-                    float.IsNaN(condition.Heat) ? 0f : Mathf.Clamp(condition.Heat, 0f, weapon.heatLimit));
+                    float.IsNaN(condition.Heat) ? 0f : Mathf.Clamp(condition.Heat, 0f, weapon.special == SpecialKind.Mine ? MineCharges : weapon.heatLimit)); // Mines: càrregues que falten
                 hotbarUI.Refresh(hotbarSlots, selectedSlot);
                 return true;
             }

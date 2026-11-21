@@ -205,6 +205,7 @@ MonoBehaviour:
   openSound: {fileID: 0}
   volume: 0.6
   lootTable:
+  - {fileID: 11400000, guid: 94305c0147637414d9a10b215f33dd7d, type: 2}
   - {fileID: 11400000, guid: bd2cd9bdd20993e41ae0740edcef4d70, type: 2}
   - {fileID: 11400000, guid: 5bd657251aeafc543b3575222d8d5291, type: 2}
   - {fileID: 11400000, guid: 5877b8191420de7489f93155cec054ae, type: 2}

@@ -61,10 +61,11 @@ public class AlphaMainMenu : MonoBehaviour
         }
 
         AddButton("JUGAR", 337, controller.PlayGame, true);
-        AddButton("PERSONALITZAR", 443, controller.OpenCustomize);
-        AddButton("AJUSTOS", 548, SettingsUI.Open);
-        AddButton("CONTROLS", 653, ControlsUI.Open);
-        var news = AddButton("NOVETATS", 758, Changelog.Open);
+        AddButton("PERSONALITZAR", 425, controller.OpenCustomize);
+        AddButton("AJUSTOS", 513, SettingsUI.Open);
+        AddButton("CONTROLS", 601, ControlsUI.Open);
+        AddButton("ALMANAC", 689, AlmanacUI.Open); // v1.4.1
+        var news = AddButton("NOVETATS", 777, Changelog.Open);
         if (Changelog.HasNew)
         {
             var unread = UIKit.Text(news.rect, "NOU", new Vector2(122, 0), new Vector2(55, 32), 17,
@@ -96,7 +97,7 @@ public class AlphaMainMenu : MonoBehaviour
     {
         var style = primary ? UIKit.Style.Primary : UIKit.Style.Normal;
         float width = primary ? 490 : 424;
-        var button = UIKit.Button(safeContent, label, Vector2.zero, new Vector2(width - 40, 93),
+        var button = UIKit.Button(safeContent, label, Vector2.zero, new Vector2(width - 40, 82),
             action, style, primary ? 44 : 32, false);
         button.label.name = GameTypography.MainMenuButtonText;
         button.label.characterSpacing = 4f;

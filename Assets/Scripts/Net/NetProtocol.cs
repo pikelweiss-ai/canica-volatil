@@ -11,7 +11,7 @@ using System.Text;
 // El mateix format serveix per a parlar amb l'amfitrio (LAN/IP) i amb el servidor de sales (Internet).
 public static class NetProtocol
 {
-    public const int Version = 18; // v1.4.0: disseny de sales i onada de l'arena a RoomState
+    public const int Version = 19; // v1.4.1: ChestClear (Creatiu); v1.4.0: disseny de sales i onada de l arena a RoomState
     public const int GamePort = 7777;      // TCP: l'amfitrio escolta ací (prova 7777..7787)
     public const int DiscoveryPort = 7778; // UDP: descobriment de sales en LAN
     public const int RelayPort = 7780;     // TCP: servidor de sales d'Internet
@@ -198,6 +198,9 @@ public enum Msg : byte
     BreakableHit = 94, ChainFx = 95, RestartRun = 96,
     HealReq = 97, HealAlly = 98, // Vareta curativa: client -> amfitrio -> company curat
     MobSound = 99, // So autoritari amb posicio i volum
+    ChestClear = 100, // v1.4.1: el Creatiu de l amfitrio lleva tots els cofres del mapa lliure
+    ZoneFx = 101,     // v1.4.1: zona de perill (foc, acid, bomba): estil + posicio; cada equip fa mal al seu jugador
+    ShopReq = 102, ShopSold = 103, // v1.4.1: mercader i maquina: peticio de compra (client -> amfitrio) i article venut (amfitrio -> tots)
 }
 
 public enum RoomMode : byte { Dungeon = 0, FreeMap = 1 }

@@ -19,7 +19,7 @@ public class HotbarUI : MonoBehaviour
     private Image[] icons;
     private Image[] conditionBars;
     private SlotInput[] inputs;
-    private TextMeshProUGUI[] names;
+    private TextMeshProUGUI[] names, charges;
     private TextMeshProUGUI currentWeaponText;
     private TMP_FontAsset font;
     public void SetHudAbove(bool value)
@@ -53,6 +53,7 @@ public class HotbarUI : MonoBehaviour
         conditionBars = new Image[slotCount];
         inputs = new SlotInput[slotCount];
         names = new TextMeshProUGUI[slotCount];
+        charges = new TextMeshProUGUI[slotCount];
 
         float totalWidth = slotCount * SlotSize + (slotCount - 1) * Spacing;
 
@@ -102,9 +103,24 @@ public class HotbarUI : MonoBehaviour
 
             // Nom de l'arma
             TextMeshProUGUI weaponName = CreateText(slot.transform, "", 16, TextAlignmentOptions.Bottom);
-            weaponName.rectTransform.offsetMin = new Vector2(2f, 4f);
+            // v1.4.1: el nom viu sols a la franja de baix (davall de la icona), en una línia
+            // i encongint la lletra si és llarg («Ganxo d'abordatge»), per a no tapar el sprite.
+            weaponName.rectTransform.anchorMax = new Vector2(1f, 0.25f);
+            weaponName.rectTransform.offsetMin = new Vector2(2f, 3f);
             weaponName.rectTransform.offsetMax = new Vector2(-2f, 0f);
+            weaponName.textWrappingMode = TextWrappingModes.NoWrap;
+            weaponName.enableAutoSizing = true;
+            weaponName.fontSizeMin = 8f;
+            weaponName.fontSizeMax = 16f;
+            weaponName.overflowMode = TextOverflowModes.Ellipsis;
             names[i] = weaponName;
+
+            TextMeshProUGUI count = CreateText(slot.transform, "", 15, TextAlignmentOptions.TopRight);
+            count.rectTransform.offsetMin = new Vector2(0f, 0f);
+            count.rectTransform.offsetMax = new Vector2(-5f, -4f);
+            count.color = new Color(1f, .85f, .35f);
+            count.enabled = false;
+            charges[i] = count;
         }
 
         // Text damunt de la hotbar amb l'arma seleccionada
@@ -164,6 +180,15 @@ public class HotbarUI : MonoBehaviour
     }
 
     // Actualitza la hotbar: quina casella està triada i què hi ha a cada una
+    // v1.4.1: text xicotet dalt a la dreta de la casella (càrregues del Llançamines, «2/3»); null l'amaga
+    public void SetCharges(int slot, string text)
+    {
+        if (charges == null || slot < 0 || slot >= charges.Length || charges[slot] == null) return;
+        bool show = !string.IsNullOrEmpty(text);
+        if (charges[slot].enabled != show) charges[slot].enabled = show;
+        if (show && charges[slot].text != text) charges[slot].text = text;
+    }
+
     public void SetWeaponCondition(int slot, float progress, bool heat)
     {
         Image bar = conditionBars[slot];
