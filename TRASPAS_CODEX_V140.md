@@ -97,3 +97,11 @@ summary = { "Sales amb formes noves", "Plantes amb anells", "Emboscades, arenes 
 
 ## 9. Missatge a Ferran quan comences
 En valencià, digues què faràs primer, i **no assumisques** res de la jugabilitat: ell prova i decideix.
+
+## ESTAT ACTUAL DE LA FEINA (actualitzat 2026-11-21, tarda)
+Codex es va quedar sense crèdits a mitja fase 3 i **Claude Code ha continuat**. Estat real (`git log`):
+- **Fase 1 · dungeons**: feta (`610d213`). Protocol online **17**. *Avís*: ara el 75 % de les sales de combat/arena/emboscada reben un modificador (foscor, gel o flames) perquè `rng.Next(4)` en dona un a cada sala; **Ferran ha de valorar si és massa** (potser 25-35 %). La prova de lliscament al mur falla en sales amb gel, així que s'ha fet que la ignore.
+- **Fase 2 · sorolls**: feta (`9defaea`).
+- **Fase 3 · enemics**: **feta** (`8f204d9`): Mimic, Sanador, Escut-guerrer, Talp, Franctirador i Banshee, amb prefabs al builder, temes, sincronització online (afegit a `EnemySnap`) i una prova al bot per enemic. Solo bot **PASS**. **Falten**: `test-online.ps1` complet, Linux i Android, i que Ferran els vegi jugant. Limitació coneguda: la Banshee no empeny els companys en cooperatiu (només els fa mal) perquè caldria un missatge de xarxa nou.
+- **Fase 4 · portes** i **Fase 5 · Llançaflames sense combustible**: **sense començar**.
+Continua per la **fase 4**. No toques res d'això: ja està provat.
