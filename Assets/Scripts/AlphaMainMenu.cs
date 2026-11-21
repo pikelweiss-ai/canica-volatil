@@ -97,7 +97,15 @@ public class AlphaMainMenu : MonoBehaviour
         var style = primary ? UIKit.Style.Primary : UIKit.Style.Normal;
         float width = primary ? 490 : 424;
         var button = UIKit.Button(safeContent, label, Vector2.zero, new Vector2(width - 40, 93),
-            action, style, primary ? 38 : 29, false);
+            action, style, primary ? 36 : 26, false);
+        button.label.name = GameTypography.MainMenuButtonText;
+        button.label.characterSpacing = 2f;
+        var labelRect = button.label.rectTransform;
+        labelRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, primary ? 360 : 306);
+        button.label.enableAutoSizing = true;
+        button.label.fontSizeMax = button.label.fontSize;
+        button.label.fontSizeMin = button.label.fontSize * .65f;
+        GameTypography.Apply(button.label);
         PlaceFromLeft(button.rect, 325, y);
 
         string art = Art + (primary ? "primari_" : "secundari_");
@@ -117,12 +125,8 @@ public class AlphaMainMenu : MonoBehaviour
             selectedSprite = hover,
             pressedSprite = Resources.Load<Sprite>(art + "premut")
         };
-        if (primary)
-        {
-            button.label.color = new Color(.15f, .065f, .025f);
-            button.label.rectTransform.anchoredPosition = new Vector2(0, 3);
-        }
-        else button.label.rectTransform.anchoredPosition = new Vector2(0, 4);
+        if (primary) button.label.color = new Color(.15f, .065f, .025f);
+        labelRect.anchoredPosition = new Vector2(0, primary ? 6 : 0);
         return button;
     }
 

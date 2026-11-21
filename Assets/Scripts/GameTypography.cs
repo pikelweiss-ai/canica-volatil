@@ -4,6 +4,7 @@ using TMPro;
 
 public static class GameTypography
 {
+    public const string MainMenuButtonText = "Text dels botons del menú principal";
     static readonly System.Collections.Generic.HashSet<TMP_Text> pending = new System.Collections.Generic.HashSet<TMP_Text>();
     static Material shadowMaterial;
     public static TMP_FontAsset Font => AlphaVisualStyle.Current != null ? AlphaVisualStyle.Current.font : TMP_Settings.defaultFontAsset;
@@ -33,10 +34,11 @@ public static class GameTypography
         bool coins=false;
         for(Transform t=text.transform;t!=null;t=t.parent)
             if(t.name == "CoinText") { coins=true; break; }
-        var target=coins && AlphaVisualStyle.Current != null ? AlphaVisualStyle.Current.coinFont : Font;
+        bool menuButton = text.name == MainMenuButtonText && AlphaVisualStyle.Current?.coinFont != null;
+        var target = (coins || menuButton) && AlphaVisualStyle.Current != null ? AlphaVisualStyle.Current.coinFont : Font;
         if(target == null) return;
         if(text.font != target) text.font=target;
-        if(coins) return;
+        if(coins || menuButton) return;
         if((text.fontStyle & FontStyles.Bold)==0) text.fontStyle |= FontStyles.Bold;
         if(shadowMaterial == null)
         {
