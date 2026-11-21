@@ -752,8 +752,8 @@ public partial class NetBot : MonoBehaviour
                 button.spriteState.highlightedSprite == null || button.spriteState.pressedSprite == null)
             { Fail("falta el botó o algun estat gràfic: " + label); yield break; }
             var title = button.transform.Find(GameTypography.MainMenuButtonText)?.GetComponent<TMPro.TMP_Text>();
-            if (title == null || title.font != AlphaVisualStyle.Current.coinFont || title.isTextTruncated)
-            { Fail("falta la lletra pixelada o el text es talla: " + label); yield break; }
+            if (title == null || title.font != GameTypography.MainMenuButtonFont || title.isTextTruncated)
+            { Fail("falta la font dels botons o el text es talla: " + label); yield break; }
             var events = UnityEngine.EventSystems.EventSystem.current;
             var pointer = new UnityEngine.EventSystems.PointerEventData(events)
             {
@@ -764,7 +764,7 @@ public partial class NetBot : MonoBehaviour
             if (hits.Count == 0 || hits[0].gameObject != button.gameObject)
             { Fail("el botó no rep el clic: " + label); yield break; }
         }
-        Ok("els cinc botons tenen lletra pixelada, sprites i reben clics");
+        Ok("els cinc botons tenen la font del menú, sprites i reben clics");
         yield return Shot("m-menu", Screen.width, Screen.height);
         ClickButton("NOVETATS");
         yield return WaitFor(() => FindFirstObjectByType<ChangelogUI>() != null, 3, "Novetats obri l'historial");

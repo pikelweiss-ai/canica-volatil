@@ -97,9 +97,9 @@ public class AlphaMainMenu : MonoBehaviour
         var style = primary ? UIKit.Style.Primary : UIKit.Style.Normal;
         float width = primary ? 490 : 424;
         var button = UIKit.Button(safeContent, label, Vector2.zero, new Vector2(width - 40, 93),
-            action, style, primary ? 36 : 26, false);
+            action, style, primary ? 44 : 32, false);
         button.label.name = GameTypography.MainMenuButtonText;
-        button.label.characterSpacing = 2f;
+        button.label.characterSpacing = 4f;
         var labelRect = button.label.rectTransform;
         labelRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, primary ? 360 : 306);
         button.label.enableAutoSizing = true;
@@ -126,7 +126,7 @@ public class AlphaMainMenu : MonoBehaviour
             pressedSprite = Resources.Load<Sprite>(art + "premut")
         };
         if (primary) button.label.color = new Color(.15f, .065f, .025f);
-        labelRect.anchoredPosition = new Vector2(0, primary ? 6 : 0);
+        labelRect.anchoredPosition = new Vector2(0, 4f);
         return button;
     }
 

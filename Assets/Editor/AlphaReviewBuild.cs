@@ -7,6 +7,15 @@ using UnityEngine;
 
 public static class AlphaReviewBuild
 {
+    internal static string OutputRoot
+    {
+        get
+        {
+            string root = Environment.GetEnvironmentVariable("CANICA_ALPHA_BUILD_ROOT");
+            return string.IsNullOrEmpty(root) ? "Builds/AlphaReview" : root;
+        }
+    }
+
     public static void BuildWindows() { AlphaVisualBuilder.BuildAssets(); AlphaContentBuilder.Build(); NetContentBuilder.Build(); AlphaSettingsChecks.Validate(); MobileInputChecks.Validate(); Build(BuildTarget.StandaloneWindows64,"Windows/CanicaAlphaReview.exe"); }
     public static void BuildLinux() { AlphaVisualBuilder.Validate(); AlphaContentBuilder.Validate(); NetContentBuilder.Build(); AlphaSettingsChecks.Validate(); Build(BuildTarget.StandaloneLinux64,"Linux/CanicaAlphaReview.x86_64"); }
     static void Build(BuildTarget target,string output)
@@ -15,7 +24,7 @@ public static class AlphaReviewBuild
         PlayerSettings.resizableWindow=true;
         PlayerSettings.allowFullscreenSwitch=true;
         var scenes=EditorBuildSettings.scenes.Where(s=>s.enabled).Select(s=>s.path).ToArray();
-        string path="Builds/AlphaReview/"+output;Directory.CreateDirectory(Path.GetDirectoryName(path));
+        string path=Path.Combine(OutputRoot,output);Directory.CreateDirectory(Path.GetDirectoryName(path));
         var report=BuildPipeline.BuildPlayer(scenes,path,target,BuildOptions.StrictMode);
         string result=target+": "+report.summary.result+"; errors="+report.summary.totalErrors;
         File.WriteAllText(Path.GetDirectoryName(path)+"/build-result.txt",result);Debug.Log("ALPHA_REVIEW: "+result);
