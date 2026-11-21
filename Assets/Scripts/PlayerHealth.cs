@@ -27,12 +27,15 @@ public class PlayerHealth : MonoBehaviour
     public bool IsInvulnerable => Time.time < invulnerableUntil;
 
     private float invulnerableUntil;
+    int baseMaxHealth;
     private SpriteRenderer sprite;
 
     void Start()
     {
         GameAudio.Track(damageAudioSource,SoundCategory.Effects);
         sprite = GetComponent<SpriteRenderer>();
+        baseMaxHealth = maxHealth;
+        maxHealth = Mathf.Max(1, baseMaxHealth + RunAmulets.ExtraHealth);
         currentHealth = maxHealth;
 
         // A la masmorra, la vida es conserva entre pisos
@@ -42,11 +45,17 @@ public class PlayerHealth : MonoBehaviour
         UpdateHealthUI();
     }
 
-    public void TakeDamage(int damage)
+    public void TakeDamage(int damage, EnemyHealth contact = null)
     {
         if (damage <= 0 || IsInvulnerable || currentHealth <= 0) return;
 
+        if (RunAmulets.Defend(RunAmulets.Action.Glass))
+        {
+            Fx.Text(transform.position, "Escut de vidre", UIKit.Gold);
+            return;
+        }
         currentHealth -= damage;
+        if (contact != null && RunAmulets.Has(Amulet.Thorns)) contact.TakeDamage(1);
 
         if (currentHealth < 0)
         {
@@ -68,6 +77,15 @@ public class PlayerHealth : MonoBehaviour
 
         if (currentHealth <= 0)
         {
+            if (RunAmulets.Defend(RunAmulets.Action.Phoenix))
+            {
+                currentHealth = Mathf.Max(1, Mathf.CeilToInt(maxHealth * .5f));
+                invulnerableUntil = Time.time + 2f;
+                Fx.Burst(transform.position, new Color(1f, .58f, .22f), 20, 3f);
+                UpdateHealthUI();
+                StartCoroutine(nameof(Blink));
+                return;
+            }
             Die();
             return;
         }
@@ -138,13 +156,35 @@ public class PlayerHealth : MonoBehaviour
         StartCoroutine(nameof(Blink));
     }
 
+    public void RefreshAmuletHealth()
+    {
+        if (baseMaxHealth <= 0) return;
+        int previous = maxHealth;
+        maxHealth = Mathf.Max(1, baseMaxHealth + RunAmulets.ExtraHealth);
+        if (currentHealth > 0) currentHealth = Mathf.Min(maxHealth, currentHealth + Mathf.Max(0, maxHealth - previous));
+        UpdateHealthUI();
+    }
+
     void UpdateHealthUI()
     {
         RunState.Health = currentHealth;
-        if (hearts == null) return;
+        if (hearts == null || hearts.Length == 0) return;
+        while (maxHealth > hearts.Length && hearts[hearts.Length - 1] != null)
+        {
+            int last = hearts.Length - 1;
+            var template = hearts[last];
+            var copy = Instantiate(template, template.transform.parent);
+            var stride = last > 0 && hearts[last - 1] != null
+                ? template.rectTransform.anchoredPosition - hearts[last - 1].rectTransform.anchoredPosition
+                : new Vector2(template.rectTransform.rect.width, 0);
+            copy.rectTransform.anchoredPosition = template.rectTransform.anchoredPosition + stride;
+            System.Array.Resize(ref hearts, hearts.Length + 1);
+            hearts[last + 1] = copy;
+        }
         for (int i = 0; i < hearts.Length; i++)
         {
             if (hearts[i] == null) continue;
+            hearts[i].enabled = i < maxHealth;
             hearts[i].sprite = i < currentHealth ? cor_ple : cor_buit;
         }
     }

@@ -51,7 +51,7 @@ public class PlayerMovement : MonoBehaviour
     void Update()
     {
         bool onLiquid = liquidTilemap != null && liquidTilemap.HasTile(liquidTilemap.WorldToCell(transform.position));
-        currentSpeed = (onLiquid ? waterSpeed : normalSpeed) * (Time.time < boostUntil ? boostMultiplier : 1f);
+        currentSpeed = (onLiquid ? waterSpeed : normalSpeed) * RunAmulets.MoveMultiplier * (Time.time < boostUntil ? boostMultiplier : 1f);
 
         movement = GameControls.Move;
     }

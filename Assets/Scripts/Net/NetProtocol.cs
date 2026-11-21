@@ -11,7 +11,7 @@ using System.Text;
 // El mateix format serveix per a parlar amb l'amfitrio (LAN/IP) i amb el servidor de sales (Internet).
 public static class NetProtocol
 {
-    public const int Version = 22; // BossKeyState replica la clau i la porta.
+    public const int Version = 23; // AmuletState i AmuletAction sincronitzen els amulets.
     public const int GamePort = 7777;      // TCP: l'amfitrio escolta ací (prova 7777..7787)
     public const int DiscoveryPort = 7778; // UDP: descobriment de sales en LAN
     public const int RelayPort = 7780;     // TCP: servidor de sales d'Internet
@@ -200,7 +200,7 @@ public enum Msg : byte
     MobSound = 99, // So autoritari amb posicio i volum
     ChestClear = 100, // v1.4.1: el Creatiu de l amfitrio lleva tots els cofres del mapa lliure
     ZoneFx = 101,     // v1.4.1: zona de perill (foc, acid, bomba): estil + posicio; cada equip fa mal al seu jugador
-    BossKeyState = 104,
+    BossKeyState = 104, AmuletState = 105, AmuletAction = 106,
     ShopReq = 102, ShopSold = 103, // v1.4.1: mercader i maquina: peticio de compra (client -> amfitrio) i article venut (amfitrio -> tots)
 }
 
@@ -267,20 +267,20 @@ public class NetPlayer
     public short aim;       // graus d'apuntat
     public string weapon;   // nom de l'arma a la ma ("" = puny)
     public bool down;       // caigut a la masmorra
-    public int health, maxHealth;
+    public int health, maxHealth, coins;
     public double lastPos;
 
     public void WritePosition(BinaryWriter w)
     {
         w.Write(scene); w.Write(x); w.Write(y); w.Write(aim); w.Write(weapon ?? "");
-        w.Write(down); w.Write(health); w.Write(maxHealth);
+        w.Write(down); w.Write(health); w.Write(maxHealth); w.Write(coins);
     }
 
     public void ReadPosition(BinaryReader r, double receivedAt)
     {
         scene = r.ReadInt32(); x = r.ReadSingle(); y = r.ReadSingle();
         aim = r.ReadInt16(); weapon = r.ReadString(); down = r.ReadBoolean();
-        health = r.ReadInt32(); maxHealth = r.ReadInt32();
+        health = r.ReadInt32(); maxHealth = r.ReadInt32(); coins = r.ReadInt32();
         lastPos = receivedAt;
     }
 

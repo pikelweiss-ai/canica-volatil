@@ -10,6 +10,9 @@ public class EnemyHealth : MonoBehaviour
     public int currentHealth;
     EnemyV140 v140; bool v140Looked, skipBlock;
     EnemyBoss boss;
+    int amuletAttacker = -1;
+    float amuletPoisonUntil;
+    Coroutine amuletPoison;
     public bool arenaPart;
     EnemyV140 V140 { get { if (!v140Looked) { v140 = GetComponent<EnemyV140>(); v140Looked = true; } return v140; } }
 
@@ -92,6 +95,8 @@ public class EnemyHealth : MonoBehaviour
             NetCoop.ProxyHit(this, damage, knockback, effect, projectile: true);
             return;
         }
+        if (RunStats.HitBy != null && RunAmulets.Enabled)
+            damage = RunAmulets.Hit(this, damage, out amuletAttacker);
         skipBlock = true; TakeHit(damage, knockback); skipBlock = false;
         if (effect == ProjectileEffect.Chain) ChainLightning();
         if (isDead) return;
@@ -153,6 +158,8 @@ public class EnemyHealth : MonoBehaviour
             return;
         }
 
+        if (!skipBlock && RunStats.HitBy != null && RunAmulets.Enabled)
+            damage = RunAmulets.Hit(this, damage, out amuletAttacker);
         if (pathfinding != null)
             pathfinding.ApplyKnockback(knockback * (1f - knockbackResist), 0.15f);
 
@@ -178,6 +185,24 @@ public class EnemyHealth : MonoBehaviour
         spriteRenderer.color = hitColor;
         yield return new WaitForSeconds(flashDuration);
         spriteRenderer.color = originalColor;
+    }
+
+    public void PoisonFromAmulet(int attacker)
+    {
+        amuletPoisonUntil = Time.time + 3f;
+        amuletAttacker = attacker;
+        if (amuletPoison == null) amuletPoison = StartCoroutine(AmuletPoison());
+    }
+
+    System.Collections.IEnumerator AmuletPoison()
+    {
+        do
+        {
+            yield return new WaitForSeconds(1f);
+            if (isDead) yield break;
+            TakeDamage(1);
+        } while (Time.time + .08f < amuletPoisonUntil);
+        amuletPoison = null;
     }
 
     public void TakeDamage(int damage)
@@ -218,6 +243,7 @@ public class EnemyHealth : MonoBehaviour
         {
             DropLoot();
             RunStats.EnemyKilled(this, lastHitBy, hitByPlayer);
+            RunAmulets.Killed(amuletAttacker);
         }
         Died?.Invoke(this);
         if (!arenaPart) AnyDied?.Invoke(this);

@@ -54,7 +54,7 @@ public class CameraFollow : MonoBehaviour
                 size = Mathf.Max(normalSize, range / Mathf.Min(1f, view.aspect));
             }
             if (weapon != null && weapon.zoomMultiplier > 1f) size = Mathf.Max(size, normalSize * weapon.zoomMultiplier);
-            view.orthographicSize = Mathf.MoveTowards(view.orthographicSize, size, 18f * Time.deltaTime);
+            view.orthographicSize = Mathf.MoveTowards(view.orthographicSize, size * (target.CompareTag("Player") ? RunAmulets.ViewMultiplier : 1f), 18f * Time.deltaTime);
         }
         Vector3 targetCamPos = target.position + offset;
 

@@ -65,7 +65,7 @@ public class CoinDrop : MonoBehaviour
                 if (da + 0.5f < mine && da < d) { d = da; target = av.transform; } // el company ha d'estar clarament mes a prop
             }
         if (target != player && d < 0.45f) hoverOnOther += Time.deltaTime;
-        if (target == null || d > MagnetRange) return;
+        if (target == null || d > RunAmulets.MagnetRange(MagnetRange)) return;
 
         speed = Mathf.Min(speed + 25f * Time.deltaTime, 14f);
         transform.position = Vector3.MoveTowards(transform.position, target.position, speed * Time.deltaTime);

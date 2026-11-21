@@ -29,7 +29,7 @@ public partial class DungeonGenerator
     {
         if (changingFloor || gameOver || (direction != -1 && direction != 1)) return false;
         if (direction < 0 && (RunState.Floor <= 1 || (!NetCoop.IsClient && !RunState.Floors.ContainsKey(RunState.Floor - 1)))) return false;
-        if (direction > 0 && !portalsSpawned) return false;
+        if (direction > 0 && (!portalsSpawned || (NetCoop.IsClient ? RunAmulets.Local.Offer.Length != 0 : RunAmulets.WaitingForChoices))) return false;
         if (waitingRoom != null || Rooms.Exists(room => room.active && !room.cleared)) return false;
         if (Vector2.Distance(position, PortalPosition(direction)) >= tolerance) return false;
         ChangeFloor(direction);

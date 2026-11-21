@@ -16,6 +16,7 @@ public class ShopSlot
     public ChestRarity rarity = ChestRarity.Comu;
     public WeaponData weapon;
     public HealItem heal;
+    public Amulet amulet;
 }
 
 public class Shop : MonoBehaviour
@@ -151,7 +152,9 @@ public class Shop : MonoBehaviour
             for (int i = 0; i < 2; i++) { ShopSlot s = null; for (int tries = 0; tries < 8; tries++) { s = Heal(); if (s == null || !list.Any(o => o.title == s.title)) break; } if (s != null) list.Add(s); }
             var main = PickRarity(rng, floor);
             var a = Weapon(main); if (a != null) list.Add(a);
-            var b = Weapon(main < ChestRarity.Llegendari ? main + 1 : main); if (b != null) list.Add(b); // «amulet»: fins que n'hi haja, una arma extra
+            var amulet = RunAmulets.Info(RunAmulets.PickStock(rng, floor));
+            list.Add(new ShopSlot { amulet = amulet.id, icon = amulet.Icon, title = amulet.name, rarity = amulet.rarity,
+                info = amulet.description, price = Final(WeaponBase(amulet.rarity), floor, rng) });
             list.Add(new ShopSlot { repair = true, title = "Recarregar combustible", info = "Torna a omplir les armes de trets limitats", rarity = ChestRarity.Comu });
             if (rng.NextDouble() < .20) { var s = Weapon((ChestRarity)rng.Next(0, 4), true); if (s != null) list.Add(s); }
             // Una ranura a l'atzar, amb -30 % (OFERTA)
@@ -221,6 +224,7 @@ public class Shop : MonoBehaviour
     {
         if (index < 0 || index >= slots.Length || pendingSlot >= 0) return;
         var s = slots[index];
+        if (s.amulet != Amulet.None && !RunAmulets.CanBuy(RunAmulets.LocalId, s.amulet)) { Say("Ja el portes o necessites una ranura lliure."); return; }
         if (s.sold) { Say("Això ja ho han comprat."); return; }
         int price = PriceOf(s);
         if (s.repair && price <= 0) { Fx.Text(transform.position + Vector3.up, "Cap arma per recarregar", UIKit.Muted); return; }
@@ -234,6 +238,15 @@ public class Shop : MonoBehaviour
     {
         var shop = Find(kind);
         if (shop == null || index < 0 || index >= shop.slots.Length || shop.slots[index].sold) return;
+        var slot = shop.slots[index];
+        if (slot.amulet != Amulet.None)
+        {
+            if (!RunAmulets.CanBuy(buyer, slot.amulet)) return;
+            if (buyer == RunAmulets.LocalId && RunState.Coins < shop.PriceOf(slot)) return;
+            if (buyer != RunAmulets.LocalId && (!NetSession.Instance.Players.TryGetValue(buyer, out var peer) || peer.coins < shop.PriceOf(slot)))
+                return;
+            RunAmulets.Buy(buyer, slot.amulet);
+        }
         shop.slots[index].sold = true;
         NetCoop.ShopSoldBroadcast(kind, index, buyer);
         if (buyer == (NetCoop.Online ? NetSession.Instance.LocalId : 0)) shop.Complete(index);

@@ -716,7 +716,7 @@ public partial class DungeonGenerator : MonoBehaviour
 
     void Update()
     {
-        if (!gameOver) TickBossKey();
+        if (!gameOver) { TickBossKey(); RunAmulets.Tick(); }
         // Online (amfitrio): els companys tambe obrin sales, encara que l'amfitrio haja caigut
         if (!gameOver && NetCoop.IsHost) TryStartRoomTogether();
         if (!gameOver) RunStats.Tick(Time.deltaTime);
@@ -920,6 +920,7 @@ public partial class DungeonGenerator : MonoBehaviour
                 if (drop == null) continue;
                 HealPickup.Spawn(drop, bossSpot, bossSpot + (Vector3)(Random.insideUnitCircle.normalized * Random.Range(.7f, 1.6f)));
             }
+            RunAmulets.OfferFloor();
             SpawnPortal(r.Center + NextPortalOffset);
             NetCoop.PortalSpawned(r.Center + NextPortalOffset);
         }

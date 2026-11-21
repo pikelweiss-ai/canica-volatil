@@ -241,6 +241,25 @@ public static class NetCoop
         if (state == 2 && downed.Count > 0) ReviveEveryone();
     }
 
+    static byte[] AmuletFrame(int id) =>
+        NetProtocol.Frame(Msg.AmuletState, w => { w.Write(Token); RunAmulets.Write(w, id); });
+
+    public static void AmuletChanged(int id)
+    {
+        if (IsHost) S.SendAll(AmuletFrame(id));
+    }
+
+    public static void AmuletRequest(RunAmulets.Action action, int a, int b)
+    {
+        if (IsClient) S.SendToHost(NetProtocol.Frame(Msg.AmuletAction, w =>
+        { w.Write(Token); w.Write((byte)action); w.Write(a); w.Write(b); }));
+    }
+
+    public static void AmuletExplosion(Vector2 pos, float radius)
+    {
+        if (IsHost) S.SendAll(NetProtocol.Frame(Msg.ExplodeFx, w => { w.Write(Token); w.Write(pos.x); w.Write(pos.y); w.Write(radius); }));
+    }
+
     static byte[] BossKeyFrame(int token, int owner) =>
         NetProtocol.Frame(Msg.BossKeyState, w => { w.Write(token); w.Write(owner); });
 
@@ -502,6 +521,7 @@ public static class NetCoop
         var health = pm.GetComponent<PlayerHealth>();
         me.health = health != null ? health.currentHealth : 0;
         me.maxHealth = health != null ? health.maxHealth : 0;
+        me.coins = RunState.Coins;
         var attack = pm.GetComponent<PlayerAttack>();
         if (attack == null) return;
         var a = attack.AimDirection;
@@ -530,8 +550,13 @@ public static class NetCoop
                     RunStats.HitBy = ""; // colp d'un company: compta com a mort, pero no per a l'arma de l'amfitrio
                     int damage = Mathf.Clamp(dmg, 0, 10000);
                     Vector2 knockback = Vector2.ClampMagnitude(kb, 40f);
-                    if (projectile) h.TakeProjectileHit(damage, knockback, effect);
-                    else h.TakeHit(damage, knockback);
+                    RunAmulets.RemoteAttacker = from.id;
+                    try
+                    {
+                        if (projectile) h.TakeProjectileHit(damage, knockback, effect);
+                        else h.TakeHit(damage, knockback);
+                    }
+                    finally { RunAmulets.RemoteAttacker = null; }
                     RunStats.HitBy = null;
                 }
                 break;
@@ -542,6 +567,13 @@ public static class NetCoop
                 if (token != Token) break;
                 if (target == S.LocalId) HealLocal();
                 else S.SendTo(target, NetProtocol.Frame(Msg.HealAlly, w => w.Write(token)));
+                break;
+            }
+            case Msg.AmuletAction:
+            {
+                int token = r.ReadInt32(); var action = (RunAmulets.Action)r.ReadByte(); int a = r.ReadInt32(), b = r.ReadInt32();
+                if (token == Token && RunAmulets.Enabled && !RunAmulets.Apply(from.id, action, a, b))
+                    S.SendTo(from.id, AmuletFrame(from.id));
                 break;
             }
             case Msg.ShopReq:
@@ -560,7 +592,7 @@ public static class NetCoop
                 if (openedChests.Contains(key)) { S.SendTo(fid, NetProtocol.Frame(Msg.ChestOpened, w => { w.Write(token); w.Write(key); })); break; }
                 openedChests.Add(key);
                 Vector3? opener = from != null && S.Players.TryGetValue(fid, out var opening) ? new Vector3(opening.x, opening.y, 0f) : (Vector3?)null;
-                c.OpenAsAuthority(opener);
+                c.OpenAsAuthority(opener, fid);
                 S.SendTo(fid, NetProtocol.Frame(Msg.ChestGrant, w => { w.Write(token); w.Write(key); }));
                 S.SendAllExcept(fid, NetProtocol.Frame(Msg.ChestOpened, w => { w.Write(token); w.Write(key); }));
                 break;
@@ -610,6 +642,8 @@ public static class NetCoop
                 if (marker != -1 || token != Token) break;
                 int fid = from.id;
                 if (DungeonGenerator.Instance != null) S.SendTo(fid, BossKeyFrame(token, DungeonGenerator.Instance.BossKeyOwner));
+                if (RunAmulets.Enabled)
+                    foreach (int id in S.Players.Keys) S.SendTo(fid, AmuletFrame(id));
                 foreach (var entry in roomStates)
                     S.SendTo(fid, RoomStateFrame(token, entry.Key, entry.Value.state, entry.Value.arenaWave));
                 foreach (var ch in extraChests) { var c = ch; S.SendTo(fid, NetProtocol.Frame(Msg.ChestSpawn, w => { w.Write(token); w.Write(c.rarity); w.Write(c.cell.x); w.Write(c.cell.y); })); }
@@ -713,6 +747,12 @@ public static class NetCoop
             {
                 int token = r.ReadInt32(); var p = new Vector2(r.ReadSingle(), r.ReadSingle());
                 if (token == Token) NetSession.Instance.StartCoroutine(Mark(p));
+                break;
+            }
+            case Msg.AmuletState:
+            {
+                int token = r.ReadInt32();
+                if (token == Token && gen != null) RunAmulets.Read(r);
                 break;
             }
             case Msg.BossKeyState:

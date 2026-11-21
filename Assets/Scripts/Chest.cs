@@ -258,15 +258,18 @@ public class Chest : MonoBehaviour
 
     // BUG-024: si l'obri un company (online), el botí es calcula al voltant d'ell i no del jugador local
     Vector3? lootReference;
+    int lootPlayerId = -1;
     Vector3? LootRef => lootReference ?? (player != null ? player.position : (Vector3?)null);
 
-    public void OpenAsAuthority(Vector3? opener = null)
+    public void OpenAsAuthority(Vector3? opener = null, int openerId = -1)
     {
         if (IsOpen) return;
         lootReference = opener;
+        lootPlayerId = openerId;
         NetMarkOpened();
         if (DungeonGenerator.Instance == null || !DungeonGenerator.Instance.OpenAmbush(this)) DropLoot();
         lootReference = null;
+        lootPlayerId = -1;
     }
 
     // Ja has mantingut la E prou temps: s'obri, sona i bota
@@ -324,10 +327,20 @@ public class Chest : MonoBehaviour
         if (lootTable == null || lootTable.Length == 0) return;
 
         // v1.4.1: jugant sol, la Vareta curativa no ix (sols cura companys); es tria entre la resta
+        var quality = RunAmulets.ChestQuality(rarity, lootPlayerId < 0 ? RunAmulets.LocalId : lootPlayerId, Random.value);
         WeaponData[] pool = lootTable;
+        if (quality != rarity)
+        {
+            var catalog = Resources.Load<NetContentCatalog>("NetContent");
+            if (catalog != null)
+            {
+                var upgraded = System.Array.FindAll(catalog.weapons, w => w != null && w.rarity == quality);
+                if (upgraded.Length > 0) pool = upgraded;
+            }
+        }
         if (!NetCoop.Online)
         {
-            var solo = System.Array.FindAll(lootTable, w => w != null && w.special != SpecialKind.HealBolt);
+            var solo = System.Array.FindAll(pool, w => w != null && w.special != SpecialKind.HealBolt);
             if (solo.Length > 0) pool = solo;
         }
         WeaponData weapon = pool[Random.Range(0, pool.Length)];
@@ -338,14 +351,14 @@ public class Chest : MonoBehaviour
         ItemPickup.Spawn(weapon, from, to);
 
         // Cura: com més rar el cofre, millor pot ser l'item (i els èpics i llegendaris en donen 2)
-        int heals = rarity >= ChestRarity.Epic ? 2 : (Random.value < healChance ? 1 : 0);
+        int heals = quality >= ChestRarity.Epic ? 2 : (Random.value < healChance ? 1 : 0);
         for (int i = 0; i < heals; i++)
         {
-            HealItem heal = HealItem.Random(rarity);
+            HealItem heal = HealItem.Random(quality);
             if (heal != null)
                 HealPickup.Spawn(heal, from, SafeLootOffset(to, new Vector3(i == 0 ? 0.7f : -0.7f, 0.1f, 0f)));
         }
-        for (int i = 0; i < (int)rarity + 1; i++)
+        for (int i = 0; i < (int)quality + 1; i++)
             CoinDrop.Spawn(from, SafeLootOffset(to, Random.insideUnitCircle * 0.8f));
     }
 

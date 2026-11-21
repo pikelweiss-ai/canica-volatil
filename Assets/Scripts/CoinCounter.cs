@@ -35,10 +35,11 @@ public class CoinCounter : MonoBehaviour
 
     public void AddCoin()
     {
-        currentCoins++;
+        int value = RunAmulets.CoinValue();
+        currentCoins += value;
         RunState.Coins = currentCoins;
-        CoinBank.Add(1);
-        RunStats.Coin();
+        CoinBank.Add(value);
+        for (int i = 0; i < value; i++) RunStats.Coin();
         UpdateText();
         if (coinAudioSource != null) coinAudioSource.Play();
     }

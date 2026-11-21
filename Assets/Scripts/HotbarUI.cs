@@ -43,6 +43,7 @@ public class HotbarUI : MonoBehaviour
         HotbarUI ui = canvasGO.AddComponent<HotbarUI>();
         ui.font = font;
         ui.Build(canvasGO.transform, slotCount);
+        if (RunAmulets.Enabled) AmuletUI.Attach(canvasGO.transform, slotCount * SlotSize + (slotCount - 1) * Spacing);
         return ui;
     }
 

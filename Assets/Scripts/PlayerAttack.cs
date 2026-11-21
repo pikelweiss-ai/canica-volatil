@@ -104,7 +104,7 @@ public partial class PlayerAttack : MonoBehaviour
     {
         if (Time.timeScale == 0f) return;
         // Tab: mostra / amaga la línia d'apuntat
-        if (GameControls.Down(7))
+        if (GameControls.Down(7) && !(RunAmulets.Enabled && NetCoop.Online))
             showAimLine = !showAimLine;
 
         HandleSlotSelection();
@@ -213,7 +213,7 @@ public partial class PlayerAttack : MonoBehaviour
             if (weapon == null)
             {
                 Punch();
-                slotCooldown[selectedSlot] = fistCooldown;
+                slotCooldown[selectedSlot] = RunAmulets.Cooldown(fistCooldown);
             }
             else if (weapon.maxShots > 0 && RunState.Active && conditions[selectedSlot].ShotsUsed >= weapon.maxShots)
             {
@@ -226,7 +226,7 @@ public partial class PlayerAttack : MonoBehaviour
             else
             {
                 Shoot(weapon);
-                slotCooldown[selectedSlot] = weapon.cooldown;
+                slotCooldown[selectedSlot] = RunAmulets.Cooldown(weapon.cooldown);
                 ref WeaponCondition condition = ref conditions[selectedSlot];
                 if (weapon.special == SpecialKind.Mine) condition.Heat = Mathf.Min(MineCharges, condition.Heat + 1f); // gasta una càrrega
                 if (weapon.heatLimit > 0 && ++condition.Heat >= weapon.heatLimit)
@@ -286,7 +286,7 @@ public partial class PlayerAttack : MonoBehaviour
         // Rectangle: per al puny, tan ample i llarg com la zona del colp;
         // per a les armes, tan ample com el projectil i llarg com l'abast
         WeaponData weapon = CurrentWeapon;
-        float length = Mathf.Max(weapon != null ? weapon.range : fistRange + fistRadius, 0.5f);
+        float length = Mathf.Max(weapon != null ? weapon.range * (weapon.melee ? 1f : RunAmulets.RangeMultiplier) : fistRange + fistRadius, 0.5f);
         float width = weapon != null ? Mathf.Max(weapon.projectileSize, 0.15f) : fistRadius * 2f;
 
         // Amb dispersió, l'aim és una V: estret al jugador i ample al final.
@@ -545,7 +545,7 @@ public partial class PlayerAttack : MonoBehaviour
         int layer = playerSprite != null ? playerSprite.sortingLayerID : 0;
         int order = playerSprite != null ? playerSprite.sortingOrder + 1 : 0;
 
-        float range = Mathf.Max(weapon.range, 0.5f);
+        float range = Mathf.Max(weapon.range * RunAmulets.RangeMultiplier, 0.5f);
         int pellets = Mathf.Max(1, weapon.pellets);
 
         for (int i = 0; i < pellets; i++)

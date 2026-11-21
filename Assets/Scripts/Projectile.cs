@@ -30,7 +30,10 @@ public class Projectile : MonoBehaviour
         startPosition = transform.position;
         firingPosition = shooter != null ? (Vector2)shooter.position : startPosition;
         pierceLeft = weapon.pierce;
-        wallBouncesLeft = weapon.wallBounces;
+        var remote = shooter != null ? shooter.GetComponent<RemoteAvatar>() : null;
+        var kit = remote != null ? RunAmulets.Get(remote.playerId) : RunAmulets.Local;
+        bool amulets = RunAmulets.Enabled && shooter != null && (remote != null || shooter.CompareTag("Player"));
+        wallBouncesLeft = weapon.wallBounces + (amulets && kit.Has(Amulet.ShatteredMirror) ? 1 : 0);
 
         // Gira el projectil cap a on va (els sprites apunten cap a la dreta)
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
@@ -48,7 +51,7 @@ public class Projectile : MonoBehaviour
         }
         else
         {
-            maxDistance = weapon.range;
+            maxDistance = weapon.range * (amulets && kit.Has(Amulet.HawkEye) ? 1.2f : 1f);
         }
     }
 

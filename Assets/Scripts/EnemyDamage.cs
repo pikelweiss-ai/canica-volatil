@@ -29,7 +29,7 @@ public class EnemyDamage : MonoBehaviour
 
         if (playerHealth != null)
         {
-            playerHealth.TakeDamage(damage);
+            playerHealth.TakeDamage(damage, GetComponentInParent<EnemyHealth>());
             nextDamageTime = Time.time + damageInterval;
         }
     }

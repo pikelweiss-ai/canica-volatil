@@ -35,6 +35,7 @@ public static class RunState
         FloorVisit = 0;
         ArrivalDirection = 0;
         Floors.Clear();
+        RunAmulets.Reset();
         RunStats.Reset();
     }
 }

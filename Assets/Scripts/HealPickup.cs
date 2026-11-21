@@ -82,7 +82,12 @@ public class HealPickup : MonoBehaviour
         }
         float dist = Vector2.Distance(player.position, transform.position);
         if (waitForPlayerToLeave) { if (dist > pickupRange + 0.3f) waitForPlayerToLeave = false; return; }
-        if (dist > pickupRange) return;
+        if (dist > pickupRange)
+        {
+            if (dist <= RunAmulets.MagnetRange(pickupRange) && bag != null && bag.CanAdd(item))
+                transform.position = Vector3.MoveTowards(transform.position, player.position, 7f * Time.deltaTime);
+            return;
+        }
 
         // Va a la bossa de cures (tecles 5-8). Si la bossa està plena, es queda al terra.
         if (bag == null) bag = player.GetComponent<HealInventory>();
