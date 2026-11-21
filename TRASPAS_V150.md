@@ -13,7 +13,7 @@
 - Provar en Android i Linux reals, i la suite online (`Tools/Net/test-online.ps1 -MobileClient`) amb el protocol 19, també en cooperatiu amb persones (botiga, microbosses, teranyines, escut).
 - Balanç per provar jugant: atacs nous del Rei de Gel, microbosses, preus de la botiga, DPS de l'escut, bosses amb +20 de vida i només cures.
 - El detector d'encallament dels bosses no s'ha provat a la sala real amb les columnes dels racons.
-- **El Talp va rar en online** (apuntat per Ferran amb la v1.4.2; detalls i pistes a les notes de `memoria-claude`, «Bugs pendents»).
+- **Pendents apuntats per Ferran** (Talp en online, Torreta i aigua, preus, Sorpresa, xat del mercader, Mímic, text de la paret, troncs, Creatiu i microbosses des del pis 2): [Docs/PENDENTS_APUNTATS.md](Docs/PENDENTS_APUNTATS.md).
 - Les portes amb clau, la Banshee que fa mal als companys i l'empenta als clients continuen pendents.
 
 ## v1.5 (full de ruta)
