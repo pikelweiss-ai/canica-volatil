@@ -170,11 +170,11 @@ public static class NetShared
         return Mathf.RoundToInt(p.x * 4) * 100003 + Mathf.RoundToInt(p.y * 4);
     }
 
-    public static bool RequestBreakableHit(Breakable b, int damage)
+    public static bool RequestBreakableHit(Breakable b, int damage, bool meleeOrMine = false)
     {
         if (!NetCoop.IsClient) return false;
         S.SendToHost(NetProtocol.Frame(Msg.BreakableHit, w =>
-        { w.Write(Token); w.Write(BreakableKey(b)); w.Write(Mathf.Clamp(damage, 0, 10000)); }));
+        { w.Write(Token); w.Write(BreakableKey(b)); w.Write(Mathf.Clamp(damage, 0, 10000)); w.Write(meleeOrMine); }));
         return true;
     }
 
@@ -331,11 +331,12 @@ public static class NetShared
             case Msg.BreakableHit:
             {
                 int token = r.ReadInt32(), key = r.ReadInt32(), damage = r.ReadInt32();
+                bool meleeOrMine = r.ReadBoolean();
                 if (token != Token) break;
                 foreach (var b in Object.FindObjectsByType<Breakable>(FindObjectsSortMode.None))
                     if (BreakableKey(b) == key)
                     {
-                        if (DungeonGenerator.CanDamageBreakableAt(b.transform.position)) { b.Hit(Mathf.Clamp(damage, 0, 10000)); if(b.health <= 0) RemoteBreaks++; }
+                        if (DungeonGenerator.CanDamageBreakableAt(b.transform.position)) { b.Hit(Mathf.Clamp(damage, 0, 10000), meleeOrMine); if(b.health <= 0) RemoteBreaks++; }
                         break;
                     }
                 break;

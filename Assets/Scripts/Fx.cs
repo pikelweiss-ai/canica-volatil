@@ -125,7 +125,7 @@ public static class Fx
         Shake(0.25f, 0.25f);
     }
 
-    public static void Explode(Vector2 pos, float radius, int playerDamage, int enemyDamage, Transform ignore = null)
+    public static void Explode(Vector2 pos, float radius, int playerDamage, int enemyDamage, Transform ignore = null, bool mine = false)
     {
         ExplodeVisual(pos, radius);
         NetCoop.Exploded(pos, radius, playerDamage); // Online: tambe als companys
@@ -143,7 +143,7 @@ public static class Fx
             if (player != null && done.Add(player)) { if (playerDamage > 0) player.TakeDamage(playerDamage); continue; }
 
             Breakable b = hit.GetComponentInParent<Breakable>();
-            if (b != null && done.Add(b)) b.Hit(enemyDamage);
+            if (b != null && done.Add(b)) b.Hit(enemyDamage, mine);
         }
     }
 

@@ -265,7 +265,7 @@ public class Chest : MonoBehaviour
         if (IsOpen) return;
         lootReference = opener;
         NetMarkOpened();
-        DropLoot();
+        if (DungeonGenerator.Instance == null || !DungeonGenerator.Instance.OpenAmbush(this)) DropLoot();
         lootReference = null;
     }
 
@@ -286,7 +286,7 @@ public class Chest : MonoBehaviour
         audioSource.pitch = 1f;
         audioSource.PlayOneShot(openSound, volume);
 
-        if (dropLoot) DropLoot();
+        if (dropLoot && (DungeonGenerator.Instance == null || !DungeonGenerator.Instance.OpenAmbush(this))) DropLoot();
 
         if (onOpened != null)
             onOpened.Invoke();

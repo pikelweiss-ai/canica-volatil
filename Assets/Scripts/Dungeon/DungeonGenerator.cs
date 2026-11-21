@@ -20,12 +20,19 @@ public partial class DungeonGenerator : MonoBehaviour
 {
     public static DungeonGenerator Instance { get; private set; }
 
-    public enum RoomType { Start, Combat, Treasure, Boss }
+    public enum RoomType { Start, Combat, Treasure, Boss, Emboscada, Arena, Secreta }
+    public enum RoomShape { Rectangle, L, T, Cross, Circle, Octagon, Pillars }
+    public enum RoomModifier { None, Darkness, Ice, Flames }
 
     public class Room
     {
         public Vector2Int slot;
         public RoomType type;
+        public RoomShape shape;
+        public RoomModifier modifier;
+        public bool ambushTriggered;
+        public ChestRarity ambushRarity;
+        public float combatStarted;
         public RectInt rect;                          // Cel·les de terra de dins de la sala
         public readonly List<Room> links = new List<Room>();
         public readonly List<Vector3Int> doorCells = new List<Vector3Int>();
@@ -178,11 +185,12 @@ public partial class DungeonGenerator : MonoBehaviour
 
             int neighbours = 0;
             foreach (Vector2Int d in Dirs) if (slots.ContainsKey(s + d)) neighbours++;
-            if (neighbours > 1) continue; // Arbre: cada sala nova toca només la seua mare
+            if (neighbours > 2 || (neighbours == 2 && (RunState.Floor < 3 || rng.NextDouble() >= .25))) continue;
 
             Room r = new Room { slot = s, type = RoomType.Combat };
-            r.links.Add(from);
-            from.links.Add(r);
+            foreach (Vector2Int d in Dirs)
+                if (slots.TryGetValue(s + d, out Room neighbour))
+                { r.links.Add(neighbour); neighbour.links.Add(r); }
             slots[s] = r;
             Rooms.Add(r);
         }
@@ -203,8 +211,7 @@ public partial class DungeonGenerator : MonoBehaviour
         foreach (Room r in Rooms)
         {
             if (r == start) continue;
-            bool leaf = r.links.Count == 1;
-            if (boss == null || (leaf && (boss.links.Count != 1 || dist[r] > dist[boss])) || (!leaf && boss.links.Count != 1 && dist[r] > dist[boss]))
+            if (boss == null || dist[r] > dist[boss])
                 boss = r;
         }
         if (boss != null) boss.type = RoomType.Boss;
@@ -220,6 +227,12 @@ public partial class DungeonGenerator : MonoBehaviour
                     ProgressionRoom = r;
         }
 
+        var special = Rooms.FindAll(r => r.type == RoomType.Combat && r != ProgressionRoom);
+        if (special.Count > 0) { var r = special[rng.Next(special.Count)]; r.type = RoomType.Emboscada; special.Remove(r); }
+        if (special.Count > 0) { var r = special[rng.Next(special.Count)]; r.type = RoomType.Arena; special.Remove(r); }
+        var secret = special.FindAll(r => r.links.Count == 1);
+        if (secret.Count > 0) secret[rng.Next(secret.Count)].type = RoomType.Secreta;
+
         // Mida de cada sala (senars, perquè tinguen un centre exacte)
         foreach (Room r in Rooms)
         {
@@ -229,12 +242,19 @@ public partial class DungeonGenerator : MonoBehaviour
                 case RoomType.Start: size = new Vector2Int(11, 11); break;
                 case RoomType.Treasure: size = new Vector2Int(9, 9); break;
                 case RoomType.Boss: size = new Vector2Int(19, 15); break;
+                case RoomType.Emboscada: size = new Vector2Int(23, 7); break;
+                case RoomType.Arena: size = new Vector2Int(21, 17); break;
                 default:
                     size = new Vector2Int(Odd(rng.Next(roomSizeMin.x, roomSizeMax.x + 1)), Odd(rng.Next(roomSizeMin.y, roomSizeMax.y + 1)));
                     break;
             }
             Vector2Int c = r.slot * slotSize;
             r.rect = new RectInt(c.x - size.x / 2, c.y - size.y / 2, size.x, size.y);
+            if (r.type == RoomType.Combat || r.type == RoomType.Arena || r.type == RoomType.Emboscada)
+            {
+                r.shape = (RoomShape)rng.Next(7);
+                if (r != ProgressionRoom) r.modifier = (RoomModifier)rng.Next(4);
+            }
         }
     }
 
@@ -243,7 +263,7 @@ public partial class DungeonGenerator : MonoBehaviour
     void Carve()
     {
         foreach (Room r in Rooms)
-            foreach (Vector2Int p in r.rect.allPositionsWithin) floor.Add(p);
+            foreach (Vector2Int p in r.rect.allPositionsWithin) if (InsideShape(r, p)) floor.Add(p);
 
         // Passadissos de 3 d'ample entre sales veïnes
         var done = new HashSet<(Room, Room)>();
@@ -294,6 +314,7 @@ public partial class DungeonGenerator : MonoBehaviour
     // ni a la vora (deixem un anell lliure) ni a la creu central (camí de porta a porta)
     bool FreeForDecor(Room r, Vector2Int p, int margin = 2)
     {
+        if (!InsideShape(r, p) || !floor.Contains(p)) return false;
         Vector2Int c = r.Center;
         if (p.x < r.rect.xMin + margin || p.x >= r.rect.xMax - margin) return false;
         if (p.y < r.rect.yMin + margin || p.y >= r.rect.yMax - margin) return false;
@@ -427,7 +448,15 @@ public partial class DungeonGenerator : MonoBehaviour
         }
     }
 
-    Vector2Int RandomCell(Room r) => new Vector2Int(rng.Next(r.rect.xMin, r.rect.xMax), rng.Next(r.rect.yMin, r.rect.yMax));
+    Vector2Int RandomCell(Room r)
+    {
+        for (int i = 0; i < 80; i++)
+        {
+            var p = new Vector2Int(rng.Next(r.rect.xMin, r.rect.xMax), rng.Next(r.rect.yMin, r.rect.yMax));
+            if (InsideShape(r, p)) return p;
+        }
+        return r.Center;
+    }
 
     void Paint()
     {
@@ -444,6 +473,12 @@ public partial class DungeonGenerator : MonoBehaviour
                 if(room.type == RoomType.Start || room.type == RoomType.Treasure)
                     foreach(Vector2Int p in room.rect.allPositionsWithin)
                         if(floor.Contains(p)) ground.SetTile(ToCell(p),Theme.refugeFloor);
+
+        foreach (Room room in Rooms)
+            if (room.modifier == RoomModifier.Ice)
+                foreach (Vector2Int p in room.rect.allPositionsWithin)
+                    if (floor.Contains(p))
+                    { ground.SetTileFlags(ToCell(p), TileFlags.None); ground.SetColor(ToCell(p), new Color(.65f, .85f, 1f)); }
 
         // Parets: tot el que toca terra (també en diagonal) i no és terra
         TileBase wall = Theme != null ? Theme.wallTile : null;
@@ -479,9 +514,10 @@ public partial class DungeonGenerator : MonoBehaviour
 
         foreach (Room r in Rooms)
         {
-            if (r.type == RoomType.Treasure)
+            if (r.type == RoomType.Treasure || r.type == RoomType.Secreta || r.type == RoomType.Emboscada)
             {
                 ChestRarity rarity = TreasureRarity();
+                r.ambushRarity = rarity;
                 SpawnChest(rarity, r.Center);
             }
             else if (r.type == RoomType.Start)
@@ -503,6 +539,7 @@ public partial class DungeonGenerator : MonoBehaviour
                 }
             }
         }
+        CreateSecretWalls();
     }
 
     // v1.3.1: els cofres milloren amb els pisos. Al pis 1 no hi ha èpics ni llegendaris.
@@ -610,6 +647,7 @@ public partial class DungeonGenerator : MonoBehaviour
         // Online (amfitrio): els companys tambe obrin sales, encara que l'amfitrio haja caigut
         if (!gameOver && NetCoop.IsHost) TryStartRoomTogether();
         if (!gameOver) RunStats.Tick(Time.deltaTime);
+        UpdateRoomEffects();
 
         if (gameOver || player == null || !player.gameObject.activeInHierarchy) return;
 
@@ -656,7 +694,7 @@ public partial class DungeonGenerator : MonoBehaviour
                 for (int i = 0; i < cells.Count; i++)
                 {
                     Room candidate = RoomAt(cells[i], 1);
-                    if (candidate == null || candidate.active || candidate.cleared || (candidate.type != RoomType.Combat && candidate.type != RoomType.Boss)) continue;
+                    if (candidate == null || candidate.active || candidate.cleared || !CombatRoom(candidate)) continue;
                     if (candidate.doorCells.Count == 0) continue;
                     var from = previousPlayerCells.TryGetValue(ids[i], out var previous) ? previous : cells[i];
                     var nearest = candidate.doorCells[0];
@@ -684,7 +722,7 @@ public partial class DungeonGenerator : MonoBehaviour
     void WaitingHint(Vector3Int pc)
     {
         Room r = RoomAt(pc, 1);
-        bool waiting = r != null && !r.cleared && !r.active && (r.type == RoomType.Combat || r.type == RoomType.Boss);
+        bool waiting = r != null && !r.cleared && !r.active && CombatRoom(r);
         if (waiting && hintRoom != r) NetToast.Show("Esperant que entren tots els companys a la sala...", 2.5f);
         hintRoom = waiting ? r : null;
     }
@@ -692,7 +730,7 @@ public partial class DungeonGenerator : MonoBehaviour
     void TryStartRoom(Vector3Int cell)
     {
         Room r = RoomAt(cell, 1);
-        if (r != null && !r.cleared && !r.active && (r.type == RoomType.Combat || r.type == RoomType.Boss))
+        if (r != null && !r.cleared && !r.active && CombatRoom(r))
             StartCoroutine(RunRoom(r));
     }
 
@@ -712,11 +750,14 @@ public partial class DungeonGenerator : MonoBehaviour
     {
         if (index < 0 || index >= Rooms.Count) return;
         Room r = Rooms[index];
+        if (state == 7) { r.ambushTriggered = true; return; }
         if (state >= 3 && state <= 6 && !r.active && !r.cleared) SetWaitingDoors(r, state - 3);
         else if (state == 0 && !r.active && !r.cleared) SetDoors(r, false);
         else if (state == 1 && !r.active && !r.cleared)
         {
             r.active = true;
+            r.ambushTriggered = true;
+            r.combatStarted = Time.time;
             SetDoors(r, true);
             ShowProgressionBanner(r);
             if (r.type == RoomType.Boss)
@@ -755,7 +796,7 @@ public partial class DungeonGenerator : MonoBehaviour
         var g = Instance;
         if (g == null) return true;
         Room r = g.RoomAt(g.ground.WorldToCell(position), 0);
-        return r == null || r.cleared || (r.type != RoomType.Combat && r.type != RoomType.Boss);
+        return r == null || r.cleared || !CombatRoom(r);
     }
 
     public static bool CanDamageBreakableAt(Vector3 position)
@@ -772,7 +813,7 @@ public partial class DungeonGenerator : MonoBehaviour
         foreach (Room r in Rooms)
         {
             RectInt q = r.rect;
-            if (cell.x >= q.xMin + inset && cell.x < q.xMax - inset && cell.y >= q.yMin + inset && cell.y < q.yMax - inset)
+            if (cell.x >= q.xMin + inset && cell.x < q.xMax - inset && cell.y >= q.yMin + inset && cell.y < q.yMax - inset && InsideShape(r, new Vector2Int(cell.x, cell.y)))
                 return r;
         }
         return null;
@@ -781,8 +822,10 @@ public partial class DungeonGenerator : MonoBehaviour
     IEnumerator RunRoom(Room r)
     {
         r.active = true;
+        r.combatStarted = Time.time;
         SetDoors(r, true);
         NetCoop.RoomChanged(Rooms.IndexOf(r), 1);
+        if (r.modifier == RoomModifier.Flames) StartCoroutine(RoomFlames(r));
         yield return new WaitForSeconds(0.4f);
 
         if (r.type == RoomType.Boss)
@@ -805,6 +848,8 @@ public partial class DungeonGenerator : MonoBehaviour
             ShowProgressionBanner(r);
             if (r == ProgressionRoom && RunState.Floor >= 4) StartCoroutine(ResonancePulses(r));
             int waves = 1 + (rng.NextDouble() < 0.5 ? 1 : 0) + (RunState.Floor >= 3 ? 1 : 0);
+            if (r.type == RoomType.Emboscada) waves = 2;
+            if (r.type == RoomType.Arena) waves = 3;
             for (int w = 0; w < waves; w++)
             {
                 // Pis 1: 3-4 enemics per onada; cada pis en suma un
@@ -819,12 +864,14 @@ public partial class DungeonGenerator : MonoBehaviour
                 if (w < waves - 1) yield return new WaitForSeconds(0.6f);
             }
             // Recompensa per netejar la sala
-            if (r == ProgressionRoom || rng.NextDouble() < 0.5)
+            if (r == ProgressionRoom || r.type == RoomType.Arena || r.type == RoomType.Emboscada || rng.NextDouble() < 0.5)
             {
                 ChestRarity reward = r == ProgressionRoom
                     ? (RunState.Floor >= 5 ? ChestRarity.Epic : ChestRarity.Rar)
                     : RandomRarity();
-                Vector2Int offset = r == ProgressionRoom ? new Vector2Int(2, 0) : new Vector2Int(2, 2);
+                if (r.type == RoomType.Emboscada) reward = (ChestRarity)Mathf.Min(3, (int)r.ambushRarity + 1);
+                if (r.type == RoomType.Arena) for (int i = 0; i < 5; i++) CoinDrop.Spawn(ground.GetCellCenterWorld(ToCell(r.Center)));
+                Vector2Int offset = new Vector2Int(2, 0);
                 SpawnChest(reward, r.Center + offset);
                 NetCoop.ChestSpawned((int)reward, r.Center + offset);
             }
@@ -832,6 +879,7 @@ public partial class DungeonGenerator : MonoBehaviour
 
         if (!r.cleared) RunStats.RoomCleared();
         r.cleared = true;
+        r.active = false;
         SetDoors(r, false);
         ui.RefreshMap();
         NetCoop.RoomChanged(Rooms.IndexOf(r), 2);
@@ -925,7 +973,7 @@ public partial class DungeonGenerator : MonoBehaviour
         {
             Vector2Int p = new Vector2Int(rng.Next(r.rect.xMin + 1, r.rect.xMax - 1), rng.Next(r.rect.yMin + 1, r.rect.yMax - 1));
             Vector3Int cell = ToCell(p);
-            if (TileNav.IsBlocked(cell) || reserved.Contains(p)) continue;
+            if (!InsideShape(r, p) || !floor.Contains(p) || TileNav.IsBlocked(cell) || reserved.Contains(p)) continue;
             if (player != null && Vector2.Distance(ground.GetCellCenterWorld(cell), player.position) < 3.5f) continue;
             return p;
         }

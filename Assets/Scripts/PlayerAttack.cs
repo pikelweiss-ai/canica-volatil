@@ -432,7 +432,7 @@ public partial class PlayerAttack : MonoBehaviour
             Breakable breakable = hit.GetComponentInParent<Breakable>();
             if (breakable != null)
             {
-                breakable.Hit(fistDamage);
+                breakable.Hit(fistDamage, true);
                 hitSomething = true;
                 continue;
             }
@@ -524,7 +524,7 @@ public partial class PlayerAttack : MonoBehaviour
             }
             EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
             if (enemy != null && enemies.Add(enemy)) targets.Add((((Vector2)enemy.transform.position - origin).sqrMagnitude, enemy));
-            if (box != null && objects.Add(box)) box.Hit(weapon.damage);
+            if (box != null && objects.Add(box)) box.Hit(weapon.damage, true);
         }
         targets.Sort((a, b) => a.dist.CompareTo(b.dist));
         if (targets.Count > 0 && weapon.hitSpeedBoost > 0f) GetComponent<PlayerMovement>()?.BoostSpeed(1f + weapon.hitSpeedBoost, weapon.hitSpeedBoostTime);

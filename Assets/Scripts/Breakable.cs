@@ -5,6 +5,7 @@ using UnityEngine;
 public class Breakable : MonoBehaviour
 {
     public int health = 2;
+    public bool meleeOrMineOnly;
     public Color debrisColor = new Color(0.62f, 0.35f, 0.16f);
 
     [Header("Barril explosiu")]
@@ -26,11 +27,11 @@ public class Breakable : MonoBehaviour
         TileNav.AddBlocker(transform.position);
     }
 
-    public void Hit(int damage)
+    public void Hit(int damage, bool meleeOrMine = false)
     {
-        if (broken || !DungeonGenerator.CanDamageBreakableAt(transform.position)) return;
+        if ((meleeOrMineOnly && !meleeOrMine) || broken || !DungeonGenerator.CanDamageBreakableAt(transform.position)) return;
         // El client demana el colp; nomes l'amfitrio canvia vida i decideix el trencament.
-        if (NetShared.RequestBreakableHit(this, damage)) return;
+        if (NetShared.RequestBreakableHit(this, damage, meleeOrMine)) return;
         health -= damage;
         if (sr != null) { StopAllCoroutines(); StartCoroutine(Flash()); }
         Fx.Play(WeaponSounds.Impact, 0.4f);

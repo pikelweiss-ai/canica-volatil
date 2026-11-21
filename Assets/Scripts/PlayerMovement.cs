@@ -18,6 +18,7 @@ public class PlayerMovement : MonoBehaviour
     public void BoostSpeed(float multiplier, float seconds) { boostMultiplier = multiplier; boostUntil = Time.time + seconds; }
     private Rigidbody2D rb;
     private Vector2 movement;
+    private Vector2 iceVelocity;
 
     void Awake()
     {
@@ -43,6 +44,7 @@ public class PlayerMovement : MonoBehaviour
     void OnDisable()
     {
         movement = Vector2.zero;
+        iceVelocity = Vector2.zero;
         dashLeft = 0f;
     }
 
@@ -56,6 +58,8 @@ public class PlayerMovement : MonoBehaviour
 
     void FixedUpdate()
     {
+        bool ice = DungeonGenerator.Instance != null && DungeonGenerator.Instance.IsIceAt(transform.position);
+        iceVelocity = ice ? Vector2.MoveTowards(iceVelocity, movement * currentSpeed, 7f * Time.fixedDeltaTime) : movement * currentSpeed;
         if(dashLeft>0f)
         {
             float step=Mathf.Min(dashLeft,12f*Time.fixedDeltaTime);
@@ -73,6 +77,6 @@ public class PlayerMovement : MonoBehaviour
             rb.MovePosition(rb.position + dashDirection * step);
             dashLeft -= step;
         }
-        else rb.MovePosition(rb.position + movement * currentSpeed * Time.fixedDeltaTime);
+        else rb.MovePosition(rb.position + iceVelocity * Time.fixedDeltaTime);
     }
 }

@@ -359,9 +359,10 @@ public class MineUnit : MonoBehaviour
         foreach (var c in Physics2D.OverlapCircleAll(transform.position, 0.9f))
         {
             var enemy = c.GetComponentInParent<EnemyHealth>();
-            if (enemy == null || enemy.IsDead) continue;
+            var secretWall = c.GetComponentInParent<Breakable>();
+            if ((enemy == null || enemy.IsDead) && (secretWall == null || !secretWall.meleeOrMineOnly)) continue;
             RunStats.HitBy = weapon.weaponName;
-            Fx.Explode(transform.position, radius, 0, Mathf.Max(1, weapon.damage), owner);
+            Fx.Explode(transform.position, radius, 0, Mathf.Max(1, weapon.damage), owner, mine: true);
             RunStats.HitBy = null;
             Destroy(gameObject);
             return;
