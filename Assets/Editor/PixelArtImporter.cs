@@ -13,7 +13,8 @@ public class PixelArtImporter : AssetPostprocessor
 
     void OnPreprocessTexture()
     {
-        if (!assetPath.Replace('\\', '/').Contains("/Pixel/"))
+        string path = assetPath.Replace('\\', '/');
+        if (!path.Contains("/Pixel/"))
             return;
 
         TextureImporter importer = (TextureImporter)assetImporter;
@@ -27,5 +28,11 @@ public class PixelArtImporter : AssetPostprocessor
         importer.alphaIsTransparency = true;
         importer.wrapMode = TextureWrapMode.Clamp;
         importer.isReadable = true; // Per a poder fer la vora de raresa dels items per codi
+        if (path.StartsWith("Assets/Resources/Pixel/Menu140/", System.StringComparison.Ordinal))
+        {
+            importer.filterMode = FilterMode.Bilinear;
+            importer.isReadable = false;
+            importer.maxTextureSize = path.EndsWith("Fons.png") || path.EndsWith("Logo.png") ? 2048 : 1024;
+        }
     }
 }

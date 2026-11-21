@@ -2,18 +2,33 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-// Novetats de cada versió. Es veuen en clicar el número de versió del menú principal.
+// Novetats de cada versió. S'obrin amb el botó NOVETATS del menú principal.
 // Per a una versió nova: afig un bloc a dalt de tot de Entries (el més nou primer) i canvia GameVersion.
 public static class Changelog
 {
-    public class Entry { public string version; public string title; public string[] lines; public string[] summary; /* resum curt per al menú */ }
+    public class Entry { public string version; public string title; public string[] lines; }
 
     public static readonly Entry[] Entries =
     {
         new Entry
         {
+            version = "Alpha v1.4.0", title = "Menú nou i masmorres més variades",
+            lines = new[]
+            {
+                "MENÚ",
+                "Fons del portal, logo i botons nous. L'historial s'obri amb NOVETATS.",
+                "MASMORRES",
+                "Sales amb formes noves, rutes alternatives, emboscades i sales secretes.",
+                "Arenes amb tres onades, cobertura i un cofre rar o millor.",
+                "Foscor, gel i flames segons la sala. Les portes s'animen en acostar-t'hi.",
+                "COMBAT",
+                "Sis enemics nous: Mímic, Sanador, Escut-guerrer, Talp, Franctirador i Banshee.",
+                "Sons nous per als enemics. El Llançaflames es queda a la barra quan es buida.",
+            }
+        },
+        new Entry
+        {
             version = "Alpha v1.3.2", title = "Sprites propis i menú amb novetats",
-            summary = new[] { "Novetats al costat del menú", "Torreta i mines amb sprite", "Harpó animat al Ganxo", "Vareta curativa: tir verd", "Barret de Cuiner arreglat" },
             lines = new[]
             {
                 "MENÚ",
@@ -30,7 +45,6 @@ public static class Changelog
         new Entry
         {
             version = "Alpha v1.3.1", title = "Sis armes noves, bosses nous i cofres que milloren",
-            summary = new[] { "Sis armes noves", "3 enemics i 2 bosses nous", "Cofres que milloren", "Cofre comú per jugador", "Barrets i esteles noves" },
             lines = new[]
             {
                 "ARMES NOVES",
@@ -126,21 +140,6 @@ public static class Changelog
         },
     };
 
-
-    // Text curt per al panell del menú principal: les dues darreres versions
-    public static string PanelText(int versions = 2)
-    {
-        var sb = new System.Text.StringBuilder();
-        for (int i = 0; i < Entries.Length && i < versions; i++)
-        {
-            var e = Entries[i];
-            if (i > 0) sb.Append("\n");
-            sb.Append("<color=#EBB347>").Append(e.version).Append("</color>\n");
-            if (e.summary != null) foreach (var line in e.summary) sb.Append("·  ").Append(line).Append('\n');
-            else sb.Append("·  ").Append(e.title).Append('\n');
-        }
-        return sb.ToString();
-    }
     const string SeenKey = "Changelog_Seen";
 
     // Hi ha novetats que l'usuari encara no ha obert d'aquesta versió?
@@ -151,6 +150,7 @@ public static class Changelog
 
     static void MarkSeen()
     {
+        if (RunStats.DontSave) return;
         try { PlayerPrefs.SetString(SeenKey, GameVersion.Package); PlayerPrefs.Save(); } catch { }
     }
 

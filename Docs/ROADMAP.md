@@ -12,6 +12,7 @@
 | 3 | **6 enemics nous**: Mímic, Sanador, Escut-guerrer, Talp, Franctirador de cristall i Banshee (sprites i sorolls fets) | §1 |
 | 4 | **Portes** amb estats (tancada → mitjana → oberta) segons la distància del jugador; portes de clau (bloquejada) | §5 i §8 |
 | 5 | **Llançaflames sense combustible**: l'arma es queda a la hotbar i diu «Sense combustible!» | `v1.4-mercader.md` §8b |
+| 6 | **Menú principal nou** amb el fons del portal, el logo i els botons de Ferran. **Novetats** torna a ser el cinqué botó, davall de Controls. | |
 
 Fora de la v1.4.0: tot el que hi ha a sota.
 **Blocs nous**: la v1.4.0 **no** té catàleg. Només, **si queda temps**, 2-3 variants de terra i 3-4 decoracions per tema (`v1.4-bosses-enemics-sales.md` §9 punt 4). **Tot l'ús dels blocs va a la v1.5** (decisió de Ferran).

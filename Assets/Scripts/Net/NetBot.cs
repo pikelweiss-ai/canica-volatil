@@ -727,17 +727,41 @@ public partial class NetBot : MonoBehaviour
         Ok("barrets nous");
     }
 
-    // Captures del menú principal i del panell de novetats (cal gràfics i -botShots <carpeta>)
+    // Captures del menú principal i de la finestra de novetats (cal gràfics i -botShots <carpeta>)
     IEnumerator MenuShots()
     {
         yield return WaitFor(() => Scene == "MainMenu", 20, "menú principal carregat");
         if (failed) yield break;
         yield return new WaitForSeconds(1.5f);
-        yield return Shot("m-menu");
-        ClickButton("VEURE-HO TOT");
-        yield return new WaitForSeconds(0.5f);
-        yield return Shot("m-novetats-completes");
-        Log("PASS"); Application.Quit(0);
+        var menu = FindFirstObjectByType<AlphaMainMenu>();
+        if (menu == null) { Fail("falta el menú principal"); yield break; }
+        var labels = new[] { "JUGAR", "PERSONALITZAR", "AJUSTOS", "CONTROLS", "NOVETATS" };
+        foreach (string label in labels)
+        {
+            var button = GameObject.Find("Boto " + label)?.GetComponent<UnityEngine.UI.Button>();
+            if (button == null || !button.transform.IsChildOf(menu.transform) ||
+                button.transition != UnityEngine.UI.Selectable.Transition.SpriteSwap ||
+                button.spriteState.highlightedSprite == null || button.spriteState.pressedSprite == null)
+            { Fail("falta el botó o algun estat gràfic: " + label); yield break; }
+            var events = UnityEngine.EventSystems.EventSystem.current;
+            var pointer = new UnityEngine.EventSystems.PointerEventData(events)
+            {
+                position = RectTransformUtility.WorldToScreenPoint(null, button.transform.position)
+            };
+            var hits = new System.Collections.Generic.List<UnityEngine.EventSystems.RaycastResult>();
+            events.RaycastAll(pointer, hits);
+            if (hits.Count == 0 || hits[0].gameObject != button.gameObject)
+            { Fail("el botó no rep el clic: " + label); yield break; }
+        }
+        Ok("els cinc botons tenen sprites i reben clics");
+        yield return Shot("m-menu", Screen.width, Screen.height);
+        ClickButton("NOVETATS");
+        yield return WaitFor(() => FindFirstObjectByType<ChangelogUI>() != null, 3, "Novetats obri l'historial");
+        if (failed) yield break;
+        yield return Shot("m-novetats-completes", Screen.width, Screen.height);
+        ClickButton("TANCAR");
+        yield return WaitFor(() => FindFirstObjectByType<ChangelogUI>() == null, 3, "Novetats es tanca i torna al menú");
+        if (!failed) Pass();
     }
 
     // Captures de les armes, enemics i bosses nous (cal obrir el joc amb gràfics i -botShots <carpeta>)
@@ -1626,14 +1650,14 @@ public partial class NetBot : MonoBehaviour
     }
 
     // ---------- Captures (nomes amb -botShots <carpeta>, sense -nographics) ----------
-    IEnumerator Shot(string label)
+    IEnumerator Shot(string label, int width = 1600, int height = 900)
     {
         if (shots == null) yield break;
         yield return null; yield return null;
         Directory.CreateDirectory(shots);
         var cam = Camera.main; bool temp = false;
         if (cam == null) { cam = new GameObject("Camera captura").AddComponent<Camera>(); cam.clearFlags = CameraClearFlags.SolidColor; cam.backgroundColor = Color.black; temp = true; }
-        var rt = new RenderTexture(1600, 900, 24, RenderTextureFormat.ARGB32);
+        var rt = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32);
         var saved = new System.Collections.Generic.List<(Canvas c, RenderMode m, Camera w, float d, int layer, int order)>();
         var layers = SortingLayer.layers;
         int top = layers.Length > 0 ? layers[layers.Length - 1].id : 0;
@@ -1654,8 +1678,8 @@ public partial class NetBot : MonoBehaviour
         if (UnityEngine.Rendering.RenderPipeline.SupportsRenderRequest(cam, request)) UnityEngine.Rendering.RenderPipeline.SubmitRenderRequest(cam, request);
         else cam.Render();
         RenderTexture.active = rt;
-        var tex = new Texture2D(1600, 900, TextureFormat.RGB24, false);
-        tex.ReadPixels(new Rect(0, 0, 1600, 900), 0, 0); tex.Apply();
+        var tex = new Texture2D(width, height, TextureFormat.RGB24, false);
+        tex.ReadPixels(new Rect(0, 0, width, height), 0, 0); tex.Apply();
         RenderTexture.active = null;
         string path = Path.Combine(shots, label + ".png");
         File.WriteAllBytes(path, tex.EncodeToPNG());
