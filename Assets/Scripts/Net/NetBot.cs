@@ -617,7 +617,6 @@ public partial class NetBot : MonoBehaviour
         yield return WaitFor(() => NetCoop.HurtsReceived > 0, 20, "dany rebut des de l'amfitrio");
         // Caiem: mode espectador
         keepAlive = false;
-        yield return new WaitForSecondsRealtime(1.3f); // fora la invulnerabilitat del colp
         var att = g.player.GetComponent<PlayerAttack>();
         var bag = g.player.GetComponent<HealInventory>();
         if (att != null) att.AddWeapon(gun);
@@ -627,6 +626,8 @@ public partial class NetBot : MonoBehaviour
         yield return null;
         var hand = GameObject.Find("Arma a la mà")?.GetComponent<SpriteRenderer>();
         if (hand == null || !hand.enabled) { Fail("falta l'arma visible de prova"); yield break; }
+        yield return WaitFor(() => !health.IsInvulnerable, 5, "fi de la invulnerabilitat abans de caure");
+        if (failed) yield break;
         health.TakeDamage(999);
         yield return WaitFor(() => Spectate.Active, 5, "caigut: espectant el company");
         if (hand.enabled) { Fail("l'arma de la mà queda flotant quan cau el jugador"); yield break; }
@@ -678,7 +679,8 @@ public partial class NetBot : MonoBehaviour
         Ok("armes i cures recuperades pel jugador que les havia soltat");
         // Tornem a caure i l'amfitrio passa de pis: hem de reapareixer al pis 2 sense armes i amb tota la vida
         var att2 = g.player.GetComponent<PlayerAttack>(); if (att2 != null) att2.AddWeapon(gun);
-        yield return new WaitForSecondsRealtime(2.4f); // fora la invulnerabilitat de tornar
+        yield return WaitFor(() => !health.IsInvulnerable, 5, "fi de la invulnerabilitat en tornar a la sala");
+        if (failed) yield break;
         health.TakeDamage(999);
         yield return WaitFor(() => Spectate.Active, 5, "caigut altra vegada");
         yield return WaitFor(() => RunState.Floor == 2 && Scene == "Dungeon" && DungeonGenerator.Instance != null && DungeonGenerator.Instance != g, 30, "els companys han passat de pis");
@@ -1406,15 +1408,23 @@ public partial class NetBot : MonoBehaviour
             var hostAttack = dungeon.player.GetComponent<PlayerAttack>();
             var wand = NetCoop.Weapon("VaretaCurativa");
             hostAttack.hotbarSlots[0] = wand; hostAttack.SelectSlot(0);
-            Vector2 clientPosition = new Vector2(session.Players[clientId].x, session.Players[clientId].y);
-            Vector2 hostSpot = clientPosition + Vector2.left * 2f;
-            dungeon.player.GetComponent<Rigidbody2D>().position = hostSpot; dungeon.player.position = hostSpot;
-            typeof(PlayerAttack).GetField("aimDirection", nonPublic).SetValue(hostAttack, Vector2.right);
+            var aim = typeof(PlayerAttack).GetField("aimDirection", nonPublic);
+            var healAlly = typeof(PlayerAttack).GetMethod("TryHealAlly", nonPublic);
+            var offsets = new[] { Vector2.left * 2f, Vector2.right * 2f, Vector2.up * 2f, Vector2.down * 2f };
             float healUntil = Time.realtimeSinceStartup + 6f; bool healed = false;
             while (Time.realtimeSinceStartup < healUntil && !healed)
             {
                 SilenceRoomEnemies(room);
-                typeof(PlayerAttack).GetMethod("TryHealAlly", nonPublic).Invoke(hostAttack, new object[] { wand });
+                Vector2 clientPosition = new Vector2(session.Players[clientId].x, session.Players[clientId].y);
+                foreach (var offset in offsets)
+                {
+                    Vector2 hostSpot = clientPosition + offset;
+                    if (!TileNav.CircleFree(hostSpot, .45f) || !TileNav.LineOfSight(hostSpot, clientPosition, 0f, true)) continue;
+                    SetBotPosition(dungeon, hostSpot);
+                    aim.SetValue(hostAttack, -offset.normalized);
+                    healAlly.Invoke(hostAttack, new object[] { wand });
+                    break;
+                }
                 yield return new WaitForSecondsRealtime(0.3f);
                 healed = session.Players.TryGetValue(clientId, out var after) && after.health == after.maxHealth;
             }
@@ -1449,14 +1459,14 @@ public partial class NetBot : MonoBehaviour
         yield return null;
         var dungeon = DungeonGenerator.Instance;
         if (dungeon.ProgressionRoom == null) { Fail("falta la cambra al client"); yield break; }
+        var health = dungeon.player.GetComponent<PlayerHealth>();
+        health.Heal(health.maxHealth);
         EnterProgressionRoom(dungeon);
         GameObject mark = null;
         yield return WaitFor(() => (mark = GameObject.Find("Avis atac")) != null, 14, "el client rep el cercle del pols");
         if (failed) yield break;
-        var health = dungeon.player.GetComponent<PlayerHealth>();
         var received = NetCoop.HurtsReceived;
-        dungeon.player.GetComponent<Rigidbody2D>().position = mark.transform.position;
-        dungeon.player.position = mark.transform.position;
+        SetBotPosition(dungeon, mark.transform.position);
         yield return WaitFor(() => NetCoop.HurtsReceived > received && health.currentHealth == health.maxHealth - 1,
             4, "el client rep un cor de dany del pols");
         if (failed) yield break;
