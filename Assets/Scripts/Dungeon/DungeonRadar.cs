@@ -60,6 +60,21 @@ public class DungeonRadar : MonoBehaviour
             if(c.a>0f) c.a=known?0.78f:0.32f;
             pixels[y*Width+x]=c;
         }
+        foreach (var cell in gen.KeyDoorCenters)
+        {
+            var delta = cell - center;
+            int cx = Width / 2 + Mathf.RoundToInt(delta.x / scale);
+            int cy = Height / 2 + Mathf.RoundToInt(delta.y / scale);
+            for (int y = -3; y <= 3; y++)
+                for (int x = -3; x <= 3; x++)
+                {
+                    bool body = y <= 0 && Mathf.Abs(x) <= 2 && y >= -2;
+                    bool shackle = y >= 1 && (y == 3 ? Mathf.Abs(x) <= 1 : Mathf.Abs(x) == 2);
+                    int px = cx + x, py = cy + y;
+                    if ((body || shackle) && px >= 0 && px < Width && py >= 0 && py < Height)
+                        pixels[py * Width + px] = new Color32(255, 212, 88, 255);
+                }
+        }
         // Online: els companys com a punts blau cel
         foreach(var av in NetShared.Avatars())
         {

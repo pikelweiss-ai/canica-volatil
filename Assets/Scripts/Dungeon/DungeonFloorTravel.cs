@@ -11,6 +11,7 @@ public partial class DungeonGenerator
         internal readonly Dictionary<int, int> BreakableHealth = new();
         internal readonly List<(Vector3 position, WeaponData weapon, HealItem heal, float cooldown, WeaponCondition condition)> Drops = new();
         internal bool ExitOpen;
+        internal int BossKeyOwner;
     }
 
     readonly Dictionary<Vector2Int, Chest> floorChests = new();
@@ -44,7 +45,7 @@ public partial class DungeonGenerator
 
     FloorState CaptureFloor()
     {
-        var state = new FloorState { ExitOpen = portalsSpawned };
+        var state = new FloorState { ExitOpen = portalsSpawned, BossKeyOwner = BossKeyOwner };
         foreach (var room in Rooms) state.Rooms.Add((room.cleared, room.visited));
         foreach (var entry in floorChests)
         {
@@ -81,6 +82,8 @@ public partial class DungeonGenerator
 
     IEnumerator RestoreFloor(FloorState saved)
     {
+        SetBossKeyState(saved.BossKeyOwner);
+        NetCoop.BossKeyChanged(saved.BossKeyOwner);
         for (int i = 0; i < Rooms.Count; i++)
         {
             var room = Rooms[i];

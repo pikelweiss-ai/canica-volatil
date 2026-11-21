@@ -18,7 +18,7 @@ public class DungeonUI : MonoBehaviour
     private DungeonGenerator gen;
     private TMP_FontAsset font;
 
-    private TextMeshProUGUI banner;
+    private TextMeshProUGUI banner, keyText;
     private CanvasGroup bannerGroup;
 
 
@@ -51,6 +51,12 @@ public class DungeonUI : MonoBehaviour
         frame.gameObject.AddComponent<DungeonRadar>().gen=gen;
         var floorText=NewText("Pis",frameRt,"Pis " + RunState.Floor + " · N ↑",20);
         var fr=floorText.rectTransform;fr.anchorMin=fr.anchorMax=new Vector2(0.5f,0);fr.anchoredPosition=new Vector2(0,-22);fr.sizeDelta=new Vector2(240,40);
+        keyText = NewText("Clau del boss", frameRt, gen.BossKeyLabel, 18);
+        keyText.color = UIKit.Gold;
+        var keyRect = keyText.rectTransform;
+        keyRect.anchorMin = keyRect.anchorMax = new Vector2(.5f, 0f);
+        keyRect.anchoredPosition = new Vector2(0f, -46f);
+        keyRect.sizeDelta = new Vector2(240, 28);
         // Rètol central
         banner = NewText("Retol", transform, "", 64);
         banner.rectTransform.anchoredPosition = new Vector2(0f, 180f);
@@ -61,6 +67,11 @@ public class DungeonUI : MonoBehaviour
         RefreshMap();
         string theme = gen.Theme != null ? gen.Theme.themeName : "";
         ShowBanner($"Pis {RunState.Floor}" + (theme != "" ? " · " + theme : ""), 2.5f);
+    }
+
+    void LateUpdate()
+    {
+        if (keyText != null && keyText.text != gen.BossKeyLabel) keyText.text = gen.BossKeyLabel;
     }
 
     public void RefreshMap() { } // El radar actualitza el terreny en temps real.

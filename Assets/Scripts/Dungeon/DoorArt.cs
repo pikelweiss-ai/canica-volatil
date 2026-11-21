@@ -22,6 +22,13 @@ public class DoorArt : ScriptableObject
         return instance;
     }
 
+    public Sprite GetKeyLock(string style, bool vertical)
+    {
+        string folder = "Pixel/PortesClau/" + (vertical ? "V/" : "H/") + "Porta_";
+        return Resources.Load<Sprite>(folder + style + "_bloquejada") ??
+            Resources.Load<Sprite>(folder + "pedra_bloquejada");
+    }
+
     public Sprite Get(string style, bool vertical, int state, int part)
     {
         if (styles == null) return null;

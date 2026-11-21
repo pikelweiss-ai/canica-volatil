@@ -241,6 +241,14 @@ public static class NetCoop
         if (state == 2 && downed.Count > 0) ReviveEveryone();
     }
 
+    static byte[] BossKeyFrame(int token, int owner) =>
+        NetProtocol.Frame(Msg.BossKeyState, w => { w.Write(token); w.Write(owner); });
+
+    public static void BossKeyChanged(int owner)
+    {
+        if (IsHost) S.SendAll(BossKeyFrame(Token, owner));
+    }
+
     static byte[] RoomStateFrame(int token, int index, int state, int arenaWave) =>
         NetProtocol.Frame(Msg.RoomState, w => { w.Write(token); w.Write(index); w.Write(state); w.Write(arenaWave); });
 
@@ -601,6 +609,7 @@ public static class NetCoop
                 int marker = r.ReadInt32(); int token = r.ReadInt32();
                 if (marker != -1 || token != Token) break;
                 int fid = from.id;
+                if (DungeonGenerator.Instance != null) S.SendTo(fid, BossKeyFrame(token, DungeonGenerator.Instance.BossKeyOwner));
                 foreach (var entry in roomStates)
                     S.SendTo(fid, RoomStateFrame(token, entry.Key, entry.Value.state, entry.Value.arenaWave));
                 foreach (var ch in extraChests) { var c = ch; S.SendTo(fid, NetProtocol.Frame(Msg.ChestSpawn, w => { w.Write(token); w.Write(c.rarity); w.Write(c.cell.x); w.Write(c.cell.y); })); }
@@ -704,6 +713,12 @@ public static class NetCoop
             {
                 int token = r.ReadInt32(); var p = new Vector2(r.ReadSingle(), r.ReadSingle());
                 if (token == Token) NetSession.Instance.StartCoroutine(Mark(p));
+                break;
+            }
+            case Msg.BossKeyState:
+            {
+                int token = r.ReadInt32(); int owner = r.ReadInt32();
+                if (token == Token && gen != null) gen.NetBossKeyState(owner);
                 break;
             }
             case Msg.RoomState:

@@ -11,9 +11,26 @@ public static class DoorArtBuilder
     static readonly string[] States = { "tancada", "mitja", "oberta" };
     static readonly string[] Parts = { "esq", "mig", "dre" };
 
+    public static void BuildLocks()
+    {
+        foreach (var orientation in new[] { "H", "V" })
+        {
+            string folder = "Assets/Resources/Pixel/PortesClau/" + orientation;
+            Directory.CreateDirectory(folder);
+            foreach (var source in Directory.GetFiles("ArtNou_v1.4/Portes/" + orientation, "*_bloquejada.png"))
+            {
+                string dest = Path.Combine(folder, Path.GetFileName(source)).Replace('\\', '/');
+                if (!File.Exists(dest) || !File.ReadAllBytes(dest).SequenceEqual(File.ReadAllBytes(source)))
+                    File.Copy(source, dest, true);
+                AssetDatabase.ImportAsset(dest, ImportAssetOptions.ForceSynchronousImport);
+            }
+        }
+    }
+
     [MenuItem("Canica/Masmorra/Portes (v1.4)")]
     public static void Build()
     {
+        BuildLocks();
         const string folder = "Assets/Sprites/Pixel/Portes";
         foreach (var orientation in new[] { "H", "V" })
         {

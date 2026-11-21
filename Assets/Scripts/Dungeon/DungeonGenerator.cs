@@ -130,6 +130,7 @@ public partial class DungeonGenerator : MonoBehaviour
         Carve();
         Paint();
         Populate();
+        PlaceBossKey();
         ApplyLook();
         DungeonBackdrop.Attach(this);
         DungeonDoors.Attach(this);
@@ -715,6 +716,7 @@ public partial class DungeonGenerator : MonoBehaviour
 
     void Update()
     {
+        if (!gameOver) TickBossKey();
         // Online (amfitrio): els companys tambe obrin sales, encara que l'amfitrio haja caigut
         if (!gameOver && NetCoop.IsHost) TryStartRoomTogether();
         if (!gameOver) RunStats.Tick(Time.deltaTime);
@@ -766,7 +768,7 @@ public partial class DungeonGenerator : MonoBehaviour
                 {
                     Room candidate = RoomAt(cells[i], 1);
                     if (candidate == null || candidate.active || candidate.cleared || !CombatRoom(candidate)) continue;
-                    if (candidate.doorCells.Count == 0) continue;
+                    if (candidate.doorCells.Count == 0 || (candidate == lockedBossRoom && BossKeyLocked)) continue;
                     var from = previousPlayerCells.TryGetValue(ids[i], out var previous) ? previous : cells[i];
                     var nearest = candidate.doorCells[0];
                     foreach (var door in candidate.doorCells)
@@ -801,7 +803,7 @@ public partial class DungeonGenerator : MonoBehaviour
     void TryStartRoom(Vector3Int cell)
     {
         Room r = RoomAt(cell, 1);
-        if (r != null && !r.cleared && !r.active && CombatRoom(r))
+        if (r != null && !r.cleared && !r.active && CombatRoom(r) && (r != lockedBossRoom || !BossKeyLocked))
             StartCoroutine(RunRoom(r));
     }
 

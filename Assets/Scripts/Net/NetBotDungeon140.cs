@@ -18,6 +18,11 @@ public partial class NetBot
         var seen = new HashSet<DungeonGenerator.RoomShape>();
         foreach (var r in g.Rooms)
         {
+            if (r.type == DungeonGenerator.RoomType.Boss && g.BossKeyLocked)
+            {
+                yield return OpenBossWithKey(g);
+                if (failed) yield break;
+            }
             player.position = g.ground.GetCellCenterWorld(new Vector3Int(r.Center.x, r.Center.y, 0));
             body.position = player.position; health.currentHealth = health.maxHealth;
             yield return null;

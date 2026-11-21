@@ -11,7 +11,7 @@ using System.Text;
 // El mateix format serveix per a parlar amb l'amfitrio (LAN/IP) i amb el servidor de sales (Internet).
 public static class NetProtocol
 {
-    public const int Version = 21; // BulletFx incorpora duracio i aspecte per a les rates i les paelles.
+    public const int Version = 22; // BossKeyState replica la clau i la porta.
     public const int GamePort = 7777;      // TCP: l'amfitrio escolta ací (prova 7777..7787)
     public const int DiscoveryPort = 7778; // UDP: descobriment de sales en LAN
     public const int RelayPort = 7780;     // TCP: servidor de sales d'Internet
@@ -200,6 +200,7 @@ public enum Msg : byte
     MobSound = 99, // So autoritari amb posicio i volum
     ChestClear = 100, // v1.4.1: el Creatiu de l amfitrio lleva tots els cofres del mapa lliure
     ZoneFx = 101,     // v1.4.1: zona de perill (foc, acid, bomba): estil + posicio; cada equip fa mal al seu jugador
+    BossKeyState = 104,
     ShopReq = 102, ShopSold = 103, // v1.4.1: mercader i maquina: peticio de compra (client -> amfitrio) i article venut (amfitrio -> tots)
 }
 

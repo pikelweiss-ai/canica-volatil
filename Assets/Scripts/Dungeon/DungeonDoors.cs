@@ -76,7 +76,10 @@ public class DungeonDoors : MonoBehaviour
 
     void Apply(Door door, int state, bool sound)
     {
-        for (int part = 0; part < 3; part++) door.sr[part].sprite = art.Get(style, door.vertical, state, part);
+        for (int part = 0; part < 3; part++)
+            door.sr[part].sprite = state == 3 && part == 1
+                ? art.GetKeyLock(style, door.vertical) ?? art.Get(style, door.vertical, 0, part)
+                : art.Get(style, door.vertical, state == 3 ? 0 : state, part);
         if (sound && Time.unscaledTime - lastSound > .15f)
         {
             lastSound = Time.unscaledTime;
@@ -99,15 +102,15 @@ public class DungeonDoors : MonoBehaviour
         if (generator == null) return;
         foreach (var door in doors)
         {
-            int want = 0;
-            if (!generator.doors.HasTile(door.cells[1]))
+            int want = generator.IsKeyDoorCell(door.cells[1]) ? 3 : 0;
+            if (want == 0 && !generator.doors.HasTile(door.cells[1]))
             {
                 float d = NearestPerson(door.center, generator.player);
                 // Histèresi: per canviar d'estat cal passar un poc del límit, així la porta no parpelleja
                 float open = door.state == 2 ? 2.3f : 1.9f, half = door.state >= 1 ? 3.6f : 3.2f;
                 want = d < open ? 2 : d < half ? 1 : 0;
             }
-            if (want != door.state) Apply(door, want, want > door.state && door.state >= 0);
+            if (want != door.state) Apply(door, want, want == 2 || (want == 1 && door.state == 0));
         }
     }
 
