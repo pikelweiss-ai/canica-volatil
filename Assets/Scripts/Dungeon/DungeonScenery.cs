@@ -10,6 +10,8 @@ public partial class DungeonGenerator
     class SceneryKit
     {
         public string[] floors = new string[0], walls = new string[0], props = new string[0], decals = new string[0];
+        public bool webs;                    // teranyines als racons de les sales
+        public bool lilies;                  // nenúfars (només on hi ha aigua)
         public Color tint = Color.white;
         public float floorShare = .16f, wallShare = .09f;
     }
@@ -25,13 +27,13 @@ public partial class DungeonGenerator
         if (n.Contains("cova")) return new SceneryKit
         {
             floors = new[] { "Roca_cova_1", "Roca_cova_marro", "Grava", "Roca_cova_molsa" }, walls = new[] { "Mineral_carbo", "Mineral_ferro", "Mineral_coure", "Roca_cova_molsa" },
-            props = new[] { "Roca_gran", "Roca_petita", "Roca_musgo", "Pedres", "Bolet_marro", "Bolets_grup", "Bolet_lluminos", "Soca" }, decals = new[] { "Pedres", "Roca_petita", "Bolet_marro", "Mata_herba" }
+            props = new[] { "Roca_gran", "Roca_petita", "Roca_musgo", "Pedres", "Bolet_marro", "Bolets_grup", "Bolet_lluminos", "Soca" }, decals = new[] { "Pedres", "Roca_petita", "Bolet_marro" }, webs = true
         };
         if (n.Contains("bosc")) return new SceneryKit
         {
             floors = new[] { "Gespa_alta", "Gespa_trevols", "Gespa_flors_mixtes", "Fulles_verd", "Molsa", "Gespa_fosca" }, floorShare = .3f, walls = new[] { "Molsa", "Fulles_verd", "Roca_cova_molsa" },
             props = new[] { "Tronc_pi", "Tronc_betula", "Tronc_caigut", "Soca", "Seto_verd", "Seto_baies", "Seto_dens", "Falguera", "Bolet_vermell", "Bolets_grup" },
-            decals = new[] { "Flor_margarida", "Flor_lavanda", "Flor_rosa", "Flor_tulipa_groga", "Flor_lliri_blau", "Mata_herba", "Falguera", "Flor_rosa_blanca" }
+            decals = new[] { "Flor_margarida", "Flor_lavanda", "Flor_rosa", "Flor_tulipa_groga", "Flor_lliri_blau", "Mata_herba", "Falguera", "Flor_rosa_blanca" }, webs = true, lilies = true
         };
         if (n.Contains("desert")) return new SceneryKit
         {
@@ -41,17 +43,17 @@ public partial class DungeonGenerator
         if (n.Contains("claveguera")) return new SceneryKit
         {
             floors = new[] { "Formigo", "Formigo_fosc", "Reixa_metall", "Grava", "Antilliscant_rovellat" }, walls = new[] { "Roca_cova_molsa", "Antilliscant_rovellat", "Metall_placa" },
-            props = new[] { "Canyes", "Roca_musgo", "Bolet_marro", "Paperera", "Carro_compra", "Armari_metal" }, decals = new[] { "Nenufar", "Canyes", "Mata_herba", "Pedres", "Bolet_marro" }
+            props = new[] { "Canyes", "Roca_musgo", "Bolet_marro", "Paperera", "Carro_compra", "Armari_metal" }, decals = new[] { "Pedres", "Bolet_marro", "Roca_petita" }, webs = true, lilies = true
         };
         if (n.Contains("neu")) return new SceneryKit
         {
             floors = new[] { "Neu_1", "Neu_2", "Neu_pisada" }, walls = new[] { "Gel_glacera", "Gel_esquerdat" },
-            props = new[] { "Seto_neu", "Roca_gran", "Roca_petita", "Pedres", "Tronc_pi" }, decals = new[] { "Pedres", "Mata_herba", "Roca_petita" }
+            props = new[] { "Seto_neu", "Roca_gran", "Roca_petita", "Pedres", "Tronc_pi" }, decals = new[] { "Pedres", "Roca_petita" }
         };
         if (n.Contains("cripta")) return new SceneryKit
         {
             floors = new[] { "Marbre", "Escacs", "Pissarra", "Rajola_negra" }, walls = new[] { "Castell_fosc", "Castell_blocs" },
-            props = new[] { "Roca_musgo", "Pedres", "Bolet_lila", "Soca", "Armari_metal", "Llum_peu" }, decals = new[] { "Pedres", "Bolet_lila", "Roca_petita" }
+            props = new[] { "Roca_musgo", "Pedres", "Bolet_lila", "Taula_fusta", "Armari_metal", "Llum_peu" }, decals = new[] { "Pedres", "Bolet_lila", "Roca_petita" }, webs = true
         };
         if (n.Contains("volc")) return new SceneryKit
         {
@@ -128,9 +130,62 @@ public partial class DungeonGenerator
         variantTiles[key] = tile; return tile;
     }
 
+    // Estil alternatiu de cada tema: base diferent per al terra i les parets (textures de Ferran o d'altres blocs, tenyides).
+    // Cada partida i pis tria a l'atzar (per llavor, igual a tots els equips) entre l'estil de sempre i l'alternatiu.
+    class AltStyle { public string[] floors; public string wall; public Color floorTint = Color.white, wallTint = Color.white; }
+
+    static AltStyle AltFor(DungeonTheme theme)
+    {
+        string n = theme != null ? theme.themeName.ToLowerInvariant() : "";
+        if (n.Contains("cristall")) return new AltStyle { floors = new[] { "Ferran_Bolas_1" }, floorTint = new Color(.5f, .55f, .85f), wall = "Roca_cova_blava" };
+        if (n.Contains("cova")) return new AltStyle { floors = new[] { "Ferran_Cobble_1", "Ferran_Cobble_2" }, floorTint = new Color(.62f, .58f, .55f), wall = "Ferran_Bricks_2", wallTint = new Color(.42f, .4f, .42f) };
+        if (n.Contains("bosc")) return new AltStyle { floors = new[] { "Gespa_alta", "Gespa_trevols" }, wall = "Fulles_verd" };
+        if (n.Contains("desert")) return new AltStyle { floors = new[] { "Ferran_Cobble_2", "Sorra" }, floorTint = new Color(.88f, .74f, .52f), wall = "Ferran_Bricks_3", wallTint = new Color(.8f, .62f, .4f) };
+        if (n.Contains("claveguera")) return new AltStyle { floors = new[] { "Ferran_Mosaico_1" }, floorTint = new Color(.45f, .55f, .5f), wall = "Ferran_Bricks_1", wallTint = new Color(.4f, .5f, .45f) };
+        if (n.Contains("neu")) return new AltStyle { floors = new[] { "Neu_1", "Neu_2" }, wall = "Ferran_Bricks_4", wallTint = new Color(.75f, .85f, .95f) };
+        if (n.Contains("cripta")) return new AltStyle { floors = new[] { "Ferran_Parches_1" }, floorTint = new Color(.55f, .5f, .6f), wall = "Ferran_Bricks_3", wallTint = new Color(.35f, .32f, .4f) };
+        if (n.Contains("volc")) return new AltStyle { floors = new[] { "Ferran_Cobble_1" }, floorTint = new Color(.5f, .33f, .3f), wall = "Ferran_Bricks_2", wallTint = new Color(.35f, .22f, .22f) };
+        return null;
+    }
+
+    static Tile TintedTile(string name, Color tint, Tile.ColliderType collider)
+    {
+        string key = "alt_" + name + "_" + ColorUtility.ToHtmlStringRGB(tint) + (int)collider;
+        if (blockTiles.TryGetValue(key, out var t) && t != null) return t;
+        var sprite = Block(name); if (sprite == null) return null;
+        t = ScriptableObject.CreateInstance<Tile>(); t.sprite = sprite; t.name = key; t.colliderType = collider; t.color = tint;
+        blockTiles[key] = t; return t;
+    }
+
+    void ApplyAltStyle(AltStyle alt)
+    {
+        var excluded = new HashSet<Vector2Int>();
+        foreach (Room room in Rooms)
+            if (room.modifier == RoomModifier.Ice || room.type == RoomType.Start || room.type == RoomType.Treasure)
+                foreach (Vector2Int p in room.rect.allPositionsWithin) excluded.Add(p);
+        foreach (Vector2Int p in floor)
+        {
+            if (excluded.Contains(p)) continue;
+            int h = PosHash(p, 5);
+            var tile = TintedTile(alt.floors[h % 4 == 0 && alt.floors.Length > 1 ? 1 + (h / 4) % (alt.floors.Length - 1) : 0], alt.floorTint, Tile.ColliderType.None);
+            if (tile != null) ground.SetTile(ToCell(p), tile);
+        }
+        if (walls != null)
+            foreach (Vector3Int cell in walls.cellBounds.allPositionsWithin)
+            {
+                if (!walls.HasTile(cell)) continue;
+                var collider = (walls.GetTile(cell) as Tile)?.colliderType ?? Tile.ColliderType.Grid;
+                var tile = TintedTile(alt.wall, alt.wallTint, collider);
+                if (tile != null) walls.SetTile(cell, tile);
+            }
+    }
+
     void ApplyScenery()
     {
         var kit = Kit(Theme);
+        var alt = AltFor(Theme);
+        int styleSeed = (NetSession.Active && NetSession.Instance.Seed != 0 ? NetSession.Instance.Seed : RunState.Seed) ^ (RunState.Floor * 7919);
+        if (alt != null && (styleSeed & 0x7fffffff) % 2 == 1) ApplyAltStyle(alt);
         // Terra: variants de la rajola del tema, repartides per posició (igual a tots els equips)
         foreach (Room room in Rooms)
         {
@@ -164,6 +219,7 @@ public partial class DungeonGenerator
     void ScatterScenery()
     {
         var kit = Kit(Theme);
+        ScatterCornerWebsAndLilies(kit);
         if (kit.props.Length == 0 && kit.decals.Length == 0) return;
         foreach (Room room in Rooms)
         {
@@ -188,6 +244,58 @@ public partial class DungeonGenerator
         }
     }
 
+    // Teranyina de racó (dibuixada per codi): llegeix-se com un racó dalt a l'esquerra i es gira per als altres tres.
+    static Sprite cobweb;
+    static Sprite Cobweb
+    {
+        get
+        {
+            if (cobweb != null) return cobweb;
+            const int size = 16; var tex = new Texture2D(size, size) { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
+            tex.SetPixels(new Color[size * size]);
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = x, dy = size - 1 - y, d = Mathf.Sqrt(dx * dx + dy * dy);       // distància al racó dalt-esquerra
+                    if (d > 15f) continue;
+                    float a = Mathf.Atan2(dy, dx) * 4f / (Mathf.PI * .5f);                     // 4 radis dins del quart de cercle
+                    bool spoke = Mathf.Abs(a - Mathf.Round(a)) * d < .6f;
+                    bool arc = (Mathf.Abs(d - 5f) < .6f || Mathf.Abs(d - 9.5f) < .6f || Mathf.Abs(d - 14f) < .6f) && d > 1f;
+                    if (spoke || arc) tex.SetPixel(x, y, new Color(.92f, .92f, .96f, d > 11f ? .5f : .75f));
+                }
+            tex.Apply(); cobweb = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(.5f, .5f), size); return cobweb;
+        }
+    }
+
+    // Racons de sala (terra amb dues parets contigües): hi van les teranyines; i nenúfars només sobre l'aigua.
+    void ScatterCornerWebsAndLilies(SceneryKit kit)
+    {
+        foreach (Room room in Rooms)
+        {
+            if (room.type == RoomType.Boss) continue;
+            foreach (Vector2Int p in room.rect.allPositionsWithin)
+            {
+                if (!floor.Contains(p) || !InsideShape(room, p)) continue;
+                var cell = ToCell(p);
+                if (kit.lilies && liquid != null && liquid.HasTile(cell) && PosHash(p, 7) % 1000 < 110)
+                {   // nenúfar sobre l'aigua
+                    var lily = Block("Nenufar"); if (lily == null) continue;
+                    var li = new GameObject("Nenufar"); li.transform.position = ground.GetCellCenterWorld(cell); li.transform.SetParent(transform);
+                    var lr = li.AddComponent<SpriteRenderer>(); lr.sprite = lily; lr.sortingLayerName = "Shadows"; lr.sortingOrder = 2;
+                    continue;
+                }
+                if (!kit.webs || (liquid != null && liquid.HasTile(cell)) || solid.Contains(p) || reserved.Contains(p)) continue;
+                bool up = !floor.Contains(p + Vector2Int.up), down = !floor.Contains(p + Vector2Int.down);
+                bool left = !floor.Contains(p + Vector2Int.left), right = !floor.Contains(p + Vector2Int.right);
+                if ((up == down) || (left == right)) continue;           // cal exactament una paret vertical i una d'horitzontal
+                if (PosHash(p, 9) % 100 >= 45) continue;                   // no tots els racons
+                var go = new GameObject("Teranyina"); go.transform.position = ground.GetCellCenterWorld(cell); go.transform.SetParent(transform);
+                var sr = go.AddComponent<SpriteRenderer>(); sr.sprite = Cobweb; sr.sortingLayerName = "Shadows"; sr.sortingOrder = 3;
+                sr.flipX = right; sr.flipY = down;
+            }
+        }
+    }
+
     void MakeScenery(string name, Vector2Int cell, SceneryKit kit, bool decal)
     {
         var sprite = Block(name); if (sprite == null) return;
@@ -202,12 +310,12 @@ public partial class DungeonGenerator
         shadow.transform.SetParent(go.transform, true); shadow.transform.localScale = new Vector3(name.StartsWith("Tronc") || name.StartsWith("Roca_gran") ? .85f : .6f, .24f, 1f);
         var box = go.AddComponent<BoxCollider2D>(); box.size = new Vector2(.65f, .55f); box.offset = new Vector2(0, -.1f);
         var b = go.AddComponent<Breakable>();
-        bool hard = name.StartsWith("Roca") || name == "Pedres" || name.StartsWith("Soca") || name.StartsWith("Tronc") || name == "Armari_metal" || name == "Llum_peu" || name == "Carro_compra";
+        bool hard = name.StartsWith("Roca") || name == "Pedres" || name.StartsWith("Soca") || name.StartsWith("Tronc") || name == "Armari_metal" || name == "Llum_peu" || name == "Carro_compra" || name == "Taula_fusta";
         bool mushroom = name.StartsWith("Bolet");
         b.health = hard ? 4 : mushroom || name.StartsWith("Cactus") ? 2 : 1;
         b.coinChance = hard ? .08f : .15f; b.healChance = mushroom ? .3f : hard ? .04f : .12f;
         b.debrisColor = name.StartsWith("Roca") || name == "Pedres" || name == "Armari_metal" || name == "Paperera" ? new Color(.55f, .55f, .6f)
-            : name.StartsWith("Tronc") || name == "Soca" || name == "Carro_compra" ? new Color(.45f, .3f, .15f)
+            : name.StartsWith("Tronc") || name == "Soca" || name == "Carro_compra" || name == "Taula_fusta" ? new Color(.45f, .3f, .15f)
             : mushroom ? new Color(.8f, .4f, .5f) : new Color(.3f, .65f, .3f);
     }
 }

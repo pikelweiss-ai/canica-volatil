@@ -48,6 +48,15 @@ public static class V141ContentBuilder
         var frog = Make("GranotaGegant", EnemyV140.Kind.GiantFrog, 34, 1.5f, 1, 1.4f, .6f);
         var mage = Make("MagCendra", EnemyV140.Kind.AshMage, 32, 1.5f, 0, 1.4f, .6f);
 
+        // Reina Aranya: sense el dash (no té sentit en una aranya) i amb teranyines que frenen (nota de Ferran, v1.3.3)
+        {
+            var queenPath = "Assets/Prefabs/Enemics/ReinaAranya.prefab";
+            var queen = PrefabUtility.LoadPrefabContents(queenPath);
+            var queenBoss = queen.GetComponent<EnemyBoss>();
+            queenBoss.attacks = new[] { EnemyBoss.Attack.Summon, EnemyBoss.Attack.Fan, EnemyBoss.Attack.Jump, EnemyBoss.Attack.Web };
+            PrefabUtility.SaveAsPrefabAsset(queen, queenPath); PrefabUtility.UnloadPrefabContents(queen);
+        }
+
         foreach (string path in System.IO.Directory.GetFiles("Assets/Dungeon/Temes", "*.asset"))
         {
             var theme = AssetDatabase.LoadAssetAtPath<DungeonTheme>(path); if (theme == null) continue;

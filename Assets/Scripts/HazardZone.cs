@@ -5,13 +5,36 @@ using UnityEngine;
 // els altres enemics (explosió de la bomba) els toca només l'amfitrió, que és qui mana al combat.
 public class HazardZone : MonoBehaviour
 {
-    public enum Style : byte { Fire = 0, Acid = 1, Bomb = 2 }
+    public enum Style : byte { Fire = 0, Acid = 1, Bomb = 2, Web = 3 }
 
     Style style;
     float radius, delay, life, age, nextTick;
     SpriteRenderer disc, ring;
     bool exploded;
     PlayerMovement local;
+
+    // Teranyina circular (radis i anells) dibuixada per codi, 32x32 píxels
+    static Sprite web;
+    public static Sprite WebSprite
+    {
+        get
+        {
+            if (web != null) return web;
+            const int size = 32; var tex = new Texture2D(size, size) { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
+            var clear = new Color[size * size]; tex.SetPixels(clear);
+            float c = (size - 1) / 2f;
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = x - c, dy = y - c, d = Mathf.Sqrt(dx * dx + dy * dy); if (d > 15.5f || d < 1f) continue;
+                    float angle = Mathf.Atan2(dy, dx) * 8f / (2f * Mathf.PI);              // 8 radis
+                    bool spoke = Mathf.Abs(angle - Mathf.Round(angle)) * d < .55f;
+                    bool ring = Mathf.Abs(d % 5f - 2.5f) > 2.1f && d > 4f;                  // anells cada 5 píxels
+                    if (spoke || ring) tex.SetPixel(x, y, Color.white);
+                }
+            tex.Apply(); web = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(.5f, .5f), size); return web;
+        }
+    }
 
     // Dades de cada tipus (taula del disseny §1: Salamandra, Llimac àcid, Bombardier)
     static void Stats(Style s, out float radius, out float delay, out float life)
@@ -20,6 +43,7 @@ public class HazardZone : MonoBehaviour
         {
             case Style.Fire: radius = 1.5f; delay = 0f; life = 3f; break;   // 1 de mal/s durant 3 s
             case Style.Acid: radius = 0.9f; delay = 0f; life = 6f; break;   // -30 % de velocitat
+            case Style.Web: radius = 1.7f; delay = 0f; life = 6f; break;    // teranyina de la Reina Aranya: velocitat x0,4
             default: radius = 1.5f; delay = 1.2f; life = 1.4f; break;       // cercle roig 1,2 s i després 3 de mal
         }
     }
@@ -42,12 +66,17 @@ public class HazardZone : MonoBehaviour
     void Setup(Style s)
     {
         style = s; Stats(s, out radius, out delay, out life);
-        Color c = s == Style.Fire ? new Color(1f, .45f, .1f) : s == Style.Acid ? new Color(.45f, .9f, .2f) : new Color(1f, .15f, .15f);
-        disc = Fx.MakeSprite("Zona terra", transform.position, Fx.Disc, new Color(c.r, c.g, c.b, s == Style.Bomb ? .18f : .38f), "Shadows", 3);
+        Color c = s == Style.Fire ? new Color(1f, .45f, .1f) : s == Style.Acid ? new Color(.45f, .9f, .2f) : s == Style.Web ? new Color(.92f, .92f, .98f) : new Color(1f, .15f, .15f);
+        disc = Fx.MakeSprite("Zona terra", transform.position, s == Style.Web ? WebSprite : Fx.Disc, new Color(c.r, c.g, c.b, s == Style.Bomb ? .18f : s == Style.Web ? .9f : .38f), "Shadows", 3);
         disc.transform.SetParent(transform, true); disc.transform.localScale = Vector3.one * radius * 2f;
         ring = Fx.MakeSprite("Zona vora", transform.position, Fx.Disc, new Color(c.r, c.g, c.b, .55f), "Shadows", 4);
         ring.transform.SetParent(transform, true); ring.transform.localScale = Vector3.one * radius * 2f * (s == Style.Bomb ? .2f : .9f);
         if (s == Style.Fire) MobSounds.PlayLocal("salamandra_flama", transform.position, .35f);
+        if (s == Style.Web)
+        {   // la teranyina es pot trencar a colps o amb trets (3 impactes); en trencar-se desapareix per a tots
+            var hit = gameObject.AddComponent<CircleCollider2D>(); hit.isTrigger = true; hit.radius = 1.1f;
+            var breakable = gameObject.AddComponent<Breakable>(); breakable.health = 3; breakable.coinChance = 0f; breakable.healChance = 0f; breakable.debrisColor = new Color(.92f, .92f, .98f);
+        }
     }
 
     void Update()
@@ -72,6 +101,7 @@ public class HazardZone : MonoBehaviour
         if (local == null) return;
         if (Vector2.Distance(local.transform.position, transform.position) > radius) return;
         if (style == Style.Acid) local.BoostSpeed(0.7f, 0.2f);
+        else if (style == Style.Web) local.BoostSpeed(0.3f, 0.2f);                 // xafar-la frena molt (x0,3)
         else if (Time.time >= nextTick)
         {
             nextTick = Time.time + 1f;

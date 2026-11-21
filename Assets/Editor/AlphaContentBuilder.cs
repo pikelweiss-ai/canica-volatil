@@ -108,7 +108,7 @@ public static class AlphaContentBuilder
             boss.useBulletColor=true;boss.bulletColor=bullets;boss.dustColor=dust;SaveEnemy(root,id);
             return AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Enemics/"+id+".prefab");
         }
-        var spiderQueen=NewBoss("ReinaAranya","Reina Aranya",80,1.8f,new[]{EnemyBoss.Attack.Summon,EnemyBoss.Attack.Fan,EnemyBoss.Attack.Jump,EnemyBoss.Attack.Charge},"Aranya",new Color(.75f,.4f,1f),new Color(.5f,.3f,.7f));
+        var spiderQueen=NewBoss("ReinaAranya","Reina Aranya",80,1.8f,new[]{EnemyBoss.Attack.Summon,EnemyBoss.Attack.Fan,EnemyBoss.Attack.Jump,EnemyBoss.Attack.Web},"Aranya",new Color(.75f,.4f,1f),new Color(.5f,.3f,.7f));
         var iceKing=NewBoss("ReiGel","Rei de Gel",85,1.5f,new[]{EnemyBoss.Attack.Ring,EnemyBoss.Attack.Spiral,EnemyBoss.Attack.Charge,EnemyBoss.Attack.Fan},"FantasmaGel",new Color(.65f,.9f,1f),new Color(.7f,.85f,1f));
         // ---- v1.4.0 fase 3: sis enemics nous (el comportament és a EnemyV140) ----
         GameObject NewKind(string id,EnemyV140.Kind kind,int hp,float speed,int contact)

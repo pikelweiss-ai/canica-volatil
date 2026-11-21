@@ -347,7 +347,7 @@ MonoBehaviour:
   minionPrefab: {fileID: 5870496072010164621, guid: 0e33aff4c4463254fb3ef5fd4621cade, type: 3}
   timeBetweenAttacks: 1.4
   bulletSpeed: 5
-  attacks: 02000000070000000100000004000000
+  attacks: 02000000070000000100000008000000
   calmAttacks: 2
   useBulletColor: 1
   bulletColor: {r: 0.75, g: 0.4, b: 1, a: 1}

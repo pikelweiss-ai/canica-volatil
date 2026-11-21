@@ -152,6 +152,21 @@ public partial class NetBot
         if (GameControls.Editing) { Fail("la botiga deixa els controls bloquejats"); yield break; }
         Ok("Mercader i màquina: estoc, compra una sola vegada i interfície");
 
+        // ---- Reina Aranya: sense dash i amb teranyines que frenen
+        var queenPrefab = Prefab("ReinaAranya");
+        if (queenPrefab == null || !queenPrefab.GetComponent<EnemyBoss>().attacks.Contains(EnemyBoss.Attack.Web) || queenPrefab.GetComponent<EnemyBoss>().attacks.Contains(EnemyBoss.Attack.Charge))
+        { Fail("la Reina Aranya ha de tindre Web i no Charge"); yield break; }
+        Place(origin + new Vector2(0f, 2f));
+        HazardZone.Spawn(HazardZone.Style.Web, origin + new Vector2(0f, 2f));
+        yield return new WaitForSeconds(.4f); yield return Shot("v141-teranyina");
+        var webZone = FindObjectsByType<HazardZone>(FindObjectsSortMode.None).FirstOrDefault(z => z.GetComponent<Breakable>() != null);
+        if (webZone == null) { Fail("la teranyina no es pot trencar"); yield break; }
+        var webBreakable = webZone.GetComponent<Breakable>();
+        webBreakable.Hit(1); webBreakable.Hit(1); webBreakable.Hit(1);
+        yield return null;
+        if (webZone != null) { Fail("la teranyina no desapareix en trencar-se"); yield break; }
+        Ok("Reina Aranya: teranyines i sense dash");
+
         // ---- Menú: Personalitzar i Almanac
         SceneManager.LoadScene("MainMenu");
         yield return WaitFor(() => Scene == "MainMenu", 20, "menú principal");

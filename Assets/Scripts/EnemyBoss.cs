@@ -13,7 +13,7 @@ using UnityEngine.UI;
 [RequireComponent(typeof(EnemyPathfindingAI), typeof(EnemyHealth))]
 public class EnemyBoss : MonoBehaviour
 {
-    public enum Attack { Ring, Jump, Summon, Spiral, Charge, RockRain, Teleport, Fan }
+    public enum Attack { Ring, Jump, Summon, Spiral, Charge, RockRain, Teleport, Fan, Web }
 
     public const int BonusHealth = 20; // v1.4.1: tots els bosses +20 de vida (s aplica en crear-los a la masmorra)
     public string bossName = "Rei Llim";
@@ -91,6 +91,7 @@ public class EnemyBoss : MonoBehaviour
             case Attack.RockRain: yield return RockRain(); break;
             case Attack.Teleport: yield return Teleport(); break;
             case Attack.Fan: yield return Fan(); break;
+            case Attack.Web: yield return Web(); break;
         }
 
         ai.mode = EnemyPathfindingAI.Mode.Chase;
@@ -242,6 +243,30 @@ public class EnemyBoss : MonoBehaviour
     }
 
     // Pluja de roques: marques roges al voltant teu i, després, cauen
+    // v1.4.1 (Reina Aranya): llança teranyines que deixen zones on et mous molt a poc a poc (x0,4 durant 6 s).
+    // Cada una avisa amb un cercle abans de caure; les zones desapareixen soles.
+    IEnumerator Web()
+    {
+        if (ai.Player == null) yield break;
+        yield return Telegraph(0.5f);
+        int n = enraged ? 3 : 2;
+        var marks = new System.Collections.Generic.List<SpriteRenderer>();
+        for (int i = 0; i < n; i++)
+        {
+            Vector2 p = (Vector2)ai.Player.position + (i == 0 ? Vector2.zero : Random.insideUnitCircle.normalized * Random.Range(1.5f, 3f));
+            marks.Add(MarkAttack("Teranyina avis", p, 3.4f, 0.9f));
+        }
+        GameAudio.Enemy(Fx.Pew, 0.5f);
+        yield return new WaitForSeconds(0.9f);
+        foreach (SpriteRenderer m in marks)
+        {
+            Vector2 p = m.transform.position;
+            RemoveMark(m);
+            HazardZone.Spawn(HazardZone.Style.Web, p);
+        }
+        yield return new WaitForSeconds(0.4f);
+    }
+
     IEnumerator RockRain()
     {
         if (ai.Player == null) yield break;

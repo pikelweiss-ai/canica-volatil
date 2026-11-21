@@ -725,7 +725,7 @@ public static class NetCoop
             case Msg.ZoneFx:
             {
                 int token = r.ReadInt32(); byte style = r.ReadByte(); var p = new Vector2(r.ReadSingle(), r.ReadSingle());
-                if (token == Token && style <= (byte)HazardZone.Style.Bomb) HazardZone.Create((HazardZone.Style)style, p);
+                if (token == Token && style <= (byte)HazardZone.Style.Web) HazardZone.Create((HazardZone.Style)style, p);
                 break;
             }
             case Msg.ChestClear:
