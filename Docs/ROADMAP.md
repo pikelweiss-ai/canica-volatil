@@ -3,16 +3,18 @@
 > Decidit amb Ferran. Cada versió té un contingut tancat: **no s'hi afig res sense preguntar-li**.
 > Detalls de cada disseny a `Docs/Dissenys/` (índex a `Docs/INDEX.md`).
 
-## v1.4.0 · «Dungeons més variades» (la que es publica ara)
+## v1.4.0 · «Dungeons més variades»
+
+[Paquets d'Alpha v1.4.0](https://github.com/pikelweiss-ai/canica-volatil/releases/tag/v1.4.0-alpha)
 
 | Fase | Contingut | Disseny |
 |------|-----------|---------|
 | 1 | **Generació de dungeons**: sales amb cantons retallats (L, T, creu, cercle, pilars) mantenint la creu central; **anells** (25 % des del pis 3); sales llargues i grans; sales **Emboscada**, **Arena d'onades** i **Secreta**; modificadors **foscor**, **gel relliscós** i **flames** | `v1.4-bosses-enemics-sales.md` §4 i §9 |
 | 2 | **Sorolls nous**: importar els 23 WAV i lligar-los als mobs (mínim 5 de diferents) | §6 |
 | 3 | **6 enemics nous**: Mímic, Sanador, Escut-guerrer, Talp, Franctirador de cristall i Banshee (sprites i sorolls fets) | §1 |
-| 4 | **Portes** amb estats (tancada → mitjana → oberta) segons la distància del jugador; portes de clau (bloquejada) | §5 i §8 |
+| 4 | **Portes** amb estats (tancada → mitjana → oberta) segons la distància del jugador. Les claus queden pendents. | §5 i §8 |
 | 5 | **Llançaflames sense combustible**: l'arma es queda a la hotbar i diu «Sense combustible!» | `v1.4-mercader.md` §8b |
-| 6 | **Menú principal nou** amb el fons del portal, el logo i els botons de Ferran. **Novetats** torna a ser el cinqué botó, davall de Controls. | |
+| 6 | **Menú principal i selector nous** amb el fons del portal, la canica original, els botons amb Chakra Petch i tres portades il·lustrades. **Novetats** és el cinqué botó. | |
 
 Fora de la v1.4.0: tot el que hi ha a sota.
 **Blocs nous**: la v1.4.0 **no** té catàleg. Només, **si queda temps**, 2-3 variants de terra i 3-4 decoracions per tema (`v1.4-bosses-enemics-sales.md` §9 punt 4). **Tot l'ús dels blocs va a la v1.5** (decisió de Ferran).

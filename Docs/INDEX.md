@@ -6,11 +6,12 @@
 |----------|-----------|
 | [README.md](../README.md) | Descàrregues, controls, estat. |
 | [AGENTS.md](../AGENTS.md) | Regles de treball per a Codex/ChatGPT. |
-| [TRASPAS_CODEX_V140.md](../TRASPAS_CODEX_V140.md) | **Traspàs actual**: què està fet, què falta i com publicar la v1.4. |
+| [TRASPAS_CLAUDE_V141.md](../TRASPAS_CLAUDE_V141.md) | **Traspàs actual a Claude Code**: Alpha v1.4.0, proves i pròxima iteració. |
+| [TRASPAS_CODEX_V140.md](../TRASPAS_CODEX_V140.md) | Traspàs històric de la implementació de la v1.4.0. |
 | [Docs/Dissenys/v1.4-almanac-amulets.md](Dissenys/v1.4-almanac-amulets.md) | Almanac (armes, enemics, bosses, amulets) i 16 amulets. |
 | [Docs/Dissenys/v1.4-bosses-enemics-sales.md](Dissenys/v1.4-bosses-enemics-sales.md) | Enemics, microbosses, bosses, sales, portes i sorolls de la v1.4. |
 | [DISSENY.md](../DISSENY.md) · [CONSELL.md](../CONSELL.md) | Disseny i balanç. |
-| [ONLINE.md](../ONLINE.md) | Protocol online (ara 16). |
+| [ONLINE.md](../ONLINE.md) | Joc online i protocol 18 de la v1.4.0. |
 | [RELEASE_NOTES.md](../RELEASE_NOTES.md) · [ALPHA_PROGRESS.md](../ALPHA_PROGRESS.md) | Historial de versions i de treball. |
 | [MOBILE_ALPHA.md](../MOBILE_ALPHA.md) · [MOBILE_ANDROID.md](../MOBILE_ANDROID.md) | Android i joc entre plataformes. |
 | `Docs/Consell/*` | Informes del consell de 19 perfils (v1.2.1). |
@@ -18,7 +19,7 @@
 
 ## 2. On és tot l'art nou (v1.4)
 
-Tot l'art generat per a la v1.4 és a **`ArtNou_v1.4/`** (arrel del repositori, **fora d'`Assets`** perquè Unity no el reimporte fins que es decidisca).
+Els originals del disseny es troben a **`ArtNou_v1.4/`**. Els recursos del menú i les portades que carrega Unity estan a `Assets/Resources/Pixel/Menu140/`.
 Cada carpeta té fulls de contacte `_*.png` per veure'l d'un colp.
 
 | Carpeta | Contingut | Quantitat | Mida | Generador |
@@ -50,4 +51,4 @@ Cada carpeta té fulls de contacte `_*.png` per veure'l d'un colp.
 - [Almanac i amulets](Dissenys/v1.4-almanac-amulets.md): §4 què és cada amulet, §5 HUD amb 3 ranures d'amulets.
 - [Nova pantalla PERSONALITZAR](Dissenys/v1.4-personalitzar.md) (estil Stumble Guys: Canigues, Barrets, Esteles) · mockups a `Docs/Dissenys/img/` (`Tools/PixelArt/mockup-personalitzar.ps1`).
 
-- [Full de ruta](ROADMAP.md): què entra a la v1.4.0, v1.4.1 i v1.5. Missatge per a ChatGPT: [PROMPT_CODEX_V140.md](../PROMPT_CODEX_V140.md).
+- [Full de ruta](ROADMAP.md): què entra a la v1.4.0, v1.4.1 i v1.5. [Traspàs a Claude Code](../TRASPAS_CLAUDE_V141.md).

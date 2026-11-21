@@ -1,5 +1,7 @@
 # Canica Volàtil · Android Pre-Alpha v1.0.0
 
+> Document històric. Per a l'APK actual, consulta la [guia d'Android de l'Alpha v1.4.0](MOBILE_ALPHA.md).
+
 Variant del joc per a mòbils Android, en horitzontal i amb dos joysticks. El codi està en la branca `mobile/android-prealpha-v1.0.0`; la versió de PC continua en `main`.
 
 ## Descarregar i jugar

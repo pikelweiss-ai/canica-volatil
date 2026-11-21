@@ -1,3 +1,16 @@
+# Alpha v1.4.0
+
+- **Menú principal renovat.** Fons del portal més nítid, la canica original, botons amb tipografia Chakra Petch i el botó **Novetats** davall de **Controls**. Les tres expedicions tenen portades il·lustrades a partir dels sprites del joc.
+- **Masmorres més variades.** Formes noves, plantes amb rutes alternatives, emboscades, sales secretes i modificadors de foscor, gel i flames. Les sales circulars grans tenen més cobertura i objectes trencables.
+- **Arenes de tres onades.** Els enemics entren per costats diferents, la pantalla mostra l'onada i la recompensa final és un cofre rar o millor i cinc monedes.
+- **Sis enemics nous.** Mímic, Sanador, Escut-guerrer, Talp, Franctirador de cristall i Banshee, amb efectes de so nous.
+- **Portes animades i Llançaflames.** Les portes reaccionen a la proximitat. El Llançaflames es queda a la barra quan s'acaba el combustible.
+- **Online.** Protocol **18**. Tots els participants han d'usar la mateixa compilació. Les claus per a portes queden pendents.
+
+**Paquets:** Windows x86_64 (ZIP, obri `CanicaVolatil.exe`), Linux x86_64 (TAR.GZ, executa `./Jugar.sh`), Android 8+ ARM64/ARMv7 (APK) i sumes `SHA256SUMS.txt`.
+
+**Verificació:** les tres plataformes compilen i coincideixen en protocol, codi i catàleg. En Windows han passat el bot del menú, el d'una masmorra sencera i el bot individual complet. La suite online amb client mòbil simulat ha donat **6/6**, inclosos els dos casos sense IP. També s'han verificat l'execució del ZIP de Windows i la firma de l'APK. Queda pendent provar Linux i Android en dispositius reals.
+
 # Alpha v1.3.2
 
 - **Menú principal** amb un panell de novetats al costat dels botons (les dues darreres versions) i botó VEURE-HO TOT.

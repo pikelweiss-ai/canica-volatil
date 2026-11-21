@@ -1,5 +1,7 @@
 # Traspàs FINAL a Codex/ChatGPT · Alpha v1.4.0
 
+> Arxiu del desenvolupament de la v1.4.0. L'estat més recent i les instruccions per a la pròxima iteració són al [traspàs a Claude Code](TRASPAS_CLAUDE_V141.md).
+
 > Escrit per Claude Code el 2026-11-21 i **llest per a fer la versió**. Continua des d'ací: **no comences de zero i no refaces el que ja està fet.**
 > El missatge per enganxar a ChatGPT és a `PROMPT_CODEX_V140.md`.
 

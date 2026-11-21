@@ -1,4 +1,12 @@
-# Alpha de PC · primera passada visual i ajustos
+# Canica Volàtil · Progrés de l'Alpha
+
+## v1.4.0 · 21 de novembre de 2026
+
+- [Publicació i notes](https://github.com/pikelweiss-ai/canica-volatil/releases/tag/v1.4.0-alpha) amb paquets Windows, Linux i Android. Protocol 18 i manifests coincidents.
+- Menú, planta de masmorra i bot individual complet superats en Windows. Suite online amb client mòbil simulat **6/6**. ZIP executat després d'extraure'l, APK verificat i sumes SHA256 comprovades.
+- [Traspàs a Claude Code](TRASPAS_CLAUDE_V141.md) amb les proves pendents i el contingut planificat de la v1.4.1.
+
+## Alpha de PC · primera passada visual i ajustos
 
 Estat vigent a la branca `alpha/bugfixes` (19/11/2026):
 

@@ -1,1 +1,1 @@
-> Abans de començar, fes git pull a C:\Users\Usuario\memoria-claude i llig les notes (sobretot "Canica Alpha.md" i "Perfil.md").
+> Per continuar Canica Volàtil, llig primer [el traspàs de la v1.4.1](TRASPAS_CLAUDE_V141.md) i [el full de ruta](Docs/ROADMAP.md). Si necessites les notes personals de Ferran, actualitza el repositori `C:\Users\Usuario\memoria-claude` i consulta «Canica Alpha.md» i «Perfil.md».
