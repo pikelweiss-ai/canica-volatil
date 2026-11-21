@@ -8,6 +8,8 @@
 | [AGENTS.md](../AGENTS.md) | Regles de treball per a Codex/ChatGPT. |
 | [TRASPAS_V150.md](../TRASPAS_V150.md) | **Traspàs actual**: Alpha v1.4.1, proves pendents i v1.5. |
 | [Docs/PENDENTS_APUNTATS.md](PENDENTS_APUNTATS.md) | **Deu pendents apuntats per Ferran** després de la v1.4.2 (candidats a una v1.4.3). |
+| [TRASPAS_CODEX_V150.md](../TRASPAS_CODEX_V150.md) · [PROMPT_CODEX_V150.md](../PROMPT_CODEX_V150.md) | **Traspàs i missatge per a fer la v1.5** (ChatGPT/Codex). |
+| [Docs/Dissenys/v1.5-almanac-blocs-i-mode-creador.md](Dissenys/v1.5-almanac-blocs-i-mode-creador.md) | Almanac de blocs i 4t mode «Creador» (pròximament). |
 | [TRASPAS_CLAUDE_V141.md](../TRASPAS_CLAUDE_V141.md) | Traspàs que va obrir la v1.4.1 (històric). |
 | [TRASPAS_CODEX_V140.md](../TRASPAS_CODEX_V140.md) | Traspàs històric de la implementació de la v1.4.0. |
 | [Docs/Dissenys/v1.4-almanac-amulets.md](Dissenys/v1.4-almanac-amulets.md) | Almanac (armes, enemics, bosses, amulets) i 16 amulets. |

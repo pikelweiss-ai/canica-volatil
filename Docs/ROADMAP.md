@@ -27,11 +27,14 @@ Fora de la v1.4.0: tot el que hi ha a sota.
 - **Almanac** fase 1 (llistes d'armes i d'enemics).
 
 
-## v1.5 (decidit amb Ferran, 2026-11-21)
+## v1.5 (decidit amb Ferran, 2026-11-21) · traspàs: [TRASPAS_CODEX_V150.md](../TRASPAS_CODEX_V150.md)
 - **Els vuit bosses nous, tots de colp** (Cor de Cristall, Cavaller Corrupte, Cuc de Sorra, Fènix, Hidra del Llac, Rei de les Clavegueres, Cuiner Boig, Professor Infernal). Disseny a `Docs/Dissenys/v1.4-bosses-enemics-sales.md` §3.
 - **Portes amb clau.** La porta de la sala del boss està tancada amb clau, i **la clau s'ha d'anar a buscar a una sala aleatòria** de la planta (sala de clau; pot estar vigilada). Cal sistema de claus (recollir, gastar, mostrar a la HUD), sincronització online i que el mapa marque on és la porta. Disseny de portes a `v1.4-bosses-enemics-sales.md` §5 i §8.
 - Els deu pendents de [Docs/PENDENTS_APUNTATS.md](PENDENTS_APUNTATS.md) (abans «v1.4.3»): arreglos petits, microbosses des del pis 2 i bugs d'online.
-- **Catàleg de blocs i mode creador de mapes.** Cada bloc és un `ScriptableObject` (nom, família, sprite, travessable, bloqueja bala, fa mal, so, ocupa el bloc complet, es pot amagar dins, peça de 2 blocs, emet llum, capa sota/sobre el jugador). Es guarden els mapes **per nom de bloc**, amb **rotació** (0/90/180/270 i flip) per bloc. Editor bàsic: pintar, guardar i carregar; després objectes i kits (Castell, Casa, Supermercat) i compartir mapes. Autotile per a catifes i camins. Plantilles de sala i plantes temàtiques. Usa les 626 textures.
+- **Almanac de blocs i 4t mode «Creador» (pròximament).** De tot el creador de mapes, a la v1.5 només entra el **catàleg mínim de blocs (`BlockData`) amb l'Almanac de blocs** i una **quarta targeta «CREADOR» al selector, apagada i amb «PRÒXIMAMENT»**. Els objectes tenen hitbox pròpia i independent per bloc. L'editor (pintar, guardar, carregar, rotació, autotile, plantilles, kits i compartir mapes) passa a la **v1.6**. Disseny: [v1.5-almanac-blocs-i-mode-creador.md](Dissenys/v1.5-almanac-blocs-i-mode-creador.md).
 - **Amulets** (16, 3 ranures a la hotbar, tria 1 de 3 en acabar cada pis, sincronització online) i **tenda de cosmètics** amb qualitats; ranura d'amulet i sala Botiga al mercader.
 - **Almanac fase 2** (animacions, filtres, amulets i blocs).
 
+
+## v1.6
+- **Mode creador de mapes**: editor (pintar, guardar, carregar), rotació i flip de blocs, autotile de catifes i camins, plantilles de sala, plantes temàtiques, kits (Castell, Casa, Supermercat) i compartir mapes.
