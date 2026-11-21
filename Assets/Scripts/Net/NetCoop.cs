@@ -25,7 +25,7 @@ public static class NetCoop
     static int nextEnemyId = 1;
     static readonly Dictionary<int, EnemyHealth> enemies = new Dictionary<int, EnemyHealth>();
     static readonly Dictionary<string, GameObject> templates = new Dictionary<string, GameObject>(); // enemics de l'escena (client)
-    static readonly Dictionary<int, int> roomStates = new Dictionary<int, int>();          // amfitrio: per a qui arriba tard
+    static readonly Dictionary<int, (int state, int arenaWave)> roomStates = new();        // amfitrio: per a qui arriba tard
     static readonly HashSet<int> openedChests = new HashSet<int>();
     static readonly HashSet<int> pendingChests = new HashSet<int>();
     static readonly List<(int rarity, Vector2Int cell)> extraChests = new List<(int, Vector2Int)>();
@@ -234,13 +234,16 @@ public static class NetCoop
         S.SendAll(NetProtocol.Frame(Msg.MobSound, w => { w.Write(Token); w.Write(sound); w.Write(position.x); w.Write(position.y); w.Write(volume); }));
     }
 
-    public static void RoomChanged(int index, int state)
+    public static void RoomChanged(int index, int state, int arenaWave = 0)
     {
         if (!IsHost) return;
-        roomStates[index] = state;
-        S.SendAll(NetProtocol.Frame(Msg.RoomState, w => { w.Write(Token); w.Write(index); w.Write(state); }));
+        roomStates[index] = (state, arenaWave);
+        S.SendAll(RoomStateFrame(Token, index, state, arenaWave));
         if (state == 2 && downed.Count > 0) ReviveEveryone();
     }
+
+    static byte[] RoomStateFrame(int token, int index, int state, int arenaWave) =>
+        NetProtocol.Frame(Msg.RoomState, w => { w.Write(token); w.Write(index); w.Write(state); w.Write(arenaWave); });
 
     public static void ChestSpawned(int rarity, Vector2Int cell)
     {
@@ -562,7 +565,8 @@ public static class NetCoop
                 int marker = r.ReadInt32(); int token = r.ReadInt32();
                 if (marker != -1 || token != Token) break;
                 int fid = from.id;
-                foreach (var kv in roomStates) { int i = kv.Key, st = kv.Value; S.SendTo(fid, NetProtocol.Frame(Msg.RoomState, w => { w.Write(token); w.Write(i); w.Write(st); })); }
+                foreach (var entry in roomStates)
+                    S.SendTo(fid, RoomStateFrame(token, entry.Key, entry.Value.state, entry.Value.arenaWave));
                 foreach (var ch in extraChests) { var c = ch; S.SendTo(fid, NetProtocol.Frame(Msg.ChestSpawn, w => { w.Write(token); w.Write(c.rarity); w.Write(c.cell.x); w.Write(c.cell.y); })); }
                 foreach (var key in openedChests) { int k = key; S.SendTo(fid, NetProtocol.Frame(Msg.ChestOpened, w => { w.Write(token); w.Write(k); })); }
                 if (portalCell.HasValue) { var pc = portalCell.Value; S.SendTo(fid, NetProtocol.Frame(Msg.PortalSpawn, w => { w.Write(token); w.Write(pc.x); w.Write(pc.y); })); }
@@ -663,8 +667,12 @@ public static class NetCoop
             }
             case Msg.RoomState:
             {
-                int token = r.ReadInt32(); int index = r.ReadInt32(); int state = r.ReadInt32();
-                if (token == Token && gen != null) { gen.NetRoomState(index, state); RoomEvents++; }
+                int token = r.ReadInt32(); int index = r.ReadInt32(); int state = r.ReadInt32(); int arenaWave = r.ReadInt32();
+                if (token == Token && gen != null)
+                {
+                    gen.NetRoomState(index, state, arenaWave);
+                    if (arenaWave <= 1) RoomEvents++;
+                }
                 break;
             }
             case Msg.ChestSpawn:

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using TMPro;
@@ -85,8 +86,72 @@ public partial class DungeonGenerator
         return r != null && r.modifier == RoomModifier.Ice;
     }
 
+    void DecorateLargeCombat(Room room)
+    {
+        bool corners = rng.Next(2) == 0;
+        foreach (int x in new[] { -1, 1 })
+            foreach (int y in new[] { -1, 1 })
+            {
+                var sign = new Vector2Int(x, y);
+                var corner = room.Center + new Vector2Int(x * (room.rect.width / 4), y * (room.rect.height / 4));
+                for (int length = 0; length < 3; length++)
+                {
+                    Vector2Int cell = corner - new Vector2Int(length * sign.x, 0);
+                    if (FreeForDecor(room, cell)) solid.Add(cell);
+                    if (corners)
+                    {
+                        cell = corner - new Vector2Int(0, length * sign.y);
+                        if (FreeForDecor(room, cell)) solid.Add(cell);
+                    }
+                }
+            }
+
+        PlaceProps(room, cratePrefab, rng.Next(6, 9), cratesToSpawn);
+        PlaceProps(room, barrelPrefab, rng.Next(1, 3), barrelsToSpawn);
+    }
+
+    const int ArenaWaves = 3;
+
+    IEnumerator RunArenaWaves(Room room)
+    {
+        for (int wave = 1; wave <= ArenaWaves; wave++)
+        {
+            if (wave > 1)
+            {
+                yield return new WaitForSeconds(1.5f);
+                room.arenaWave = wave;
+                NetCoop.RoomChanged(Rooms.IndexOf(room), 1, wave);
+            }
+
+            var cells = new List<Vector2Int>();
+            foreach (Vector2Int cell in room.rect.allPositionsWithin)
+                if (InsideShape(room, cell) && !reserved.Contains(cell) && !TileNav.IsBlocked(ToCell(cell)))
+                    cells.Add(cell);
+
+            var players = new List<Vector2>(RemotePlayerPositions()) { (Vector2)player.position };
+            int count = 1 + RunState.Floor + wave;
+            for (int i = 0; i < count && cells.Count > 0; i++)
+            {
+                Vector2Int direction = wave == 1 ? Dirs[i % 2] : wave == 2 ? Dirs[2 + i % 2] : Dirs[i % 4];
+                var flank = cells.FindAll(cell =>
+                {
+                    Vector2Int delta = cell - room.Center;
+                    if (delta.x * direction.x + delta.y * direction.y < 3) return false;
+                    Vector2 position = ground.GetCellCenterWorld(ToCell(cell));
+                    return players.TrueForAll(at => (at - position).sqrMagnitude >= 3.5f * 3.5f);
+                });
+                var positions = flank.Count > 0 ? flank : cells;
+                Vector2Int spawn = positions[rng.Next(positions.Count)];
+                cells.Remove(spawn);
+                StartCoroutine(SpawnEnemy(PickEnemy(), spawn, room, 0f));
+            }
+
+            yield return WaitClear(room);
+        }
+    }
+
     Light2D[] roomLights;
-    TextMeshProUGUI arenaClock;
+    TextMeshProUGUI arenaProgress;
     void UpdateRoomEffects()
     {
         if (roomLights == null) roomLights = FindObjectsByType<Light2D>(FindObjectsSortMode.None);
@@ -94,16 +159,22 @@ public partial class DungeonGenerator
         foreach (var light in roomLights)
             if (light != null && light.lightType == Light2D.LightType.Global)
                 light.intensity = (Theme != null ? Theme.lightIntensity : 1f) * (r != null && r.modifier == RoomModifier.Darkness ? .4f : 1f);
-        if (arenaClock == null && ui != null)
+        bool inArena = r != null && r.type == RoomType.Arena && r.active && !r.cleared;
+        if (arenaProgress == null && inArena && ui != null)
         {
-            var go = new GameObject("Cronometre arena", typeof(RectTransform), typeof(TextMeshProUGUI));
-            go.transform.SetParent(ui.transform, false); arenaClock = go.GetComponent<TextMeshProUGUI>();
-            arenaClock.fontSize = 24; arenaClock.alignment = TextAlignmentOptions.Center;
-            arenaClock.rectTransform.anchoredPosition = new Vector2(0, 300);
-            arenaClock.rectTransform.sizeDelta = new Vector2(600, 45);
+            var go = new GameObject("Progrés de l'arena", typeof(RectTransform), typeof(TextMeshProUGUI));
+            go.transform.SetParent(ui.transform, false);
+            arenaProgress = go.GetComponent<TextMeshProUGUI>();
+            arenaProgress.fontSize = 24;
+            arenaProgress.alignment = TextAlignmentOptions.Center;
+            arenaProgress.raycastTarget = false;
+            var rect = arenaProgress.rectTransform;
+            rect.anchorMin = rect.anchorMax = new Vector2(.5f, 1f);
+            rect.anchoredPosition = new Vector2(0, -85);
+            rect.sizeDelta = new Vector2(600, 45);
         }
-        if (arenaClock != null) arenaClock.text = r != null && r.type == RoomType.Arena && r.active && !r.cleared
-            ? "ARENA · " + (Time.time - r.combatStarted).ToString("0.0") + " s" : "";
+        if (arenaProgress != null)
+            arenaProgress.text = inArena ? $"ARENA · ONADA {r.arenaWave}/{ArenaWaves}" : "";
     }
 
     IEnumerator RoomFlames(Room r)

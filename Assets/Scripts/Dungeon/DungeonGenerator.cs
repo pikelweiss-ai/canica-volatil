@@ -32,7 +32,7 @@ public partial class DungeonGenerator : MonoBehaviour
         public RoomModifier modifier;
         public bool ambushTriggered;
         public ChestRarity ambushRarity;
-        public float combatStarted;
+        public int arenaWave;
         public RectInt rect;                          // Cel·les de terra de dins de la sala
         public readonly List<Room> links = new List<Room>();
         public readonly List<Vector3Int> doorCells = new List<Vector3Int>();
@@ -254,6 +254,8 @@ public partial class DungeonGenerator : MonoBehaviour
             if (r.type == RoomType.Combat || r.type == RoomType.Arena || r.type == RoomType.Emboscada)
             {
                 r.shape = (RoomShape)rng.Next(7);
+                if (r.type == RoomType.Arena)
+                    r.shape = (int)r.shape % 2 == 0 ? RoomShape.Circle : RoomShape.Octagon;
                 if (r != ProgressionRoom) r.modifier = (RoomModifier)rng.Next(4);
             }
         }
@@ -303,10 +305,11 @@ public partial class DungeonGenerator : MonoBehaviour
                 }
             }
 
-        // Decoració de dins de les sales de combat i del boss
+        // Decoració de dins de les sales de combat, de les arenes i del boss
         foreach (Room r in Rooms)
         {
             if (r.type == RoomType.Combat) DecorateCombat(r);
+            else if (r.type == RoomType.Arena) DecorateLargeCombat(r);
             else if (r.type == RoomType.Boss) DecorateBoss(r);
         }
     }
@@ -337,6 +340,12 @@ public partial class DungeonGenerator : MonoBehaviour
                     Vector2Int pillar = c + new Vector2Int(x * qx, y * qy);
                     if (FreeForDecor(r, pillar)) solid.Add(pillar);
                 }
+            return;
+        }
+
+        if (r.shape == RoomShape.Circle && r.rect.width >= 15 && r.rect.height >= 11)
+        {
+            DecorateLargeCombat(r);
             return;
         }
 
@@ -501,7 +510,7 @@ public partial class DungeonGenerator : MonoBehaviour
     {
         if(Theme!=null && Theme.decorPrefabs!=null && Theme.decorPrefabs.Length>0)
             foreach(Room room in Rooms)
-                if(room.type==RoomType.Combat)
+                if(room.type==RoomType.Combat || room.type==RoomType.Arena)
                     for(int tries=0;tries<30;tries++)
                     {
                         var cell=RandomCell(room);if(!FreeForDecor(room,cell,2))continue;
@@ -754,10 +763,12 @@ public partial class DungeonGenerator : MonoBehaviour
 
     // ------------------------------------------------------------------ Online (ho crida NetCoop als clients)
 
-    public void NetRoomState(int index, int state)
+    public void NetRoomState(int index, int state, int arenaWave = 0)
     {
         if (index < 0 || index >= Rooms.Count) return;
         Room r = Rooms[index];
+        if (state == 1 && r.type == RoomType.Arena && !r.cleared)
+            r.arenaWave = Mathf.Max(r.arenaWave, arenaWave);
         if (state == 7) { r.ambushTriggered = true; return; }
         if (state >= 3 && state <= 6 && !r.active && !r.cleared) SetWaitingDoors(r, state - 3);
         else if (state == 0 && !r.active && !r.cleared) SetDoors(r, false);
@@ -765,7 +776,6 @@ public partial class DungeonGenerator : MonoBehaviour
         {
             r.active = true;
             r.ambushTriggered = true;
-            r.combatStarted = Time.time;
             SetDoors(r, true);
             ShowProgressionBanner(r);
             if (r.type == RoomType.Boss)
@@ -830,9 +840,9 @@ public partial class DungeonGenerator : MonoBehaviour
     IEnumerator RunRoom(Room r)
     {
         r.active = true;
-        r.combatStarted = Time.time;
+        if (r.type == RoomType.Arena) r.arenaWave = 1;
         SetDoors(r, true);
-        NetCoop.RoomChanged(Rooms.IndexOf(r), 1);
+        NetCoop.RoomChanged(Rooms.IndexOf(r), 1, r.arenaWave);
         if (r.modifier == RoomModifier.Flames) StartCoroutine(RoomFlames(r));
         yield return new WaitForSeconds(0.4f);
 
@@ -857,8 +867,8 @@ public partial class DungeonGenerator : MonoBehaviour
             if (r == ProgressionRoom && RunState.Floor >= 4) StartCoroutine(ResonancePulses(r));
             int waves = 1 + (rng.NextDouble() < 0.5 ? 1 : 0) + (RunState.Floor >= 3 ? 1 : 0);
             if (r.type == RoomType.Emboscada) waves = 2;
-            if (r.type == RoomType.Arena) waves = 3;
-            for (int w = 0; w < waves; w++)
+            if (r.type == RoomType.Arena) yield return RunArenaWaves(r);
+            else for (int w = 0; w < waves; w++)
             {
                 // Pis 1: 3-4 enemics per onada; cada pis en suma un
                 int count = 2 + RunState.Floor + rng.Next(0, 2);
@@ -878,7 +888,11 @@ public partial class DungeonGenerator : MonoBehaviour
                     ? (RunState.Floor >= 5 ? ChestRarity.Epic : ChestRarity.Rar)
                     : RandomRarity();
                 if (r.type == RoomType.Emboscada) reward = (ChestRarity)Mathf.Min(3, (int)r.ambushRarity + 1);
-                if (r.type == RoomType.Arena) for (int i = 0; i < 5; i++) CoinDrop.Spawn(ground.GetCellCenterWorld(ToCell(r.Center)));
+                if (r.type == RoomType.Arena)
+                {
+                    reward = (ChestRarity)Mathf.Max((int)ChestRarity.Rar, (int)reward);
+                    for (int i = 0; i < 5; i++) CoinDrop.Spawn(ground.GetCellCenterWorld(ToCell(r.Center)));
+                }
                 Vector2Int offset = new Vector2Int(2, 0);
                 SpawnChest(reward, r.Center + offset);
                 NetCoop.ChestSpawned((int)reward, r.Center + offset);

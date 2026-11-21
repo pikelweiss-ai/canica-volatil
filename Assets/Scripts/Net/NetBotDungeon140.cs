@@ -45,19 +45,29 @@ public partial class NetBot
                 if (!r.ambushTriggered || !r.active) { Fail("el cofre no activa l'emboscada"); yield break; }
             }
             if (r.type == DungeonGenerator.RoomType.Start || r.type == DungeonGenerator.RoomType.Treasure || r.type == DungeonGenerator.RoomType.Secreta) continue;
+            bool arena = r.type == DungeonGenerator.RoomType.Arena;
+            if (arena && !CheckArenaLayout(g, r)) yield break;
             float until = Time.time + 25f; int waves = 0; bool hadEnemies = false;
             while (!r.cleared && Time.time < until)
             {
                 health.currentHealth = health.maxHealth;
                 bool enemies = r.alive.Exists(e => e != null && e.enabled && !e.IsDead);
-                if (enemies && !hadEnemies) waves++;
+                if (enemies && !hadEnemies)
+                {
+                    waves++;
+                    if (arena && r.arenaWave != waves)
+                    { Fail("l'indicador d'onada de l'arena va desfasat"); yield break; }
+                }
                 hadEnemies = enemies;
                 foreach (var e in r.alive.ToArray()) if (e != null && e.enabled && !e.IsDead) e.TakeDamage(99999);
                 yield return new WaitForSeconds(.1f);
             }
             if (!r.cleared) { Fail("sala no acabada: " + r.type); yield break; }
-            if ((r.type == DungeonGenerator.RoomType.Emboscada && waves != 2) || (r.type == DungeonGenerator.RoomType.Arena && waves != 3))
+            if ((r.type == DungeonGenerator.RoomType.Emboscada && waves != 2) || (arena && waves != 3))
             { Fail("nombre d'onades incorrecte: " + r.type + "=" + waves); yield break; }
+            if (arena && !System.Array.Exists(FindObjectsByType<Chest>(FindObjectsSortMode.None),
+                chest => r.rect.Contains((Vector2Int)g.ground.WorldToCell(chest.transform.position)) && chest.rarity >= ChestRarity.Rar))
+            { Fail("falta el cofre rar o millor al final de l'arena"); yield break; }
             foreach (var cell in r.doorCells) if (g.doors.HasTile(cell)) { Fail("porta tancada despres del combat"); yield break; }
             Ok("sala acabada: " + r.type + ", onades=" + waves);
         }
@@ -89,5 +99,22 @@ public partial class NetBot
             Ok("captures de les set formes");
         }
         Pass();
+    }
+
+    bool CheckArenaLayout(DungeonGenerator dungeon, DungeonGenerator.Room room)
+    {
+        int cover = 0, props = 0;
+        foreach (Vector2Int cell in room.rect.allPositionsWithin)
+        {
+            if (!DungeonGenerator.InsideShape(room, cell) || !dungeon.walls.HasTile((Vector3Int)cell)) continue;
+            if (Mathf.Abs(cell.x - room.Center.x) <= 1 || Mathf.Abs(cell.y - room.Center.y) <= 1)
+            { Fail("una paret de l'arena bloqueja el passadís central"); return false; }
+            cover++;
+        }
+        foreach (var prop in FindObjectsByType<Breakable>(FindObjectsSortMode.None))
+            if (room.rect.Contains((Vector2Int)dungeon.ground.WorldToCell(prop.transform.position))) props++;
+        if (cover < 4 || props < 6) { Fail("falta cobertura o caixes a l'arena"); return false; }
+        Ok("arena amb " + cover + " caselles de cobertura i " + props + " objectes trencables");
+        return true;
     }
 }
