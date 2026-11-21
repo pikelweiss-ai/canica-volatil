@@ -733,6 +733,7 @@ public partial class DungeonGenerator : MonoBehaviour
         if (gameOver || player == null || !player.gameObject.activeInHierarchy) return;
 
         Vector3Int pc = ground.WorldToCell(player.position);
+        DiscoverBlocks(pc);
         Room r = RoomAt(pc, 0);
         if (r != null && r != CurrentRoom)
         {

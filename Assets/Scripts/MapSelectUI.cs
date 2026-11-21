@@ -13,15 +13,17 @@ public class MapInfo
 
 public class MapSelectUI : MonoBehaviour
 {
-    private const float CardWidth = 432f;
-    private const float CardHeight = 382f;
-    private const float CardSpacing = 32f;
+    private const float CardWidth = 326f;
+    private const float CardHeight = 334f;
+    private const float CardSpacing = 22f;
     private const float Frame = 4f;
     private const float CoverWidth = CardWidth - Frame * 2;
     private const float CoverHeight = CoverWidth * 9f / 16f;
     private const string Covers = "Pixel/Menu140/Covers/";
 
     private TMP_FontAsset font;
+    TextMeshProUGUI creatorNotice;
+    float noticeUntil;
 
     public static MapSelectUI Create(MapInfo[] maps, TMP_FontAsset font)
     {
@@ -39,6 +41,7 @@ public class MapSelectUI : MonoBehaviour
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape)) Hide();
+        if (creatorNotice != null && Time.unscaledTime >= noticeUntil) creatorNotice.gameObject.SetActive(false);
     }
 
     void Build(MapInfo[] maps)
@@ -48,13 +51,19 @@ public class MapSelectUI : MonoBehaviour
         Label(transform, "TRIA LA TEUA EXPEDICIÓ", new Vector2(0, 280), new Vector2(1360, 84),
             49, TextAlignmentOptions.Center, new Color(1f, .89f, .65f));
 
+        var cards = new System.Collections.Generic.List<MapInfo>();
         if (maps != null)
-        {
-            float step = CardWidth + CardSpacing;
-            float start = -(maps.Length - 1) * step * .5f;
-            for (int i = 0; i < maps.Length; i++)
-                if (maps[i] != null) CreateCard(maps[i], new Vector2(start + i * step, 12));
-        }
+            foreach (var map in maps)
+                if (map != null) cards.Add(map);
+        cards.Add(new MapInfo { displayName = "Creador", sceneName = "" });
+        float step = CardWidth + CardSpacing;
+        float start = -(cards.Count - 1) * step * .5f;
+        for (int i = 0; i < cards.Count; i++) CreateCard(cards[i], new Vector2(start + i * step, 12));
+
+        creatorNotice = Label(transform, "El mode Creador arriba a la v1.6", new Vector2(0, -203),
+            new Vector2(720, 44), 25, TextAlignmentOptions.Center, UIKit.Muted);
+        creatorNotice.gameObject.name = "Avís Creador";
+        creatorNotice.gameObject.SetActive(false);
 
         UIKit.Button(transform, "TORNAR", new Vector2(0, -272), new Vector2(224, 58), Hide,
             UIKit.Style.Normal, 22);
@@ -63,15 +72,16 @@ public class MapSelectUI : MonoBehaviour
     void CreateCard(MapInfo map, Vector2 position)
     {
         string scene = map.sceneName;
+        bool coming = string.IsNullOrEmpty(scene);
         var (title, details, action, accent) = scene switch
         {
             "Dungeon" => ("Masmorra", "Tresors, trampes i bosses.", "JUGAR EN SOLITARI", new Color(1f, .72f, .35f)),
             "GameScene" => ("Mapa de proves", "Practica el moviment i la punteria.", "PRACTICAR", new Color(.73f, .88f, .48f)),
             "Lobby" => ("Online", "Per codi, LAN o Internet.", "VEURE SALES", new Color(.43f, .89f, .87f)),
-            _ => (map.displayName, "", "JUGAR", UIKit.Gold)
+            _ => ("CREADOR", "", "PRÒXIMAMENT", new Color(.62f, .65f, .68f))
         };
 
-        var frame = UIKit.Box(transform, position, new Vector2(CardWidth, CardHeight), Color.white, "Mapa " + scene);
+        var frame = UIKit.Box(transform, position, new Vector2(CardWidth, CardHeight), Color.white, "Mapa " + (coming ? "Creador" : scene));
         var card = frame.gameObject.AddComponent<Button>();
         card.targetGraphic = frame.GetComponent<Image>();
         var colors = card.colors;
@@ -79,8 +89,13 @@ public class MapSelectUI : MonoBehaviour
         colors.highlightedColor = colors.selectedColor = accent;
         colors.pressedColor = Color.Lerp(accent, Color.black, .2f);
         card.colors = colors;
-        card.interactable = Application.CanStreamedLevelBeLoaded(scene);
-        if (scene == "Lobby") card.onClick.AddListener(() => { Hide(); RoomBrowserUI.Open(); });
+        card.interactable = coming || Application.CanStreamedLevelBeLoaded(scene);
+        if (coming) card.onClick.AddListener(() =>
+        {
+            noticeUntil = Time.unscaledTime + 2.5f;
+            creatorNotice.gameObject.SetActive(true);
+        });
+        else if (scene == "Lobby") card.onClick.AddListener(() => { Hide(); RoomBrowserUI.Open(); });
         else card.onClick.AddListener(() => { RunState.Reset(); SceneManager.LoadScene(scene); });
 
         var panel = UIKit.Box(frame, Vector2.zero, Vector2.zero, new Color(.05f, .105f, .15f), "Cos de la targeta");
@@ -88,7 +103,7 @@ public class MapSelectUI : MonoBehaviour
         panel.GetComponent<Image>().raycastTarget = false;
 
         var cover = map.preview != null ? map.preview : Resources.Load<Sprite>(Covers + scene);
-        if (cover == null) cover = Resources.Load<Sprite>("MapPreviews/" + scene);
+        if (!coming && cover == null) cover = Resources.Load<Sprite>("MapPreviews/" + scene);
         float coverY = (CardHeight - CoverHeight) * .5f - Frame;
         var window = UIKit.Box(frame, new Vector2(0, coverY), new Vector2(CoverWidth, CoverHeight),
             UIKit.Ink, "Portada");
@@ -102,14 +117,33 @@ public class MapSelectUI : MonoBehaviour
             fitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
         }
 
+        if (coming)
+        {
+            for (int y = 0; y < 4; y++)
+                for (int x = 0; x < 7; x++)
+                {
+                    float tone = .12f + ((x * 7 + y * 11) % 4) * .033f;
+                    var cell = UIKit.Box(window, new Vector2(-129 + x * 43, -63 + y * 42), new Vector2(40, 39),
+                        new Color(tone, tone + .012f, tone + .025f), "Bloc");
+                    cell.GetComponent<Image>().raycastTarget = false;
+                }
+            var ribbon = UIKit.Box(window, Vector2.zero, new Vector2(263, 41), new Color(.16f, .18f, .22f), "Cinta");
+            ribbon.GetComponent<Image>().raycastTarget = false;
+            Label(ribbon, action, Vector2.zero, new Vector2(255, 38), 25, TextAlignmentOptions.Center, accent);
+        }
+
         float coverBottom = coverY - CoverHeight * .5f;
         var divider = UIKit.Box(frame, new Vector2(0, coverBottom - 2), new Vector2(CoverWidth, 4), accent);
         divider.GetComponent<Image>().raycastTarget = false;
         const float textWidth = CardWidth - 52;
         var alignment = TextAlignmentOptions.MidlineLeft;
-        Label(frame, title, new Vector2(0, -79), new Vector2(textWidth, 42), 33, alignment, Color.white);
-        Label(frame, details, new Vector2(0, -122), new Vector2(textWidth, 46), 21, alignment, UIKit.TextColor);
-        Label(frame, card.interactable ? action : "NO DISPONIBLE", new Vector2(0, -164), new Vector2(textWidth, 26), 18, alignment, accent);
+        Label(frame, title, new Vector2(0, coming ? -100 : -55), new Vector2(textWidth, 41), 28,
+            coming ? TextAlignmentOptions.Center : alignment, coming ? accent : Color.white);
+        if (!coming)
+        {
+            Label(frame, details, new Vector2(0, -98), new Vector2(textWidth, 48), 18, alignment, UIKit.TextColor);
+            Label(frame, card.interactable ? action : "NO DISPONIBLE", new Vector2(0, -141), new Vector2(textWidth, 26), 17, alignment, accent);
+        }
     }
 
     TextMeshProUGUI Label(Transform parent, string text, Vector2 position, Vector2 size, float fontSize,

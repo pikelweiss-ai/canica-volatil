@@ -280,6 +280,7 @@ public partial class DungeonGenerator
                 if (kit.lilies && liquid != null && liquid.HasTile(cell) && PosHash(p, 7) % 1000 < 110)
                 {   // nenúfar sobre l'aigua
                     var lily = Block("Nenufar"); if (lily == null) continue;
+                    TrackBlock(p, lily);
                     var li = new GameObject("Nenufar"); li.transform.position = ground.GetCellCenterWorld(cell); li.transform.SetParent(transform);
                     var lr = li.AddComponent<SpriteRenderer>(); lr.sprite = lily; lr.sortingLayerName = "Shadows"; lr.sortingOrder = 2;
                     continue;
@@ -303,6 +304,7 @@ public partial class DungeonGenerator
     void MakeScenery(string name, Vector2Int cell, SceneryKit kit, bool decal)
     {
         var sprite = Block(name); if (sprite == null) return;
+        TrackBlock(cell, sprite);
         Vector3 pos = ground.GetCellCenterWorld(ToCell(cell));
         var go = new GameObject((decal ? "Decoracio " : "Objecte ") + name);
         go.transform.position = pos; go.transform.SetParent(transform);

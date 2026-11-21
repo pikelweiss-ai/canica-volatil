@@ -9,7 +9,22 @@ using UnityEngine.UI;
 public static class Almanac
 {
     const string WeaponsKey = "Almanac_Weapons", SeenKey = "Almanac_Seen", DefeatedKey = "Almanac_Defeated";
-    static HashSet<string> weapons, seen, defeated;
+    static HashSet<string> weapons, seen, defeated, blocks;
+    const string BlocksKey = "Almanac_Blocks";
+
+    public static bool HasBlock(string id) { blocks ??= Load(BlocksKey); return blocks.Contains(id); }
+
+    public static bool SawBlock(string id)
+    {
+        if (!RunState.Active || string.IsNullOrEmpty(id)) return false;
+        blocks ??= Load(BlocksKey);
+        return blocks.Add(id);
+    }
+
+    public static void SaveBlocks()
+    {
+        if (!RunStats.DontSave && blocks != null) Save(BlocksKey, blocks);
+    }
 
     static HashSet<string> Load(string key)
     {
@@ -66,126 +81,367 @@ public static class Almanac
     };
 }
 
-// Pantalla de l'Almanac: pestanyes ARMES / ENEMICS / BOSSES, quadrícula a l'esquerra i fitxa a la dreta.
+// Llibre de descobriments. La vista prèvia és una animació de la fitxa i no executa combat.
 public class AlmanacUI : MonoBehaviour
 {
-    enum Tab { Weapons, Enemies, Bosses }
-    class Entry { public string id, name; public Sprite icon; public ChestRarity rarity; public bool unlocked, silhouette; public string stats, text; }
+    enum Tab { Weapons, Enemies, Bosses, Blocks, Amulets }
+    class Entry
+    {
+        public string id, name, stats, text, family;
+        public string[] themes = System.Array.Empty<string>();
+        public Sprite icon, projectile;
+        public ChestRarity rarity;
+        public bool unlocked, silhouette;
+        public AlmanacPreview.Pattern pattern;
+    }
 
+    const int PageSize = 30;
     static AlmanacUI instance;
     GameObject canvas;
-    RectTransform grid;
-    TextMeshProUGUI title, stats, text, counter;
+    RectTransform grid, filters, filterMenu;
+    ScrollRect scroll;
+    TextMeshProUGUI title, stats, text, counter, pageLabel;
     Image big;
-    UIKit.UIButton[] tabs = new UIKit.UIButton[3];
-    Tab tab = Tab.Weapons;
-    List<Entry> entries = new List<Entry>();
-    int selected;
+    AlmanacPreview preview;
+    readonly UIKit.UIButton[] tabs = new UIKit.UIButton[5];
+    UIKit.UIButton left, right, familyButton, themeButton, rarityButton;
+    TMP_InputField search;
+    Tab tab;
+    List<Entry> all = new(), entries = new();
+    int page, selected;
+    Image selectedBorder;
+    string family, theme;
+    ChestRarity? rarity;
 
     public static void Open()
     {
         if (instance != null) { instance.Close(); return; }
-        var go = new GameObject("Almanac UI"); instance = go.AddComponent<AlmanacUI>(); instance.Build();
+        var go = new GameObject("Almanac UI");
+        instance = go.AddComponent<AlmanacUI>();
+        instance.Build();
     }
 
     void Build()
     {
-        canvas = UIKit.Canvas("Almanac", 60); canvas.transform.SetParent(transform, false);
+        canvas = UIKit.Canvas("Almanac", 60);
+        canvas.transform.SetParent(transform, false);
         UIKit.Box(canvas.transform, Vector2.zero, new Vector2(4000, 3000), new Color(.035f, .065f, .10f, 1f), "Fons");
         UIKit.Text(canvas.transform, "ALMANAC", new Vector2(0, 400), new Vector2(700, 70), 48, TextAlignmentOptions.Center, UIKit.Gold);
         UIKit.Button(canvas.transform, "TANCAR", new Vector2(-640, 400), new Vector2(240, 62), Close, UIKit.Style.Danger, 28);
         counter = UIKit.Text(canvas.transform, "", new Vector2(540, 400), new Vector2(420, 40), 24, TextAlignmentOptions.MidlineRight, UIKit.Muted);
-        string[] names = { "ARMES", "ENEMICS", "BOSSES" };
-        for (int i = 0; i < 3; i++) { int t = i; tabs[i] = UIKit.Button(canvas.transform, names[i], new Vector2(-400 + i * 210, 320), new Vector2(200, 56), () => { tab = (Tab)t; selected = 0; Fill(); }, UIKit.Style.Normal, 24); }
+        string[] names = { "ARMES", "ENEMICS", "BOSSES", "BLOCS", "AMULETS" };
+        for (int i = 0; i < tabs.Length; i++)
+        {
+            var current = (Tab)i;
+            tabs[i] = UIKit.Button(canvas.transform, names[i], new Vector2(-568 + i * 173, 326),
+                new Vector2(165, 47), () => SwitchTab(current), UIKit.Style.Normal, 22);
+        }
 
-        var frame = UIKit.Box(canvas.transform, new Vector2(-320, -30), new Vector2(760, 600), new Color(.03f, .06f, .09f), "Llista");
-        var scroll = frame.gameObject.AddComponent<ScrollRect>();
-        var viewport = UIKit.Box(frame, Vector2.zero, Vector2.zero, new Color(0, 0, 0, .01f), "Viewport"); UIKit.Stretch(viewport, 8, 8, 8, 8); viewport.gameObject.AddComponent<RectMask2D>();
-        var content = new GameObject("Contingut", typeof(RectTransform), typeof(GridLayoutGroup), typeof(ContentSizeFitter)); content.transform.SetParent(viewport, false);
-        grid = (RectTransform)content.transform; grid.anchorMin = new Vector2(0, 1); grid.anchorMax = new Vector2(1, 1); grid.pivot = new Vector2(.5f, 1); grid.offsetMin = grid.offsetMax = Vector2.zero;
-        var layout = content.GetComponent<GridLayoutGroup>(); layout.cellSize = new Vector2(112, 112); layout.spacing = new Vector2(8, 8); layout.padding = new RectOffset(4, 4, 4, 4);
-        layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount; layout.constraintCount = 6;
+        search = UIKit.Input(canvas.transform, new Vector2(-532, 266), new Vector2(365, 43), "Busca pel nom", 50, fontSize: 20);
+        search.onValueChanged.AddListener(_ => ApplyFilters());
+        filters = UIKit.Empty(canvas.transform, "Filtres");
+        familyButton = UIKit.Button(filters, "", new Vector2(-259, 266), new Vector2(165, 43),
+            () => ShowFilter("Família", all.Select(e => e.family), choice => { family = choice; ApplyFilters(); }), UIKit.Style.Normal, 17);
+        themeButton = UIKit.Button(filters, "", new Vector2(-79, 266), new Vector2(165, 43),
+            () => ShowFilter("Tema", all.SelectMany(e => e.themes), choice => { theme = choice; ApplyFilters(); }), UIKit.Style.Normal, 17);
+        rarityButton = UIKit.Button(filters, "", new Vector2(87, 266), new Vector2(166, 43), ShowRarityFilter, UIKit.Style.Normal, 17);
+
+        var frame = UIKit.Box(canvas.transform, new Vector2(-320, -42), new Vector2(760, 543), UIKit.Ink, "Llista");
+        scroll = frame.gameObject.AddComponent<ScrollRect>();
+        var viewport = UIKit.Box(frame, Vector2.zero, Vector2.zero, new Color(0, 0, 0, .01f), "Viewport");
+        UIKit.Stretch(viewport, 8, 8, 8, 8);
+        viewport.gameObject.AddComponent<RectMask2D>();
+        var content = new GameObject("Contingut", typeof(RectTransform), typeof(GridLayoutGroup), typeof(ContentSizeFitter));
+        content.transform.SetParent(viewport, false);
+        grid = (RectTransform)content.transform;
+        grid.anchorMin = new Vector2(0, 1);
+        grid.anchorMax = new Vector2(1, 1);
+        grid.pivot = new Vector2(.5f, 1);
+        grid.offsetMin = grid.offsetMax = Vector2.zero;
+        var layout = content.GetComponent<GridLayoutGroup>();
+        layout.cellSize = new Vector2(112, 97);
+        layout.spacing = new Vector2(8, 8);
+        layout.padding = new RectOffset(4, 4, 4, 4);
+        layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        layout.constraintCount = 6;
         content.GetComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-        scroll.viewport = viewport; scroll.content = grid; scroll.horizontal = false; scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 35;
+        scroll.viewport = viewport;
+        scroll.content = grid;
+        scroll.horizontal = false;
+        scroll.movementType = ScrollRect.MovementType.Clamped;
+        scroll.scrollSensitivity = 35;
 
-        var side = UIKit.Box(canvas.transform, new Vector2(400, -30), new Vector2(580, 600), UIKit.Panel, "Fitxa");
-        big = UIKit.Picture(side, null, new Vector2(0, 190), new Vector2(190, 190));
-        title = UIKit.Text(side, "", new Vector2(0, 70), new Vector2(540, 50), 34, TextAlignmentOptions.Center, UIKit.Gold);
-        stats = UIKit.Text(side, "", new Vector2(0, 0), new Vector2(540, 60), 22, TextAlignmentOptions.Center, UIKit.TextColor);
-        var scrollBox = UIKit.Box(side, new Vector2(0, -170), new Vector2(530, 190), new Color(.78f, .70f, .52f), "Pergami");
-        text = UIKit.Text(scrollBox, "", Vector2.zero, new Vector2(500, 170), 22, TextAlignmentOptions.Center, new Color(.18f, .12f, .06f));
-        Fill();
+        left = UIKit.Button(canvas.transform, "‹", new Vector2(-452, -363), new Vector2(70, 48), () => ChangePage(-1), UIKit.Style.Normal, 35);
+        right = UIKit.Button(canvas.transform, "›", new Vector2(-188, -363), new Vector2(70, 48), () => ChangePage(1), UIKit.Style.Normal, 35);
+        pageLabel = UIKit.Text(canvas.transform, "", new Vector2(-320, -363), new Vector2(172, 38), 22,
+            TextAlignmentOptions.Center, UIKit.Muted);
+
+        var side = UIKit.Box(canvas.transform, new Vector2(448, -58), new Vector2(542, 630), UIKit.Panel, "Fitxa");
+        var stage = UIKit.Box(side, new Vector2(0, 155), new Vector2(488, 245), UIKit.Ink, "Previsualització");
+        stage.gameObject.AddComponent<RectMask2D>();
+        big = UIKit.Picture(stage, null, Vector2.zero, new Vector2(175, 175));
+        preview = stage.gameObject.AddComponent<AlmanacPreview>();
+        preview.Build(big);
+        title = UIKit.Text(side, "", new Vector2(0, 9), new Vector2(504, 48), 32, TextAlignmentOptions.Center, UIKit.Gold);
+        title.enableAutoSizing = true;
+        title.fontSizeMin = 19;
+        title.fontSizeMax = 32;
+        stats = UIKit.Text(side, "", new Vector2(0, -51), new Vector2(502, 66), 21, TextAlignmentOptions.Center, UIKit.TextColor);
+        var paper = UIKit.Box(side, new Vector2(0, -189), new Vector2(496, 190), new Color(.78f, .70f, .52f), "Pergamí");
+        text = UIKit.Text(paper, "", Vector2.zero, new Vector2(457, 166), 22, TextAlignmentOptions.Center, new Color(.18f, .12f, .06f));
+        SwitchTab(Tab.Weapons);
+    }
+
+    void SwitchTab(Tab current)
+    {
+        if (filterMenu != null) Destroy(filterMenu.gameObject);
+        tab = current;
+        family = theme = null;
+        rarity = null;
+        search.SetTextWithoutNotify("");
+        all = Collect();
+        for (int i = 0; i < tabs.Length; i++)
+            tabs[i].SetStyle(i == (int)tab ? UIKit.Style.Primary : UIKit.Style.Normal);
+        familyButton.rect.gameObject.SetActive(tab == Tab.Blocks);
+        themeButton.rect.gameObject.SetActive(tab == Tab.Blocks || tab == Tab.Enemies || tab == Tab.Bosses);
+        ApplyFilters();
     }
 
     List<Entry> Collect()
     {
+        if (tab == Tab.Blocks)
+            return (BlockCatalog.Instance?.blocks ?? System.Array.Empty<BlockData>()).Where(block => block != null)
+                .OrderBy(block => block.family).ThenBy(block => block.displayName)
+                .Select(block => new Entry
+                {
+                    id = block.id, name = block.displayName, icon = block.sprite, rarity = block.rarity, family = block.family,
+                    themes = new[] { block.theme }, unlocked = Almanac.HasBlock(block.id),
+                    stats = block.family + " · " + block.theme + " · " + CosmeticStore.QualityName(block.rarity),
+                    text = Properties(block)
+                }).ToList();
+
+        if (tab == Tab.Amulets)
+            return RunAmulets.Catalog.Select(info => new Entry
+            {
+                id = info.id.ToString(), name = info.name, icon = info.Icon, rarity = info.rarity,
+                unlocked = RunAmulets.Discovered(info.id), stats = CosmeticStore.QualityName(info.rarity), text = info.description,
+                pattern = AlmanacPreview.Pattern.Amulet
+            }).ToList();
+
         var list = new List<Entry>();
         var catalog = Resources.Load<NetContentCatalog>("NetContent");
         if (catalog == null) return list;
         if (tab == Tab.Weapons)
         {
-            foreach (var w in catalog.weapons.Where(w => w != null).OrderBy(w => w.rarity == ChestRarity.PocComu ? 0.5f : (float)w.rarity).ThenBy(w => w.weaponName)) // verdes entre grises i blaves
-            {
-                bool got = Almanac.HasWeapon(w.name);
-                list.Add(new Entry { id = w.name, name = w.weaponName, icon = w.icon, rarity = w.rarity, unlocked = got,
-                    stats = "Dany " + w.damage + " · " + (w.cooldown > 0 ? (1f / w.cooldown).ToString("0.0") : "-") + " trets/s · abast " + w.range.ToString("0.#"),
-                    text = (w.melee ? "Arma cos a cos. " : w.special != SpecialKind.None ? "Arma especial. " : "Arma de distància. ") + (w.pierce > 0 ? "Travessa enemics. " : "") + (w.explosionRadius > 0 ? "Explota en impactar. " : "") + (w.maxShots > 0 ? "Gasta combustible (" + w.maxShots + " trets). " : "") + "Rareza " + w.rarity + "." });
-            }
+            foreach (var w in catalog.weapons.Where(w => w != null).OrderBy(w => w.rarity == ChestRarity.PocComu ? .5f : (float)w.rarity).ThenBy(w => w.weaponName))
+                list.Add(new Entry
+                {
+                    id = w.name, name = w.weaponName, icon = w.icon, projectile = w.projectileSprite, rarity = w.rarity,
+                    unlocked = Almanac.HasWeapon(w.name), pattern = w.melee ? AlmanacPreview.Pattern.Sweep :
+                        w.pellets > 1 ? AlmanacPreview.Pattern.Fan : w.explosionRadius > 0 ? AlmanacPreview.Pattern.Hazard : AlmanacPreview.Pattern.Bolt,
+                    stats = "Dany " + w.damage + " · " + (w.cooldown > 0 ? (1f / w.cooldown).ToString("0.0") : "—") +
+                        " trets/s · abast " + w.range.ToString("0.#"),
+                    text = (w.melee ? "Arma cos a cos." : w.special != SpecialKind.None ? "Arma especial." : "Arma de distància.") +
+                        (w.pierce > 0 ? " Travessa enemics." : "") + (w.explosionRadius > 0 ? " Explota en impactar." : "") +
+                        (w.maxShots > 0 ? " Gasta combustible (" + w.maxShots + " trets)." : "") +
+                        "\n" + CosmeticStore.QualityName(w.rarity)
+                });
+            return list;
         }
-        else
+
+        foreach (var prefab in catalog.enemies.Where(p => p != null))
         {
-            foreach (var prefab in catalog.enemies.Where(p => p != null))
+            var boss = prefab.GetComponent<EnemyBoss>();
+            var enemy = prefab.GetComponent<EnemyV140>();
+            var hp = prefab.GetComponent<EnemyHealth>();
+            bool micro = enemy != null && enemy.IsMicroboss;
+            if ((tab == Tab.Bosses) != (boss != null || micro) || hp == null || hp.arenaPart) continue;
+            bool saw = Almanac.HasSeen(prefab.name), won = Almanac.HasDefeated(prefab.name);
+            Almanac.Notes.TryGetValue(prefab.name, out var note);
+            var themes = ThemesFor(prefab);
+            float speed = prefab.GetComponent<EnemyPathfindingAI>()?.moveSpeed ?? 0f;
+            list.Add(new Entry
             {
-                bool boss = prefab.GetComponent<EnemyBoss>() != null, micro = prefab.TryGetComponent<EnemyV140>(out var v) && v.IsMicroboss;
-                if ((tab == Tab.Bosses) != (boss || micro)) continue;
-                var health = prefab.GetComponent<EnemyHealth>(); var sr = prefab.GetComponent<SpriteRenderer>();
-                if (health != null && health.arenaPart) continue;
-                bool saw = Almanac.HasSeen(prefab.name), won = Almanac.HasDefeated(prefab.name);
-                bool open = tab == Tab.Bosses ? won : saw;
-                Almanac.Notes.TryGetValue(prefab.name, out var note);
-                list.Add(new Entry { id = prefab.name, name = boss ? prefab.GetComponent<EnemyBoss>().bossName : prefab.name, icon = sr != null ? sr.sprite : null, unlocked = open, silhouette = tab == Tab.Bosses && saw && !won,
-                    stats = "Vida " + (health != null ? health.maxHealth + (boss ? EnemyBoss.BonusHealth : 0) : 0),
-                    text = note ?? "Enemic de la masmorra. Vida " + (health != null ? health.maxHealth : 0) + "." });
-            }
-            list = list.OrderBy(e => e.name).ToList();
+                id = prefab.name, name = boss != null ? boss.bossName : prefab.name,
+                icon = prefab.GetComponent<SpriteRenderer>()?.sprite, themes = themes,
+                rarity = boss != null ? ChestRarity.Epic : micro ? ChestRarity.Rar : ChestRarity.Comu,
+                unlocked = tab == Tab.Bosses ? won : saw, silhouette = tab == Tab.Bosses && saw && !won,
+                stats = "Vida " + (hp.maxHealth + (boss != null ? EnemyBoss.BonusHealth : 0)) + " · Velocitat " +
+                    speed.ToString("0.#") + "\n" + string.Join(", ", themes),
+                text = note ?? (boss != null ? "Boss de la masmorra. Canvia d'atacs a mitja vida." : "Enemic de la masmorra."),
+                pattern = AlmanacPreview.ForEnemy(boss, enemy, prefab.GetComponent<EnemyShooter>() != null)
+            });
         }
-        return list;
+        return list.OrderBy(e => e.name).ToList();
     }
 
-    void Fill()
+    static string[] ThemesFor(GameObject prefab)
     {
-        entries = Collect();
-        UIKit.Clear(grid);
-        for (int i = 0; i < 3; i++) tabs[i].SetStyle(i == (int)tab ? UIKit.Style.Primary : UIKit.Style.Normal);
-        selected = Mathf.Clamp(selected, 0, Mathf.Max(0, entries.Count - 1));
-        for (int i = 0; i < entries.Count; i++)
+        return (BlockCatalog.Instance?.themes ?? System.Array.Empty<DungeonTheme>())
+            .Where(t => t != null && (t.boss == prefab || t.mimic == prefab ||
+                (t.bossVariants != null && t.bossVariants.Contains(prefab)) ||
+                (t.enemies != null && t.enemies.Contains(prefab)) ||
+                (t.microbosses != null && t.microbosses.Contains(prefab))))
+            .Select(t => t.themeName).Distinct().ToArray();
+    }
+
+    static string Properties(BlockData block)
+    {
+        var details = new List<string>
         {
-            int index = i; var e = entries[i];
-            var go = new GameObject("Carta", typeof(RectTransform), typeof(Image), typeof(Button)); go.transform.SetParent(grid, false);
-            go.GetComponent<Image>().color = i == selected ? UIKit.Gold : e.unlocked ? ItemGraphics.RarityColor(tab == Tab.Weapons ? e.rarity : ChestRarity.Comu) : UIKit.Dim;
-            go.GetComponent<Button>().onClick.AddListener(() => { selected = index; Fill(); });
-            var inner = UIKit.Box(go.transform, Vector2.zero, new Vector2(104, 104), UIKit.Row, "Fons"); inner.GetComponent<Image>().raycastTarget = false;
-            var pic = UIKit.Picture(inner, e.icon, new Vector2(0, 8), new Vector2(64, 64));
-            pic.color = e.unlocked ? Color.white : Color.black;
-            if (!e.unlocked && !e.silhouette) UIKit.Text(inner, "???", new Vector2(0, -38), new Vector2(96, 24), 16, TextAlignmentOptions.Center, UIKit.Dim);
-            else UIKit.Text(inner, e.silhouette ? e.name : e.name, new Vector2(0, -38), new Vector2(98, 24), 11, TextAlignmentOptions.Center, UIKit.TextColor).textWrappingMode = TextWrappingModes.NoWrap;
+            block.passable ? "Es pot travessar" : "Sòlid",
+            block.blocksBullets ? "Para les bales" : "Deixa passar les bales",
+            block.breakable ? "Es pot trencar" : "Indestructible"
+        };
+        if (block.damage > 0) details.Add(block.damage.ToString("0.#") + " de mal per segon");
+        if (block.hideInside) details.Add("T'hi pots amagar");
+        if (block.emitsLight) details.Add("Fa llum");
+        if (block.multiPart) details.Add("Peça d'un objecte de diversos blocs");
+        if (!block.passable) details.Add("Hitbox " + block.hitbox.width.ToString("0.##") + " × " + block.hitbox.height.ToString("0.##"));
+        return string.Join("\n", details);
+    }
+
+    void ShowFilter(string label, IEnumerable<string> values, System.Action<string> choose)
+    {
+        if (filterMenu != null) Destroy(filterMenu.gameObject);
+        filterMenu = UIKit.Box(canvas.transform, new Vector2(-246, 47), new Vector2(925, 339), UIKit.PanelLight, label);
+        UIKit.Text(filterMenu, label, new Vector2(0, 142), new Vector2(840, 44), 28, TextAlignmentOptions.Center, UIKit.Gold);
+        var choices = new[] { "" }.Concat(values.Where(v => !string.IsNullOrEmpty(v)).Distinct().OrderBy(v => v)).ToArray();
+        for (int i = 0; i < choices.Length; i++)
+        {
+            string choice = choices[i];
+            UIKit.Button(filterMenu, string.IsNullOrEmpty(choice) ? "Tots" : choice,
+                new Vector2(-355 + i % 5 * 178, 76 - i / 5 * 58), new Vector2(166, 46),
+                () => { Destroy(filterMenu.gameObject); filterMenu = null; choose(choice); }, UIKit.Style.Normal, 19);
         }
-        int got = entries.Count(e => e.unlocked);
-        counter.text = got + " / " + entries.Count;
+    }
+
+    void ShowRarityFilter()
+    {
+        var values = System.Enum.GetValues(typeof(ChestRarity)).Cast<ChestRarity>()
+            .Where(value => value != ChestRarity.PocComu || tab == Tab.Weapons).ToArray();
+        string Name(ChestRarity value) => value == ChestRarity.PocComu ? "Poc comú" : CosmeticStore.QualityName(value);
+        ShowFilter("Qualitat", values.Select(Name), choice =>
+        {
+            rarity = string.IsNullOrEmpty(choice) ? null : (ChestRarity?)values.First(value => Name(value) == choice);
+            ApplyFilters();
+        });
+    }
+
+    void ApplyFilters()
+    {
+        var compare = System.Globalization.CultureInfo.InvariantCulture.CompareInfo;
+        const System.Globalization.CompareOptions ignore = System.Globalization.CompareOptions.IgnoreCase |
+            System.Globalization.CompareOptions.IgnoreNonSpace;
+        string query = search.text.Trim();
+        entries = all.Where(e =>
+            (string.IsNullOrEmpty(family) || e.family == family) &&
+            (string.IsNullOrEmpty(theme) || e.themes.Contains(theme)) &&
+            (!rarity.HasValue || e.rarity == rarity.Value) &&
+            (query.Length == 0 || compare.IndexOf(e.name, query, ignore) >= 0)).ToList();
+        page = selected = 0;
+        familyButton.SetLabel(string.IsNullOrEmpty(family) ? "Família" : family);
+        themeButton.SetLabel(string.IsNullOrEmpty(theme) ? "Tema" : theme);
+        rarityButton.SetLabel(rarity.HasValue ? (rarity == ChestRarity.PocComu ? "Poc comú" : CosmeticStore.QualityName(rarity.Value)) : "Qualitat");
+        RenderPage();
+    }
+
+    void ChangePage(int direction)
+    {
+        page += direction;
+        selected = page * PageSize;
+        RenderPage();
+    }
+
+    void RenderPage()
+    {
+        UIKit.Clear(grid);
+        selectedBorder = null;
+        scroll.verticalNormalizedPosition = 1f;
+        int end = Mathf.Min((page + 1) * PageSize, entries.Count);
+        for (int i = page * PageSize; i < end; i++)
+        {
+            int index = i;
+            var e = entries[i];
+            var go = new GameObject("Carta " + e.id, typeof(RectTransform), typeof(Image), typeof(Button));
+            go.transform.SetParent(grid, false);
+            var border = go.GetComponent<Image>();
+            border.color = BorderFor(index, e);
+            if (selected == index) selectedBorder = border;
+            go.GetComponent<Button>().onClick.AddListener(() =>
+            {
+                if (selected == index) return;
+                int previous = selected;
+                selected = index;
+                if (selectedBorder != null) selectedBorder.color = BorderFor(previous, entries[previous]);
+                selectedBorder = border;
+                border.color = UIKit.Gold;
+                ShowDetail();
+            });
+            var inner = UIKit.Box(go.transform, Vector2.zero, new Vector2(104, 89), UIKit.Row, "Fons");
+            inner.GetComponent<Image>().raycastTarget = false;
+            var pic = UIKit.Picture(inner, e.icon, new Vector2(0, 8), new Vector2(62, 62));
+            pic.color = e.unlocked ? Color.white : e.icon != null ? Color.black : Color.clear;
+            var label = UIKit.Text(inner, e.unlocked || e.silhouette ? e.name : "???", new Vector2(0, -33),
+                new Vector2(99, 22), 14, TextAlignmentOptions.Center, e.unlocked || e.silhouette ? UIKit.TextColor : UIKit.Muted);
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 8;
+            label.fontSizeMax = 14;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+        }
+        int pages = Mathf.Max(1, Mathf.CeilToInt(entries.Count / (float)PageSize));
+        pageLabel.text = (page + 1) + " / " + pages;
+        left.SetInteractable(page > 0);
+        right.SetInteractable(page + 1 < pages);
+        counter.text = entries.Count(e => e.unlocked) + " / " + entries.Count +
+            (entries.Count != all.Count ? " · Total " + all.Count(e => e.unlocked) + " / " + all.Count : "");
         ShowDetail();
+    }
+
+    Color BorderFor(int index, Entry e)
+    {
+        if (index == selected) return UIKit.Gold;
+        if (tab != Tab.Blocks) return e.unlocked ? ItemGraphics.RarityColor(e.rarity) : UIKit.Dim;
+        int hash = 17;
+        foreach (char c in e.family) hash = unchecked(hash * 31 + c);
+        return Color.HSVToRGB((hash & 0xffff) / 65536f, .48f, .74f);
     }
 
     void ShowDetail()
     {
-        if (entries.Count == 0) { title.text = ""; stats.text = ""; text.text = "Encara no hi ha res."; big.color = Color.clear; return; }
+        if (entries.Count == 0)
+        {
+            title.text = stats.text = "";
+            text.text = "Cap resultat.";
+            preview.Show(null, null, AlmanacPreview.Pattern.None, false);
+            return;
+        }
         var e = entries[selected];
-        big.sprite = e.icon; big.color = e.unlocked ? Color.white : Color.black;
+        preview.Show(e.icon, e.projectile, e.pattern, e.unlocked);
         if (e.unlocked) { title.text = e.name; stats.text = e.stats; text.text = e.text; }
         else if (e.silhouette) { title.text = e.name; stats.text = "???"; text.text = "L'has vist, però encara no l'has derrotat."; }
-        else { title.text = "???"; stats.text = ""; text.text = tab == Tab.Weapons ? "Recull esta arma per a descobrir-la." : tab == Tab.Enemies ? "Troba'l a la masmorra." : "Derrota'l per a desbloquejar-lo."; }
+        else
+        {
+            title.text = "???";
+            stats.text = "";
+            text.text = tab switch
+            {
+                Tab.Weapons => "Recull esta arma per a descobrir-la.",
+                Tab.Enemies => "Troba'l a la masmorra.",
+                Tab.Blocks => "Descobrix este bloc a la masmorra.",
+                Tab.Amulets => "Aconseguix l'amulet durant una partida de masmorra.",
+                _ => "Derrota'l per a desbloquejar-lo."
+            };
+        }
     }
 
-    void Update() { if (Input.GetKeyDown(KeyCode.Escape)) Close(); }
+    void Update()
+    {
+        if (!Input.GetKeyDown(KeyCode.Escape)) return;
+        if (filterMenu == null) Close();
+        else { Destroy(filterMenu.gameObject); filterMenu = null; }
+    }
+
     void Close() { instance = null; Destroy(gameObject); }
     void OnDestroy() { if (instance == this) instance = null; }
 }

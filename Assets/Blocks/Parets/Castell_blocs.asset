@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb797d1fd6eaf9244bfbac437d352fcc, type: 3}
+  m_Name: Castell_blocs
+  m_EditorClassIdentifier: 
+  id: Parets/Castell_blocs
+  displayName: Castell blocs
+  family: Parets
+  theme: Cripta
+  sprite: {fileID: 21300000, guid: 6b494e2d065202544b3408f1d07e4152, type: 3}
+  scenerySprite: {fileID: 21300000, guid: 6b494e2d065202544b3408f1d07e4152, type: 3}
+  rarity: 0
+  passable: 0
+  blocksBullets: 1
+  breakable: 0
+  fullBlock: 1
+  hideInside: 0
+  multiPart: 0
+  emitsLight: 0
+  damage: 0
+  layer: 1
+  hitbox:
+    serializedVersion: 2
+    x: -0.5
+    y: -0.5
+    width: 1
+    height: 1

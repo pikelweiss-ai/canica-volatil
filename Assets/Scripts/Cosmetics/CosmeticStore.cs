@@ -103,6 +103,7 @@ public static class CosmeticStore
         ChestRarity.Llegendari => "Llegendari",
         ChestRarity.Epic => "Èpic",
         ChestRarity.Rar => "Rar",
+        ChestRarity.PocComu => "Poc comú",
         _ => "Comú"
     };
 
