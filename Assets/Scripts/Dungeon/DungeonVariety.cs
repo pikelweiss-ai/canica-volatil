@@ -62,21 +62,13 @@ public partial class DungeonGenerator
                 var wr = walls.GetComponent<UnityEngine.Tilemaps.TilemapRenderer>();
                 sr.sortingLayerID = wr.sortingLayerID; sr.sortingOrder = wr.sortingOrder + 1;
                 go.AddComponent<BoxCollider2D>();
-                var b = go.AddComponent<Breakable>(); b.health = 1; b.coinChance = b.healChance = 0; b.meleeOrMineOnly = true;
+                var b = go.AddComponent<Breakable>(); b.health = 1; b.coinChance = b.healChance = 0;
                 var crack = new GameObject("Esquerda", typeof(TextMeshPro)); crack.transform.SetParent(go.transform, false);
                 var text = crack.GetComponent<TextMeshPro>(); text.text = "ϟ"; text.fontSize = 5; text.alignment = TextAlignmentOptions.Center;
                 text.color = new Color(.15f, .12f, .1f); text.rectTransform.sizeDelta = Vector2.one;
                 text.GetComponent<MeshRenderer>().sortingLayerID = sr.sortingLayerID;
                 text.GetComponent<MeshRenderer>().sortingOrder = sr.sortingOrder + 2;
             }
-            Room neighbour = r.links[0];
-            Vector2Int direction = r.slot - neighbour.slot;
-            Vector2Int hint = neighbour.Center + direction * 2;
-            var sign = new GameObject("Pista sala secreta", typeof(TextMeshPro)); sign.transform.SetParent(transform);
-            sign.transform.position = ground.GetCellCenterWorld(ToCell(hint));
-            var label = sign.GetComponent<TextMeshPro>(); label.text = "Paret esquerdada a prop!\nTrenca-la a colps o amb una mina"; label.fontSize = 2; // v1.4.1: abans «Una paret sona buida...»
-            label.alignment = TextAlignmentOptions.Center; label.rectTransform.sizeDelta = new Vector2(7, 2);
-            label.GetComponent<MeshRenderer>().sortingLayerName = "Player";
         }
     }
 

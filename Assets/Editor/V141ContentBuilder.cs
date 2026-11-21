@@ -73,7 +73,7 @@ public static class V141ContentBuilder
 
             var micro = new List<GameObject>();
             if (Is("Desert", "Cova")) micro.Add(beetle);
-            if (Is("Cripta", "Cristall")) micro.Add(eye);
+            if (Is("Cripta", "Cristall", "Neu")) micro.Add(eye);
             if (Is("Bosc", "Claveguera")) micro.Add(frog);
             if (Is("Volca", "Cripta")) micro.Add(mage);
             theme.microbosses = micro.ToArray();

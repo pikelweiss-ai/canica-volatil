@@ -22,6 +22,6 @@ public class DungeonTheme : ScriptableObject
     public GameObject[] enemies;
     public string doorStyle;               // v1.4.0: estil de les portes (pedra, reixa_castell, preso, lab_metall, perill, vidre)
     public GameObject mimic;               // v1.4.0: cofre fals que apareix a les sales de tresor des del pis 2
-    public GameObject[] microbosses;       // v1.4.1: microbosses del tema (barra de vida); des del pis 3, de vegades en una sala de combat
+    public GameObject[] microbosses;       // v1.4.1: microbosses del tema (barra de vida); un per pis des del segon
     public GameObject boss;                // Si està buit, el boss per defecte
 }

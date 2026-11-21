@@ -126,6 +126,8 @@ public static class NetCoop
             {
                 if (th == null) continue;
                 if (th.enemies != null) foreach (var p in th.enemies) if (Match(p)) return p;
+                if (Match(th.mimic)) return th.mimic;
+                if (th.microbosses != null) foreach (var p in th.microbosses) if (Match(p)) return p;
                 if (Match(th.boss)) return th.boss;
                 var b = th.boss != null ? th.boss.GetComponent<EnemyBoss>() : null;
                 if (b != null && Match(b.minionPrefab)) return b.minionPrefab;
@@ -149,7 +151,7 @@ public static class NetCoop
         go.transform.localScale = new Vector3(s.scale, s.scale, go.transform.localScale.z);
         // Fora la IA: es mou amb les posicions de l'amfitrio. El dany de contacte es queda (fa mal al jugador d'aquest PC)
         foreach (var mb in go.GetComponentsInChildren<MonoBehaviour>(true))
-            if (mb != null && !(mb is EnemyHealth) && !(mb is EnemyDamage) && !(mb is EnemyBoss) && mb.GetType().Name.StartsWith("Enemy")) mb.enabled = false;
+            if (mb != null && !(mb is EnemyHealth) && !(mb is EnemyDamage) && !(mb is EnemyBoss) && !(mb is EnemyV140) && mb.GetType().Name.StartsWith("Enemy")) mb.enabled = false;
         var rb = go.GetComponent<Rigidbody2D>();
         if (rb != null) { rb.bodyType = RigidbodyType2D.Kinematic; rb.linearVelocity = Vector2.zero; }
         var proxy = go.AddComponent<NetEnemyProxy>(); proxy.target = s.pos;
@@ -208,14 +210,14 @@ public static class NetCoop
             }
     }
 
-    public static void EnemyBulletFired(Vector2 pos, Vector2 velocity, int damage, float scale, Color? tint)
+    public static void EnemyBulletFired(Vector2 pos, Vector2 velocity, int damage, float scale, Color? tint, bool overHazardousLiquid)
     {
         if (!IsHost) return;
         Color c = tint ?? new Color(0, 0, 0, 0);
         S.SendAll(NetProtocol.Frame(Msg.BulletFx, w =>
         {
             w.Write(Token); w.Write(pos.x); w.Write(pos.y); w.Write(velocity.x); w.Write(velocity.y); w.Write(damage); w.Write(scale);
-            w.Write(tint.HasValue); w.Write(c.r); w.Write(c.g); w.Write(c.b); w.Write(c.a);
+            w.Write(tint.HasValue); w.Write(c.r); w.Write(c.g); w.Write(c.b); w.Write(c.a); w.Write(overHazardousLiquid);
         }));
     }
 
@@ -676,13 +678,18 @@ public static class NetCoop
                 {
                     int id = r.ReadInt32(); float x = r.ReadSingle(), y = r.ReadSingle(); int hp = r.ReadInt32(); bool flip = r.ReadBoolean();
                     var col = new Color32(r.ReadByte(), r.ReadByte(), r.ReadByte(), r.ReadByte()); float scale = r.ReadSingle();
-                    byte vstate = r.ReadByte(); Vector2 vaim = default, vface = default;
-                    if ((vstate & 128) != 0) { vaim = new Vector2(r.ReadSingle(), r.ReadSingle()); vface = new Vector2(r.ReadSingle(), r.ReadSingle()); }
+                    bool hasVisual = r.ReadBoolean();
+                    byte vstate = 0; Vector2 vaim = default, vface = default;
+                    if (hasVisual)
+                    {
+                        vstate = r.ReadByte();
+                        vaim = new Vector2(r.ReadSingle(), r.ReadSingle()); vface = new Vector2(r.ReadSingle(), r.ReadSingle());
+                    }
                     if (token != Token || !enemies.TryGetValue(id, out var h) || h == null) continue;
                     var proxy = h.GetComponent<NetEnemyProxy>();
                     if (proxy != null) { proxy.target = new Vector2(x, y); proxy.flip = flip; proxy.scale = scale; if (!proxy.color.Equals(col)) { proxy.color = col; var psr = h.GetComponent<SpriteRenderer>(); if (psr != null) psr.color = col; } }
                     var v140p = h.GetComponent<EnemyV140>();
-                    if (v140p != null) v140p.ApplyVisualState((byte)(vstate & 127), vaim, vface);
+                    if (hasVisual && v140p != null) v140p.ApplyVisualState(vstate, vaim, vface);
                     h.currentHealth = hp;
                 }
                 break;
@@ -794,7 +801,8 @@ public static class NetCoop
             {
                 int token = r.ReadInt32(); var p = new Vector2(r.ReadSingle(), r.ReadSingle()); var v = new Vector2(r.ReadSingle(), r.ReadSingle());
                 int dmg = r.ReadInt32(); float scale = r.ReadSingle(); bool hasTint = r.ReadBoolean(); var c = new Color(r.ReadSingle(), r.ReadSingle(), r.ReadSingle(), r.ReadSingle());
-                if (token == Token) EnemyBullet.Fire(p, v, v.magnitude, dmg, null, scale, hasTint ? c : (Color?)null);
+                bool overHazardousLiquid = r.ReadBoolean();
+                if (token == Token) EnemyBullet.Fire(p, v, v.magnitude, dmg, null, scale, hasTint ? c : (Color?)null, overHazardousLiquid);
                 break;
             }
             case Msg.ExplodeFx:
@@ -885,8 +893,12 @@ public static class NetCoop
                     Color32 col = sr != null ? (Color32)sr.color : new Color32(255, 255, 255, 255);
                     w.Write(col.r); w.Write(col.g); w.Write(col.b); w.Write(col.a); w.Write(h.transform.localScale.x);
                     var v140 = h.GetComponent<EnemyV140>();
-                    w.Write(v140 != null ? (byte)(v140.VisualState | 128) : (byte)0);
-                    if (v140 != null) { w.Write(v140.Aim.x); w.Write(v140.Aim.y); w.Write(v140.Facing.x); w.Write(v140.Facing.y); }
+                    w.Write(v140 != null);
+                    if (v140 != null)
+                    {
+                        w.Write(v140.VisualState);
+                        w.Write(v140.Aim.x); w.Write(v140.Aim.y); w.Write(v140.Facing.x); w.Write(v140.Facing.y);
+                    }
                 }
             }));
         }

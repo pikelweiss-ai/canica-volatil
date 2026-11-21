@@ -28,6 +28,7 @@ public class EnemyHealth : MonoBehaviour
     public Color deathColor = new Color(0.6f, 0.9f, 0.35f);
 
     public bool IsDead => isDead;
+    public bool CanBeTargeted => V140 == null || !V140.MoleUnderground;
     public event Action<EnemyHealth> Died;
     public static event Action<EnemyHealth> AnyDied;
 

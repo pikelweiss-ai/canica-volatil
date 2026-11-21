@@ -32,7 +32,7 @@ public partial class DungeonGenerator
         if (n.Contains("bosc")) return new SceneryKit
         {
             floors = new[] { "Gespa_alta", "Gespa_trevols", "Gespa_flors_mixtes", "Fulles_verd", "Molsa", "Gespa_fosca" }, floorShare = .3f, walls = new[] { "Molsa", "Fulles_verd", "Roca_cova_molsa" },
-            props = new[] { "Tronc_pi", "Tronc_betula", "Tronc_caigut", "Soca", "Seto_verd", "Seto_baies", "Seto_dens", "Falguera", "Bolet_vermell", "Bolets_grup" },
+            props = new[] { "Tronc_caigut", "Tronc_caigut_cap", "Tronc_caigut", "Soca", "Seto_verd", "Seto_baies", "Seto_dens", "Falguera", "Bolet_vermell", "Bolets_grup" },
             decals = new[] { "Flor_margarida", "Flor_lavanda", "Flor_rosa", "Flor_tulipa_groga", "Flor_lliri_blau", "Mata_herba", "Falguera", "Flor_rosa_blanca" }, webs = true, lilies = true
         };
         if (n.Contains("desert")) return new SceneryKit
@@ -48,7 +48,7 @@ public partial class DungeonGenerator
         if (n.Contains("neu")) return new SceneryKit
         {
             floors = new[] { "Neu_1", "Neu_2", "Neu_pisada" }, walls = new[] { "Gel_glacera", "Gel_esquerdat" },
-            props = new[] { "Seto_neu", "Roca_gran", "Roca_petita", "Pedres", "Tronc_pi" }, decals = new[] { "Pedres", "Roca_petita" }
+            props = new[] { "Seto_neu", "Roca_gran", "Roca_petita", "Pedres", "Tronc_caigut" }, decals = new[] { "Pedres", "Roca_petita" }
         };
         if (n.Contains("cripta")) return new SceneryKit
         {
@@ -312,14 +312,22 @@ public partial class DungeonGenerator
         // Ombra semitransparent al peu (bolets, roques, troncs...), igual que la resta d objectes
         var shadow = Fx.MakeSprite("Ombra", pos + new Vector3(0f, -.24f, 0f), Fx.Disc, new Color(0f, 0f, 0f, .32f), "Shadows", 1);
         shadow.transform.SetParent(go.transform, true); shadow.transform.localScale = new Vector3(name.StartsWith("Tronc") || name.StartsWith("Roca_gran") ? .85f : .6f, .24f, 1f);
-        var box = go.AddComponent<BoxCollider2D>(); box.size = new Vector2(.65f, .55f); box.offset = new Vector2(0, -.1f);
+        var box = go.AddComponent<BoxCollider2D>();
+        bool trunk = name.StartsWith("Tronc");
+        box.size = trunk ? Vector2.one : new Vector2(.65f, .55f);
+        box.offset = trunk ? Vector2.zero : new Vector2(0, -.1f);
+        if (trunk)
+        {
+            TileNav.AddBlocker(pos);
+            return;
+        }
         var b = go.AddComponent<Breakable>();
-        bool hard = name.StartsWith("Roca") || name == "Pedres" || name.StartsWith("Soca") || name.StartsWith("Tronc") || name == "Armari_metal" || name == "Llum_peu" || name == "Carro_compra" || name == "Taula_fusta";
+        bool hard = name.StartsWith("Roca") || name == "Pedres" || name.StartsWith("Soca") || name == "Armari_metal" || name == "Llum_peu" || name == "Carro_compra" || name == "Taula_fusta";
         bool mushroom = name.StartsWith("Bolet");
         b.health = hard ? 4 : mushroom || name.StartsWith("Cactus") ? 2 : 1;
         b.coinChance = hard ? .08f : .15f; b.healChance = mushroom ? .3f : hard ? .04f : .12f;
         b.debrisColor = name.StartsWith("Roca") || name == "Pedres" || name == "Armari_metal" || name == "Paperera" ? new Color(.55f, .55f, .6f)
-            : name.StartsWith("Tronc") || name == "Soca" || name == "Carro_compra" || name == "Taula_fusta" ? new Color(.45f, .3f, .15f)
+            : name == "Soca" || name == "Carro_compra" || name == "Taula_fusta" ? new Color(.45f, .3f, .15f)
             : mushroom ? new Color(.8f, .4f, .5f) : new Color(.3f, .65f, .3f);
     }
 }

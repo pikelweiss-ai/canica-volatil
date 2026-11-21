@@ -17,6 +17,7 @@ public class EnemyV140 : MonoBehaviour
     float timer, healClock, waveUntil;
     int molePhase, shieldHits;
     Collider2D[] moleColliders;
+    bool[] moleTriggerDefaults;
     bool awake, charging, channeling;
     Vector2 aim, facing = Vector2.down;
     Vector3 chestPosition;
@@ -31,6 +32,8 @@ public class EnemyV140 : MonoBehaviour
     public Vector2 Aim => aim;
     public Vector2 Facing => facing;
     byte remoteState;
+    float remoteMoleWarningStarted;
+    public bool MoleUnderground => kind == Kind.Mole && (health.IsNetProxy ? (remoteState & 2) != 0 : Invulnerable);
 
     void Awake()
     {
@@ -44,6 +47,8 @@ public class EnemyV140 : MonoBehaviour
         }
         if (kind == Kind.Mole)
         {
+            moleColliders = GetComponentsInChildren<Collider2D>(true);
+            moleTriggerDefaults = System.Array.ConvertAll(moleColliders, collider => collider.isTrigger);
             shadow = Fx.MakeSprite("Ombra del talp", transform.position, Fx.Disc, new Color(.05f, .03f, .02f, .65f), "Player", 1);
             shadow.transform.SetParent(transform, true);
         }
@@ -56,6 +61,8 @@ public class EnemyV140 : MonoBehaviour
             if (kind == Kind.FloatingEye) beam.startWidth = beam.endWidth = .1f;
             beam.enabled = false;
         }
+        if (kind == Kind.Mimic) body.sprite = disguise;
+        if (kind == Kind.Mole) remoteState = 2;
         health.Died += Died;
         if (IsMicroboss) MicrobossBar.Attach(gameObject, MicrobossName(kind), MicrobossColor(kind)); // barra flotant, a tots els equips
     }
@@ -74,7 +81,13 @@ public class EnemyV140 : MonoBehaviour
     }
 
     public void ApplyVisualState(byte state, Vector2 endpoint, Vector2 direction)
-    { remoteState = state; aim = endpoint; facing = direction; }
+    {
+        if (kind == Kind.Mole && (remoteState & 32) == 0 && (state & 32) != 0)
+            remoteMoleWarningStarted = Time.time;
+        remoteState = state;
+        aim = endpoint;
+        facing = direction;
+    }
 
     void LateUpdate()
     {
@@ -92,11 +105,16 @@ public class EnemyV140 : MonoBehaviour
             var color = body.color; color.a = hidden ? 0f : 1f; body.color = color;
             // v1.4.1: sota terra no té cos. Abans el collider seguia actiu i es menjava les bales
             // («tirs fantasma»). Ara les bales passen i sols es pot colpejar quan ix (fase 2).
-            if (moleColliders == null) moleColliders = GetComponentsInChildren<Collider2D>(true);
-            foreach (var c in moleColliders) if (c != null && c.enabled == hidden) c.enabled = !hidden;
+            for (int i = 0; i < moleColliders.Length; i++)
+            {
+                var collider = moleColliders[i];
+                if (collider == null) continue;
+                if (health.IsNetProxy) collider.isTrigger = hidden || moleTriggerDefaults[i];
+                else collider.enabled = !hidden;
+            }
             shadow.enabled = (state & 32) != 0;
             shadow.transform.position = aim;
-            shadow.transform.localScale = Vector3.one * (health.IsNetProxy ? 1f : Mathf.Lerp(.25f, 1.5f, 1f - timer));
+            shadow.transform.localScale = Vector3.one * Mathf.Lerp(.25f, 1.5f, health.IsNetProxy ? Time.time - remoteMoleWarningStarted : 1f - timer);
         }
         if (shield != null)
         {
@@ -533,7 +551,7 @@ public class EnemyV140 : MonoBehaviour
         fireClock = .7f;
         Vector2 axis = phase == 0 ? Vector2.right : Vector2.up;
         for (int i = -1; i <= 1; i += 2)
-            EnemyBullet.Fire((Vector2)transform.position + axis * i * .4f, axis * i, 5.5f, 1, transform, 1f, new Color(1f, .8f, .25f));
+            EnemyBullet.Fire((Vector2)transform.position + axis * i * .4f, axis * i, 5.5f, 1, transform, 1f, new Color(1f, .8f, .25f), overHazardousLiquid: true);
         Actions++;
     }
 

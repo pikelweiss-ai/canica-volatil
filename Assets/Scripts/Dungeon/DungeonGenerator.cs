@@ -79,6 +79,7 @@ public partial class DungeonGenerator : MonoBehaviour
     public List<Room> Rooms { get; } = new List<Room>();
     public Room CurrentRoom { get; private set; }
     public Room ProgressionRoom { get; private set; }
+    public Room MicrobossRoom { get; private set; }
     public DungeonTheme Theme { get; private set; }
 
     static readonly Vector2Int[] Dirs = { Vector2Int.right, Vector2Int.left, Vector2Int.up, Vector2Int.down };
@@ -233,6 +234,13 @@ public partial class DungeonGenerator : MonoBehaviour
         if (special.Count > 0) { var r = special[rng.Next(special.Count)]; r.type = RoomType.Arena; special.Remove(r); }
         var secret = special.FindAll(r => r.links.Count == 1);
         if (secret.Count > 0) secret[rng.Next(secret.Count)].type = RoomType.Secreta;
+
+        if (RunState.Floor >= 2 && Theme != null && Theme.microbosses != null && Theme.microbosses.Length > 0)
+        {
+            var candidates = Rooms.FindAll(r => r.type == RoomType.Combat && r != ProgressionRoom);
+            if (candidates.Count == 0) candidates = Rooms.FindAll(r => r.type == RoomType.Combat || r.type == RoomType.Arena);
+            if (candidates.Count > 0) MicrobossRoom = candidates[PosHash(new Vector2Int(RunState.Seed, RunState.Floor), 29) % candidates.Count];
+        }
 
         // Mida de cada sala (senars, perquè tinguen un centre exacte)
         foreach (Room r in Rooms)
@@ -568,7 +576,9 @@ public partial class DungeonGenerator : MonoBehaviour
                     for (int tries = 0; tries < 30; tries++)
                     {
                         var mimicCell = RandomCell(r); if (!FreeForDecor(r, mimicCell, 2)) continue;
-                        reserved.Add(mimicCell); Spawn(Theme.mimic, mimicCell); break;
+                        reserved.Add(mimicCell);
+                        if (!NetCoop.IsClient) Spawn(Theme.mimic, mimicCell);
+                        break;
                     }
             }
             else if (r.type == RoomType.Start)
@@ -907,6 +917,8 @@ public partial class DungeonGenerator : MonoBehaviour
             if (r == ProgressionRoom && RunState.Floor >= 4) StartCoroutine(ResonancePulses(r));
             int waves = 1 + (rng.NextDouble() < 0.5 ? 1 : 0) + (RunState.Floor >= 3 ? 1 : 0);
             if (r.type == RoomType.Emboscada) waves = 2;
+            if (r == MicrobossRoom)
+                StartCoroutine(SpawnEnemy(Theme.microbosses[rng.Next(Theme.microbosses.Length)], RandomSpawnCell(r), r, 0f));
             if (r.type == RoomType.Arena) yield return RunArenaWaves(r);
             else for (int w = 0; w < waves; w++)
             {
@@ -921,10 +933,6 @@ public partial class DungeonGenerator : MonoBehaviour
                     if (!elite && chosen != null && chosen.TryGetComponent<EnemyV140>(out var pack) && pack.kind == EnemyV140.Kind.SnowWolf)
                         for (int extra = 0; extra < 2; extra++) StartCoroutine(SpawnEnemy(chosen, RandomSpawnCell(r), r, 0f));
                 }
-                // v1.4.1: des del pis 3, de vegades un microboss (barra de vida) a la primera onada d'una sala de combat normal
-                if (w == 0 && r.type == RoomType.Combat && r != ProgressionRoom && RunState.Floor >= 3 &&
-                    Theme != null && Theme.microbosses != null && Theme.microbosses.Length > 0 && rng.NextDouble() < 0.25)
-                    StartCoroutine(SpawnEnemy(Theme.microbosses[rng.Next(Theme.microbosses.Length)], RandomSpawnCell(r), r, 0f));
                 yield return new WaitForSeconds(0.9f);
                 yield return WaitClear(r);
                 if (w < waves - 1) yield return new WaitForSeconds(0.6f);

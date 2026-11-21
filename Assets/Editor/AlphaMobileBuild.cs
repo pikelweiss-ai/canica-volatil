@@ -20,7 +20,7 @@ public static class AlphaMobileBuild
     }
     public static void BuildAndroid()
     {
-        AlphaVisualBuilder.Validate(); AlphaContentBuilder.Validate(); NetContentBuilder.Build(); MobileInputChecks.Validate();
+        AlphaVisualBuilder.Validate(); AlphaContentBuilder.Validate(); V141ContentBuilder.Build(); MobileInputChecks.Validate();
         var settings = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset")[0]);
         var input = settings.FindProperty("activeInputHandler");
         int originalInput = input.intValue;

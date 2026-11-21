@@ -33,7 +33,6 @@ public class CreativeMode : MonoBehaviour
     Entry placing;
     int placedFrame = -10;
     SpriteRenderer ghostRenderer;
-    readonly List<EnemyHealth> spawned = new List<EnemyHealth>();
     NetContentCatalog catalog;
 
     // ---------- Arrancada: s'afig sol en carregar el mapa lliure ----------
@@ -232,9 +231,7 @@ public class CreativeMode : MonoBehaviour
         }
         else
         {
-            var go = Instantiate(e.prefab, new Vector3(pos.x, pos.y, 0), Quaternion.identity);
-            var h = go.GetComponent<EnemyHealth>();
-            if (h != null) spawned.Add(h); // EnemyHealth.Start l'envia sol als clients (NetCoop.EnemyStarted)
+            Instantiate(e.prefab, new Vector3(pos.x, pos.y, 0), Quaternion.identity);
             Fx.Burst(pos, new Color(1f, 0.4f, 0.45f), 8, 2f);
         }
     }
@@ -291,14 +288,13 @@ public class CreativeMode : MonoBehaviour
     void ClearEnemies()
     {
         int n = 0;
-        foreach (var h in spawned)
+        foreach (var h in FindObjectsByType<EnemyHealth>(FindObjectsSortMode.None))
         {
             if (h == null || h.IsDead) continue;
             Fx.Burst(h.transform.position, new Color(.7f, .9f, 1f), 6, 2f);
             NetCoop.EnemyDied(h); // online: el fa desaparéixer també als clients
             Destroy(h.gameObject); n++;
         }
-        spawned.Clear();
         var player = GameObject.FindWithTag("Player");
         if (player != null) Fx.Text(player.transform.position, n > 0 ? n + " enemics fora" : "No n'hi ha", UIKit.Muted);
     }

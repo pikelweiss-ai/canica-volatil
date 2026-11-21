@@ -40,7 +40,7 @@ public class ShopUI : MonoBehaviour
         var portrait = UIKit.Box(panel, new Vector2(-500, 90), new Vector2(260, 260), UIKit.PanelLight, "Retrat");
         var picture = UIKit.Picture(portrait, shop.Portrait, Vector2.zero, new Vector2(240, 240));
         if (picture != null) picture.preserveAspect = true;
-        detail = UIKit.Text(panel, shop.IsMerchant ? "Mira, mira... i compra." : "Només articles barats.", new Vector2(-500, -150), new Vector2(280, 180), 22, TextAlignmentOptions.Top, UIKit.Muted);
+        detail = UIKit.Text(panel, shop.IsMerchant ? "Mira, mira... i compra." : "Només articles de cura.", new Vector2(-500, -150), new Vector2(280, 180), 22, TextAlignmentOptions.Top, UIKit.Muted);
 
         cards = UIKit.Empty(panel, "Targetes");
         coins = UIKit.Text(panel, "", new Vector2(-200, -315), new Vector2(380, 50), 30, TextAlignmentOptions.MidlineLeft, UIKit.Gold);

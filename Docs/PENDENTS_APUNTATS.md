@@ -1,6 +1,6 @@
 # Pendents apuntats per Ferran després de l'Alpha v1.4.2
 
-> Apuntats jugant la v1.4.2 (21 de novembre de 2026). **Només estan apuntats: encara no s'ha arreglat res.** Es poden fer en una **v1.4.3** abans de la v1.5 o dins d'ella. Cada punt diu on mirar. Detall i conversa a `C:\Users\Usuario\memoria-claude\Canica Volàtil - Bugs pendents.md`.
+> Apuntats jugant la v1.4.2 (21 de novembre de 2026). **Resolts a la fase 0 de l’Alpha v1.5.** Es poden fer en una **v1.4.3** abans de la v1.5 o dins d'ella. Cada punt diu on mirar. Detall i conversa a `C:\Users\Usuario\memoria-claude\Canica Volàtil - Bugs pendents.md`.
 
 | # | Què passa | On mirar | Arreglo previst |
 |---|-----------|----------|-----------------|
@@ -18,3 +18,9 @@
 ## Ordre suggerit
 
 Primer els arreglos xicotets i segurs (3, 4, 5, 7, 9), després els visuals (8), el contingut (10) i, per últim, els que cal reproduir en online (1, 2, 6).
+
+## Verificació de la fase 0
+
+- El bot `phase0` comprova preus de les cures iguals abans d’ofertes, targeta Sorpresa sense la icona ni la raresa de l’arma, una bala de pistola contra una paret secreta real, troncs tombats sòlids i indestructibles, i que TREURE ENEMICS elimina els tres fills d’un llimac. També entra a la sala del microboss al pis 2 i a la Neu (pis 5).
+- Els bots `host` i `join` amb `-botPhase0` comproven en dos processos el Talp (cos ocult, ombra, punteria i colliders), el Mímic (cofre fins que es desperta), la bafarada del mercader sense xat, la bala de la Torreta sobre líquid que fa mal i la destrucció d’una paret de prova disparada pel client.
+- Resultat en Windows amb client mòbil simulat. Queda la prova en dispositius físics.

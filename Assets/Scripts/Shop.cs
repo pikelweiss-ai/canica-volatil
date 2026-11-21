@@ -128,22 +128,22 @@ public class Shop : MonoBehaviour
         var heals = HealItem.All.Where(h => h != null).OrderBy(h => h.name).ToList();
         var list = new List<ShopSlot>();
 
-        ShopSlot Heal(float multiplier = 1f)
+        ShopSlot Heal()
         {
             var item = PickHeal(rng, heals); if (item == null) return null;
             return new ShopSlot { heal = item, icon = item.icon, title = item.itemName, info = "Cura " + item.healAmount + (item.healAmount == 1 ? " cor" : " cors"), rarity = item.rarity,
-                price = IsMerchant ? Final(HealBase(item), floor, rng) : Mathf.Max(3, Mathf.RoundToInt(HealBase(item) * .5f * Mathf.Lerp(.8f, 1.2f, (float)rng.NextDouble()))) };
+                price = Mathf.RoundToInt(HealBase(item) * (1f + .1f * floor)) };
         }
         ShopSlot Weapon(ChestRarity r, bool surprise = false)
         {
             var w = PickWeapon(rng, r, weapons); if (w == null) return null;
-            return new ShopSlot { weapon = w, icon = w.icon, title = surprise ? "Sorpresa!" : w.weaponName, rarity = w.rarity, surprise = surprise,
+            return new ShopSlot { weapon = w, icon = surprise ? null : w.icon, title = surprise ? "Sorpresa!" : w.weaponName, rarity = surprise ? ChestRarity.Comu : w.rarity, surprise = surprise,
                 info = surprise ? "Una arma de rareza desconeguda" : "Dany " + w.damage + " · " + (w.cooldown > 0 ? (1f / w.cooldown).ToString("0.0") : "-") + " trets/s · abast " + w.range.ToString("0.#"),
                 price = surprise ? Final(60, floor, rng) : Final(WeaponBase(w.rarity), floor, rng) };
         }
 
         if (!IsMerchant)
-        {   // Màquina: tres articles barats i limitats
+        {   // Màquina: tres articles de cura
             for (int i = 0; i < 3; i++) { ShopSlot s = null; for (int tries = 0; tries < 8; tries++) { s = Heal(); if (s == null || !list.Any(o => o.title == s.title)) break; } if (s != null) list.Add(s); } // sense repetits
         }
         else
@@ -179,7 +179,6 @@ public class Shop : MonoBehaviour
         if (!force && Time.unscaledTime - lastLine < 4f) return; // màxim 1 missatge cada 4 s
         lastLine = Time.unscaledTime; speakUntil = Time.time + 2.5f;
         ChatBubble.Show(gameObject, text);
-        if (NetSession.Active && NetSession.Instance != null) NetSession.Instance.LocalNotice("<color=#F2C94C>Mercader:</color> " + text);
     }
 
     // ----------------------------------------------------------------- interacció

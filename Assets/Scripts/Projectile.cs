@@ -60,7 +60,9 @@ public class Projectile : MonoBehaviour
         if (shooter != null && hit.transform.IsChildOf(shooter)) return false;
         if (NetCoop.Online && (hit.GetComponentInParent<PlayerHealth>() != null || hit.GetComponentInParent<RemoteAvatar>() != null))
             return false;
-        return !hit.isTrigger || hit.GetComponentInParent<EnemyHealth>() != null || hit.GetComponentInParent<Breakable>() != null;
+        var enemy = hit.GetComponentInParent<EnemyHealth>();
+        if (enemy != null) return enemy.CanBeTargeted;
+        return !hit.isTrigger || hit.GetComponentInParent<Breakable>() != null;
     }
 
     public static Vector2 SafeMuzzle(Vector2 center, Vector2 muzzle, float radius, Transform shooter)
@@ -186,7 +188,7 @@ public class Projectile : MonoBehaviour
         foreach (Collider2D hit in Physics2D.OverlapCircleAll(transform.position, radius))
         {
             EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
-            if (enemy == null || alreadyHit.Contains(enemy)) continue;
+            if (enemy == null || !enemy.CanBeTargeted || alreadyHit.Contains(enemy)) continue;
             alreadyHit.Add(enemy);
             if (!cosmetic) HitEnemy(enemy);
         }
@@ -207,7 +209,7 @@ public class Projectile : MonoBehaviour
         foreach (Collider2D hit in Physics2D.OverlapCircleAll(transform.position, 6f))
         {
             EnemyHealth e = hit.GetComponentInParent<EnemyHealth>();
-            if (e == null || e.IsDead || alreadyHit.Contains(e)) continue;
+            if (e == null || e.IsDead || !e.CanBeTargeted || alreadyHit.Contains(e)) continue;
             Vector2 to = (Vector2)e.transform.position - (Vector2)transform.position;
             if (Vector2.Dot(to.normalized, direction) < 0.2f) continue; // Només els de davant
             if (to.magnitude < bestD) { bestD = to.magnitude; best = e; }

@@ -24,15 +24,15 @@ public partial class NetBot
             if (seen.Add(r.shape)) { yield return new WaitForSeconds(.2f); yield return Shot("forma-" + r.shape); }
             if (r.type == DungeonGenerator.RoomType.Secreta)
             {
-                foreach (var b in FindObjectsByType<Breakable>(FindObjectsSortMode.None))
+                var walls = System.Array.FindAll(FindObjectsByType<Breakable>(FindObjectsSortMode.None), b => b.name == "Paret esquerdada");
+                if (walls.Length == 0 || GameObject.Find("Pista sala secreta") != null)
+                { Fail("la sala secreta ha de tindre paret i cap cartell"); yield break; }
+                foreach (var wall in walls)
                 {
-                    if (!b.meleeOrMineOnly) continue;
-                    int before = b.health; b.Hit(100);
-                    if (b.health != before) { Fail("una bala trenca la paret secreta"); yield break; }
-                    b.Hit(1, true);
-                    if (b.health > 0) { Fail("cos a cos no obri la paret secreta"); yield break; }
+                    wall.Hit(1);
+                    if (wall.health > 0) { Fail("una bala no obri la paret secreta"); yield break; }
                 }
-                Ok("paret secreta rebutja bales i accepta cos a cos");
+                Ok("paret secreta trencable amb bales i sense cartell");
             }
             if (r.type == DungeonGenerator.RoomType.Emboscada)
             {

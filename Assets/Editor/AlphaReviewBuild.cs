@@ -16,8 +16,8 @@ public static class AlphaReviewBuild
         }
     }
 
-    public static void BuildWindows() { AlphaVisualBuilder.BuildAssets(); AlphaContentBuilder.Build(); NetContentBuilder.Build(); AlphaSettingsChecks.Validate(); MobileInputChecks.Validate(); Build(BuildTarget.StandaloneWindows64,"Windows/CanicaAlphaReview.exe"); }
-    public static void BuildLinux() { AlphaVisualBuilder.Validate(); AlphaContentBuilder.Validate(); NetContentBuilder.Build(); AlphaSettingsChecks.Validate(); Build(BuildTarget.StandaloneLinux64,"Linux/CanicaAlphaReview.x86_64"); }
+    public static void BuildWindows() { AlphaVisualBuilder.BuildAssets(); AlphaContentBuilder.Build(); V141ContentBuilder.Build(); AlphaSettingsChecks.Validate(); MobileInputChecks.Validate(); Build(BuildTarget.StandaloneWindows64,"Windows/CanicaAlphaReview.exe"); }
+    public static void BuildLinux() { AlphaVisualBuilder.Validate(); AlphaContentBuilder.Validate(); V141ContentBuilder.Build(); AlphaSettingsChecks.Validate(); Build(BuildTarget.StandaloneLinux64,"Linux/CanicaAlphaReview.x86_64"); }
     static void Build(BuildTarget target,string output)
     {
         PlayerSettings.bundleVersion=GameVersion.Package;

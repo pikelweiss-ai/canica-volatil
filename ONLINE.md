@@ -1,5 +1,7 @@
 # Sales online — Canica Volàtil Alpha
 
+**Protocol de treball v1.5 (fase 0): 20.** `BulletFx` indica si la bala travessa els líquids que fan mal. La Torreta antiga ho fa també sobre l’àcid i la lava. `EnemySnap` envia l’estat visual complet, inclòs el bit del llop líder. El client aplica l’estat visual del Talp i del Mímic; l’amfitrió continua decidint els atacs i el dany. Els tres processos (amfitrió, client i relay) han d’usar el mateix protocol.
+
 `MobSound` (99, protocol 17): l'amfitrió envia identificador de clip, posició i volum; cada participant aplica la distància i el volum de la categoria Enemics.
 
 **Protocol de treball v1.4.1: 19** (`test-online.ps1 -MobileClient`: 6/6). Missatges nous: `ChestClear` (100, el Creatiu de l'amfitrió lleva els cofres del mapa lliure), `ZoneFx` (101: estil i posició d'una zona de perill; cada equip fa el mal al SEU jugador i l'amfitrió, a la resta d'enemics), `ShopReq` (102, client → amfitrió: ranura que vol comprar) i `ShopSold` (103, amfitrió → tots: ranura venuda i comprador; el comprador cobra amb les seues monedes i l'article cau al seu voltant). L'estoc del mercader i de la màquina ix d'una llavor compartida (no s'envia). Els enemics nous reutilitzen l'estat visual d'`EnemyV140` (bit 128 = líder dels llops). Cal que tots usen la mateixa compilació.

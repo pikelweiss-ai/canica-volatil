@@ -8,10 +8,11 @@ public class EnemyBullet : MonoBehaviour
     private Vector2 velocity;
     private int damage;
     bool slows; // v1.4.1: boles de gel (color blau pàl·lid): en tocar-te et ralentixen ~2 s
+    bool overHazardousLiquid;
     private float life;
     private Transform owner;
 
-    public static EnemyBullet Fire(Vector2 pos, Vector2 dir, float speed, int damage, Transform owner, float scale = 1f, Color? tint = null)
+    public static EnemyBullet Fire(Vector2 pos, Vector2 dir, float speed, int damage, Transform owner, float scale = 1f, Color? tint = null, bool overHazardousLiquid = false)
     {
         Sprite s = sprite != null ? sprite : Fx.PixelCircle(6);
         // Amb color: cercle d'aquest color (bales màgiques, pedres...); sense: la bala roja
@@ -24,8 +25,9 @@ public class EnemyBullet : MonoBehaviour
         b.damage = damage;
         b.slows = tint.HasValue && Mathf.Abs(tint.Value.r - .65f) < .03f && Mathf.Abs(tint.Value.g - .9f) < .03f && Mathf.Abs(tint.Value.b - 1f) < .03f;
         b.owner = owner;
+        b.overHazardousLiquid = overHazardousLiquid;
         b.life = 6f;
-        NetCoop.EnemyBulletFired(pos, b.velocity, damage, scale, tint);
+        NetCoop.EnemyBulletFired(pos, b.velocity, damage, scale, tint, overHazardousLiquid);
         return b;
     }
 
@@ -35,7 +37,7 @@ public class EnemyBullet : MonoBehaviour
         life -= Time.fixedDeltaTime;
         if (life <= 0f) { Destroy(gameObject); return; }
 
-        if (TileNav.Ground != null && TileNav.IsBlocked(TileNav.Cell(transform.position), ignoreWater: true)) { Pop(); return; }
+        if (TileNav.Ground != null && TileNav.IsBlocked(TileNav.Cell(transform.position), ignoreWater: true, overHazardousLiquid: overHazardousLiquid)) { Pop(); return; }
 
         foreach (Collider2D hit in Physics2D.OverlapCircleAll(transform.position, 0.12f * transform.localScale.x))
         {
@@ -51,7 +53,7 @@ public class EnemyBullet : MonoBehaviour
             }
             if (hit.GetComponentInParent<EnemyHealth>() != null) continue;     // Travessa els altres enemics
             var tilemap = hit.GetComponent<UnityEngine.Tilemaps.Tilemap>();
-            if (TileNav.IsWaterTilemap(tilemap) && !(tilemap.GetTile(tilemap.WorldToCell(transform.position)) is DamageTile)) continue;
+            if (tilemap != null && TileNav.CanShootOverLiquid(tilemap, tilemap.WorldToCell(transform.position), overHazardousLiquid)) continue;
             if (!hit.isTrigger) { Pop(); return; }                             // Paret, cofre, caixa...
         }
     }
