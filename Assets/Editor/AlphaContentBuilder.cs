@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEngine;
 
 // Ampliacio incremental: preserva els identificadors i les opcions anteriors.
-public static class AlphaContentBuilder
+public static partial class AlphaContentBuilder
 {
     static Sprite S(string name)=>AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Pixel/"+name+".png");
     public static void Build()

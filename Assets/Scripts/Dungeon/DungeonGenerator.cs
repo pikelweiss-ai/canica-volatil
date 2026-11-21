@@ -81,6 +81,7 @@ public partial class DungeonGenerator : MonoBehaviour
     public Room ProgressionRoom { get; private set; }
     public Room MicrobossRoom { get; private set; }
     public DungeonTheme Theme { get; private set; }
+    public GameObject SelectedBoss { get; private set; }
 
     static readonly Vector2Int[] Dirs = { Vector2Int.right, Vector2Int.left, Vector2Int.up, Vector2Int.down };
 
@@ -108,6 +109,14 @@ public partial class DungeonGenerator : MonoBehaviour
         if (RunState.Seed == 0) RunState.Seed = seed != 0 ? seed : System.Environment.TickCount | 1;
         rng = new System.Random(netSeed != 0 ? netSeed : unchecked(RunState.Seed + (RunState.Floor - 1) * 7919));
         Theme = themes != null && themes.Length > 0 ? themes[(RunState.Floor - 1) % themes.Length] : null;
+        SelectedBoss = Theme != null && Theme.boss != null ? Theme.boss : bossPrefab;
+        if (Theme != null && Theme.bossVariants != null && Theme.bossVariants.Length > 0)
+        {
+            int dungeonSeed = netSeed != 0 ? netSeed : RunState.Seed;
+            var variants = Theme.bossVariants;
+            int choice = PosHash(new Vector2Int(dungeonSeed, RunState.Floor), 47) % (variants.Length + 1);
+            if (choice < variants.Length && variants[choice] != null) SelectedBoss = variants[choice];
+        }
         if (enemyBulletSprite != null) EnemyBullet.sprite = enemyBulletSprite;
 
         if (player == null)
@@ -547,6 +556,7 @@ public partial class DungeonGenerator : MonoBehaviour
         foreach (Vector2Int p in barrelsToSpawn) if (occupied.Add(p)) Spawn(barrelPrefab, p);
         foreach (Vector2Int p in spikesToSpawn) if (occupied.Add(p)) Spawn(spikePrefab, p);
         ScatterScenery(); // v1.4.1: objectes i decoració del tema
+        DecorateThemedBoss();
 
         foreach (Room r in Rooms)
         {
@@ -824,7 +834,7 @@ public partial class DungeonGenerator : MonoBehaviour
             ShowProgressionBanner(r);
             if (r.type == RoomType.Boss)
             {
-                GameObject boss = Theme != null && Theme.boss != null ? Theme.boss : bossPrefab;
+                GameObject boss = SelectedBoss;
                 EnemyBoss info = boss != null ? boss.GetComponent<EnemyBoss>() : null;
                 ui.ShowBanner(info != null ? info.bossName.ToUpper() : "BOSS", 1.5f);
             }
@@ -892,7 +902,7 @@ public partial class DungeonGenerator : MonoBehaviour
 
         if (r.type == RoomType.Boss)
         {
-            GameObject boss = Theme != null && Theme.boss != null ? Theme.boss : bossPrefab;
+            GameObject boss = SelectedBoss;
             EnemyBoss info = boss != null ? boss.GetComponent<EnemyBoss>() : null;
             ui.ShowBanner(info != null ? info.bossName.ToUpper() : "BOSS", 1.5f);
             yield return SpawnEnemy(boss, r.Center + new Vector2Int(0, r.rect.height / 4), r, 1.2f);

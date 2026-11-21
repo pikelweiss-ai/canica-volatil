@@ -1,5 +1,7 @@
 # Sales online — Canica Volàtil Alpha
 
+**Protocol de treball v1.5 (bosses): 21.** `BulletFx` porta l’aspecte i la durada de les rates i les paelles. `ZoneFx` també admet aigua bruta, lava ascendent, fogons i bombes de boss. `EnemyHitReq` distingeix els projectils perquè el Cavaller només reflectisca bales. Els avisos d’atac i les peces de l’arena aprofiten els missatges del combat cooperatiu.
+
 **Protocol de treball v1.5 (fase 0): 20.** `BulletFx` indica si la bala travessa els líquids que fan mal. La Torreta antiga ho fa també sobre l’àcid i la lava. `EnemySnap` envia l’estat visual complet, inclòs el bit del llop líder. El client aplica l’estat visual del Talp i del Mímic; l’amfitrió continua decidint els atacs i el dany. Els tres processos (amfitrió, client i relay) han d’usar el mateix protocol.
 
 `MobSound` (99, protocol 17): l'amfitrió envia identificador de clip, posició i volum; cada participant aplica la distància i el volum de la categoria Enemics.

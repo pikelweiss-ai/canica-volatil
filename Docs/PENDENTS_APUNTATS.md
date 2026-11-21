@@ -23,4 +23,4 @@ Primer els arreglos xicotets i segurs (3, 4, 5, 7, 9), després els visuals (8),
 
 - El bot `phase0` comprova preus de les cures iguals abans d’ofertes, targeta Sorpresa sense la icona ni la raresa de l’arma, una bala de pistola contra una paret secreta real, troncs tombats sòlids i indestructibles, i que TREURE ENEMICS elimina els tres fills d’un llimac. També entra a la sala del microboss al pis 2 i a la Neu (pis 5).
 - Els bots `host` i `join` amb `-botPhase0` comproven en dos processos el Talp (cos ocult, ombra, punteria i colliders), el Mímic (cofre fins que es desperta), la bafarada del mercader sense xat, la bala de la Torreta sobre líquid que fa mal i la destrucció d’una paret de prova disparada pel client.
-- Resultat en Windows amb client mòbil simulat. Queda la prova en dispositius físics.
+- La suite general `test-online.ps1 -MobileClient` ha donat 6/6 en Windows amb client mòbil simulat. Queda la prova en dispositius físics.

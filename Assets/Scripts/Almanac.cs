@@ -139,6 +139,7 @@ public class AlmanacUI : MonoBehaviour
                 bool boss = prefab.GetComponent<EnemyBoss>() != null, micro = prefab.TryGetComponent<EnemyV140>(out var v) && v.IsMicroboss;
                 if ((tab == Tab.Bosses) != (boss || micro)) continue;
                 var health = prefab.GetComponent<EnemyHealth>(); var sr = prefab.GetComponent<SpriteRenderer>();
+                if (health != null && health.arenaPart) continue;
                 bool saw = Almanac.HasSeen(prefab.name), won = Almanac.HasDefeated(prefab.name);
                 bool open = tab == Tab.Bosses ? won : saw;
                 Almanac.Notes.TryGetValue(prefab.name, out var note);

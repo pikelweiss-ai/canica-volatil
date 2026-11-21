@@ -11,9 +11,9 @@ using UnityEngine.UI;
 //  - Teleport: desapareix i reapareix       - Fan: ventall de bales apuntat
 // Els primers 'calmAttacks' atacs els fa sempre; a mitja vida es posa furiós i els fa tots.
 [RequireComponent(typeof(EnemyPathfindingAI), typeof(EnemyHealth))]
-public class EnemyBoss : MonoBehaviour
+public partial class EnemyBoss : MonoBehaviour
 {
-    public enum Attack { Ring, Jump, Summon, Spiral, Charge, RockRain, Teleport, Fan, Web, Snowflake, IceCone, SlowSpiral }
+    public enum Attack { Ring, Jump, Summon, Spiral, Charge, RockRain, Teleport, Fan, Web, Snowflake, IceCone, SlowSpiral, Burrow, Sweep, Beam, Shockwave, Bomb, Hazard }
 
     public const int BonusHealth = 20; // v1.4.1: tots els bosses +20 de vida (s aplica en crear-los a la masmorra)
     public string bossName = "Rei Llim";
@@ -51,18 +51,29 @@ public class EnemyBoss : MonoBehaviour
         ai.detectionRange = 30f;
         health.Died += OnDied;
         CreateBar();
-        MobSounds.Play("boss_rugit", transform.position, .55f);
+        if (!health.IsNetProxy)
+        {
+            PrepareArena();
+            MobSounds.Play("boss_rugit", transform.position, .55f);
+        }
     }
 
     void Update()
     {
         UpdateBar();
-        if (!health.IsNetProxy) CheckStuck(); // v1.4.1: si s encalla als blocs o no pot arribar-te, busca com eixir
+        if (health.IsNetProxy) return;
+        TickArena();
+        if (!Stationary) CheckStuck();
         if (attacking || ai.Player == null || !ai.HasAggro) return;
 
         if (!enraged && health.currentHealth <= health.maxHealth / 2)
         {
             enraged = true;
+            if (arenaKind == ArenaKind.Knight)
+            {
+                health.knockbackResist *= .35f;
+                Fx.Burst(transform.position, dustColor, 18, 4f);
+            }
             MobSounds.Play("boss_fase2", transform.position, .55f);
             ai.moveSpeed *= 1.3f;
             timeBetweenAttacks *= 0.7f;
@@ -84,7 +95,16 @@ public class EnemyBoss : MonoBehaviour
         do { a = Random.Range(0, count); } while (a == lastAttack && count > 1 && guard++ < 10);
         lastAttack = a;
 
-        switch (attacks[a])
+        yield return PerformAttack(attacks[a]);
+
+        ai.mode = Stationary ? EnemyPathfindingAI.Mode.Hold : EnemyPathfindingAI.Mode.Chase;
+        timer = timeBetweenAttacks;
+        attacking = false;
+    }
+
+    IEnumerator PerformAttack(Attack attack)
+    {
+        switch (attack)
         {
             case Attack.Ring: yield return Ring(); break;
             case Attack.Jump: yield return Jump(); break;
@@ -98,11 +118,13 @@ public class EnemyBoss : MonoBehaviour
             case Attack.Snowflake: yield return Snowflake(); break;
             case Attack.IceCone: yield return IceCone(); break;
             case Attack.SlowSpiral: yield return SlowSpiral(); break;
+            case Attack.Burrow: yield return Burrow(); break;
+            case Attack.Sweep: yield return Sweep(); break;
+            case Attack.Beam: yield return Beam(); break;
+            case Attack.Shockwave: yield return Shockwave(); break;
+            case Attack.Bomb: yield return Bomb(); break;
+            case Attack.Hazard: yield return ArenaHazard(); break;
         }
-
-        ai.mode = EnemyPathfindingAI.Mode.Chase;
-        timer = timeBetweenAttacks;
-        attacking = false;
     }
 
     // Parpelleig d'avís abans de l'atac
@@ -476,6 +498,7 @@ public class EnemyBoss : MonoBehaviour
     void OnDied(EnemyHealth h)
     {
         StopAllCoroutines();
+        ClearArenaParts();
         ClearAttackMarks();
         if (barRoot != null) Destroy(barRoot);
         Fx.Shake(0.6f, 0.4f);
@@ -484,6 +507,7 @@ public class EnemyBoss : MonoBehaviour
 
     void OnDestroy()
     {
+        ClearArenaParts();
         ClearAttackMarks();
         if (barRoot != null) Destroy(barRoot);
     }
@@ -535,7 +559,7 @@ public class EnemyBoss : MonoBehaviour
         if (barFill == null || health == null) return;
         float k = Mathf.Clamp01((float)health.currentHealth / health.maxHealth);
         barFill.rectTransform.localScale = new Vector3(k, 1f, 1f);
-        barFill.color = enraged ? new Color(0.95f, 0.35f, 0.3f) : new Color(0.55f, 0.85f, 0.3f);
+        barFill.color = k <= .5f ? new Color(0.95f, 0.35f, 0.3f) : new Color(0.55f, 0.85f, 0.3f);
         barRoot.SetActive((health != null && health.netProxy) || (ai != null && ai.HasAggro)); // Online: als clients sempre es veu
     }
 

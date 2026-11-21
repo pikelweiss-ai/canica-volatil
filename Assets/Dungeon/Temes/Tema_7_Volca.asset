@@ -39,4 +39,7 @@ MonoBehaviour:
   mimic: {fileID: 8254766765077702423, guid: 165f3351b0dc8394da6aa67fe5476266, type: 3}
   microbosses:
   - {fileID: 9130908671089073421, guid: e02162fe6e26d404c8ebf354f29cb97c, type: 3}
+  bossVariants:
+  - {fileID: 5119422190387897216, guid: a15c23086b8d0a1458a0fe611f49b76a, type: 3}
+  - {fileID: 7209581967107913960, guid: cd231ae20b546bf4b94513b4c14bdbf6, type: 3}
   boss: {fileID: 8439166493649068586, guid: bb9c27ab96cc9164f8ed14f1bd5822d2, type: 3}

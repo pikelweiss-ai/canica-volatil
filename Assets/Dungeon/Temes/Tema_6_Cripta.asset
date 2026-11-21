@@ -42,4 +42,6 @@ MonoBehaviour:
   microbosses:
   - {fileID: 4071329484018601251, guid: 2ee0c3b41f0afd442a71d70649a27bf2, type: 3}
   - {fileID: 9130908671089073421, guid: e02162fe6e26d404c8ebf354f29cb97c, type: 3}
+  bossVariants:
+  - {fileID: 5108411971520946357, guid: 14c4b79cbc5e44541b27d92e29de2a8e, type: 3}
   boss: {fileID: 937029439769639437, guid: 861996f1ca16de64393278514f8afa5e, type: 3}

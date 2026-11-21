@@ -15,7 +15,7 @@ public partial class NetBot : MonoBehaviour
 {
     string role, net, join, password, codeFile, mode, botName, shots, roomName;
     int maxPlayers = 4;
-    bool coop, phase0Online;
+    bool coop, phase0Online, bosses150Online;
     int expect;
     bool failed;
 
@@ -40,6 +40,7 @@ public partial class NetBot : MonoBehaviour
         bot.shots = Arg("-botShots", null);
         bot.coop = Array.IndexOf(a, "-botCoop") >= 0;
         bot.phase0Online = Array.IndexOf(a, "-botPhase0") >= 0;
+        bot.bosses150Online = Array.IndexOf(a, "-botBosses150") >= 0;
         bot.roomName = Arg("-botRoom", "BotRoom");
         bot.maxPlayers = int.Parse(Arg("-botMax", "4"));
         bot.botName = Arg("-botName", role == "host" ? "BotAmfitrio" : "BotJugador");
@@ -52,7 +53,7 @@ public partial class NetBot : MonoBehaviour
 
     void Start()
     {
-        StartCoroutine(role == "phase0" ? Phase0() : role == "audio140" ? Audio140() : role == "scenery" ? Scenery141() : role == "v141" ? V141() : role == "dungeon140" ? Dungeon140() : role == "solo" ? SoloCombat() : role == "menushot" ? MenuShots() : role == "weaponshots" ? WeaponShots() : role == "trails" ? TrailGallery() : role == "host" ? Host() : Join());
+        StartCoroutine(role == "bosses150" ? Bosses150() : role == "phase0" ? Phase0() : role == "audio140" ? Audio140() : role == "scenery" ? Scenery141() : role == "v141" ? V141() : role == "dungeon140" ? Dungeon140() : role == "solo" ? SoloCombat() : role == "menushot" ? MenuShots() : role == "weaponshots" ? WeaponShots() : role == "trails" ? TrailGallery() : role == "host" ? Host() : Join());
         StartCoroutine(Watchdog());
     }
 
@@ -114,6 +115,7 @@ public partial class NetBot : MonoBehaviour
         if (coop && Scene == "Dungeon") { yield return HostCoop(); if (failed) yield break; }
         if (Scene == "GameScene") { yield return CheckFreeSky(); if (failed) yield break; }
         if (phase0Online && Scene == "Dungeon") { yield return HostPhase0(); if (failed) yield break; }
+        if (bosses150Online && Scene == "Dungeon") { yield return HostBosses150(); if (failed) yield break; }
         yield return new WaitForSecondsRealtime(0.5f);
         yield return Shot("6-partida-amfitrio");
         if (failed) yield break;
@@ -215,6 +217,7 @@ public partial class NetBot : MonoBehaviour
         if (coop && Scene == "Dungeon") { yield return JoinCoop(); if (failed) yield break; }
         yield return WaitFor(() => Avatars >= 1, 20, "avatar de l'amfitrio visible en partida");
         if (phase0Online && Scene == "Dungeon") { yield return JoinPhase0(); if (failed) yield break; }
+        if (bosses150Online && Scene == "Dungeon") { yield return JoinBosses150(); if (failed) yield break; }
         yield return WaitFor(() => Scene == "Lobby", 20, "tornada al lobby");
         yield return WaitFor(() => { closed = !NetSession.Active; return closed && Scene == "MainMenu"; }, 20, "sala tancada per l'amfitrio i tornada al menu");
         if (failed) yield break;

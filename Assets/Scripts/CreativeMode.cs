@@ -126,6 +126,7 @@ public class CreativeMode : MonoBehaviour
         if (tab == Tab.Enemics && catalog.enemies != null)
             foreach (var go in catalog.enemies)
             {
+                if (go != null && go.TryGetComponent<EnemyHealth>(out var part) && part.arenaPart) continue;
                 if (go == null) continue;
                 var h = go.GetComponent<EnemyHealth>();
                 bool boss = go.GetComponent<EnemyBoss>() != null;

@@ -5,11 +5,12 @@ using UnityEngine;
 // els altres enemics (explosió de la bomba) els toca només l'amfitrió, que és qui mana al combat.
 public class HazardZone : MonoBehaviour
 {
-    public enum Style : byte { Fire = 0, Acid = 1, Bomb = 2, Web = 3 }
+    public enum Style : byte { Fire = 0, Acid = 1, Bomb = 2, Web = 3, DirtyWater = 4, RisingLava = 5, Stove = 6, BossBomb = 7 }
 
     Style style;
     float radius, delay, life, age, nextTick;
     SpriteRenderer disc, ring;
+    bool IsBomb => style == Style.Bomb || style == Style.BossBomb;
     bool exploded;
     PlayerMovement local;
 
@@ -41,9 +42,12 @@ public class HazardZone : MonoBehaviour
     {
         switch (s)
         {
+            case Style.Stove:
             case Style.Fire: radius = 1.5f; delay = 0f; life = 3f; break;   // 1 de mal/s durant 3 s
             case Style.Acid: radius = 0.9f; delay = 0f; life = 6f; break;   // -30 % de velocitat
             case Style.Web: radius = 1.7f; delay = 0f; life = 6f; break;    // teranyina de la Reina Aranya: velocitat x0,4
+            case Style.DirtyWater: radius = 7f; delay = 0f; life = 1.18f; break;
+            case Style.RisingLava: radius = 2f; delay = .7f; life = 5f; break;
             default: radius = 1.5f; delay = 1.2f; life = 1.4f; break;       // cercle roig 1,2 s i després 3 de mal
         }
     }
@@ -66,12 +70,21 @@ public class HazardZone : MonoBehaviour
     void Setup(Style s)
     {
         style = s; Stats(s, out radius, out delay, out life);
-        Color c = s == Style.Fire ? new Color(1f, .45f, .1f) : s == Style.Acid ? new Color(.45f, .9f, .2f) : s == Style.Web ? new Color(.92f, .92f, .98f) : new Color(1f, .15f, .15f);
-        disc = Fx.MakeSprite("Zona terra", transform.position, s == Style.Web ? WebSprite : Fx.Disc, new Color(c.r, c.g, c.b, s == Style.Bomb ? .18f : s == Style.Web ? .9f : .38f), "Shadows", 3);
+        Color c = (s == Style.Fire || s == Style.Stove) ? new Color(1f, .45f, .1f) : s == Style.Acid ? new Color(.45f, .9f, .2f) : s == Style.DirtyWater ? new Color(.29f, .37f, .17f) : s == Style.RisingLava ? new Color(1f, .25f, .04f) : s == Style.Web ? new Color(.92f, .92f, .98f) : new Color(1f, .15f, .15f);
+        disc = Fx.MakeSprite("Zona terra", transform.position, s == Style.Web ? WebSprite : Fx.Disc, new Color(c.r, c.g, c.b, IsBomb ? .18f : s == Style.Web ? .9f : .38f), "Shadows", 3);
         disc.transform.SetParent(transform, true); disc.transform.localScale = Vector3.one * radius * 2f;
         ring = Fx.MakeSprite("Zona vora", transform.position, Fx.Disc, new Color(c.r, c.g, c.b, .55f), "Shadows", 4);
-        ring.transform.SetParent(transform, true); ring.transform.localScale = Vector3.one * radius * 2f * (s == Style.Bomb ? .2f : .9f);
-        if (s == Style.Fire) MobSounds.PlayLocal("salamandra_flama", transform.position, .35f);
+        ring.transform.SetParent(transform, true); ring.transform.localScale = Vector3.one * radius * 2f * (IsBomb ? .2f : .9f);
+        if (s == Style.Stove)
+        {
+            var stove = Resources.Load<Sprite>("Pixel/Bosses/Fogons_encesos_centre");
+            if (stove != null)
+            {
+                var glowing = Fx.MakeSprite("Fogons encesos", transform.position, stove, Color.white, "Shadows", 6);
+                glowing.transform.SetParent(transform, true);
+            }
+        }
+        if (s == Style.Fire || s == Style.Stove) MobSounds.PlayLocal("salamandra_flama", transform.position, .35f);
         if (s == Style.Web)
         {   // la teranyina es pot trencar a colps o amb trets (3 impactes); en trencar-se desapareix per a tots
             var hit = gameObject.AddComponent<CircleCollider2D>(); hit.isTrigger = true; hit.radius = 1.1f;
@@ -84,7 +97,7 @@ public class HazardZone : MonoBehaviour
         age += Time.deltaTime;
         if (age >= delay + life) { Destroy(gameObject); return; }
 
-        if (style == Style.Bomb)
+        if (IsBomb)
         {
             if (age < delay)
             {   // el cercle roig es va omplint fins al moment de l'explosió
@@ -100,7 +113,9 @@ public class HazardZone : MonoBehaviour
         if (local == null) local = FindFirstObjectByType<PlayerMovement>();
         if (local == null) return;
         if (Vector2.Distance(local.transform.position, transform.position) > radius) return;
-        if (style == Style.Acid) local.BoostSpeed(0.7f, 0.2f);
+        if (age < delay) return;
+        if (style == Style.DirtyWater) local.BoostSpeed(.8f, .2f);
+        else if (style == Style.Acid) local.BoostSpeed(0.7f, 0.2f);
         else if (style == Style.Web) local.BoostSpeed(0.3f, 0.2f);                 // xafar-la frena molt (x0,3)
         else if (Time.time >= nextTick)
         {
@@ -122,7 +137,7 @@ public class HazardZone : MonoBehaviour
             if (health != null) health.TakeDamage(3);
         }
         // Les bombes també fan mal als altres enemics (decideix l'amfitrió)
-        if (NetCoop.IsClient) return;
+        if (NetCoop.IsClient || style == Style.BossBomb) return;
         foreach (var enemy in FindObjectsByType<EnemyHealth>(FindObjectsSortMode.None))
             if (enemy != null && !enemy.IsDead && Vector2.Distance(enemy.transform.position, transform.position) <= radius)
                 enemy.TakeDamage(3);

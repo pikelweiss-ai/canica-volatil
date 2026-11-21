@@ -72,6 +72,33 @@ public partial class DungeonGenerator
         }
     }
 
+    void DecorateThemedBoss()
+    {
+        if (SelectedBoss == null || !SelectedBoss.TryGetComponent<EnemyBoss>(out var boss) || boss.arenaProp == null) return;
+        var room = Rooms.Find(r => r.type == RoomType.Boss);
+        if (room == null) return;
+        if (boss.arenaKind == EnemyBoss.ArenaKind.Cook)
+        {
+            for (int i = 0; i < 4; i++)
+                PlaceBossDecor("Fogons", boss.arenaProp, room.Center, new Vector2(-4.5f + i * 3f, 2f));
+        }
+        if (boss.arenaKind == EnemyBoss.ArenaKind.Professor)
+        {
+            foreach (int x in new[] { -4, 4 })
+                foreach (int y in new[] { -2, 2 })
+                    PlaceBossDecor("Pupitre", boss.arenaProp, room.Center, new Vector2(x, y));
+            var board = Resources.Load<Sprite>("Pixel/Bosses/Pissarra_escola");
+            if (board != null) PlaceBossDecor("Pissarra", board, room.Center, new Vector2(0, 5));
+        }
+    }
+
+    void PlaceBossDecor(string name, Sprite sprite, Vector2Int center, Vector2 offset)
+    {
+        Vector3 at = ground.GetCellCenterWorld(ToCell(center)) + (Vector3)offset;
+        var decor = Fx.MakeSprite(name, at, sprite, Color.white, "Shadows", 2);
+        decor.transform.SetParent(transform, true);
+    }
+
     const int IceMinFloor = 3;
     static UnityEngine.Tilemaps.TileBase[] iceTiles;
     // Gel_net primer (és el que més ix) i després les variants amb bombolles i esquerdes

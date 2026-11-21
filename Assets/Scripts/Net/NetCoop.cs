@@ -100,25 +100,22 @@ public static class NetCoop
     }
 
     // Client: ha pegat a una copia -> el colp el decideix l'amfitrio
-    public static void ProxyHit(EnemyHealth h, int damage, Vector2 knockback, ProjectileEffect effect = ProjectileEffect.None)
+    public static void ProxyHit(EnemyHealth h, int damage, Vector2 knockback, ProjectileEffect effect = ProjectileEffect.None, bool projectile = false)
     {
         if (!IsClient) return;
         int id = h.netId;
-        S.SendToHost(NetProtocol.Frame(Msg.EnemyHitReq, w => { w.Write(id); w.Write(damage); w.Write(knockback.x); w.Write(knockback.y); w.Write((byte)effect); }));
+        S.SendToHost(NetProtocol.Frame(Msg.EnemyHitReq, w => { w.Write(id); w.Write(damage); w.Write(knockback.x); w.Write(knockback.y); w.Write((byte)effect); w.Write(projectile); }));
     }
 
     static GameObject Lookup(string key)
     {
         if (templates.TryGetValue(key, out var t) && t != null) return t;
         var g = DungeonGenerator.Instance;
-        if (g == null)
-        {
-            // Mapa lliure: els enemics del mode Creatiu venen del cataleg
-            var cat = Resources.Load<NetContentCatalog>("NetContent");
-            if (cat != null && cat.enemies != null) foreach (var p in cat.enemies) if (p != null && Key(p) == key) return p;
-            return null;
-        }
         bool Match(GameObject p) => p != null && Key(p) == key;
+        var catalog = Resources.Load<NetContentCatalog>("NetContent");
+        if (catalog != null && catalog.enemies != null)
+            foreach (var p in catalog.enemies) if (Match(p)) return p;
+        if (g == null) return null;
         if (g.enemyPrefabs != null) foreach (var p in g.enemyPrefabs) if (Match(p)) return p;
         if (Match(g.bossPrefab)) return g.bossPrefab;
         if (g.themes != null)
@@ -210,14 +207,14 @@ public static class NetCoop
             }
     }
 
-    public static void EnemyBulletFired(Vector2 pos, Vector2 velocity, int damage, float scale, Color? tint, bool overHazardousLiquid)
+    public static void EnemyBulletFired(Vector2 pos, Vector2 velocity, int damage, float scale, Color? tint, bool overHazardousLiquid, float flightTime, EnemyBullet.Appearance appearance)
     {
         if (!IsHost) return;
         Color c = tint ?? new Color(0, 0, 0, 0);
         S.SendAll(NetProtocol.Frame(Msg.BulletFx, w =>
         {
             w.Write(Token); w.Write(pos.x); w.Write(pos.y); w.Write(velocity.x); w.Write(velocity.y); w.Write(damage); w.Write(scale);
-            w.Write(tint.HasValue); w.Write(c.r); w.Write(c.g); w.Write(c.b); w.Write(c.a); w.Write(overHazardousLiquid);
+            w.Write(tint.HasValue); w.Write(c.r); w.Write(c.g); w.Write(c.b); w.Write(c.a); w.Write(overHazardousLiquid); w.Write(flightTime); w.Write((byte)appearance);
         }));
     }
 
@@ -518,12 +515,15 @@ public static class NetCoop
             case Msg.EnemyHitReq:
             {
                 int id = r.ReadInt32(); int dmg = r.ReadInt32(); var kb = new Vector2(r.ReadSingle(), r.ReadSingle());
-                var effect = (ProjectileEffect)r.ReadByte();
+                var effect = (ProjectileEffect)r.ReadByte(); bool projectile = r.ReadBoolean();
                 if (effect > ProjectileEffect.Chain) break;
                 if (enemies.TryGetValue(id, out var h) && h != null && !h.IsDead)
                 {
                     RunStats.HitBy = ""; // colp d'un company: compta com a mort, pero no per a l'arma de l'amfitrio
-                    h.TakeProjectileHit(Mathf.Clamp(dmg, 0, 10000), Vector2.ClampMagnitude(kb, 40f), effect);
+                    int damage = Mathf.Clamp(dmg, 0, 10000);
+                    Vector2 knockback = Vector2.ClampMagnitude(kb, 40f);
+                    if (projectile) h.TakeProjectileHit(damage, knockback, effect);
+                    else h.TakeHit(damage, knockback);
                     RunStats.HitBy = null;
                 }
                 break;
@@ -732,7 +732,7 @@ public static class NetCoop
             case Msg.ZoneFx:
             {
                 int token = r.ReadInt32(); byte style = r.ReadByte(); var p = new Vector2(r.ReadSingle(), r.ReadSingle());
-                if (token == Token && style <= (byte)HazardZone.Style.Web) HazardZone.Create((HazardZone.Style)style, p);
+                if (token == Token && style <= (byte)HazardZone.Style.BossBomb) HazardZone.Create((HazardZone.Style)style, p);
                 break;
             }
             case Msg.ChestClear:
@@ -802,7 +802,8 @@ public static class NetCoop
                 int token = r.ReadInt32(); var p = new Vector2(r.ReadSingle(), r.ReadSingle()); var v = new Vector2(r.ReadSingle(), r.ReadSingle());
                 int dmg = r.ReadInt32(); float scale = r.ReadSingle(); bool hasTint = r.ReadBoolean(); var c = new Color(r.ReadSingle(), r.ReadSingle(), r.ReadSingle(), r.ReadSingle());
                 bool overHazardousLiquid = r.ReadBoolean();
-                if (token == Token) EnemyBullet.Fire(p, v, v.magnitude, dmg, null, scale, hasTint ? c : (Color?)null, overHazardousLiquid);
+                float flightTime = r.ReadSingle(); var appearance = (EnemyBullet.Appearance)r.ReadByte();
+                if (token == Token) EnemyBullet.Fire(p, v, v.magnitude, dmg, null, scale, hasTint ? c : (Color?)null, overHazardousLiquid, flightTime, appearance);
                 break;
             }
             case Msg.ExplodeFx:

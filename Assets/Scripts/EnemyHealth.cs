@@ -9,6 +9,8 @@ public class EnemyHealth : MonoBehaviour
     public int maxHealth = 5;
     public int currentHealth;
     EnemyV140 v140; bool v140Looked, skipBlock;
+    EnemyBoss boss;
+    public bool arenaPart;
     EnemyV140 V140 { get { if (!v140Looked) { v140 = GetComponent<EnemyV140>(); v140Looked = true; } return v140; } }
 
     public AudioSource damageAudioSource;
@@ -50,6 +52,7 @@ public class EnemyHealth : MonoBehaviour
     void Awake()
     {
         currentHealth = maxHealth;
+        boss = GetComponent<EnemyBoss>();
     }
 
     void Start()
@@ -57,8 +60,11 @@ public class EnemyHealth : MonoBehaviour
         GameAudio.Track(damageAudioSource,SoundCategory.Enemies);
         if (currentHealth <= 0) currentHealth = maxHealth;
         // v1.4.1: l'Almanac apunta els enemics que veus i els que derrotes (a cada equip, el seu)
-        Almanac.SawEnemy(gameObject.name);
-        Died += dead => Almanac.DefeatedEnemy(dead.gameObject.name);
+        if (!arenaPart)
+        {
+            Almanac.SawEnemy(gameObject.name);
+            Died += dead => Almanac.DefeatedEnemy(dead.gameObject.name);
+        }
 
         spriteRenderer = GetComponent<SpriteRenderer>();
         if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
@@ -78,10 +84,12 @@ public class EnemyHealth : MonoBehaviour
     {
         if (isDead) return;
         NoteHitter();
+        if (!netProxy && damage < 9999 && boss != null && boss.ReflectProjectile(knockback)) return;
         if (!netProxy && damage < 9999 && V140 != null && V140.BlockHit(knockback, false, true)) return;
-        if (netProxy && effect != ProjectileEffect.None)
+        if (netProxy)
         {
-            NetCoop.ProxyHit(this, damage, knockback, effect);
+            ShowProxyHit(damage);
+            NetCoop.ProxyHit(this, damage, knockback, effect, projectile: true);
             return;
         }
         skipBlock = true; TakeHit(damage, knockback); skipBlock = false;
@@ -140,9 +148,7 @@ public class EnemyHealth : MonoBehaviour
         // Copia online: es veu el colp ací, pero el dany el decideix l'amfitrio
         if (netProxy)
         {
-            if (spriteRenderer != null) { StopCoroutine(nameof(HitFlash)); StartCoroutine(nameof(HitFlash)); }
-            Fx.DamageNumber(transform.position, damage, Color.white);
-            PlayRandomDamageSound();
+            ShowProxyHit(damage);
             NetCoop.ProxyHit(this, damage, knockback * (1f - knockbackResist));
             return;
         }
@@ -160,6 +166,13 @@ public class EnemyHealth : MonoBehaviour
         TakeDamage(damage);
     }
 
+    void ShowProxyHit(int damage)
+    {
+        if (spriteRenderer != null) { StopCoroutine(nameof(HitFlash)); StartCoroutine(nameof(HitFlash)); }
+        Fx.DamageNumber(transform.position, damage, Color.white);
+        PlayRandomDamageSound();
+    }
+
     System.Collections.IEnumerator HitFlash()
     {
         spriteRenderer.color = hitColor;
@@ -172,6 +185,7 @@ public class EnemyHealth : MonoBehaviour
         if (isDead) return;
         if (netProxy) { NetCoop.ProxyHit(this, damage, Vector2.zero); return; }
 
+        if (boss != null && damage < 9999 && boss.GuardDamage(damage)) return;
         currentHealth -= damage;
         if (V140 != null) V140.Damaged();
 
@@ -200,11 +214,13 @@ public class EnemyHealth : MonoBehaviour
             Instantiate(poofEffectPrefab, transform.position, Quaternion.identity);
 
         Fx.Burst(transform.position, deathColor, 10, 3.5f);
-        DropLoot();
-
-        RunStats.EnemyKilled(this, lastHitBy, hitByPlayer);
+        if (!arenaPart)
+        {
+            DropLoot();
+            RunStats.EnemyKilled(this, lastHitBy, hitByPlayer);
+        }
         Died?.Invoke(this);
-        AnyDied?.Invoke(this);
+        if (!arenaPart) AnyDied?.Invoke(this);
         NetCoop.EnemyDied(this);
 
         Destroy(gameObject);
@@ -216,7 +232,7 @@ public class EnemyHealth : MonoBehaviour
         if (isDead) return;
         isDead = true;
         // Client: la mort la decideix l'amfitrio, que ja ha descartat els kamikazes que esclaten sols
-        RunStats.EnemyKilled(this, lastHitBy, true);
+        if (!arenaPart) RunStats.EnemyKilled(this, lastHitBy, true);
         if (poofEffectPrefab != null) Instantiate(poofEffectPrefab, transform.position, Quaternion.identity);
         Fx.Burst(transform.position, deathColor, 10, 3.5f);
         // El boti el crea l'amfitrio i es comparteix (el primer que l'agafa)

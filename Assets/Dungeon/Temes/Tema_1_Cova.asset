@@ -35,4 +35,6 @@ MonoBehaviour:
   mimic: {fileID: 8254766765077702423, guid: 165f3351b0dc8394da6aa67fe5476266, type: 3}
   microbosses:
   - {fileID: 9018315121737859018, guid: 9f8a029470650424f9b41122a18085fb, type: 3}
+  bossVariants:
+  - {fileID: 2858169189713389479, guid: 56a554bda6aef5c418c1641dc27ca19f, type: 3}
   boss: {fileID: 2767157674481483285, guid: cbdd44b94b39d164ca13361ea498d1de, type: 3}
