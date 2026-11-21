@@ -134,6 +134,13 @@ public partial class PlayerAttack : MonoBehaviour
         }
     }
 
+    float noFuelAt = -10f;
+    void NoFuel()
+    {
+        if (Time.time - noFuelAt >= 1f) { noFuelAt = Time.time; Fx.Text(transform.position, "Sense combustible!", new Color(1f, .45f, .2f)); }
+        slotCooldown[selectedSlot] = Mathf.Max(slotCooldown[selectedSlot], .2f);
+    }
+
     bool ReadDesktopAttack(bool pressed, bool held, Vector2 pointer, bool mouseBound, bool otherBindingHeld)
     {
         // Només l'inici del clic decideix si la UI se'l queda.
@@ -170,6 +177,10 @@ public partial class PlayerAttack : MonoBehaviour
                 Punch();
                 slotCooldown[selectedSlot] = fistCooldown;
             }
+            else if (weapon.maxShots > 0 && RunState.Active && conditions[selectedSlot].ShotsUsed >= weapon.maxShots)
+            {
+                NoFuel(); // v1.4.0: l'arma no desapareix; es queda buida
+            }
             else
             {
                 Shoot(weapon);
@@ -185,9 +196,8 @@ public partial class PlayerAttack : MonoBehaviour
                 // v1.2.1 (FIX-019): només en masmorra es trenquen; al mapa lliure i al mode Creatiu no
                 if (weapon.maxShots > 0 && RunState.Active && ++condition.ShotsUsed >= weapon.maxShots)
                 {
-                    hotbarSlots[selectedSlot] = null;
-                    condition = default;
-                    Fx.Text(transform.position, "Arma trencada", new Color(1f, .45f, .2f));
+                    condition.ShotsUsed = weapon.maxShots; // v1.4.0: sense combustible, l'arma es queda a la hotbar
+                    NoFuel();
                     hotbarUI.Refresh(hotbarSlots, selectedSlot);
                 }
             }
@@ -406,7 +416,7 @@ public partial class PlayerAttack : MonoBehaviour
             {
                 hotbarSlots[i] = weapon;
                 slotCooldown[i] = Mathf.Clamp(cooldownRemaining, 0f, Mathf.Max(weapon.cooldown, weapon.overheatCooldown));
-                conditions[i] = new WeaponCondition(Mathf.Clamp(condition.ShotsUsed, 0, Mathf.Max(0, weapon.maxShots - 1)),
+                conditions[i] = new WeaponCondition(Mathf.Clamp(condition.ShotsUsed, 0, Mathf.Max(0, weapon.maxShots)),
                     float.IsNaN(condition.Heat) ? 0f : Mathf.Clamp(condition.Heat, 0f, weapon.heatLimit));
                 hotbarUI.Refresh(hotbarSlots, selectedSlot);
                 return true;

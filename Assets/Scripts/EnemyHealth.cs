@@ -74,7 +74,7 @@ public class EnemyHealth : MonoBehaviour
     {
         if (isDead) return;
         NoteHitter();
-        if (!netProxy && V140 != null && V140.BlockHit(knockback, false, true)) return;
+        if (!netProxy && damage < 9999 && V140 != null && V140.BlockHit(knockback, false, true)) return;
         if (netProxy && effect != ProjectileEffect.None)
         {
             NetCoop.ProxyHit(this, damage, knockback, effect);
@@ -131,7 +131,7 @@ public class EnemyHealth : MonoBehaviour
     {
         if (isDead) return;
         NoteHitter();
-        if (!netProxy && !skipBlock && V140 != null && V140.BlockHit(knockback, knockback.sqrMagnitude > .001f, false)) return;
+        if (!netProxy && !skipBlock && damage < 9999 && V140 != null && V140.BlockHit(knockback, knockback.sqrMagnitude > .001f, false)) return;
 
         // Copia online: es veu el colp ací, pero el dany el decideix l'amfitrio
         if (netProxy)

@@ -1139,6 +1139,8 @@ public partial class NetBot : MonoBehaviour
             Ok("enemic nou: " + id);
         }
         yield return Enemies140(origin, player, body, catalog);
+        if (failed) yield break;
+        yield return Doors140(player, body);
     }
 
     // v1.3.1: les sis armes noves fan el que diuen
@@ -1259,8 +1261,14 @@ public partial class NetBot : MonoBehaviour
         attack.SelectSlot(0);
         attack.AddWeapon(flame, condition: new WeaponCondition(299, 0f));
         tick.Invoke(attack, new object[] { true });
-        if (attack.CurrentWeapon != null || flame.maxShots != 300)
-        { Fail("el Llancaflames no es trenca al tret 300"); yield break; }
+        if (attack.CurrentWeapon != flame || flame.maxShots != 300 || conditions[0].ShotsUsed != 300)
+        { Fail("el Llancaflames s'ha de quedar a la hotbar, buit, al tret 300"); yield break; }
+        cooldowns[0] = 0f;
+        int projectilesBefore = FindObjectsByType<Projectile>(FindObjectsSortMode.None).Length;
+        tick.Invoke(attack, new object[] { true });
+        if (FindObjectsByType<Projectile>(FindObjectsSortMode.None).Length != projectilesBefore || conditions[0].ShotsUsed != 300)
+        { Fail("el Llancaflames buit no ha de disparar"); yield break; }
+        attack.hotbarSlots[0] = null; conditions[0] = default; cooldowns[0] = 0f;
         attack.AddWeapon(minigun, condition: new WeaponCondition(0, 59f));
         typeof(PlayerAttack).GetField("spinningWeapon", instance).SetValue(attack, minigun);
         typeof(PlayerAttack).GetField("spinCharge", instance).SetValue(attack, minigun.spinUpTime);
@@ -1272,7 +1280,7 @@ public partial class NetBot : MonoBehaviour
         conditions[0] = default;
         attack.SelectSlot(0);
         foreach (var projectile in FindObjectsByType<Projectile>(FindObjectsSortMode.None)) Destroy(projectile.gameObject);
-        Ok("durabilitat del Llancaflames i bloqueig de la Minigun");
+        Ok("Llancaflames sense combustible: es queda buit i no dispara; bloqueig de la Minigun");
 
         var targets = new EnemyHealth[5];
         for (int i = 0; i < targets.Length; i++)

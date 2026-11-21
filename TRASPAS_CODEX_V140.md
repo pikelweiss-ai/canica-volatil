@@ -105,3 +105,15 @@ Codex es va quedar sense crèdits a mitja fase 3 i **Claude Code ha continuat**.
 - **Fase 3 · enemics**: **feta** (`8f204d9`): Mimic, Sanador, Escut-guerrer, Talp, Franctirador i Banshee, amb prefabs al builder, temes, sincronització online (afegit a `EnemySnap`) i una prova al bot per enemic. Solo bot **PASS**. **Falten**: `test-online.ps1` complet, Linux i Android, i que Ferran els vegi jugant. Limitació coneguda: la Banshee no empeny els companys en cooperatiu (només els fa mal) perquè caldria un missatge de xarxa nou.
 - **Fase 4 · portes** i **Fase 5 · Llançaflames sense combustible**: **sense començar**.
 Continua per la **fase 4**. No toques res d'això: ja està provat.
+
+## ESTAT FINAL DE LA TARDA (Claude Code, 2026-11-21) · LLEGEIX AÇÒ PRIMER
+Claude va fer les fases 3, 4 i 5 mentre Codex no tenia crèdits. **Tot en local, sense push.** Estat exacte:
+- **Fase 3 (enemics)**: feta i provada al bot individual (commit `8f204d9`).
+- **Fase 4 (portes)**: **escrita i compila (0 errors), però la seua prova NO s'ha vist passar.** Codi: `DoorArt.cs`, `DungeonDoors.cs` (dibuixa les portes de 3 caselles amb estats tancada/mitjana/oberta segons la distància; la col·lisió no canvia), `DoorArtBuilder.cs`, estil per tema (`DungeonTheme.doorStyle`), sprites cosits en `ArtNou_v1.4/Portes_dungeon` → `Assets/Sprites/Pixel/Portes`. Prova: `NetBotDoors140.cs` (cridada al final de `CheckNewEnemies`). **Pendent**: veure-la passar i que Ferran vegi les portes.
+- **Fase 5 (Llançaflames)**: escrita (`PlayerAttack.cs`: `NoFuel()`, ja no s'esborra l'arma; `AddWeapon` permet `ShotsUsed == maxShots`). **La prova `CheckArsenal` actualitzada va passar** («Llancaflames sense combustible: es queda buit i no dispara»).
+- **Prova del Franctirador**: era fràgil (el jugador quedava dins de la paret segons la sala inicial). **Corregida però no verificada**.
+- **Bot individual complet**: l'última execució completa va fallar només al Franctirador (resolt, sense confirmar). Cal **tornar-la a passar sencera**.
+- **Prova online (`test-online.ps1 -MobileClient`) = 4/6**: fallen `LAN codi` (cofre de la cambra: «el client rep el cofre de la cambra» / «cambra cooperativa sense acabar» — era ja el problema que investigaves amb els cofres d'emboscada) i `Internet llista` («un enemic ha mort pel colp del company»). El segon ho causaven els enemics nous (Talp invulnerable, etc.): **ja està corregit** (`EnemyHealth`: els colps de ≥ 9999 de les proves travessen escuts i invulnerabilitat) però **no s'ha tornat a provar**. El primer **continua obert**: investiga'l tu.
+- Avís per a Ferran: el 75 % de les sales reben modificador (gel, foscor, flames), potser massa.
+
+**Fes ara, en ordre:** (1) `build-alpha.ps1 -Target Windows` i bot individual complet fins al PASS; (2) `test-online.ps1 -MobileClient` i arregla el cofre de la cambra; (3) Linux i Android; (4) demana a Ferran que prove la v1.4.0 jugant; (5) releases només amb el seu permís. Les fases 1-5 ja estan escrites: **no les refaces**.

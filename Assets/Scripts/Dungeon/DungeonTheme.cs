@@ -20,6 +20,7 @@ public class DungeonTheme : ScriptableObject
 
     [Header("Enemics d'este tema (si està buit, els de la masmorra)")]
     public GameObject[] enemies;
+    public string doorStyle;               // v1.4.0: estil de les portes (pedra, reixa_castell, preso, lab_metall, perill, vidre)
     public GameObject mimic;               // v1.4.0: cofre fals que apareix a les sales de tresor des del pis 2
     public GameObject boss;                // Si està buit, el boss per defecte
 }

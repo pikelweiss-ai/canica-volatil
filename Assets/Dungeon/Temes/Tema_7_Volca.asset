@@ -32,5 +32,6 @@ MonoBehaviour:
   - {fileID: 8806987266807776986, guid: 1ac0eba9b5257474296709fc8e7c513c, type: 3}
   - {fileID: 291104690429044633, guid: ea71dd6d4ae94074791544cd53341846, type: 3}
   - {fileID: 1275677151620237431, guid: 394d4479098114b409e7e89b4a35a3d7, type: 3}
+  doorStyle: perill
   mimic: {fileID: 8254766765077702423, guid: 165f3351b0dc8394da6aa67fe5476266, type: 3}
   boss: {fileID: 8439166493649068586, guid: bb9c27ab96cc9164f8ed14f1bd5822d2, type: 3}

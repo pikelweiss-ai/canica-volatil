@@ -67,8 +67,8 @@ public partial class NetBot
         Destroy(moleGo); Heal(); Ok("Talp: s'enterra, és invulnerable i ix per sota");
 
         // --- Franctirador: carrega un tret i el mal el pot interrompre
-        Place(origin + new Vector2(-4f, 0f));
-        var sniperGo = Instantiate(Prefab("FranctiradorCristall"), origin + new Vector2(2f, 0f), Quaternion.identity);
+        Place(origin + new Vector2(-1.5f, 0f)); // dins de la sala inicial (11x11), no a la paret
+        var sniperGo = Instantiate(Prefab("FranctiradorCristall"), origin + new Vector2(4f, 0f), Quaternion.identity);
         var sniper = sniperGo.GetComponent<EnemyV140>();
         for (float t = 0; t < 5f && !sniper.Charging; t += .1f) { Heal(); yield return new WaitForSeconds(.1f); }
         if (!sniper.Charging) { Fail("el Franctirador no carrega cap tret"); yield break; }

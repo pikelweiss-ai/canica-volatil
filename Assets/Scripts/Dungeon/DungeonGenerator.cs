@@ -122,6 +122,7 @@ public partial class DungeonGenerator : MonoBehaviour
         Populate();
         ApplyLook();
         DungeonBackdrop.Attach(this);
+        DungeonDoors.Attach(this);
 
         // El jugador comença al mig de la sala inicial
         Room start = Rooms[0];

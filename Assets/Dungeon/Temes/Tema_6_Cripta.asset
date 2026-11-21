@@ -36,5 +36,6 @@ MonoBehaviour:
   - {fileID: 1044709781171128092, guid: e29e48f1e020bcc4e8b57175e81397dc, type: 3}
   - {fileID: 7911894285281348374, guid: 87f834de0003f14418bdefdd18c12146, type: 3}
   - {fileID: 139416381315230538, guid: b737abb9e5c3a1a47afeaf2c8d73ae08, type: 3}
+  doorStyle: reixa_castell
   mimic: {fileID: 8254766765077702423, guid: 165f3351b0dc8394da6aa67fe5476266, type: 3}
   boss: {fileID: 937029439769639437, guid: 861996f1ca16de64393278514f8afa5e, type: 3}

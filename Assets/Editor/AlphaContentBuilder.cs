@@ -12,6 +12,7 @@ public static class AlphaContentBuilder
     public static void Build()
     {
         MobAudioBuilder.Build();
+        DoorArtBuilder.Build();
         var db=AssetDatabase.LoadAssetAtPath<CosmeticsDatabase>("Assets/Resources/Cosmetics.asset");
         var skins=db.skins.ToList();
         foreach(string name in new[] { "Ciclope","Gat","Gota" })if(!skins.Any(s=>s.sprite==S("Skins/"+name)))skins.Add(new CosmeticsDatabase.Hat { name=name=="Ciclope"?"Cíclop":name,sprite=S("Skins/"+name) });
@@ -148,6 +149,8 @@ public static class AlphaContentBuilder
             if(path.Contains("Cripta"))AddNew(bansheeEnemy);
             if(path.Contains("Cristall"))AddNew(sniperEnemy);
             theme.mimic=mimicEnemy;
+            // v1.4.0: estil de les portes per tema
+            theme.doorStyle=path.Contains("Cova")?"pedra":path.Contains("Bosc")?"preso":path.Contains("Desert")?"pedra":path.Contains("Claveguera")?"preso":path.Contains("Neu")?"vidre":path.Contains("Cripta")?"reixa_castell":path.Contains("Volca")?"perill":"lab_metall";
             theme.enemies=list.ToArray();EditorUtility.SetDirty(theme);
         }
         AssetDatabase.SaveAssets();Validate();Debug.Log("ALPHA_CONTENT: cares, 4 barrets, 6 esteles, 5 armes, 2 enemics i 2 objectes preparats.");
