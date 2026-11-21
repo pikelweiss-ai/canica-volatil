@@ -11,7 +11,7 @@
 
 **Paquets:** Windows x86_64 (ZIP, obri `CanicaVolatil.exe`), Linux x86_64 (TAR.GZ, executa `./Jugar.sh`), Android 8+ ARM64/ARMv7 (APK) i sumes `SHA256SUMS.txt`.
 
-**Verificació i límits:** els bots del menú, d'una masmorra, individual complet i de contingut nou passen en Windows. Queda pendent provar Linux i Android en dispositius reals, la suite online amb la v1.4.1 i el balanç dels bosses nous jugant.
+**Verificació i límits:** els bots del menú, d'una masmorra, individual complet i de contingut nou passen en Windows. La suite online amb client mòbil simulat ha donat **6/6** i el ZIP extret s'ha executat. Els pegats oficials de Unity (CVE-2025-59489) estan aplicats a Windows i Android. Queda pendent provar Linux i Android en dispositius reals i el balanç dels bosses nous jugant.
 
 # Alpha v1.4.0
 
