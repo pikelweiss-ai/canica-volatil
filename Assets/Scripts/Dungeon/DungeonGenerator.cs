@@ -20,7 +20,7 @@ public partial class DungeonGenerator : MonoBehaviour
 {
     public static DungeonGenerator Instance { get; private set; }
 
-    public enum RoomType { Start, Combat, Treasure, Boss, Emboscada, Arena, Secreta }
+    public enum RoomType { Start, Combat, Treasure, Boss, Emboscada, Arena, Secreta, Shop }
     public enum RoomShape { Rectangle, L, T, Cross, Circle, Octagon, Pillars }
     public enum RoomModifier { None, Darkness, Ice, Flames }
 
@@ -239,7 +239,14 @@ public partial class DungeonGenerator : MonoBehaviour
                     ProgressionRoom = r;
         }
 
-        var special = Rooms.FindAll(r => r.type == RoomType.Combat && r != ProgressionRoom);
+        var mainCombat = Rooms.Find(r => r.type == RoomType.Combat && r.links.Count > 1);
+        var shopRooms = Rooms.FindAll(r => r.type == RoomType.Combat && r != ProgressionRoom && r != mainCombat && r.links.Count == 1);
+        if (shopRooms.Count == 0)
+            shopRooms = Rooms.FindAll(r => r.type == RoomType.Combat && r != ProgressionRoom && r != mainCombat);
+        if (shopRooms.Count > 0)
+            shopRooms[rng.Next(shopRooms.Count)].type = RoomType.Shop;
+
+        var special = Rooms.FindAll(r => r.type == RoomType.Combat && r != ProgressionRoom && r != mainCombat);
         if (special.Count > 0) { var r = special[rng.Next(special.Count)]; r.type = RoomType.Emboscada; special.Remove(r); }
         if (special.Count > 0) { var r = special[rng.Next(special.Count)]; r.type = RoomType.Arena; special.Remove(r); }
         var secret = special.FindAll(r => r.links.Count == 1);
@@ -259,6 +266,7 @@ public partial class DungeonGenerator : MonoBehaviour
             switch (r.type)
             {
                 case RoomType.Start: size = new Vector2Int(11, 11); break;
+                case RoomType.Shop:
                 case RoomType.Treasure: size = new Vector2Int(9, 9); break;
                 case RoomType.Boss: size = new Vector2Int(19, 15); break;
                 case RoomType.Emboscada: size = new Vector2Int(23, 7); break;
@@ -503,7 +511,7 @@ public partial class DungeonGenerator : MonoBehaviour
         }
         if(Theme != null && Theme.refugeFloor != null)
             foreach(Room room in Rooms)
-                if(room.type == RoomType.Start || room.type == RoomType.Treasure)
+                if (room.type == RoomType.Start || room.type == RoomType.Treasure || room.type == RoomType.Shop)
                     foreach(Vector2Int p in room.rect.allPositionsWithin)
                         if(floor.Contains(p)) ground.SetTile(ToCell(p),Theme.refugeFloor);
 
@@ -561,36 +569,23 @@ public partial class DungeonGenerator : MonoBehaviour
 
         foreach (Room r in Rooms)
         {
-            if (r.type == RoomType.Treasure || r.type == RoomType.Secreta || r.type == RoomType.Emboscada)
+            if (r.type == RoomType.Shop)
+            {
+                int shopSeed = (NetSession.Active && NetSession.Instance.Seed != 0 ? NetSession.Instance.Seed : RunState.Seed) + RunState.Floor * 7919;
+                var merchantCell = r.Center + new Vector2Int(-3, 3);
+                var tableCell = r.Center + new Vector2Int(-3, 2);
+                var vendingCell = r.Center + new Vector2Int(3, 3);
+                reserved.Add(merchantCell); reserved.Add(tableCell); reserved.Add(vendingCell);
+                Shop.Spawn(ground.GetCellCenterWorld(ToCell(merchantCell)), Shop.MerchantKind, shopSeed);
+                Shop.Spawn(ground.GetCellCenterWorld(ToCell(vendingCell)), Shop.VendingKind, shopSeed);
+                SpawnRoomMimic(r);
+            }
+            else if (r.type == RoomType.Treasure || r.type == RoomType.Secreta || r.type == RoomType.Emboscada)
             {
                 ChestRarity rarity = TreasureRarity();
                 r.ambushRarity = rarity;
                 SpawnChest(rarity, r.Center);
-                // v1.4.1: mercader amb taulell i màquina expenedora a la sala de tresor (fora de la creu central)
-                if (r.type == RoomType.Treasure)
-                {
-                    double shopChance = RunState.Floor <= 1 ? .6 : RunState.Floor <= 4 ? .8 : 1.0;
-                    if (rng.NextDouble() < shopChance)
-                    {
-                        int shopSeed = (NetSession.Active && NetSession.Instance.Seed != 0 ? NetSession.Instance.Seed : RunState.Seed) + RunState.Floor * 7919;
-                        var merchantCell = r.Center + new Vector2Int(-3, 3); var tableCell = r.Center + new Vector2Int(-3, 2); var vendingCell = r.Center + new Vector2Int(3, 3);
-                        if (floor.Contains(merchantCell) && floor.Contains(tableCell) && floor.Contains(vendingCell))
-                        {
-                            reserved.Add(merchantCell); reserved.Add(tableCell); reserved.Add(vendingCell);
-                            Shop.Spawn(ground.GetCellCenterWorld(ToCell(merchantCell)), Shop.MerchantKind, shopSeed);
-                            Shop.Spawn(ground.GetCellCenterWorld(ToCell(vendingCell)), Shop.VendingKind, shopSeed);
-                        }
-                    }
-                }
-                // v1.4.0: a vegades, un cofre fals (Mimic) a la sala de tresor, des del pis 2
-                if (r.type == RoomType.Treasure && Theme != null && Theme.mimic != null && RunState.Floor >= 2 && rng.NextDouble() < 0.3)
-                    for (int tries = 0; tries < 30; tries++)
-                    {
-                        var mimicCell = RandomCell(r); if (!FreeForDecor(r, mimicCell, 2)) continue;
-                        reserved.Add(mimicCell);
-                        if (!NetCoop.IsClient) Spawn(Theme.mimic, mimicCell);
-                        break;
-                    }
+                if (r.type == RoomType.Treasure) SpawnRoomMimic(r);
             }
             else if (r.type == RoomType.Start)
             {
@@ -657,6 +652,19 @@ public partial class DungeonGenerator : MonoBehaviour
     {
         var s = NetSession.Instance;
         return NetCoop.Online && s != null ? Mathf.Clamp(s.Players.Count, 1, StartChestOffsets.Length) : 1;
+    }
+
+    void SpawnRoomMimic(Room room)
+    {
+        if (Theme == null || Theme.mimic == null || RunState.Floor < 2 || rng.NextDouble() >= .3) return;
+        for (int tries = 0; tries < 30; tries++)
+        {
+            var cell = RandomCell(room);
+            if (!FreeForDecor(room, cell, 2)) continue;
+            reserved.Add(cell);
+            if (!NetCoop.IsClient) Spawn(Theme.mimic, cell);
+            break;
+        }
     }
 
     GameObject Spawn(GameObject prefab, Vector2Int cell)
@@ -738,7 +746,7 @@ public partial class DungeonGenerator : MonoBehaviour
         if (!NetCoop.Online) TryStartRoom(pc);
         else WaitingHint(pc);
 
-        if (r != null && (r.type == RoomType.Start || r.type == RoomType.Treasure)) r.cleared = true;
+        if (r != null && (r.type == RoomType.Start || r.type == RoomType.Treasure || r.type == RoomType.Shop)) r.cleared = true;
     }
 
     Room waitingRoom;
@@ -843,7 +851,7 @@ public partial class DungeonGenerator : MonoBehaviour
         }
         else if (state == 2 && !r.cleared)
         {
-            if (r.type != RoomType.Start && r.type != RoomType.Treasure) RunStats.RoomCleared();
+            if (r.type != RoomType.Start && r.type != RoomType.Treasure && r.type != RoomType.Shop) RunStats.RoomCleared();
             r.cleared = true; r.active = false;
             SetDoors(r, false);
             ui.RefreshMap();

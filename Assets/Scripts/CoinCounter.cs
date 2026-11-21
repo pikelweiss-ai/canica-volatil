@@ -55,6 +55,13 @@ public static class CoinBank
 {
     const string Key = "MonedesTotals";
     public static int Total => PlayerPrefs.GetInt(Key, 0);
+    public static bool TrySpend(int amount)
+    {
+        if (amount < 0 || Total < amount) return false;
+        PlayerPrefs.SetInt(Key, Total - amount);
+        return true;
+    }
+
     public static void Add(int n)
     {
         // Mapa lliure (amb el mode Creatiu): les monedes només compten dins de la partida, no al teu total

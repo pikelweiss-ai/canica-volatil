@@ -5,7 +5,7 @@ using UnityEngine;
 public class PlayerCosmetics : MonoBehaviour
 {
     private SpriteRenderer body;
-    private SpriteRenderer hat;
+    private SpriteRenderer hat, expression;
     internal const string TrailSortingLayer = "Shadows";
     private TrailRenderer trail;
     private bool rainbow;
@@ -14,7 +14,7 @@ public class PlayerCosmetics : MonoBehaviour
     private Vector3 previousTrailPosition;
 
     // Online: per a un company, les seues tries en lloc de les d'aquest PC (-1 = les d'aquest PC)
-    [System.NonSerialized] public int skinOverride = -1, hatOverride = -1, trailOverride = -1;
+    [System.NonSerialized] public int skinOverride = -1, hatOverride = -1, trailOverride = -1, colorOverride = -1, expressionOverride = -1;
     int Pick(int over, string key, int count) => over >= 0 && over < count ? over : CosmeticsDatabase.Get(key, count);
 
     void Start()
@@ -29,6 +29,19 @@ public class PlayerCosmetics : MonoBehaviour
         {
             Sprite skin = db.skins[Pick(skinOverride, CosmeticsDatabase.KeySkin, db.skins.Length)].sprite;
             if (skin != null) body.sprite = skin;
+        }
+
+        body.color = CosmeticStore.Tint(Pick(colorOverride, CosmeticStore.KeyColor, CosmeticStore.Count(CosmeticKind.Colors)));
+        var face = CosmeticStore.Expression(Pick(expressionOverride, CosmeticStore.KeyExpression, CosmeticStore.Count(CosmeticKind.Expressions)));
+        if (face != null && body.sprite != null)
+        {
+            var go = new GameObject("Expressió");
+            go.transform.SetParent(transform, false);
+            expression = go.AddComponent<SpriteRenderer>();
+            expression.sprite = face;
+            expression.sortingLayerID = body.sortingLayerID;
+            go.transform.localPosition = body.sprite.bounds.center;
+            go.transform.localScale = Vector3.one * body.sprite.bounds.size.x;
         }
 
         // Barret
@@ -58,7 +71,7 @@ public class PlayerCosmetics : MonoBehaviour
         hat = go.AddComponent<SpriteRenderer>();
         hat.sprite = s;
         hat.sortingLayerID = body.sortingLayerID;
-        hat.sortingOrder = body.sortingOrder + 1;
+        hat.sortingOrder = body.sortingOrder + 2;
 
         float parentScale=Mathf.Max(0.01f,transform.lossyScale.y);
         float bodyWidth=body.sprite.bounds.size.x;
@@ -111,9 +124,15 @@ public class PlayerCosmetics : MonoBehaviour
         if (body != null)
         {
             body.sortingOrder = Mathf.Clamp(Mathf.RoundToInt(-transform.position.y * 8f), -30000, 30000);
+            if (expression != null)
+            {
+                expression.sortingOrder = body.sortingOrder + 1;
+                expression.enabled = body.enabled;
+                expression.flipX = body.flipX;
+            }
             if (hat != null)
             {
-                hat.sortingOrder = body.sortingOrder + 1;
+                hat.sortingOrder = body.sortingOrder + 2;
                 hat.enabled = body.enabled;
             }
         }

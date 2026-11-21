@@ -52,6 +52,7 @@ public class DungeonRadar : MonoBehaviour
                 {
                     c=new Color(0.16f,0.23f,0.28f);
                     if(room!=null && IsChestRoom(room.type))c=new Color(0.5f,0.39f,0.15f); // v1.4.1: tota sala amb cofre ix marro
+                    if(room!=null && room.type==DungeonGenerator.RoomType.Shop)c=new Color(.15f,.52f,.42f);
                     if(room!=null && room.type==DungeonGenerator.RoomType.Boss)c=new Color(0.48f,0.15f,0.22f);
                     if(gen.liquid!=null && gen.liquid.HasTile(cell))c=new Color(0.1f,0.5f,0.65f);
                     if(gen.doors!=null && gen.doors.HasTile(cell))c=new Color(0.95f,0.5f,0.15f);

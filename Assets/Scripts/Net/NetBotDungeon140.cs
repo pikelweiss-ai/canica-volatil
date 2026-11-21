@@ -49,7 +49,7 @@ public partial class NetBot
                 chest.OpenAsAuthority(player.position);
                 if (!r.ambushTriggered || !r.active) { Fail("el cofre no activa l'emboscada"); yield break; }
             }
-            if (r.type == DungeonGenerator.RoomType.Start || r.type == DungeonGenerator.RoomType.Treasure || r.type == DungeonGenerator.RoomType.Secreta) continue;
+            if (r.type == DungeonGenerator.RoomType.Start || r.type == DungeonGenerator.RoomType.Treasure || r.type == DungeonGenerator.RoomType.Shop || r.type == DungeonGenerator.RoomType.Secreta) continue;
             bool arena = r.type == DungeonGenerator.RoomType.Arena;
             if (arena && !CheckArenaLayout(g, r)) yield break;
             float until = Time.time + 25f; int waves = 0; bool hadEnemies = false;

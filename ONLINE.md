@@ -1,5 +1,7 @@
 # Sales online — Canica Volàtil Alpha
 
+**Protocol de treball v1.5 (personalització): 24.** `Hello` i la llista de jugadors porten el color i l’expressió de cada avatar. Les compres es guarden al dispositiu.
+
 **Protocol de treball v1.5 (amulets): 23.** `AmuletState` envia les ranures, les ofertes i els temps de recuperació. L’amfitrió valida les accions `AmuletAction` i aplica el dany d’atac i els efectes d’àrea. Les monedes de la partida viatgen amb la posició per validar la compra d’amulets.
 
 **Protocol de treball v1.5 (claus): 22.** `BossKeyState` envia qui porta la clau, si està en terra o si la porta ja està oberta. L’amfitrió comprova les posicions i repeteix l’estat quan un company acaba de carregar el pis.

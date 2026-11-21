@@ -2,25 +2,28 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Category = CosmeticKind;
 
 // Pantalla PERSONALITZAR (v1.4.1, estil Stumble Guys): categories a l'esquerra, pista de previsualització al centre
 // i quadrícula de col·leccionables a la dreta. Les tries es guarden a PlayerPrefs amb les mateixes claus de sempre
 // (Cos_Skin, Cos_Hat, Cos_Trail); res no canvia a CosmeticsDatabase.
 public class CustomizeMenuUI : MonoBehaviour
 {
-    enum Category { Skins, Hats, Trails }
 
     TMP_FontAsset font;
     CosmeticsDatabase db;
     TMP_InputField nameInput;
     TextMeshProUGUI coinsLabel, gridCount, nameCard, qualityLabel;
     RectTransform track, grid;
-    Image marble, hat;
-    readonly Image[] tabIcons = new Image[3];
-    UIKit.UIButton[] tabs = new UIKit.UIButton[3];
-    UIKit.UIButton useButton;
+    Image marble, hat, face, qualityBand;
+    readonly Image[] tabIcons = new Image[5];
+    UIKit.UIButton[] tabs = new UIKit.UIButton[5];
+    UIKit.UIButton useButton, storeButton;
+    readonly UIKit.UIButton[] filters = new UIKit.UIButton[4];
+    int qualityFilter = -1;
+    bool store;
     Category category = Category.Skins;
-    int pSkin, pHat, pTrail; // previsualització (encara no aplicada)
+    int pSkin, pHat, pTrail, pColor, pExpression; // previsualització (encara no aplicada)
     readonly List<Sprite> cropped = new List<Sprite>();
 
     public static CustomizeMenuUI Create(TMP_FontAsset font)
@@ -42,7 +45,9 @@ public class CustomizeMenuUI : MonoBehaviour
         pSkin = CosmeticsDatabase.Get(CosmeticsDatabase.KeySkin, db.skins != null ? db.skins.Length : 0);
         pHat = CosmeticsDatabase.Get(CosmeticsDatabase.KeyHat, db.hats != null ? db.hats.Length : 0);
         pTrail = CosmeticsDatabase.Get(CosmeticsDatabase.KeyTrail, db.trails != null ? db.trails.Length : 0);
-        category = Category.Skins; Refresh();
+        pColor = CosmeticStore.Equipped(Category.Colors);
+        pExpression = CosmeticStore.Equipped(Category.Expressions);
+        category = Category.Skins; qualityFilter = -1; store = false; Refresh();
     }
 
     public void Hide() { gameObject.SetActive(false); }
@@ -64,16 +69,18 @@ public class CustomizeMenuUI : MonoBehaviour
         UIKit.Text(root, "PERSONALITZAR", new Vector2(0, 400), new Vector2(800, 70), 46, TextAlignmentOptions.Center, UIKit.Gold);
         coinsLabel = UIKit.Text(root, "", new Vector2(540, 400), new Vector2(380, 50), 28, TextAlignmentOptions.MidlineRight, UIKit.Gold);
 
-        // Esquerra: tres categories senzilles (icona a dalt, nom a baix)
-        string[] names = { "CANIQUES", "BARRETS", "ESTELES" };
-        for (int i = 0; i < 3; i++)
+        storeButton = UIKit.Button(root, "TENDA", new Vector2(725, 400), new Vector2(125, 58), () => { store = !store; Refresh(); }, UIKit.Style.Primary, 23);
+        coinsLabel.rectTransform.anchoredPosition = new Vector2(447, 400);
+
+        // Esquerra: categories (icona a dalt, nom a baix)
+        string[] names = { "CANIQUES", "BARRETS", "ESTELES", "COLORS", "EXPRESSIONS" };
+        for (int i = 0; i < tabs.Length; i++)
         {
             int c = i;
-            tabs[i] = UIKit.Button(root, names[i], new Vector2(-640, 250 - i * 160), new Vector2(170, 140), () => { category = (Category)c; Refresh(); }, UIKit.Style.Normal, 20, false);
-            tabs[i].label.rectTransform.anchoredPosition = new Vector2(0, -48);
-            tabIcons[i] = UIKit.Picture(tabs[i].rect, null, new Vector2(0, 22), new Vector2(72, 72));
+            tabs[i] = UIKit.Button(root, names[i], new Vector2(-640, 274 - i * 100), new Vector2(170, 86), () => { category = (Category)c; qualityFilter = -1; Refresh(); }, UIKit.Style.Normal, i == (int)Category.Expressions ? 16 : 20, false);
+            tabs[i].label.rectTransform.anchoredPosition = new Vector2(0, -24);
+            tabIcons[i] = UIKit.Picture(tabs[i].rect, null, new Vector2(0, 13), new Vector2(48, 48));
         }
-        UIKit.Text(root, "més aviat: colors, expressions", new Vector2(-640, -240), new Vector2(230, 70), 16, TextAlignmentOptions.Center, UIKit.Dim);
         UIKit.Text(root, "Nom del jugador", new Vector2(-640, -305), new Vector2(250, 30), 16, TextAlignmentOptions.Center, UIKit.Muted);
         BuildNameField(root);
 
@@ -87,15 +94,24 @@ public class CustomizeMenuUI : MonoBehaviour
             if (Mathf.Abs(g) <= 4) UIKit.Box(track, new Vector2(0, g * 50), new Vector2(548, 1), new Color(1, 1, 1, .04f), "Linia");
         }
         marble = UIKit.Picture(track, db.playerSprite, Vector2.zero, new Vector2(120, 120));
+        face = UIKit.Picture(marble.transform, null, Vector2.zero, new Vector2(120, 120));
         hat = UIKit.Picture(marble.transform, null, Vector2.zero, new Vector2(120, 120));
         UIKit.Text(root, "WASD o arrossega el ratolí per moure la canica", new Vector2(-170, -165), new Vector2(560, 30), 16, TextAlignmentOptions.Center, UIKit.Dim);
         var card = UIKit.Box(root, new Vector2(-170, -250), new Vector2(480, 110), UIKit.Panel, "Targeta de nom");
         nameCard = UIKit.Text(card, "", new Vector2(0, 18), new Vector2(460, 50), 32, TextAlignmentOptions.Center, UIKit.TextColor);
         var band = UIKit.Box(card, new Vector2(0, -30), new Vector2(300, 32), new Color(.25f, .30f, .33f), "Banda de qualitat");
+        qualityBand = band.GetComponent<Image>();
         qualityLabel = UIKit.Text(band, "Sense qualitat", Vector2.zero, new Vector2(290, 30), 18, TextAlignmentOptions.Center, UIKit.TextColor);
 
         // Dreta: quadrícula amb scroll i botó UTILITZAR
         gridCount = UIKit.Text(root, "", new Vector2(500, 330), new Vector2(500, 40), 22, TextAlignmentOptions.MidlineLeft, UIKit.Muted);
+        string[] qualities = { "TOTS", "RAR", "ÈPIC", "LLEGENDARI" };
+        for (int i = 0; i < filters.Length; i++)
+        {
+            int index = i;
+            filters[i] = UIKit.Button(root, qualities[i], new Vector2(290 + i * 112, 291), new Vector2(110, 35),
+                () => { qualityFilter = index == 0 ? -1 : index; Refresh(); }, UIKit.Style.Normal, i == 3 ? 12 : 15, false);
+        }
         BuildGrid(root);
         useButton = UIKit.Button(root, "UTILITZAR", new Vector2(500, -355), new Vector2(380, 64), UseSelected, UIKit.Style.Success, 30);
         var random = UIKit.Button(root, "SORPREN-ME!", new Vector2(-170, -355), new Vector2(260, 52), Surprise, UIKit.Style.Normal, 22);
@@ -120,7 +136,7 @@ public class CustomizeMenuUI : MonoBehaviour
 
     void BuildGrid(Transform root)
     {
-        var frame = UIKit.Box(root, new Vector2(500, 10), new Vector2(580, 590), new Color(.03f, .06f, .09f), "Quadricula");
+        var frame = UIKit.Box(root, new Vector2(500, -14), new Vector2(580, 553), new Color(.03f, .06f, .09f), "Quadricula");
         var scroll = frame.gameObject.AddComponent<ScrollRect>();
         var viewport = UIKit.Box(frame, Vector2.zero, Vector2.zero, new Color(0, 0, 0, .01f), "Viewport");
         UIKit.Stretch(viewport, 8, 8, 8, 8); viewport.gameObject.AddComponent<RectMask2D>();
@@ -130,31 +146,58 @@ public class CustomizeMenuUI : MonoBehaviour
         grid.anchorMin = new Vector2(0, 1); grid.anchorMax = new Vector2(1, 1); grid.pivot = new Vector2(.5f, 1); grid.offsetMin = grid.offsetMax = Vector2.zero;
         var layout = content.GetComponent<GridLayoutGroup>();
         layout.cellSize = new Vector2(130, 128); layout.spacing = new Vector2(8, 8); layout.padding = new RectOffset(4, 4, 4, 4);
-        layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount; layout.constraintCount = 4;
+        layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount; layout.constraintCount = MobileInput.Active ? 3 : 4;
         content.GetComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         scroll.viewport = viewport; scroll.content = grid; scroll.horizontal = false; scroll.movementType = ScrollRect.MovementType.Clamped; scroll.scrollSensitivity = 35;
     }
 
     // ------------------------------------------------------------------ dades per categoria
 
-    int Count => category == Category.Skins ? (db.skins != null ? db.skins.Length : 0) : category == Category.Hats ? (db.hats != null ? db.hats.Length : 0) : db.trails.Length;
-    int Selected { get => category == Category.Skins ? pSkin : category == Category.Hats ? pHat : pTrail; set { if (category == Category.Skins) pSkin = value; else if (category == Category.Hats) pHat = value; else pTrail = value; } }
-    string KeyOf(Category c) => c == Category.Skins ? CosmeticsDatabase.KeySkin : c == Category.Hats ? CosmeticsDatabase.KeyHat : CosmeticsDatabase.KeyTrail;
-    int Applied(Category c) => CosmeticsDatabase.Get(KeyOf(c), c == Category.Skins ? db.skins.Length : c == Category.Hats ? db.hats.Length : db.trails.Length);
-    string NameOf(int i) => category == Category.Skins ? (i == 0 ? "Original" : db.skins[i].name) : category == Category.Hats ? (string.IsNullOrEmpty(db.hats[i].name) ? "Cap" : db.hats[i].name) : db.trails[i].name;
+    int Count => CosmeticStore.Count(category);
+    int Selected
+    {
+        get => category switch
+        {
+            Category.Skins => pSkin, Category.Hats => pHat, Category.Trails => pTrail,
+            Category.Colors => pColor, _ => pExpression
+        };
+        set
+        {
+            switch (category)
+            {
+                case Category.Skins: pSkin = value; break;
+                case Category.Hats: pHat = value; break;
+                case Category.Trails: pTrail = value; break;
+                case Category.Colors: pColor = value; break;
+                default: pExpression = value; break;
+            }
+        }
+    }
+    int Applied(Category c) => CosmeticStore.Equipped(c);
+    string NameOf(int i) => CosmeticStore.Name(category, i);
 
     void UseSelected()
     {
-        PlayerPrefs.SetInt(KeyOf(category), Selected); PlayerPrefs.Save(); Refresh();
+        if (!CosmeticStore.Owned(category, Selected))
+        {
+            if (!store) store = true;
+            else CosmeticStore.Buy(category, Selected);
+        }
+        else CosmeticStore.Use(category, Selected);
+        Refresh();
     }
 
     void Surprise()
     {
-        if (db.skins.Length > 0) pSkin = Random.Range(0, db.skins.Length);
-        if (db.hats.Length > 0) pHat = Random.Range(0, db.hats.Length);
-        if (db.trails.Length > 0) pTrail = Random.Range(0, db.trails.Length);
-        PlayerPrefs.SetInt(CosmeticsDatabase.KeySkin, pSkin); PlayerPrefs.SetInt(CosmeticsDatabase.KeyHat, pHat); PlayerPrefs.SetInt(CosmeticsDatabase.KeyTrail, pTrail);
-        PlayerPrefs.Save(); Refresh();
+        var original = category;
+        foreach (Category kind in System.Enum.GetValues(typeof(Category)))
+        {
+            category = kind;
+            Selected = CosmeticStore.RandomOwned(kind);
+            CosmeticStore.Use(kind, Selected);
+        }
+        category = original;
+        Refresh();
     }
 
     // ------------------------------------------------------------------ pintar
@@ -175,15 +218,25 @@ public class CustomizeMenuUI : MonoBehaviour
     {
         if (db == null || grid == null) return;
         coinsLabel.text = "● " + CoinBank.Total;
-        for (int i = 0; i < 3; i++) tabs[i].SetStyle(i == (int)category ? UIKit.Style.Primary : UIKit.Style.Normal);
+        for (int i = 0; i < tabs.Length; i++) tabs[i].SetStyle(i == (int)category ? UIKit.Style.Primary : UIKit.Style.Normal);
         UIKit.Clear(grid); foreach (var s in cropped) if (s != null) Destroy(s); cropped.Clear();
 
-        int n = Count;
-        gridCount.text = "Tots " + n + "/" + n;
-        for (int i = 0; i < n; i++) BuildCard(i);
+        int count = Count, owned = 0;
+        for (int i = 0; i < count; i++)
+        {
+            if (CosmeticStore.Owned(category, i)) owned++;
+            if (qualityFilter < 0 || (int)CosmeticStore.Quality(category, i) == qualityFilter) BuildCard(i);
+        }
+        gridCount.text = (store ? "Tenda" : "Col·lecció") + "   " + owned + "/" + count;
+        storeButton.SetLabel(store ? "ARMARI" : "TENDA");
+        for (int i = 0; i < filters.Length; i++)
+            filters[i].SetStyle((i == 0 ? qualityFilter < 0 : i == qualityFilter) ? UIKit.Style.Primary : UIKit.Style.Normal);
         RefreshTabIcons();
-        useButton.SetLabel(Selected == Applied(category) ? "EQUIPAT" : "UTILITZAR");
-        useButton.SetInteractable(Selected != Applied(category));
+        bool ownsSelection = CosmeticStore.Owned(category, Selected);
+        int price = CosmeticStore.Price(category, Selected);
+        useButton.SetLabel(ownsSelection ? Selected == Applied(category) ? "EQUIPAT" : "UTILITZAR" :
+            (!store ? "OBRIR TENDA" : "COMPRAR · " + price));
+        useButton.SetInteractable(ownsSelection ? Selected != Applied(category) : !store || CoinBank.Total >= price);
         RefreshPreview();
     }
 
@@ -197,6 +250,10 @@ public class CustomizeMenuUI : MonoBehaviour
         var trail = db.trails[Applied(Category.Trails)];
         tabIcons[2].sprite = trail.color.a > 0 ? TrailParticleEmitter.SpriteFor(trail.shape == TrailShape.Ribbon ? TrailShape.Dots : trail.shape) : null;
         tabIcons[2].color = trail.color.a > 0 ? (CosmeticsDatabase.IsRainbow(trail.color) ? Color.HSVToRGB(.6f, .8f, 1f) : trail.color) : new Color(1, 1, 1, 0);
+        tabIcons[3].sprite = db.playerSprite;
+        tabIcons[3].color = CosmeticStore.Tint(pColor == 0 ? 1 : pColor);
+        tabIcons[4].sprite = CosmeticStore.Expression(pExpression == 0 ? 1 : pExpression);
+        tabIcons[4].color = Color.white;
     }
 
     void BuildCard(int i)
@@ -204,7 +261,9 @@ public class CustomizeMenuUI : MonoBehaviour
         bool chosen = i == Selected;
         var go = new GameObject("Carta " + i, typeof(RectTransform), typeof(Image), typeof(Button));
         go.transform.SetParent(grid, false);
-        go.GetComponent<Image>().color = chosen ? UIKit.Gold : new Color(.20f, .27f, .31f);
+        var quality = CosmeticStore.Quality(category, i);
+        bool owned = CosmeticStore.Owned(category, i);
+        go.GetComponent<Image>().color = chosen ? UIKit.Gold : ItemGraphics.RarityColor(quality);
         int index = i;
         go.GetComponent<Button>().onClick.AddListener(() => { Selected = index; Refresh(); });
         var inner = UIKit.Box(go.transform, Vector2.zero, new Vector2(chosen ? 120 : 124, chosen ? 118 : 122), chosen ? UIKit.RowSelected : UIKit.Row, "Fons");
@@ -218,6 +277,17 @@ public class CustomizeMenuUI : MonoBehaviour
             if (sprite != null) UIKit.Picture(inner, Crop(sprite), new Vector2(0, 14), new Vector2(78, 78));
             else UIKit.Text(inner, "—", new Vector2(0, 14), new Vector2(78, 78), 44, TextAlignmentOptions.Center, UIKit.Dim);
         }
+        else if (category == Category.Colors)
+        {
+            var sample = UIKit.Picture(inner, db.playerSprite, new Vector2(0, 14), new Vector2(65, 65));
+            sample.color = CosmeticStore.Tint(i);
+        }
+        else if (category == Category.Expressions)
+        {
+            UIKit.Picture(inner, db.playerSprite, new Vector2(0, 14), new Vector2(65, 65));
+            var expression = CosmeticStore.Expression(i);
+            if (expression != null) UIKit.Picture(inner, expression, new Vector2(0, 14), new Vector2(65, 65));
+        }
         else
         {
             var trail = db.trails[i];
@@ -228,6 +298,16 @@ public class CustomizeMenuUI : MonoBehaviour
                     new Vector2(-40 + k * 20, 14 + Mathf.Sin(k * 1.1f) * 8), Vector2.one * (trail.shape == TrailShape.Ribbon ? 12 + k * 2 : 20));
                 piece.color = CosmeticsDatabase.IsRainbow(trail.color) ? Color.HSVToRGB(k / 5f, .8f, 1f) : trail.color;
             }
+        }
+        if (!owned && !store)
+            UIKit.Box(inner, new Vector2(0, 14), new Vector2(109, 73), new Color(.02f, .04f, .07f, .68f), "Bloquejada")
+                .GetComponent<Image>().raycastTarget = false;
+        if (!owned)
+        {
+            var priceTag = UIKit.Box(inner, new Vector2(32, 45), new Vector2(59, 23), UIKit.Ink, "Preu");
+            priceTag.GetComponent<Image>().raycastTarget = false;
+            UIKit.Text(priceTag, CosmeticStore.Price(category, i) + " ●", Vector2.zero, new Vector2(56, 22), 14,
+                TextAlignmentOptions.Center, UIKit.Gold);
         }
         var label = UIKit.Text(inner, NameOf(i), new Vector2(0, -46), new Vector2(116, 26), 15, TextAlignmentOptions.Center, UIKit.TextColor);
         label.enableAutoSizing = true; label.fontSizeMin = 9; label.fontSizeMax = 15; label.textWrappingMode = TextWrappingModes.NoWrap;
@@ -248,9 +328,15 @@ public class CustomizeMenuUI : MonoBehaviour
             float top = (HatFit.Top(marble.sprite) - .5f) * bodySize;
             hat.rectTransform.anchoredPosition = h.fullHelmet ? Vector2.zero : new Vector2(0, top - 3 + lift - (HatFit.Bottom(h.sprite) - .5f) * size);
         }
-        string current = category == Category.Skins ? NameOf(pSkin) : category == Category.Hats ? NameOf(pHat) : NameOf(pTrail);
-        nameCard.text = current;
-        qualityLabel.text = "Sense qualitat";
+        marble.color = CosmeticStore.Tint(pColor);
+        face.sprite = CosmeticStore.Expression(pExpression);
+        face.color = Color.white;
+        face.enabled = face.sprite != null;
+        nameCard.text = NameOf(Selected);
+        var quality = CosmeticStore.Quality(category, Selected);
+        qualityBand.color = ItemGraphics.RarityColor(quality);
+        qualityLabel.text = CosmeticStore.QualityName(quality);
+        qualityLabel.color = quality == ChestRarity.Rar || quality == ChestRarity.Epic ? Color.white : UIKit.Ink;
     }
 
     // ------------------------------------------------------------------ pista: canica i estela
