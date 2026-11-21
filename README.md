@@ -1,6 +1,8 @@
-# Canica Volàtil · Alpha v1.4.2
+# Canica Volàtil
 
-Protocol online **19**. Tots els participants han d'usar la mateixa compilació.
+**Candidata Alpha v1.5.0** en `alpha/arsenal`, protocol online **24**. Inclou huit bosses nous, portes amb clau, setze amulets, tenda de cosmètics i un Almanac amb 626 blocs. La targeta **Creador** anuncia la v1.6.
+
+**Última publicació:** Alpha v1.4.2, protocol **19**. Tots els participants han d'usar una compilació amb el mateix protocol.
 
 Joc 2D de caniques, combat i masmorres fet amb Unity. Explora huit ambients, combina armes i juga en solitari o en cooperatiu **per Internet sense escriure cap IP**.
 
@@ -22,7 +24,7 @@ No cal instal·lar Unity. Mantín l'executable de PC amb les seues carpetes i bi
 2. **CREAR SALA** (la xarxa INTERNET ja ve triada). En uns segons el lobby diu **EN LÍNIA**.
 3. Els amics, des de qualsevol casa, wifi o dades mòbils, veuen la sala a la llista i hi entren amb doble clic. A les privades s'entra amb el **codi de 6 lletres**.
 
-No cal obrir ports al router, ni tocar el tallafocs, ni posar una VPN, ni configurar cap servidor. Windows, Linux i Android comparteixen el protocol **18** en la v1.4.0. La v1.3.2 usa el protocol **16**.
+No cal obrir ports al router, ni tocar el tallafocs, ni posar una VPN, ni configurar cap servidor. Windows, Linux i Android han de tindre la mateixa versió de protocol.
 
 Per a jugar a la mateixa wifi amb menys retard, hi ha la pestanya **XARXA LOCAL**. Com funciona per dins, i l'opció de servidor propi: [ONLINE.md](ONLINE.md).
 
@@ -41,7 +43,7 @@ Per a jugar a la mateixa wifi amb menys retard, hi ha la pestanya **XARXA LOCAL*
 
 ## Controls de PC
 
-WASD/fletxes: moure. Ratolí: apuntar. Clic esquerre/Espai: atacar. E mantinguda: obrir cofre. 1–4: armes. 5–8: cures. Clic dret: cura intel·ligent (tria la que encaixa amb la vida que et falta). Botó NOVETATS al menú principal. Z: deixar arma. M: ampliar mapa. Roda: armes; Maj+roda: cures. C: mode Creatiu (mapa lliure). Tecles configurables en Controls.
+WASD/fletxes: moure. Ratolí: apuntar. Clic esquerre/Espai: atacar. E mantinguda: obrir cofre. 1–4: armes. 5–8: cures. Clic dret: cura intel·ligent (tria la que encaixa amb la vida que et falta). Botó NOVETATS al menú principal. Z: deixar arma. M: ampliar mapa. Tab en la masmorra cooperativa de la v1.5: amulets de l’equip. Roda: armes; Maj+roda: cures. C: mode Creatiu (mapa lliure). Tecles configurables en Controls.
 
 Tres barres o Esc: menú de partida. F11: pantalla completa. Nom i cosmètics en Personalitzar; mapa, so, pantalla i HUD en Ajustos.
 
@@ -50,6 +52,7 @@ Tres barres o Esc: menú de partida. F11: pantalla completa. Nom i cosmètics en
 És una **Alpha**, amb contingut i equilibri en desenvolupament.
 
 - **Compilació:** Windows, Linux i Android compilen sense errors i comparteixen protocol, codi i catàlegs.
+- **Proves de la candidata v1.5.0:** bots de Windows superats, manifests de les tres plataformes coincidents i 6/6 online amb directori de prova local i túnel real. [Resultat amb el directori públic](ONLINE.md).
 - **Proves automàtiques de la v1.4.0:** el menú, una masmorra sencera i el bot individual complet han passat en Windows. La passada online amb client mòbil simulat ha donat **6/6**. [Historial de proves](ONLINE.md)
 - **Prova real en una versió anterior:** Ferran i un amic han jugat per Internet des de dues cases diferents, sense escriure cap IP.
 

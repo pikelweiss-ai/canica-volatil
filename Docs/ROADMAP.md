@@ -27,7 +27,7 @@ Fora de la v1.4.0: tot el que hi ha a sota.
 - **Almanac** fase 1 (llistes d'armes i d'enemics).
 
 
-## v1.5 (decidit amb Ferran, 2026-11-21) · traspàs: [TRASPAS_CODEX_V150.md](../TRASPAS_CODEX_V150.md)
+## v1.5.0 · candidata local · [Traspàs](../TRASPAS_V151.md)
 - **Els vuit bosses nous, tots de colp** (Cor de Cristall, Cavaller Corrupte, Cuc de Sorra, Fènix, Hidra del Llac, Rei de les Clavegueres, Cuiner Boig, Professor Infernal). Disseny a `Docs/Dissenys/v1.4-bosses-enemics-sales.md` §3.
 - **Portes amb clau.** La porta de la sala del boss està tancada amb clau, i **la clau s'ha d'anar a buscar a una sala aleatòria** de la planta (sala de clau; pot estar vigilada). Cal sistema de claus (recollir, gastar, mostrar a la HUD), sincronització online i que el mapa marque on és la porta. Disseny de portes a `v1.4-bosses-enemics-sales.md` §5 i §8.
 - Els deu pendents de [Docs/PENDENTS_APUNTATS.md](PENDENTS_APUNTATS.md) (abans «v1.4.3»): arreglos petits, microbosses des del pis 2 i bugs d'online.

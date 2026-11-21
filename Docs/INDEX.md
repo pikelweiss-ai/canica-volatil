@@ -6,8 +6,8 @@
 |----------|-----------|
 | [README.md](../README.md) | Descàrregues, controls, estat. |
 | [AGENTS.md](../AGENTS.md) | Regles de treball per a Codex/ChatGPT. |
-| [TRASPAS_V150.md](../TRASPAS_V150.md) | **Traspàs actual**: Alpha v1.4.1, proves pendents i v1.5. |
-| [Docs/PENDENTS_APUNTATS.md](PENDENTS_APUNTATS.md) | **Deu pendents apuntats per Ferran** després de la v1.4.2 (candidats a una v1.4.3). |
+| [TRASPAS_V151.md](../TRASPAS_V151.md) | **Traspàs actual** de la candidata Alpha v1.5.0. |
+| [Docs/PENDENTS_APUNTATS.md](PENDENTS_APUNTATS.md) | **Deu pendents apuntats per Ferran** després de la v1.4.2 i resolts a la fase 0. |
 | [TRASPAS_CODEX_V150.md](../TRASPAS_CODEX_V150.md) · [PROMPT_CODEX_V150.md](../PROMPT_CODEX_V150.md) | **Traspàs i missatge per a fer la v1.5** (ChatGPT/Codex). |
 | [Docs/Dissenys/v1.5-almanac-blocs-i-mode-creador.md](Dissenys/v1.5-almanac-blocs-i-mode-creador.md) | Almanac de blocs i 4t mode «Creador» (pròximament). |
 | [TRASPAS_CLAUDE_V141.md](../TRASPAS_CLAUDE_V141.md) | Traspàs que va obrir la v1.4.1 (històric). |
@@ -15,7 +15,7 @@
 | [Docs/Dissenys/v1.4-almanac-amulets.md](Dissenys/v1.4-almanac-amulets.md) | Almanac (armes, enemics, bosses, amulets) i 16 amulets. |
 | [Docs/Dissenys/v1.4-bosses-enemics-sales.md](Dissenys/v1.4-bosses-enemics-sales.md) | Enemics, microbosses, bosses, sales, portes i sorolls de la v1.4. |
 | [DISSENY.md](../DISSENY.md) · [CONSELL.md](../CONSELL.md) | Disseny i balanç. |
-| [ONLINE.md](../ONLINE.md) | Joc online i protocol 19 de la v1.4.1. |
+| [ONLINE.md](../ONLINE.md) | Joc online i historial de protocols fins al 24. |
 | [RELEASE_NOTES.md](../RELEASE_NOTES.md) · [ALPHA_PROGRESS.md](../ALPHA_PROGRESS.md) | Historial de versions i de treball. |
 | [MOBILE_ALPHA.md](../MOBILE_ALPHA.md) · [MOBILE_ANDROID.md](../MOBILE_ANDROID.md) | Android i joc entre plataformes. |
 | `Docs/Consell/*` | Informes del consell de 19 perfils (v1.2.1). |

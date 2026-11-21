@@ -12,6 +12,23 @@ public static class Changelog
     {
         new Entry
         {
+            version = "Alpha v1.5.0", title = "Huit bosses, claus i amulets",
+            lines = new[]
+            {
+                "MASMORRA",
+                "Huit bosses nous amb dos fases i atacs propis. Els microbosses apareixen des del pis 2, també a la Neu.",
+                "Busca la clau en una altra sala i du-la fins a la porta marcada al radar.",
+                "AMULETS I BOTIGA",
+                "Setze amulets, tres ranures i una tria al final de cada pis. El mercader també en ven a la sala Botiga.",
+                "La tenda de Personalitzar ven caniques, barrets, esteles, colors i expressions amb les monedes que tens guardades.",
+                "ALMANAC I SELECTOR",
+                "Previsualitzacions animades, filtres i fitxes per als amulets i els 626 blocs. La targeta Creador mostra Pròximament.",
+                "ONLINE",
+                "El Talp mostra l’ombra i el Mímic continua disfressat de cofre fins que es desperta. Protocol 24."
+            }
+        },
+        new Entry
+        {
             version = "Alpha v1.4.2", title = "Teranyines que frenen",
             lines = new[]
             {

@@ -10,6 +10,8 @@ Descàrregues: https://github.com/pikelweiss-ai/canica-volatil/releases/tag/v1.4
 - Android 8+: APK ARM64/ARMv7 amb controls tàctils.
 - SHA256SUMS.txt i BUILD_INFO.json amb identificació de codi/commit i catàlegs.
 
+La candidata **Alpha v1.5.0** porta el protocol 24. La publicació depén del permís explícit de Ferran i seguix els passos del [traspàs de la v1.5](TRASPAS_CODEX_V150.md#6-com-publicar-només-amb-permís-explícit-de-ferran).
+
 Assets, Packages, ProjectSettings, eines i documentació versionats. Library, Temp, Logs, UserSettings, Builds i .utmp exclosos. Executables en Releases, no dins del Git. Les fonts dinàmiques i les metadades antigues reimportades per Unity es conserven localment sense incloure soroll de compilació en el commit.
 
 Les Pre-Alpha anteriors es conserven amb les seues etiquetes. No es reescriu l'historial ni es fa push --force. Llegir RELEASE_NOTES.md per a controls, instal·lació, proves i límits reals.

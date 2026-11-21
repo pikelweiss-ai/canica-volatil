@@ -1,5 +1,9 @@
 # Sales online — Canica Volàtil Alpha
 
+**Candidata final 1.5.0-alpha.** Amb el directori públic, els quatre casos LAN i amb relay de `test-online.ps1 -MobileClient` han passat en la repetició. Els dos anuncis sense IP han rebut HTTP 429 d’ntfy.sh. La quota anònima de l’entorn marcava 250 de 250 missatges consumits. [Límits del directori](https://docs.ntfy.sh/publish/#limitations).
+
+La mateixa suite ha donat **6/6** amb un directori de prova en loopback i el túnel real `bore.pub`. Els dos casos sense IP han comprovat l’anunci, l’entrada per llista i per codi, el joc i el retorn al lobby. Els logs estan en `Online-directori-local`, dins de la candidata.
+
 **Protocol de treball v1.5 (personalització): 24.** `Hello` i la llista de jugadors porten el color i l’expressió de cada avatar. Les compres es guarden al dispositiu.
 
 **Protocol de treball v1.5 (amulets): 23.** `AmuletState` envia les ranures, les ofertes i els temps de recuperació. L’amfitrió valida les accions `AmuletAction` i aplica el dany d’atac i els efectes d’àrea. Les monedes de la partida viatgen amb la posició per validar la compra d’amulets.

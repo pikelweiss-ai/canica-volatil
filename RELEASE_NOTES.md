@@ -1,3 +1,15 @@
+# Alpha v1.5.0
+
+Candidata local en `alpha/arsenal`. Protocol online **24**.
+
+- **Huit bosses nous.** Cor de Cristall, Cavaller Corrupte, Cuc de Sorra, Fènix, Hidra del Llac, Rei de les Clavegueres, Cuiner Boig i Professor Infernal. Els microbosses apareixen des del pis 2, també a la Neu.
+- **Porta del boss amb clau.** Busca-la en una altra sala del mateix pis. La HUD indica qui la porta i el radar marca el cadenat.
+- **Setze amulets.** Tria'n un dels tres que apareixen després del boss. Pots portar-ne tres. El mercader ven amulets i la màquina ven cures a la mateixa sala Botiga.
+- **Tenda de cosmètics.** Compra caniques, barrets, esteles, colors i expressions amb les monedes guardades. Es conserven les tries equipades de les versions anteriors.
+- **Almanac.** Filtres, previsualitzacions animades, amulets i 626 fitxes de blocs. Veure un bloc a la masmorra desbloqueja la fitxa.
+- **Selector.** La quarta targeta mostra «Creador · Pròximament». L'editor de mapes continua previst per a la v1.6.
+- **Arreglos.** Talp i Mímic en online, trets de la Torreta, preus i Bafarada del mercader, targeta Sorpresa, paret secreta, troncs i eliminació d'enemics al Creatiu. [Deu pendents i proves](Docs/PENDENTS_APUNTATS.md).
+
 # Alpha v1.4.2
 
 - **Teranyines que frenen.** Les teranyines dels racons de les sales ara frenen molt qui les xafa i es poden trencar a colps o amb trets. Tota la resta és igual que la v1.4.1.

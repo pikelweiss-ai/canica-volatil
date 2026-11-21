@@ -1,6 +1,6 @@
 # Alpha Android i joc entre plataformes
 
-Windows, Linux i Android es compilen des del mateix projecte, amb el mateix catàleg d'armes i cures. **Alpha v1.4.2, protocol 19.** Tots els jugadors han d'usar la mateixa compilació.
+Windows, Linux i Android es compilen des del mateix projecte, amb el mateix catàleg d'armes i cures. **Candidata Alpha v1.5.0, protocol 24 i codi d'Android 16.** L'última publicació és la v1.4.2 (protocol 19). Els jugadors han d'usar compilacions amb el mateix protocol.
 
 ## Jugar
 
