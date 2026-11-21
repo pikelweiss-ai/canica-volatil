@@ -735,6 +735,14 @@ public partial class NetBot : MonoBehaviour
         yield return new WaitForSeconds(1.5f);
         var menu = FindFirstObjectByType<AlphaMainMenu>();
         if (menu == null) { Fail("falta el menú principal"); yield break; }
+        var originalMarble = CosmeticsDatabase.Instance?.playerSprite;
+        var backdrop = Resources.Load<Sprite>("Pixel/Menu140/Fons");
+        if (backdrop == null || backdrop.texture.filterMode != FilterMode.Point ||
+            originalMarble == null ||
+            GameObject.Find("Canica del fons")?.GetComponent<UnityEngine.UI.Image>()?.sprite != originalMarble ||
+            GameObject.Find("Canica del logo")?.GetComponent<UnityEngine.UI.Image>()?.sprite != originalMarble)
+        { Fail("falta el fons nítid o el sprite de la canica al menú"); yield break; }
+        Ok("el fons conserva els píxels i les dos caniques usen el sprite original");
         var labels = new[] { "JUGAR", "PERSONALITZAR", "AJUSTOS", "CONTROLS", "NOVETATS" };
         foreach (string label in labels)
         {

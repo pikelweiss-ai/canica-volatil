@@ -30,9 +30,11 @@ public class PixelArtImporter : AssetPostprocessor
         importer.isReadable = true; // Per a poder fer la vora de raresa dels items per codi
         if (path.StartsWith("Assets/Resources/Pixel/Menu140/", System.StringComparison.Ordinal))
         {
-            importer.filterMode = FilterMode.Bilinear;
+            bool fullSizeArtwork = path.EndsWith("/Fons.png", System.StringComparison.Ordinal) ||
+                path.EndsWith("/Logo.png", System.StringComparison.Ordinal);
+            importer.filterMode = fullSizeArtwork ? FilterMode.Point : FilterMode.Bilinear;
             importer.isReadable = false;
-            importer.maxTextureSize = path.EndsWith("Fons.png") || path.EndsWith("Logo.png") ? 2048 : 1024;
+            importer.maxTextureSize = fullSizeArtwork ? 2048 : 1024;
         }
     }
 }

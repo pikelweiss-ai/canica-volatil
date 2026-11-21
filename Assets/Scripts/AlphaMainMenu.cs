@@ -32,6 +32,7 @@ public class AlphaMainMenu : MonoBehaviour
         var backdrop = UIKit.Box(transform, Vector2.zero, Vector2.zero, UIKit.Ink, "Fons del menú");
         UIKit.Stretch(backdrop);
         backdrop.GetComponent<Image>().raycastTarget = false;
+        var marble = CosmeticsDatabase.Instance?.playerSprite ?? AlphaVisualStyle.Current?.player;
         var art = Resources.Load<Sprite>(Art + "Fons");
         if (art != null)
         {
@@ -39,6 +40,8 @@ public class AlphaMainMenu : MonoBehaviour
             var fitter = background.gameObject.AddComponent<AspectRatioFitter>();
             fitter.aspectRatio = art.rect.width / art.rect.height;
             fitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+            // Coordenades sobre la imatge, perquè la canica conserve el lloc quan el fons es retalla.
+            PlaceMarble(background.rectTransform, marble, "Canica del fons", new Vector2(.665f, .398f), .066f, art);
         }
 
         safeContent = UIKit.Empty(transform, "Àrea segura del menú");
@@ -48,6 +51,7 @@ public class AlphaMainMenu : MonoBehaviour
         {
             var image = UIKit.Picture(safeContent, logo, Vector2.zero, new Vector2(500, 375));
             PlaceFromLeft(image.rectTransform, 325, 163);
+            PlaceMarble(image.rectTransform, marble, "Canica del logo", new Vector2(.773f, .568f), .116f, logo);
         }
         else
         {
@@ -73,6 +77,19 @@ public class AlphaMainMenu : MonoBehaviour
         version.rectTransform.anchorMin = version.rectTransform.anchorMax = Vector2.zero;
         version.rectTransform.pivot = Vector2.zero;
         version.rectTransform.anchoredPosition = new Vector2(28, 16);
+    }
+
+    static void PlaceMarble(RectTransform parent, Sprite marble, string name, Vector2 position, float width, Sprite artwork)
+    {
+        if (marble == null) return;
+        var image = UIKit.Picture(parent, marble, Vector2.zero, Vector2.zero);
+        image.name = name;
+        float height = width * artwork.rect.width / artwork.rect.height;
+        var half = new Vector2(width, height) * .5f;
+        var rect = image.rectTransform;
+        rect.anchorMin = position - half;
+        rect.anchorMax = position + half;
+        rect.offsetMin = rect.offsetMax = Vector2.zero;
     }
 
     UIKit.UIButton AddButton(string label, float y, UnityAction action, bool primary = false)
