@@ -11,6 +11,7 @@ public static class AlphaContentBuilder
     static Sprite S(string name)=>AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/Pixel/"+name+".png");
     public static void Build()
     {
+        MobAudioBuilder.Build();
         var db=AssetDatabase.LoadAssetAtPath<CosmeticsDatabase>("Assets/Resources/Cosmetics.asset");
         var skins=db.skins.ToList();
         foreach(string name in new[] { "Ciclope","Gat","Gota" })if(!skins.Any(s=>s.sprite==S("Skins/"+name)))skins.Add(new CosmeticsDatabase.Hat { name=name=="Ciclope"?"Cíclop":name,sprite=S("Skins/"+name) });

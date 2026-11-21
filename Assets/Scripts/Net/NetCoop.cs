@@ -220,6 +220,12 @@ public static class NetCoop
     // =====================================================================
     //  SALES, COFRES I PORTAL (masmorra)
     // =====================================================================
+    public static void EnemySound(string sound, Vector2 position, float volume)
+    {
+        if (!IsHost) return;
+        S.SendAll(NetProtocol.Frame(Msg.MobSound, w => { w.Write(Token); w.Write(sound); w.Write(position.x); w.Write(position.y); w.Write(volume); }));
+    }
+
     public static void RoomChanged(int index, int state)
     {
         if (!IsHost) return;
@@ -602,6 +608,13 @@ public static class NetCoop
         var gen = DungeonGenerator.Instance;
         switch (type)
         {
+            case Msg.MobSound:
+            {
+                int token = r.ReadInt32(); string sound = r.ReadString();
+                var position = new Vector2(r.ReadSingle(), r.ReadSingle()); float volume = r.ReadSingle();
+                if (token == Token) MobSounds.PlayLocal(sound, position, volume);
+                break;
+            }
             case Msg.EnemySpawn:
             {
                 int token = r.ReadInt32();

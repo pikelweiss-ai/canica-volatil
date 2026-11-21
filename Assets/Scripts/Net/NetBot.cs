@@ -51,7 +51,7 @@ public partial class NetBot : MonoBehaviour
 
     void Start()
     {
-        StartCoroutine(role == "dungeon140" ? Dungeon140() : role == "solo" ? SoloCombat() : role == "menushot" ? MenuShots() : role == "weaponshots" ? WeaponShots() : role == "trails" ? TrailGallery() : role == "host" ? Host() : Join());
+        StartCoroutine(role == "audio140" ? Audio140() : role == "dungeon140" ? Dungeon140() : role == "solo" ? SoloCombat() : role == "menushot" ? MenuShots() : role == "weaponshots" ? WeaponShots() : role == "trails" ? TrailGallery() : role == "host" ? Host() : Join());
         StartCoroutine(Watchdog());
     }
 
@@ -590,6 +590,7 @@ public partial class NetBot : MonoBehaviour
         Chest nearest = null; float best = float.MaxValue;
         foreach (var ch in FindObjectsByType<Chest>(FindObjectsSortMode.None))
         {
+            if (!g.Rooms[0].rect.Contains((Vector2Int)g.ground.WorldToCell(ch.transform.position))) continue;
             float d = Vector2.Distance(ch.transform.position, g.player.position);
             if (!ch.IsOpen && DungeonGenerator.CanInteractAt(ch.transform.position) && d < best) { best = d; nearest = ch; }
         }

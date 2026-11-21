@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c171474eb08a6e408f21dbae24dc6ae, type: 3}
+  m_Name: MobSounds
+  m_EditorClassIdentifier: 
+  clips:
+  - {fileID: 8300000, guid: 395cbc230ab5f594ca2530b52113c575, type: 3}
+  - {fileID: 8300000, guid: 67f81884defe5c545ac5835d5a2632e2, type: 3}
+  - {fileID: 8300000, guid: faaa8a07eb200f3428e9f0d5f2a3c4fe, type: 3}
+  - {fileID: 8300000, guid: b73015b09cf9e4544844257204ad9122, type: 3}
+  - {fileID: 8300000, guid: 79d9726f4c0414d44ae97ef10618c581, type: 3}
+  - {fileID: 8300000, guid: 16e4e2c77615ccb4fa95591a5e93c80e, type: 3}
+  - {fileID: 8300000, guid: 0c238580cc77e104aa71996a223ba783, type: 3}
+  - {fileID: 8300000, guid: ab0dd1a08cdf4f74f812f99085a79f7f, type: 3}
+  - {fileID: 8300000, guid: 59cfd11225d1def4ba119ec11544575c, type: 3}
+  - {fileID: 8300000, guid: e4a8aea13deb32d4da3416d99010c4fb, type: 3}
+  - {fileID: 8300000, guid: a51a821f77d589b4a8694a426f3b567b, type: 3}
+  - {fileID: 8300000, guid: 80036d38c4430944fab7e4b9f63312c0, type: 3}
+  - {fileID: 8300000, guid: 6c91a73199f2cb343a5223d8e0e1c877, type: 3}
+  - {fileID: 8300000, guid: 9da91970bf92a0a4f9acf1cff9a948f2, type: 3}
+  - {fileID: 8300000, guid: 2255b795a0d1df1448027f4a9e353c6a, type: 3}
+  - {fileID: 8300000, guid: a554025368ff7f0499651a253dc4aaa1, type: 3}
+  - {fileID: 8300000, guid: 3f2b5afa3665b7b42a01fcdc6fc15505, type: 3}
+  - {fileID: 8300000, guid: f707f220af1a5394298ec45f64d7e91e, type: 3}
+  - {fileID: 8300000, guid: a6e6c0e986a08cb448c7ddf77ef30009, type: 3}
+  - {fileID: 8300000, guid: fc09d3c9c66938949b59d14108680b94, type: 3}
+  - {fileID: 8300000, guid: b8681cbc8ec12e344a8aea3f23a5c27a, type: 3}
+  - {fileID: 8300000, guid: e66f50a18c00ac445a3ced5358b9e676, type: 3}
+  - {fileID: 8300000, guid: 4402b31a85b87e044834d77cc12048b2, type: 3}

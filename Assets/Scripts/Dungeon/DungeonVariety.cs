@@ -37,6 +37,7 @@ public partial class DungeonGenerator
             r.ambushTriggered = true;
             NetCoop.RoomChanged(Rooms.IndexOf(r), 7);
             ui.ShowBanner("EMBOSCADA!", 2f);
+            MobSounds.Play("sala_emboscada", chest.transform.position, .6f);
             // En cooperatiu es conserva l'entrada oberta fins que entren tots.
             if (!NetCoop.Online) TryStartRoom(ToCell(r.Center));
         }

@@ -9,6 +9,8 @@ public static class DungeonVarietyChecks
     // Executable separat: permet provar el bot sense substituir el que usa la suite online.
     public static void BuildTestPlayer()
     {
+        AlphaContentBuilder.Build();
+        NetContentBuilder.Build();
         var scenes = new List<string>();
         foreach (var scene in EditorBuildSettings.scenes) if (scene.enabled) scenes.Add(scene.path);
         var report = BuildPipeline.BuildPlayer(scenes.ToArray(), "Builds/V140QA/Windows/CanicaAlphaReview.exe",

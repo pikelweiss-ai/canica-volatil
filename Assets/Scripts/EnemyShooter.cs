@@ -80,7 +80,9 @@ public class EnemyShooter : MonoBehaviour
     {
         EnemyBullet.Fire((Vector2)transform.position + dir * 0.4f, dir, bulletSpeed, bulletDamage, transform, 1f,
                          useColor ? bulletColor : (Color?)null);
-        GameAudio.Enemy(Fx.Pew, 0.35f);
+        string sound = name.StartsWith("Gargola") ? "torreta_servo" : name.StartsWith("FantasmaGel") ? "banshee_lament" : name.StartsWith("Esporer") ? "llimac_xip" : null;
+        if (sound != null) MobSounds.Play(sound, transform.position, .35f);
+        else GameAudio.Enemy(Fx.Pew, 0.35f);
     }
 
     public static Vector2 Rotate(Vector2 v, float deg)

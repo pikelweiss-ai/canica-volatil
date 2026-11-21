@@ -48,6 +48,7 @@ public class EnemyBoss : MonoBehaviour
         ai.detectionRange = 30f;
         health.Died += OnDied;
         CreateBar();
+        MobSounds.Play("boss_rugit", transform.position, .55f);
     }
 
     void Update()
@@ -58,6 +59,7 @@ public class EnemyBoss : MonoBehaviour
         if (!enraged && health.currentHealth <= health.maxHealth / 2)
         {
             enraged = true;
+            MobSounds.Play("boss_fase2", transform.position, .55f);
             ai.moveSpeed *= 1.3f;
             timeBetweenAttacks *= 0.7f;
             Fx.Shake(0.4f, 0.3f);

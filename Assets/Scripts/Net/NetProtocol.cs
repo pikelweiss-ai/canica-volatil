@@ -197,6 +197,7 @@ public enum Msg : byte
     MapCoinReq = 91, MapCoinGrant = 92, MapCoinTaken = 93,
     BreakableHit = 94, ChainFx = 95, RestartRun = 96,
     HealReq = 97, HealAlly = 98, // Vareta curativa: client -> amfitrio -> company curat
+    MobSound = 99, // So autoritari amb posicio i volum
 }
 
 public enum RoomMode : byte { Dungeon = 0, FreeMap = 1 }
