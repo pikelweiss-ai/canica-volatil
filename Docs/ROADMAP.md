@@ -26,7 +26,6 @@ Fora de la v1.4.0: tot el que hi ha a sota.
 - **Nova pantalla PERSONALITZAR** (Canigues, Barrets, Esteles) estil Stumble Guys.
 - **Almanac** fase 1 (llistes d'armes i d'enemics).
 
-- Els deu pendents de [Docs/PENDENTS_APUNTATS.md](PENDENTS_APUNTATS.md): arreglos petits, microbosses des del pis 2 i bugs d'online.
 
 ## v1.5 (decidit amb Ferran, 2026-11-21)
 - **Els vuit bosses nous, tots de colp** (Cor de Cristall, Cavaller Corrupte, Cuc de Sorra, Fènix, Hidra del Llac, Rei de les Clavegueres, Cuiner Boig, Professor Infernal). Disseny a `Docs/Dissenys/v1.4-bosses-enemics-sales.md` §3.
