@@ -19,6 +19,7 @@ public sealed class MapEditor : MonoBehaviour
     TMP_Text status;
     int rotation;
     bool flip, eraseMode;
+    bool filledRectangle;
     EditTool tool;
     EditLayer layer;
     PlaceMode placeMode;
@@ -91,7 +92,7 @@ public sealed class MapEditor : MonoBehaviour
         UIKit.Button(canvas.transform, "KIT CASTELL", new Vector2(-360, 315), new Vector2(140, 34), () => PlaceKit("Parets/Castell_blocs", "Parets/Castell_fosc"), UIKit.Style.Normal, 13);
         UIKit.Button(canvas.transform, "KIT CASA", new Vector2(-205, 315), new Vector2(140, 34), () => PlaceKit("Parets/Paret_casa", "Terres/Terra"), UIKit.Style.Normal, 13);
         UIKit.Button(canvas.transform, "KIT SUPERMERCAT", new Vector2(-35, 315), new Vector2(165, 34), () => PlaceKit("Moderns/Paret_supermercat", "Terres/Rajola_supermercat"), UIKit.Style.Normal, 12);
-        string[] toolNames = { "PINTAR", "ESBORRAR", "OMPLIR", "RECTANGLE", "LÍNIA", "COMPTAGOTES", "DESFER", "REFER", "CAPA", "JUGADOR", "ENEMIC", "COFRE", "FINAL", "COPIAR", "ENGANXAR", "V. CAPA" };
+        string[] toolNames = { "PINTAR", "ESBORRAR", "OMPLIR", "RECTANGLE", "R. PLE/BUIT", "LÍNIA", "COMPTAGOTES", "DESFER", "REFER", "CAPA", "JUGADOR", "ENEMIC", "COFRE", "FINAL", "COPIAR", "ENGANXAR", "V. CAPA" };
         float toolX = -575;
         foreach (string toolName in toolNames)
         {
@@ -215,6 +216,7 @@ public sealed class MapEditor : MonoBehaviour
     }
     void SelectTool(string name)
     {
+        if (name == "R. PLE/BUIT") { filledRectangle = !filledRectangle; status.text = filledRectangle ? "Rectangle ple" : "Rectangle buit"; return; }
         if (name == "JUGADOR") { placeMode = PlaceMode.Player; status.text = "Posa el punt inicial"; return; }
         if (name == "ENEMIC") { placeMode = PlaceMode.Enemy; status.text = "Posa un Llim"; return; }
         if (name == "COFRE") { placeMode = PlaceMode.Chest; status.text = "Posa un cofre comú"; return; }
@@ -312,7 +314,7 @@ public sealed class MapEditor : MonoBehaviour
         var points = new List<Vector2Int>();
         if (rectangle)
             for (int y = minY; y <= maxY; y++) for (int x = minX; x <= maxX; x++)
-                if (x == minX || x == maxX || y == minY || y == maxY) points.Add(new Vector2Int(x,y));
+                if (filledRectangle || x == minX || x == maxX || y == minY || y == maxY) points.Add(new Vector2Int(x,y));
         else
         {
             int x0=start.x,y0=start.y,x1=end.x,y1=end.y,dx=Mathf.Abs(x1-x0),sx=x0<x1?1:-1,dy=-Mathf.Abs(y1-y0),sy=y0<y1?1:-1,err=dx+dy;
