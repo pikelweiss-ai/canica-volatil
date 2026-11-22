@@ -19,6 +19,8 @@ Commits locals de les fases inicials:
 - `98a0ff1` — pintura amb arrossegament i interpolació de cel·les.
 - `44c257f` — llista seleccionable de mapes guardats amb nom, dimensions i data.
 - `40bdd24` — autotile de camins, panells i canonades, amb comprovació de peces de cantonada/T.
+- `61944f7` — el jugador de PROVAR no travessa blocs marcats com a sòlids.
+- `27f6c9e` — spawn de mercader en l'editor, validació i marcador en PROVAR.
 
 La versió visible/package 1.6.0-alpha, el Changelog, el codi Android 17, el cubell, la línia Bresenham, la càmera WASD/zoom, la visibilitat de capes, l'autosave recuperable, els avisos de confirmació i el desfés dels marcadors ja es van incloure en el tancament de la v1.6. La versió del worktree pot continuar diferint del número de release perquè la v1.6 no s'ha publicat.
 
@@ -32,7 +34,7 @@ Validació a `Builds/Candidats/Alpha-v1.6.0-final`:
 
 ## Pendents abans de dir que el Creador està complet
 
-- La vista PROVAR encara és una graella local amb marcadors: no instancia enemics, cofres ni portal com a sistemes de joc reals.
+- La vista PROVAR encara és una graella local amb marcadors: jugador es mou i respecta blocs sòlids, però no instancia enemics, cofres, mercader ni portal com a sistemes de joc reals, ni té combat/vida/armes.
 - Online de mapes: D2 permet passar-ho a v1.7 si s'allarga. No hi ha protocol 25 ni transmissió en chunks; el protocol es queda en 24.
 - Autotile ara inclou `Natura/Gespa_cami_*`, `Oficina/Panell_*` i `Laboratori/Tuberia_*`; falten catifes, roques de cova, aigua i baranes connectades, així com ombres/col·lisions rotades en el món.
 - Els kits són habitacions de 9×9 amb paret perimetral i terra; falta provar/afinar el contingut temàtic i les plantes.
