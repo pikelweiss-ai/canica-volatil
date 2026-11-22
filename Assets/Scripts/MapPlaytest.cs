@@ -87,6 +87,7 @@ public sealed class MapPlaytest : MonoBehaviour
 
 public sealed class MapPlaytestRuntime : MonoBehaviour
 {
+    public static MapPlaytestRuntime Active { get; private set; }
     MapData map;
     DungeonGenerator dungeon;
     Transform player;
@@ -95,6 +96,7 @@ public sealed class MapPlaytestRuntime : MonoBehaviour
 
     public void Initialize(MapData data, DungeonGenerator generator)
     {
+        Active = this;
         map = data;
         dungeon = generator;
         player = generator.player;
@@ -104,16 +106,17 @@ public sealed class MapPlaytestRuntime : MonoBehaviour
         if (map.goal != null)
         {
             Vector3 pos = dungeon.ground.GetCellCenterWorld(new Vector3Int(map.goal.x, map.goal.y, 0));
-            var marker = Fx.MakeSprite("Portal final del mapa", pos, Fx.Disc, new Color(.3f, .95f, .55f, .9f), "Shadows", 8);
-            if (marker != null) marker.transform.localScale = Vector3.one * .85f;
+            DungeonPortal.Create(pos, mapGoal: true);
+            Vector3Int startCell = dungeon.ground.WorldToCell(player.position);
+            if (startCell.x == map.goal.x && startCell.y == map.goal.y) CompleteGoal();
         }
     }
 
-    void Update()
+    void OnDestroy() { if (Active == this) Active = null; }
+
+    public void CompleteGoal()
     {
-        if (completed || map == null || map.goal == null || player == null) return;
-        Vector3Int cell = dungeon.ground.WorldToCell(player.position);
-        if (cell.x != map.goal.x || cell.y != map.goal.y) return;
+        if (completed) return;
         completed = true;
         status.text = "MAPA COMPLETAT!";
         status.color = UIKit.Green;

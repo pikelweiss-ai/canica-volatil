@@ -7,15 +7,17 @@ public class DungeonPortal : MonoBehaviour
     private Transform player;
     private SpriteRenderer outer, inner;
     private bool armed;
+    private bool mapGoalPortal;
     public int Direction { get; private set; } = 1;
     public const float TriggerRadius = 0.6f;
     private float appear;
 
-    public static DungeonPortal Create(Vector3 pos, bool returning = false)
+    public static DungeonPortal Create(Vector3 pos, bool returning = false, bool mapGoal = false)
     {
         GameObject go = new GameObject(returning ? "Portal de tornada" : "Portal");
         go.transform.position = pos;
         DungeonPortal p = go.AddComponent<DungeonPortal>();
+        p.mapGoalPortal = mapGoal;
         Color outerColor = returning ? new Color(0.25f, 0.78f, 0.9f, 0.9f) : new Color(0.64f, 0.35f, 0.88f, 0.9f);
         Color innerColor = returning ? new Color(0.04f, 0.16f, 0.24f) : new Color(0.15f, 0.05f, 0.25f);
         p.Direction = returning ? -1 : 1;
@@ -59,6 +61,12 @@ public class DungeonPortal : MonoBehaviour
         bool inside = Vector2.Distance(player.position, transform.position) < TriggerRadius;
         if (!inside) { armed = true; return; }
         if (!armed || appear < 1f || DungeonGenerator.Instance == null) return;
+        if (mapGoalPortal)
+        {
+            MapPlaytestRuntime.Active?.CompleteGoal();
+            armed = false;
+            return;
+        }
         if (!DungeonGenerator.Instance.TryTravel(Direction, player.position)) return;
         armed = false;
         Fx.Play(Fx.Heal, 0.7f);

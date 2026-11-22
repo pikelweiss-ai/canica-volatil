@@ -110,8 +110,9 @@ public partial class NetBot
         if (FindFirstObjectByType<PlayerHealth>() == null || FindFirstObjectByType<PlayerAttack>() == null ||
             !FindObjectsByType<EnemyHealth>(FindObjectsSortMode.None).Any() ||
             !FindObjectsByType<Chest>(FindObjectsSortMode.None).Any() ||
-            !FindObjectsByType<Shop>(FindObjectsSortMode.None).Any(s => s.IsMerchant))
-        { Fail("PROVAR no ha creat jugador amb vida/arma, enemic, cofre i mercader reals"); yield break; }
+            !FindObjectsByType<Shop>(FindObjectsSortMode.None).Any(s => s.IsMerchant) ||
+            FindFirstObjectByType<DungeonPortal>() == null)
+        { Fail("PROVAR no ha creat jugador, enemic, cofre, mercader i portal reals"); yield break; }
         if (!FindObjectsByType<TMP_Text>(FindObjectsSortMode.None).Any(t => t.text == "MAPA COMPLETAT!"))
         { Fail("el jugador no ha completat el mapa en arribar al portal"); yield break; }
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
