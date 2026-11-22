@@ -114,11 +114,11 @@ public sealed class MapEditor : MonoBehaviour
                 () => Paint(cx, cy), UIKit.Style.Normal, 10);
             button.rect.name = "Cel·la " + cx + "," + cy;
             var cells = ActiveCells();
-            var item = cells.FirstOrDefault(c => c.x == cx && c.y == cy);
+            var item = MapAutoTile160.Resolve(cells.FirstOrDefault(c => c.x == cx && c.y == cy), cells);
             if (!string.IsNullOrEmpty(item.blockId))
             {
                 var block = BlockCatalog.Instance.blocks.FirstOrDefault(b => b.id == item.blockId);
-                if (block != null) UIKit.Picture(button.rect, block.sprite, Vector2.zero, new Vector2(cell - 3, cell - 3));
+                if (block != null) { var image = UIKit.Picture(button.rect, block.sprite, Vector2.zero, new Vector2(cell - 3, cell - 3)); image.rectTransform.localEulerAngles = new Vector3(0, 0, -90 * item.rot); image.rectTransform.localScale = new Vector3(item.flip ? -1 : 1, 1, 1); }
             }
         }
     }

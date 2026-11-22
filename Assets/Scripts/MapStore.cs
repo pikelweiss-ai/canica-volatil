@@ -23,8 +23,9 @@ public static class MapStore
         if (cells.Any(c => string.IsNullOrWhiteSpace(c.blockId) || c.x < 0 || c.y < 0 ||
             c.x >= map.width || c.y >= map.height || c.rot < 0 || c.rot > 3))
         { error = "Hi ha una cel·la no vàlida."; return false; }
-        if (cells.Select(c => c.x + c.y * map.width).Distinct().Count() != cells.Length)
-        { error = "Hi ha cel·les duplicades."; return false; }
+        foreach (var layer in new[] { map.layers.ground, map.layers.objects, map.layers.overlay })
+            if (layer.Select(c => c.x + c.y * map.width).Distinct().Count() != layer.Length)
+            { error = "Hi ha cel·les duplicades dins d'una capa."; return false; }
         if (map.spawns.Any(s => s.x < 0 || s.y < 0 || s.x >= map.width || s.y >= map.height ||
             (s.kind != "player" && s.kind != "enemy") || s.kind == "enemy" && string.IsNullOrWhiteSpace(s.id)) ||
             map.chests.Any(c => c.x < 0 || c.y < 0 || c.x >= map.width || c.y >= map.height ||

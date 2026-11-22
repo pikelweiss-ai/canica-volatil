@@ -42,11 +42,12 @@ public sealed class MapPlaytest : MonoBehaviour
         for (int y = 0; y < map.height; y++) for (int x = 0; x < map.width; x++)
         {
             var cell = UIKit.Box(grid, new Vector2(-((map.width - 1) * size) / 2 + x * size, 250 - y * size), new Vector2(size - 1, size - 1), new Color(.12f,.17f,.2f), "Cel·la");
-            var block = map.layers.ground.FirstOrDefault(c => c.x == x && c.y == y);
+            var all = map.layers.ground.Concat(map.layers.objects).Concat(map.layers.overlay).ToArray();
+            var block = MapAutoTile160.Resolve(all.FirstOrDefault(c => c.x == x && c.y == y), all);
             if (!string.IsNullOrEmpty(block.blockId))
             {
                 var data = BlockCatalog.Instance.blocks.FirstOrDefault(b => b.id == block.blockId);
-                if (data != null) UIKit.Picture(cell, data.sprite, Vector2.zero, new Vector2(size - 2, size - 2));
+                if (data != null) { var image = UIKit.Picture(cell, data.sprite, Vector2.zero, new Vector2(size - 2, size - 2)); image.rectTransform.localEulerAngles = new Vector3(0, 0, -90 * block.rot); image.rectTransform.localScale = new Vector3(block.flip ? -1 : 1, 1, 1); }
             }
             if (map.goal != null && map.goal.x == x && map.goal.y == y) cell.GetComponent<UnityEngine.UI.Image>().color = Color.green;
             if (map.spawns.Any(s => s.kind == "enemy" && s.x == x && s.y == y)) cell.GetComponent<UnityEngine.UI.Image>().color = Color.red;
