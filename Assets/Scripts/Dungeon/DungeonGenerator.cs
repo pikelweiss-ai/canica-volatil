@@ -159,6 +159,7 @@ public partial class DungeonGenerator : MonoBehaviour
     void InitializeMapPlaytest(MapData data)
     {
         floor.Clear(); solid.Clear(); reserved.Clear(); Rooms.Clear();
+        var partialHitboxes = new GameObject("Hitboxes parcials del mapa");
         var room = new Room
         {
             type = RoomType.Start, shape = RoomShape.Rectangle, modifier = RoomModifier.None,
@@ -166,9 +167,9 @@ public partial class DungeonGenerator : MonoBehaviour
         };
         Rooms.Add(room);
         var all = data.layers.ground.Concat(data.layers.objects).Concat(data.layers.overlay).ToArray();
-        PaintMapLayer(data.layers.ground, all, false);
-        PaintMapLayer(data.layers.objects, all, false);
-        PaintMapLayer(data.layers.overlay, all, true);
+        PaintMapLayer(data.layers.ground, all, false, partialHitboxes.transform);
+        PaintMapLayer(data.layers.objects, all, false, partialHitboxes.transform);
+        PaintMapLayer(data.layers.overlay, all, true, partialHitboxes.transform);
         for (int y = 0; y < data.height; y++)
             for (int x = 0; x < data.width; x++) floor.Add(new Vector2Int(x, y));
         ground.CompressBounds(); walls.CompressBounds();
@@ -187,7 +188,7 @@ public partial class DungeonGenerator : MonoBehaviour
         runtime.Initialize(data, this);
     }
 
-    void PaintMapLayer(MapCell[] cells, MapCell[] all, bool forceOverPlayer)
+    void PaintMapLayer(MapCell[] cells, MapCell[] all, bool forceOverPlayer, Transform partialHitboxes)
     {
         foreach (var source in cells)
         {
@@ -197,13 +198,22 @@ public partial class DungeonGenerator : MonoBehaviour
             var tile = ScriptableObject.CreateInstance<Tile>();
             tile.name = "Mapa prova " + cell.blockId;
             tile.sprite = block.sprite;
-            tile.colliderType = block.passable ? Tile.ColliderType.None : Tile.ColliderType.Grid;
+            tile.colliderType = !block.passable && block.fullBlock ? Tile.ColliderType.Grid : Tile.ColliderType.None;
             tile.transform = Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(0, 0, -90 * cell.rot), new Vector3(cell.flip ? -1 : 1, 1, 1));
             tile.flags = TileFlags.None;
             var pos = new Vector3Int(cell.x, cell.y, 0);
             Tilemap destination = !block.passable || forceOverPlayer || block.layer == BlockData.DrawLayer.OverPlayer ? walls : ground;
             destination.SetTile(pos, tile);
             if (!block.passable) solid.Add(new Vector2Int(cell.x, cell.y));
+            if (!block.passable && !block.fullBlock && block.hitbox.width > 0f && block.hitbox.height > 0f)
+            {
+                Rect hitbox = MapAutoTile160.TransformHitbox(block.hitbox, cell.rot, cell.flip);
+                Vector3 center = ground.GetCellCenterWorld(pos);
+                Vector3 localCenter = partialHitboxes.InverseTransformPoint(center);
+                var collider = partialHitboxes.gameObject.AddComponent<BoxCollider2D>();
+                collider.offset = new Vector2(localCenter.x + hitbox.center.x, localCenter.y + hitbox.center.y);
+                collider.size = new Vector2(hitbox.width, hitbox.height);
+            }
         }
     }
 

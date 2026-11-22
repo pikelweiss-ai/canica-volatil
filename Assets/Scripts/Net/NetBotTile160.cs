@@ -31,8 +31,12 @@ public partial class NetBot
         if (MapAutoTile160.Resolve(pipeCells[0], pipeCells).blockId != "Laboratori/Tuberia_T")
         { Fail("autotile de T de canonada incorrecte"); yield break; }
         var rect = MapAutoTile160.RotateHitbox(new Rect(-.25f,-.5f,.5f,1f), 1);
-        if (Mathf.Abs(rect.width - 1f) > .001f || Mathf.Abs(rect.height - .5f) > .001f)
+        if (Mathf.Abs(rect.xMin + .5f) > .001f || Mathf.Abs(rect.yMin + .25f) > .001f ||
+            Mathf.Abs(rect.width - 1f) > .001f || Mathf.Abs(rect.height - .5f) > .001f)
         { Fail("la hitbox no gira amb el bloc"); yield break; }
+        var flipped = MapAutoTile160.TransformHitbox(new Rect(-.4f, -.2f, .6f, .4f), 0, true);
+        if (Mathf.Abs(flipped.xMin + .2f) > .001f || Mathf.Abs(flipped.yMin + .2f) > .001f)
+        { Fail("la hitbox no es reflecteix amb el bloc"); yield break; }
         var map = new MapData { width=2,height=2,layers=new MapLayers {
             ground=new[] { new MapCell {x=0,y=0,blockId="Terres/Terra"} },
             objects=new[] { new MapCell {x=0,y=0,blockId="Bany/Catifa_bany_centre"} } } };

@@ -49,6 +49,13 @@ public static class MapAutoTile160
     public static Rect RotateHitbox(Rect rect, int rotation)
     {
         rotation = ((rotation % 4) + 4) % 4;
-        return rotation % 2 == 0 ? rect : new Rect(-rect.yMax, rect.xMin, rect.height, rect.width);
+        if (rotation % 2 == 0) return rect;
+        return new Rect(rect.yMin, -rect.xMax, rect.height, rect.width);
+    }
+
+    public static Rect TransformHitbox(Rect rect, int rotation, bool flip)
+    {
+        if (flip) rect = new Rect(-rect.xMax, rect.yMin, rect.width, rect.height);
+        return RotateHitbox(rect, rotation);
     }
 }

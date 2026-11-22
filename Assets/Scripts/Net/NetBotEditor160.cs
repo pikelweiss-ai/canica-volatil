@@ -97,6 +97,14 @@ public partial class NetBot
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         buttons.First(b => b.gameObject.name == "Cel·la 3,0").onClick.Invoke();
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        var partialBlock = BlockCatalog.Instance.blocks.FirstOrDefault(b => b != null && !b.passable && !b.fullBlock && b.hitbox.width > 0 && b.hitbox.height > 0);
+        if (partialBlock == null) { Fail("no hi ha cap semibloc sòlid per provar la hitbox"); yield break; }
+        buttons.First(b => b.gameObject.name == "Bloc " + partialBlock.id).onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto PINTAR").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Cel·la 4,0").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
         if (!MapStore.Load("Mapa", out saved, out error) || saved.goal == null || !saved.spawns.Any(s => s.kind == "player") || !saved.spawns.Any(s => s.kind == "enemy" && s.id == "Llim") || !saved.spawns.Any(s => s.kind == "merchant" && s.id == "Mercader") || saved.chests.Length != 1)
         { Fail("no s'han guardat el jugador, l'enemic, el mercader i el portal"); yield break; }
@@ -111,7 +119,9 @@ public partial class NetBot
             !FindObjectsByType<EnemyHealth>(FindObjectsSortMode.None).Any() ||
             !FindObjectsByType<Chest>(FindObjectsSortMode.None).Any() ||
             !FindObjectsByType<Shop>(FindObjectsSortMode.None).Any(s => s.IsMerchant) ||
-            FindFirstObjectByType<DungeonPortal>() == null)
+            FindFirstObjectByType<DungeonPortal>() == null ||
+            GameObject.Find("Hitboxes parcials del mapa") == null ||
+            GameObject.Find("Hitboxes parcials del mapa").GetComponents<BoxCollider2D>().Length == 0)
         { Fail("PROVAR no ha creat jugador, enemic, cofre, mercader i portal reals"); yield break; }
         if (!FindObjectsByType<TMP_Text>(FindObjectsSortMode.None).Any(t => t.text == "MAPA COMPLETAT!"))
         { Fail("el jugador no ha completat el mapa en arribar al portal"); yield break; }
