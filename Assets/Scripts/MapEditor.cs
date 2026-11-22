@@ -169,7 +169,7 @@ public sealed class MapEditor : MonoBehaviour
         sharePathField = UIKit.Input(filePanel, new Vector2(0, 30), new Vector2(245, 34), "Ruta .canicamap", 240, fontSize: 12);
         UIKit.Button(filePanel, "EXPORTAR", new Vector2(-60, -18), new Vector2(110, 36), ExportFile, UIKit.Style.Normal, 13);
         UIKit.Button(filePanel, "IMPORTAR", new Vector2(60, -18), new Vector2(110, 36), ImportFile, UIKit.Style.Normal, 13);
-        UIKit.Text(filePanel, "El fitxer és només dada; es valida en importar.", new Vector2(0, -60), new Vector2(250, 35), 11, TextAlignmentOptions.Center, UIKit.Muted);
+        UIKit.Text(filePanel, "Ruta buida: tria la carpeta. El fitxer és només dada; es valida en importar.", new Vector2(0, -60), new Vector2(250, 35), 11, TextAlignmentOptions.Center, UIKit.Muted);
         status = UIKit.Text(canvas.transform, "", new Vector2(0, -430), new Vector2(800, 30), 16, TextAlignmentOptions.Center, UIKit.Muted);
         UIKit.Button(canvas.transform, "ENEMIC −", new Vector2(-285, 230), new Vector2(105, 32), () => CycleEnemy(-1), UIKit.Style.Normal, 12);
         enemyChoiceLabel = UIKit.Text(canvas.transform, "", new Vector2(-155, 230), new Vector2(155, 32), 13, TextAlignmentOptions.Center, UIKit.TextColor);
@@ -623,7 +623,7 @@ public sealed class MapEditor : MonoBehaviour
         "<b>MARCADORS</b> a la graella: <b>J</b> punt d'inici (només n'hi ha un; en tornar a clicar es mou), <b>E</b> enemic, <b>C</b> cofre, <b>F</b> final, <b>M</b> mercader. Ctrl+Z desfà l'últim que has posat.\n" +
         "<b>MOURE LA VISTA</b>: WASD o botó del mig del ratolí; la roda fa zoom. GRAELLA i HITBOXES ajuden a depurar. La paleta es mou arrossegant la barra de dalt.\n" +
         "<b>KITS</b>: Castell, Casa i Supermercat posen una base feta.\n" +
-        "<b>COMPARTIR</b>: COPIAR CODI i IMPORTAR CODI, o el panell de fitxers. Importa només mapes de gent que conegues.";
+        "<b>COMPARTIR</b>: COPIAR CODI i IMPORTAR CODI, o el panell de fitxers (a la dreta): deixa la ruta buida i EXPORTAR/IMPORTAR t'obri el selector de carpetes del sistema (Windows i Linux). Importa només mapes de gent que conegues.";
 
     static string LayerName(EditLayer value) => value == EditLayer.Ground ? "TERRA" : value == EditLayer.Objects ? "OBJECTES" : "DAMUNT";
 
@@ -976,14 +976,39 @@ public sealed class MapEditor : MonoBehaviour
         if (System.IO.Path.GetExtension(path).Length == 0) path += ".canicamap";
         return path;
     }
+    bool fileDialogOpen;
+    // Ruta buida i selector del sistema disponible (Windows/Linux): s'obri el selector. Amb la ruta escrita, es fa directament (com sempre).
     void ExportFile()
     {
-        string path = SharePath();
-        if (MapShare160.ExportFile(map, path, out var error)) status.text = "Exportat: " + path; else status.text = error;
+        if (string.IsNullOrWhiteSpace(sharePathField.text) && MapFileDialog160.Available) { StartCoroutine(ChooseFileThen(true)); return; }
+        ExportToPath(SharePath());
     }
     void ImportFile()
     {
-        if (!MapShare160.ImportFile(SharePath(), out var imported, out var error)) { status.text = error; return; }
+        if (string.IsNullOrWhiteSpace(sharePathField.text) && MapFileDialog160.Available) { StartCoroutine(ChooseFileThen(false)); return; }
+        ImportFromPath(SharePath());
+    }
+    System.Collections.IEnumerator ChooseFileThen(bool save)
+    {
+        if (fileDialogOpen) yield break;
+        fileDialogOpen = true;
+        status.text = save ? "Tria on guardar el fitxer (finestra del sistema; pot quedar darrere)..." : "Tria el fitxer a importar (finestra del sistema)...";
+        string chosen = null;
+        yield return MapFileDialog160.Run(save, map.name, p => chosen = p);
+        fileDialogOpen = false;
+        if (chosen == null) { status.text = "No s'ha pogut obrir el selector del sistema. Escriu la ruta a mà."; yield break; }
+        if (chosen.Length == 0) { status.text = save ? "Exportació cancel·lada." : "Importació cancel·lada."; yield break; }
+        if (save && System.IO.Path.GetExtension(chosen).Length == 0) chosen += ".canicamap";
+        sharePathField.text = chosen;
+        if (save) ExportToPath(chosen); else ImportFromPath(chosen);
+    }
+    void ExportToPath(string path)
+    {
+        if (MapShare160.ExportFile(map, path, out var error)) status.text = "Exportat: " + path; else status.text = error;
+    }
+    void ImportFromPath(string path)
+    {
+        if (!MapShare160.ImportFile(path, out var imported, out var error)) { status.text = error; return; }
         map = imported; nameField.text = map.name; mapWidthField.text=map.width.ToString(); mapHeightField.text=map.height.ToString(); currentSavedName=null; dirty=true; undo.Clear(); redo.Clear(); DrawGrid(); status.text = "Fitxer importat: " + map.name;
     }
 
