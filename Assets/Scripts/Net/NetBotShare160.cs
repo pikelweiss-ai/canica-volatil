@@ -29,6 +29,28 @@ public partial class NetBot
         if (playButton == null) { Fail("no s'ha trobat JUGAR per obrir el selector"); yield break; }
         playButton.onClick.Invoke();
         yield return WaitFor(() => FindFirstObjectByType<MapSelectUI>() != null, 4, "selector amb importació de mapes per codi");
+        // Jugar un mapa GUARDAT des del selector: ha de carregar la masmorra real i NO esborrar el mapa.
+        const string savedName = "NETBOT-Guardat";
+        var savedMap = new MapData { name = savedName, width = 3, height = 2, layers = new MapLayers { ground = new[] { new MapCell { x = 0, y = 0, blockId = "Terres/Terra" } } } };
+        if (!MapStore.Save(savedMap, savedName, out error)) { Fail("no s'ha pogut preparar el mapa guardat: " + error); yield break; }
+        var savedButton = FindObjectsByType<Button>(FindObjectsSortMode.None).FirstOrDefault(b => b.gameObject.name == "Boto JUGAR MAPA GUARDAT");
+        if (savedButton == null) { MapStore.Delete(savedName); Fail("falta el botó JUGAR MAPA GUARDAT al selector"); yield break; }
+        savedButton.onClick.Invoke();
+        var savedRow = FindObjectsByType<Button>(FindObjectsSortMode.None).FirstOrDefault(b => b.gameObject.name == "Mapa per jugar " + savedName);
+        if (savedRow == null) { MapStore.Delete(savedName); Fail("la llista de mapes guardats no mostra el mapa"); yield break; }
+        savedRow.onClick.Invoke();
+        yield return WaitFor(() => Scene == "Dungeon" && FindFirstObjectByType<MapPlaytestRuntime>() != null, 10, "mapa guardat carregat en el joc real");
+        bool savedStillThere = MapStore.List().Contains(savedName);
+        MapStore.Delete(savedName);
+        if (failed) yield break;
+        if (!savedStillThere) { Fail("jugar un mapa guardat l'ha esborrat del disc"); yield break; }
+        Ok("jugar un mapa guardat des del selector: carrega la masmorra i el mapa continua guardat");
+        UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
+        yield return WaitFor(() => Scene == "MainMenu", 20, "tornar al menú després del mapa guardat");
+        var playAgain = FindObjectsByType<Button>(FindObjectsSortMode.None).FirstOrDefault(b => b.gameObject.name == "Boto JUGAR");
+        if (playAgain == null) { Fail("no s'ha trobat JUGAR en tornar al menú"); yield break; }
+        playAgain.onClick.Invoke();
+        yield return WaitFor(() => FindFirstObjectByType<MapSelectUI>() != null, 4, "selector, segona vegada");
         var importButton = FindObjectsByType<Button>(FindObjectsSortMode.None).FirstOrDefault(b => b.gameObject.name == "Boto IMPORTAR CODI I JUGAR");
         if (importButton == null)
         { Fail("falta l'opció per jugar codis de mapa des del selector"); yield break; }

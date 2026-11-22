@@ -68,7 +68,9 @@ public class MapSelectUI : MonoBehaviour
         creatorNotice.gameObject.name = "Avís Creador";
         creatorNotice.gameObject.SetActive(false);
 
-        UIKit.Button(transform, "IMPORTAR CODI I JUGAR", new Vector2(0, -350), new Vector2(350, 48), OpenCodeImport,
+        UIKit.Button(transform, "JUGAR MAPA GUARDAT", new Vector2(-185, -350), new Vector2(350, 48), OpenSavedMaps,
+            UIKit.Style.Primary, 17);
+        UIKit.Button(transform, "IMPORTAR CODI I JUGAR", new Vector2(185, -350), new Vector2(350, 48), OpenCodeImport,
             UIKit.Style.Success, 17);
         UIKit.Button(transform, "TORNAR", new Vector2(0, -272), new Vector2(224, 58), Hide,
             UIKit.Style.Normal, 22);
@@ -157,6 +159,49 @@ public class MapSelectUI : MonoBehaviour
             Label(frame, details, new Vector2(0, -98), new Vector2(textWidth, 48), 18, alignment, UIKit.TextColor);
             Label(frame, creatorMobile ? "CREADOR NOMÉS A PC" : card.interactable ? action : "NO DISPONIBLE", new Vector2(0, -141), new Vector2(textWidth, 26), 17, alignment, accent);
         }
+    }
+
+    Transform savedPanel;
+
+    // Llista els mapes guardats (els del Creador i els importats) perquè es puguen jugar sense passar per l'editor.
+    void OpenSavedMaps()
+    {
+        if (savedPanel != null) Destroy(savedPanel.gameObject);
+        savedPanel = UIKit.Box(transform, Vector2.zero, new Vector2(720, 620), new Color(.04f, .06f, .09f, .99f), "Llista mapes per jugar");
+        UIKit.Text(savedPanel, "JUGAR UN MAPA GUARDAT", new Vector2(0, 270), new Vector2(620, 38), 24, TextAlignmentOptions.Center, new Color(1f, .89f, .65f));
+        var names = MapStore.List();
+        if (names.Length == 0)
+            UIKit.Text(savedPanel, "Encara no hi ha mapes guardats. Crea'n un al Creador.", new Vector2(0, 0), new Vector2(620, 60), 18, TextAlignmentOptions.Center, UIKit.Muted);
+        else
+        {
+            var content = UIKit.ScrollList(savedPanel, new Vector2(0, -5), new Vector2(660, 500), out _, 4);
+            int i = 0;
+            foreach (string savedName in names)
+            {
+                string captured = savedName;
+                if (!MapStore.Load(captured, out var savedMap, out _)) continue;
+                var row = UIKit.ListRow(content, 52, i++ % 2 == 0 ? UIKit.Row : UIKit.RowAlt);
+                row.name = "Mapa per jugar " + captured;
+                row.gameObject.AddComponent<Button>().onClick.AddListener(() => PlaySavedMap(captured));
+                var modified = MapStore.LastModifiedUtc(captured);
+                string date = modified == System.DateTime.MinValue ? "data desconeguda" : modified.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
+                var label = UIKit.Text(row, captured + "  ·  " + savedMap.width + "×" + savedMap.height + "  ·  " + date,
+                    Vector2.zero, new Vector2(620, 46), 16, TextAlignmentOptions.MidlineLeft, UIKit.TextColor);
+                label.textWrappingMode = TextWrappingModes.NoWrap;
+            }
+        }
+        UIKit.Button(savedPanel, "TANCAR", new Vector2(0, -275), new Vector2(150, 42), () => { Destroy(savedPanel.gameObject); savedPanel = null; }, UIKit.Style.Normal, 15);
+    }
+
+    void PlaySavedMap(string savedName)
+    {
+        MapPlaytest.MapName = savedName;
+        MapPlaytest.ReturnToEditor = false;
+        MapPlaytest.DeleteMapAfterConsume = false; // és un mapa guardat de debò: NO s'esborra en jugar-lo
+        MapPlaytest.StartInDungeon = true;
+        RunStats.DontSave = true;
+        RunState.Reset();
+        SceneManager.LoadScene("Dungeon");
     }
 
     void OpenCodeImport()
