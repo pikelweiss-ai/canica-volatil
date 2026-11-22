@@ -70,13 +70,31 @@ public static class CosmeticStore
     {
         if (!Valid(kind, index)) return false;
         ImportLegacyEquipment();
-        return Price(kind, index) == 0 || PlayerPrefs.GetInt(OwnershipKey(kind, index)) != 0;
+        return (Price(kind, index) == 0 && !IsExclusive(kind, index)) || PlayerPrefs.GetInt(OwnershipKey(kind, index)) != 0;
     }
+
+    public static bool IsExclusive(CosmeticKind kind, int index) =>
+        kind == CosmeticKind.Skins && Valid(kind, index) && Name(kind, index) == "Capvespre";
 
     public static ChestRarity Quality(CosmeticKind kind, int index)
     {
-        if (index < 2) return ChestRarity.Comu;
+        if (index == 0) return ChestRarity.Comu;
         string name = Name(kind, index);
+        if (kind == CosmeticKind.Skins)
+        {
+            switch (name)
+            {
+                case "Bombolla": case "Glaçó": case "Ninja":
+                    return ChestRarity.PocComu;
+                case "Coure": case "Caramel": case "Llima":
+                    return ChestRarity.Rar;
+                case "Robot": case "Aurora": case "Cosmos": case "Canica d'or": case "Canica de vidre":
+                    return ChestRarity.Epic;
+                case "Capvespre":
+                    return ChestRarity.Llegendari;
+            }
+        }
+        if (index < 2) return ChestRarity.Comu;
         if (name.Contains("Arc de Sant Martí", StringComparison.OrdinalIgnoreCase) ||
             name.Contains("Univers", StringComparison.OrdinalIgnoreCase) ||
             name.Contains("Diamant", StringComparison.OrdinalIgnoreCase)) return ChestRarity.Llegendari;
@@ -93,17 +111,18 @@ public static class CosmeticStore
         _ => "Comú"
     };
 
-    public static int Price(CosmeticKind kind, int index) => Quality(kind, index) switch
+    public static int Price(CosmeticKind kind, int index) => IsExclusive(kind, index) ? 0 : Quality(kind, index) switch
     {
         ChestRarity.Llegendari => 260,
         ChestRarity.Epic => 120,
         ChestRarity.Rar => 55,
+        ChestRarity.PocComu => 25,
         _ => 0
     };
 
     public static bool Buy(CosmeticKind kind, int index)
     {
-        if (!Valid(kind, index) || Owned(kind, index) || !CoinBank.TrySpend(Price(kind, index))) return false;
+        if (!Valid(kind, index) || IsExclusive(kind, index) || Owned(kind, index) || !CoinBank.TrySpend(Price(kind, index))) return false;
         PlayerPrefs.SetInt(OwnershipKey(kind, index), 1);
         PlayerPrefs.Save();
         return true;

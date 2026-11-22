@@ -35,6 +35,40 @@ public partial class NetBot
                 { Fail("la tenda ha perdut la tria antiga de " + kind); yield break; }
             Ok("conserva les claus i tries antigues de canica, barret i estela");
 
+            const CosmeticKind skins = CosmeticKind.Skins;
+            int SkinIndex(string name) => Enumerable.Range(0, CosmeticStore.Count(skins))
+                .Where(i => CosmeticStore.Name(skins, i) == name).DefaultIfEmpty(-1).First();
+            var qualities = new[]
+            {
+                (ChestRarity.Comu, 0, new[] { "Original" }),
+                (ChestRarity.PocComu, 25, new[] { "Bombolla", "Glaçó", "Ninja" }),
+                (ChestRarity.Rar, 55, new[] { "Coure", "Caramel", "Llima" }),
+                (ChestRarity.Epic, 120, new[] { "Robot", "Aurora", "Cosmos", "Canica d'or", "Canica de vidre" }),
+            };
+            foreach (var (quality, price, names) in qualities)
+                foreach (string name in names)
+                {
+                    int index = SkinIndex(name);
+                    if (index < 0 || CosmeticStore.Quality(skins, index) != quality || CosmeticStore.Price(skins, index) != price)
+                    { Fail("qualitat o preu incorrecte: " + name); yield break; }
+                }
+
+            int capvespre = SkinIndex("Capvespre");
+            if (capvespre < 0)
+            { Fail("falta Capvespre"); yield break; }
+            string exclusiveKey = OwnerKey(skins, capvespre);
+            Save(exclusiveKey);
+            PlayerPrefs.DeleteKey(exclusiveKey);
+            PlayerPrefs.SetInt("MonedesTotals", 1000);
+            if (!CosmeticStore.IsExclusive(skins, capvespre) || CosmeticStore.Owned(skins, capvespre) ||
+                CosmeticStore.Buy(skins, capvespre) || CosmeticStore.Use(skins, capvespre) || CoinBank.Total != 1000)
+            { Fail("Capvespre només es pot equipar si ja la tens"); yield break; }
+            PlayerPrefs.SetInt(exclusiveKey, 1);
+            if (!CosmeticStore.Owned(skins, capvespre) || !CosmeticStore.Use(skins, capvespre))
+            { Fail("s'ha perdut l'accés a una Capvespre ja desbloquejada"); yield break; }
+            PlayerPrefs.DeleteKey(exclusiveKey);
+            Ok("qualitats i preus de les caniques i bloqueig de Capvespre");
+
             foreach (var kind in new[] { CosmeticKind.Skins, CosmeticKind.Hats, CosmeticKind.Trails })
             {
                 int index = CosmeticStore.Count(kind) - 1;
@@ -66,6 +100,33 @@ public partial class NetBot
             field.SetValue(ui, true);
             typeof(CustomizeMenuUI).GetMethod("Refresh", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(ui, null);
             yield return Shot("fase4-tenda");
+
+            var special = ui.GetComponentsInChildren<UnityEngine.UI.Button>().Single(button =>
+                button.GetComponentInChildren<TMPro.TMP_Text>()?.text == "ESPECIAL");
+            special.onClick.Invoke();
+            yield return null;
+            var filterLabels = ui.GetComponentsInChildren<TMPro.TMP_Text>().Where(label =>
+                label.text == "ESPECIAL" || label.text == "LLEGENDARI").ToArray();
+            if (filterLabels.Length != 2 || filterLabels.Any(label =>
+                label.GetPreferredValues(label.text).x > label.rectTransform.rect.width))
+            { Fail("els noms de les qualitats es tallen"); yield break; }
+            var specialCards = ui.GetComponentsInChildren<UnityEngine.UI.Button>()
+                .Where(button => button.name.StartsWith("Carta ")).ToArray();
+            if (specialCards.Length != 3 || specialCards.Any(button =>
+                button.GetComponent<UnityEngine.UI.Image>().color != ItemGraphics.RarityColor(ChestRarity.PocComu)))
+            { Fail("el filtre Especial ha de mostrar només les tres caniques amb vora verda"); yield break; }
+            yield return Shot("fase4-caniques-especials");
+            var all = ui.GetComponentsInChildren<UnityEngine.UI.Button>().Single(button =>
+                button.GetComponentInChildren<TMPro.TMP_Text>()?.text == "TOTS");
+            all.onClick.Invoke();
+            yield return null;
+            ui.GetComponentsInChildren<UnityEngine.UI.Button>().Single(button => button.name == "Carta " + capvespre).onClick.Invoke();
+            yield return null;
+            var exclusive = ui.GetComponentsInChildren<UnityEngine.UI.Button>().Single(button =>
+                !button.name.StartsWith("Carta ") && button.GetComponentInChildren<TMPro.TMP_Text>()?.text == "EXCLUSIVA");
+            if (exclusive.interactable)
+            { Fail("el botó de compra de Capvespre s'ha d'amagar o desactivar"); yield break; }
+            yield return Shot("fase4-capvespre-exclusiva");
             Destroy(ui.gameObject);
 
             var avatar = new NetPlayer { id = 2, name = "Bot", skin = 3, hat = 4, trail = 5, ready = true, ping = 17 };

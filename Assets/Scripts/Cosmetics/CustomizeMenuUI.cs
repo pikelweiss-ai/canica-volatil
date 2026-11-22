@@ -19,8 +19,10 @@ public class CustomizeMenuUI : MonoBehaviour
     readonly Image[] tabIcons = new Image[3];
     UIKit.UIButton[] tabs = new UIKit.UIButton[3];
     UIKit.UIButton useButton, storeButton;
-    readonly UIKit.UIButton[] filters = new UIKit.UIButton[4];
-    int qualityFilter = -1;
+    static readonly ChestRarity?[] filterQualities =
+        { null, ChestRarity.PocComu, ChestRarity.Rar, ChestRarity.Epic, ChestRarity.Llegendari };
+    readonly UIKit.UIButton[] filters = new UIKit.UIButton[filterQualities.Length];
+    ChestRarity? qualityFilter;
     bool store;
     Category category = Category.Skins;
     int pSkin, pHat, pTrail; // previsualització (encara no aplicada)
@@ -45,7 +47,7 @@ public class CustomizeMenuUI : MonoBehaviour
         pSkin = CosmeticsDatabase.Get(CosmeticsDatabase.KeySkin, db.skins != null ? db.skins.Length : 0);
         pHat = CosmeticsDatabase.Get(CosmeticsDatabase.KeyHat, db.hats != null ? db.hats.Length : 0);
         pTrail = CosmeticsDatabase.Get(CosmeticsDatabase.KeyTrail, db.trails != null ? db.trails.Length : 0);
-        category = Category.Skins; qualityFilter = -1; store = false; Refresh();
+        category = Category.Skins; qualityFilter = null; store = false; Refresh();
     }
 
     public void Hide() { gameObject.SetActive(false); }
@@ -75,7 +77,7 @@ public class CustomizeMenuUI : MonoBehaviour
         for (int i = 0; i < tabs.Length; i++)
         {
             int c = i;
-            tabs[i] = UIKit.Button(root, names[i], new Vector2(-640, 245 - i * 153), new Vector2(170, 132), () => { category = (Category)c; qualityFilter = -1; Refresh(); }, UIKit.Style.Normal, 20, false);
+            tabs[i] = UIKit.Button(root, names[i], new Vector2(-640, 245 - i * 153), new Vector2(170, 132), () => { category = (Category)c; qualityFilter = null; Refresh(); }, UIKit.Style.Normal, 20, false);
             tabs[i].label.rectTransform.anchoredPosition = new Vector2(0, -42);
             tabIcons[i] = UIKit.Picture(tabs[i].rect, null, new Vector2(0, 15), new Vector2(65, 65));
         }
@@ -102,12 +104,12 @@ public class CustomizeMenuUI : MonoBehaviour
 
         // Dreta: quadrícula amb scroll i botó UTILITZAR
         gridCount = UIKit.Text(root, "", new Vector2(500, 330), new Vector2(500, 40), 22, TextAlignmentOptions.MidlineLeft, UIKit.Muted);
-        string[] qualities = { "TOTS", "RAR", "ÈPIC", "LLEGENDARI" };
+        string[] qualities = { "TOTS", "ESPECIAL", "RAR", "ÈPIC", "LLEGENDARI" };
         for (int i = 0; i < filters.Length; i++)
         {
-            int index = i;
-            filters[i] = UIKit.Button(root, qualities[i], new Vector2(290 + i * 112, 291), new Vector2(110, 35),
-                () => { qualityFilter = index == 0 ? -1 : index; Refresh(); }, UIKit.Style.Normal, i == 3 ? 12 : 15, false);
+            var quality = filterQualities[i];
+            filters[i] = UIKit.Button(root, qualities[i], new Vector2(290, 291), new Vector2(88, 35),
+                () => { qualityFilter = quality; Refresh(); }, UIKit.Style.Normal, i == filters.Length - 1 ? 12 : 15, false);
         }
         BuildGrid(root);
         useButton = UIKit.Button(root, "UTILITZAR", new Vector2(500, -355), new Vector2(380, 64), UseSelected, UIKit.Style.Success, 30);
@@ -174,6 +176,7 @@ public class CustomizeMenuUI : MonoBehaviour
     {
         if (!CosmeticStore.Owned(category, Selected))
         {
+            if (CosmeticStore.IsExclusive(category, Selected)) return;
             if (!store) store = true;
             else CosmeticStore.Buy(category, Selected);
         }
@@ -219,18 +222,31 @@ public class CustomizeMenuUI : MonoBehaviour
         for (int i = 0; i < count; i++)
         {
             if (CosmeticStore.Owned(category, i)) owned++;
-            if (qualityFilter < 0 || (int)CosmeticStore.Quality(category, i) == qualityFilter) BuildCard(i);
+            if (!qualityFilter.HasValue || CosmeticStore.Quality(category, i) == qualityFilter && !CosmeticStore.IsExclusive(category, i)) BuildCard(i);
         }
         gridCount.text = (store ? "Tenda" : "Col·lecció") + "   " + owned + "/" + count;
         storeButton.SetLabel(store ? "ARMARI" : "TENDA");
+        bool skins = category == Category.Skins;
+        float filterWidth = skins ? 110 : 112;
+        float filterStart = skins ? 223 : 235;
+        int position = 0;
         for (int i = 0; i < filters.Length; i++)
-            filters[i].SetStyle((i == 0 ? qualityFilter < 0 : i == qualityFilter) ? UIKit.Style.Primary : UIKit.Style.Normal);
+        {
+            bool visible = skins || filterQualities[i] != ChestRarity.PocComu;
+            filters[i].rect.gameObject.SetActive(visible);
+            if (!visible) continue;
+            filters[i].rect.sizeDelta = new Vector2(filterWidth - 2, 35);
+            filters[i].rect.anchoredPosition = new Vector2(filterStart + filterWidth * (position++ + .5f), 291);
+            filters[i].label.rectTransform.sizeDelta = new Vector2(filterWidth - 18, 29);
+            filters[i].SetStyle(filterQualities[i] == qualityFilter ? UIKit.Style.Primary : UIKit.Style.Normal);
+        }
         RefreshTabIcons();
         bool ownsSelection = CosmeticStore.Owned(category, Selected);
         int price = CosmeticStore.Price(category, Selected);
+        bool exclusive = CosmeticStore.IsExclusive(category, Selected);
         useButton.SetLabel(ownsSelection ? Selected == Applied(category) ? "EQUIPAT" : "UTILITZAR" :
-            (!store ? "OBRIR TENDA" : "COMPRAR · " + price));
-        useButton.SetInteractable(ownsSelection ? Selected != Applied(category) : !store || CoinBank.Total >= price);
+            exclusive ? "EXCLUSIVA" : (!store ? "OBRIR TENDA" : "COMPRAR · " + price));
+        useButton.SetInteractable(ownsSelection ? Selected != Applied(category) : !exclusive && (!store || CoinBank.Total >= price));
         RefreshPreview();
     }
 
@@ -281,7 +297,13 @@ public class CustomizeMenuUI : MonoBehaviour
         if (!owned && !store)
             UIKit.Box(inner, new Vector2(0, 14), new Vector2(109, 73), new Color(.02f, .04f, .07f, .68f), "Bloquejada")
                 .GetComponent<Image>().raycastTarget = false;
-        if (!owned)
+        if (CosmeticStore.IsExclusive(category, i))
+        {
+            var tag = UIKit.Box(inner, new Vector2(0, 45), new Vector2(88, 22), UIKit.Ink, "Exclusiva");
+            tag.GetComponent<Image>().raycastTarget = false;
+            UIKit.Text(tag, "EXCLUSIVA", Vector2.zero, new Vector2(84, 22), 12, TextAlignmentOptions.Center, UIKit.Gold);
+        }
+        else if (!owned)
         {
             var priceTag = UIKit.Box(inner, new Vector2(32, 45), new Vector2(59, 23), UIKit.Ink, "Preu");
             priceTag.GetComponent<Image>().raycastTarget = false;
@@ -310,7 +332,8 @@ public class CustomizeMenuUI : MonoBehaviour
         nameCard.text = NameOf(Selected);
         var quality = CosmeticStore.Quality(category, Selected);
         qualityBand.color = ItemGraphics.RarityColor(quality);
-        qualityLabel.text = CosmeticStore.QualityName(quality);
+        qualityLabel.text = CosmeticStore.IsExclusive(category, Selected) ? "Exclusiva" :
+            quality == ChestRarity.PocComu ? "Especial" : CosmeticStore.QualityName(quality);
         qualityLabel.color = quality == ChestRarity.Rar || quality == ChestRarity.Epic ? Color.white : UIKit.Ink;
     }
 
