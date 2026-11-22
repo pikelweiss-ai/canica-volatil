@@ -18,6 +18,7 @@ Commits locals de les fases inicials:
 - `ce773c4`, `8de74ab` — rectangles plens/buits i comprovació dels dos modes al `editor160`.
 - `98a0ff1` — pintura amb arrossegament i interpolació de cel·les.
 - `44c257f` — llista seleccionable de mapes guardats amb nom, dimensions i data.
+- `40bdd24` — autotile de camins, panells i canonades, amb comprovació de peces de cantonada/T.
 
 La versió visible/package 1.6.0-alpha, el Changelog, el codi Android 17, el cubell, la línia Bresenham, la càmera WASD/zoom, la visibilitat de capes, l'autosave recuperable, els avisos de confirmació i el desfés dels marcadors ja es van incloure en el tancament de la v1.6. La versió del worktree pot continuar diferint del número de release perquè la v1.6 no s'ha publicat.
 
@@ -33,7 +34,7 @@ Validació a `Builds/Candidats/Alpha-v1.6.0-final`:
 
 - La vista PROVAR encara és una graella local amb marcadors: no instancia enemics, cofres ni portal com a sistemes de joc reals.
 - Online de mapes: D2 permet passar-ho a v1.7 si s'allarga. No hi ha protocol 25 ni transmissió en chunks; el protocol es queda en 24.
-- Autotile limitat als camins `Natura/Gespa_cami_*`; falta cobrir la resta de famílies del disseny i fer ombres/col·lisions rotades en el món.
+- Autotile ara inclou `Natura/Gespa_cami_*`, `Oficina/Panell_*` i `Laboratori/Tuberia_*`; falten catifes, roques de cova, aigua i baranes connectades, així com ombres/col·lisions rotades en el món.
 - Els kits són habitacions de 9×9 amb paret perimetral i terra; falta provar/afinar el contingut temàtic i les plantes.
 - L'editor encara no té selecció/copiat de multipart com a objecte; la pintura amb arrossegament i la llista d'obertura ja estan implementades. La prova Android de jugar mapes importats està pendent.
 - Revisar el rendiment en un mapa 64×64 i fer QA visual en 16:9/4:3.
