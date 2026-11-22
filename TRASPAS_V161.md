@@ -49,6 +49,7 @@ Validació a `Builds/Candidats/Alpha-v1.6.0-final`:
 - No s'han provat executables en PC Linux físic ni APK en mòbil físic. El selector i el flux d'importació s'han comprovat amb el bot Windows, no en un telèfon.
 - Després de `451e514`, Windows, Linux i Android tornen a donar `ALPHA_BUILD_OK`; els manifests coincideixen (`CROSSPLAY_MANIFEST: PASS`) i `editor160` dona `NETBOT PASS`. L'optimització no substitueix la prova pendent de rendiment 64×64 amb gràfics actius.
 - Tancament de la fase 5: `catalog160`, `tile160` i `editor160` donen `NETBOT PASS`; `tile160` valida les 144 màscares de roca/aigua i `editor160` valida l'ombra d'una paret girada. Windows, Linux i Android donen `ALPHA_BUILD_OK`, amb protocol 24 i manifest 1.6.0-alpha compatible.
+- Després del tancament de fase 5, el commit `ab87215` registra les 144 variants i la validació de l'ombra. He tornat a executar `mapdata160` i `share160` en el candidat Windows: tots dos `NETBOT PASS`; els logs de build ja existents indiquen Windows/Linux/Android `Succeeded; errors=0`. No s'ha fet push ni release.
 
 ## Pendents abans de dir que el Creador està complet
 
