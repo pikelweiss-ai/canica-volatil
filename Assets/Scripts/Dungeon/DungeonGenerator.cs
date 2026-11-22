@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
@@ -126,6 +127,11 @@ public partial class DungeonGenerator : MonoBehaviour
         }
 
         PrepareTilemaps();
+        if (MapPlaytest.TryConsumeDungeonMap(out var userMap))
+        {
+            InitializeMapPlaytest(userMap);
+            return;
+        }
         BuildLayout();
         Carve();
         Paint();
@@ -148,6 +154,88 @@ public partial class DungeonGenerator : MonoBehaviour
         CurrentRoom = RunState.ArrivalDirection < 0 ? Rooms.Find(r => r.type == RoomType.Boss) : start;
 
         ui = DungeonUI.Create(this);
+    }
+
+    void InitializeMapPlaytest(MapData data)
+    {
+        floor.Clear(); solid.Clear(); reserved.Clear(); Rooms.Clear();
+        var room = new Room
+        {
+            type = RoomType.Start, shape = RoomShape.Rectangle, modifier = RoomModifier.None,
+            rect = new RectInt(0, 0, data.width, data.height), visited = true, cleared = true
+        };
+        Rooms.Add(room);
+        var all = data.layers.ground.Concat(data.layers.objects).Concat(data.layers.overlay).ToArray();
+        PaintMapLayer(data.layers.ground, all, false);
+        PaintMapLayer(data.layers.objects, all, false);
+        PaintMapLayer(data.layers.overlay, all, true);
+        for (int y = 0; y < data.height; y++)
+            for (int x = 0; x < data.width; x++) floor.Add(new Vector2Int(x, y));
+        ground.CompressBounds(); walls.CompressBounds();
+        var spawn = data.spawns.FirstOrDefault(s => s.kind == "player");
+        Vector2Int start = data.spawns.Any(s => s.kind == "player") ? new Vector2Int(spawn.x, spawn.y) : Vector2Int.zero;
+        Vector3 startPos = ground.GetCellCenterWorld(new Vector3Int(start.x, start.y, 0));
+        if (player != null) player.position = new Vector3(startPos.x, startPos.y, player.position.z);
+        if (spawnPoint != null) spawnPoint.position = startPos;
+        Camera cam = Camera.main;
+        if (cam != null) cam.transform.position = new Vector3(startPos.x, startPos.y, cam.transform.position.z);
+        CurrentRoom = room;
+        SpawnMapObjects(data, room);
+        ApplyLook();
+        ui = DungeonUI.Create(this);
+        var runtime = new GameObject("Prova de mapa real").AddComponent<MapPlaytestRuntime>();
+        runtime.Initialize(data, this);
+    }
+
+    void PaintMapLayer(MapCell[] cells, MapCell[] all, bool forceOverPlayer)
+    {
+        foreach (var source in cells)
+        {
+            var cell = MapAutoTile160.Resolve(source, all);
+            var block = BlockCatalog.Instance.blocks.FirstOrDefault(b => b != null && b.id == cell.blockId);
+            if (block == null || block.sprite == null) continue;
+            var tile = ScriptableObject.CreateInstance<Tile>();
+            tile.name = "Mapa prova " + cell.blockId;
+            tile.sprite = block.sprite;
+            tile.colliderType = block.passable ? Tile.ColliderType.None : Tile.ColliderType.Grid;
+            tile.transform = Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(0, 0, -90 * cell.rot), new Vector3(cell.flip ? -1 : 1, 1, 1));
+            tile.flags = TileFlags.None;
+            var pos = new Vector3Int(cell.x, cell.y, 0);
+            Tilemap destination = !block.passable || forceOverPlayer || block.layer == BlockData.DrawLayer.OverPlayer ? walls : ground;
+            destination.SetTile(pos, tile);
+            if (!block.passable) solid.Add(new Vector2Int(cell.x, cell.y));
+        }
+    }
+
+    void SpawnMapObjects(MapData data, Room room)
+    {
+        foreach (var spawn in data.spawns)
+        {
+            Vector3 position = ground.GetCellCenterWorld(new Vector3Int(spawn.x, spawn.y, 0));
+            if (spawn.kind == "enemy")
+            {
+                var candidates = (enemyPrefabs ?? System.Array.Empty<GameObject>())
+                    .Concat(Theme != null ? Theme.enemies ?? System.Array.Empty<GameObject>() : System.Array.Empty<GameObject>())
+                    .Concat(Theme != null ? Theme.microbosses ?? System.Array.Empty<GameObject>() : System.Array.Empty<GameObject>())
+                    .Concat(Theme != null ? Theme.bossVariants ?? System.Array.Empty<GameObject>() : System.Array.Empty<GameObject>())
+                    .Concat(new[] { bossPrefab, SelectedBoss }).Where(p => p != null);
+                var prefab = candidates.FirstOrDefault(p => string.Equals(p.name.Replace("(Clone)", "").Trim(), spawn.id, System.StringComparison.OrdinalIgnoreCase));
+                if (prefab == null) continue;
+                var enemy = Instantiate(prefab, position, Quaternion.identity);
+                var health = enemy.GetComponent<EnemyHealth>();
+                if (health != null) { room.alive.Add(health); health.currentHealth = health.maxHealth; }
+                enemy.GetComponent<EnemyPathfindingAI>()?.Alert();
+            }
+            else if (spawn.kind == "merchant") Shop.Spawn(position, Shop.MerchantKind, RunState.Seed ^ (spawn.x * 73856093) ^ (spawn.y * 19349663));
+        }
+        foreach (var chestData in data.chests)
+        {
+            int rarity = chestData.rarity == "Rar" ? 1 : chestData.rarity == "Epic" ? 2 : chestData.rarity == "Llegendari" ? 3 : 0;
+            if (chestPrefabs == null || rarity >= chestPrefabs.Length || chestPrefabs[rarity] == null) continue;
+            var chestObject = Instantiate(chestPrefabs[rarity], ground.GetCellCenterWorld(new Vector3Int(chestData.x, chestData.y, 0)), Quaternion.identity);
+            var chest = chestObject.GetComponent<Chest>();
+            if (chest != null) chest.rarity = (ChestRarity)rarity;
+        }
     }
 
     void OnDestroy()

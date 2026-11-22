@@ -7,6 +7,15 @@ public sealed class MapPlaytest : MonoBehaviour
 {
     public static string MapName;
     public static bool ReturnToEditor;
+    public static bool StartInDungeon;
+    public static bool TryConsumeDungeonMap(out MapData map)
+    {
+        map = null;
+        if (!StartInDungeon) return false;
+        StartInDungeon = false;
+        return MapStore.Load(MapName, out map, out _);
+    }
+
     MapData map;
     Vector2Int player;
     TMP_Text status;
@@ -74,4 +83,46 @@ public sealed class MapPlaytest : MonoBehaviour
         }
     }
     void Return() { ReturnToEditor = true; SceneManager.LoadScene("Creador"); }
+}
+
+public sealed class MapPlaytestRuntime : MonoBehaviour
+{
+    MapData map;
+    DungeonGenerator dungeon;
+    Transform player;
+    TMP_Text status;
+    bool completed;
+
+    public void Initialize(MapData data, DungeonGenerator generator)
+    {
+        map = data;
+        dungeon = generator;
+        player = generator.player;
+        var canvas = UIKit.Canvas("Prova mapa real", 80);
+        UIKit.Button(canvas.transform, "TORNAR A L'EDITOR", new Vector2(-610, 405), new Vector2(260, 48), ReturnToEditor, UIKit.Style.Primary, 17);
+        status = UIKit.Text(canvas.transform, map.goal == null ? "MAPA LLIURE" : "Arriba al portal per completar el mapa", new Vector2(0, 405), new Vector2(700, 42), 20, TextAlignmentOptions.Center, UIKit.Gold);
+        if (map.goal != null)
+        {
+            Vector3 pos = dungeon.ground.GetCellCenterWorld(new Vector3Int(map.goal.x, map.goal.y, 0));
+            var marker = Fx.MakeSprite("Portal final del mapa", pos, Fx.Disc, new Color(.3f, .95f, .55f, .9f), "Shadows", 8);
+            if (marker != null) marker.transform.localScale = Vector3.one * .85f;
+        }
+    }
+
+    void Update()
+    {
+        if (completed || map == null || map.goal == null || player == null) return;
+        Vector3Int cell = dungeon.ground.WorldToCell(player.position);
+        if (cell.x != map.goal.x || cell.y != map.goal.y) return;
+        completed = true;
+        status.text = "MAPA COMPLETAT!";
+        status.color = UIKit.Green;
+    }
+
+    void ReturnToEditor()
+    {
+        MapPlaytest.ReturnToEditor = true;
+        RunStats.DontSave = false;
+        SceneManager.LoadScene("Creador");
+    }
 }

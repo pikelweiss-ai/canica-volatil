@@ -94,6 +94,7 @@ public sealed class MapEditor : MonoBehaviour
         map = new MapData();
         if (MapPlaytest.ReturnToEditor && MapStore.Load(MapPlaytest.MapName, out var restored, out _)) { map = restored; currentSavedName = map.name; }
         MapPlaytest.ReturnToEditor = false;
+        RunStats.DontSave = false;
         autosaveAt = Time.unscaledTime + 60f;
         var canvas = UIKit.Canvas("Creador UI", 20);
         uiRoot = canvas.transform;
@@ -283,8 +284,19 @@ public sealed class MapEditor : MonoBehaviour
     }
     void Playtest()
     {
-        Save();
-        if (MapStore.Load(map.name, out var saved, out _)) { MapPlaytest.MapName = map.name; SceneManager.LoadScene("MapaProva"); }
+        string target = string.IsNullOrWhiteSpace(nameField.text) ? "Mapa" : nameField.text.Trim();
+        if (MapStore.List().Contains(target) && target != currentSavedName)
+        { ShowPrompt("Ja existeix un mapa amb este nom. Vols sobreescriure'l abans de provar-lo?", () => { if (SaveAs(target)) BeginPlaytest(); }); return; }
+        if (SaveAs(target)) BeginPlaytest();
+    }
+
+    void BeginPlaytest()
+    {
+        if (!MapStore.Load(map.name, out _, out var error)) { status.text = error; return; }
+        MapPlaytest.MapName = map.name;
+        MapPlaytest.StartInDungeon = true;
+        RunStats.DontSave = true;
+        SceneManager.LoadScene("Dungeon");
     }
     void CopyRegion(int x, int y)
     {
@@ -396,7 +408,7 @@ public sealed class MapEditor : MonoBehaviour
         { ShowPrompt("Ja existeix un mapa amb este nom. Vols sobreescriure'l?", () => SaveAs(target)); return; }
         SaveAs(target);
     }
-    void SaveAs(string target) { map.name = target; if (MapStore.Save(map, map.name, out var error)) { currentSavedName=map.name; dirty=false; status.text = "Guardat: " + map.name; } else status.text = error; }
+    bool SaveAs(string target) { map.name = target; if (MapStore.Save(map, map.name, out var error)) { currentSavedName=map.name; dirty=false; status.text = "Guardat: " + map.name; return true; } status.text = error; return false; }
     void ShowPrompt(string message, System.Action action) { pendingConfirm=action; promptText.text=message; promptPanel.gameObject.SetActive(true); }
     void ConfirmNewMap() { if (dirty) ShowPrompt("Hi ha canvis sense guardar. Vols començar un mapa nou?", () => NewMap(16,16)); else NewMap(16,16); }
     void RecoverAutosave() { if (MapStore.Load("__autosave",out var recovered,out var error)) { map=recovered; nameField.text=map.name; currentSavedName=null; dirty=true; DrawGrid(); status.text="Còpia automàtica recuperada; guarda-la amb un nom."; } else status.text=error; }
