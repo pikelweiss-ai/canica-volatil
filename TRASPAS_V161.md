@@ -34,6 +34,7 @@ Commits locals de les fases inicials:
 - `a271e2f` — ruta automàtica de blocs a la capa segons `BlockData.layer` i `fullBlock`.
 - `18e57ce` — dreceres de teclat desactivades mentre s'editen camps de text.
 - `7bc6567` — col·locar, copiar, girar, voltejar i esborrar mobles multipart com un sol objecte; `editor160` ho valida amb un grup de tres peces.
+- `451e514` — calcula les cel·les visibles una vegada per redibuix de l'editor, en lloc de repetir-ho per cada cel·la.
 
 La versió visible/package 1.6.0-alpha, el Changelog, el codi Android 17, el cubell, la línia Bresenham, la càmera WASD/zoom, la visibilitat de capes, l'autosave recuperable, els avisos de confirmació i el desfés dels marcadors ja es van incloure en el tancament de la v1.6. La versió del worktree pot continuar diferint del número de release perquè la v1.6 no s'ha publicat.
 
@@ -46,6 +47,7 @@ Validació a `Builds/Candidats/Alpha-v1.6.0-final`:
 - Builds Windows, Linux i Android posteriors al canvi multipart: `ALPHA_BUILD_OK`. `check-crossplay.ps1`: `CROSSPLAY_MANIFEST: PASS`, protocol 24, paquet 1.6.0-alpha, 29 armes i 4 cures; Android bundle code 17.
 - `test-online.ps1 -MobileClient`: 6/6 en la validació anterior de les sales ja existents. No és prova de mapes creats online, que es deixa a v1.7.
 - No s'han provat executables en PC Linux físic ni APK en mòbil físic. El selector i el flux d'importació s'han comprovat amb el bot Windows, no en un telèfon.
+- Després de `451e514`, Windows, Linux i Android tornen a donar `ALPHA_BUILD_OK`; els manifests coincideixen (`CROSSPLAY_MANIFEST: PASS`) i `editor160` dona `NETBOT PASS`. L'optimització no substitueix la prova pendent de rendiment 64×64 amb gràfics actius.
 
 ## Pendents abans de dir que el Creador està complet
 
