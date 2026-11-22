@@ -83,6 +83,12 @@ public static class MapStore
         catch { return false; }
     }
 
+    public static DateTime LastModifiedUtc(string fileName)
+    {
+        try { return File.GetLastWriteTimeUtc(SafePath(fileName)); }
+        catch { return DateTime.MinValue; }
+    }
+
     static string SafePath(string fileName)
     {
         if (string.IsNullOrWhiteSpace(fileName) || fileName != Path.GetFileNameWithoutExtension(fileName))

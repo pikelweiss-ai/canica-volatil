@@ -13,7 +13,7 @@ public sealed class MapEditor : MonoBehaviour
     enum PlaceMode { Blocks, Player, Enemy, Chest, Goal }
     MapData map;
     BlockData selected;
-    Transform grid, palette;
+    Transform grid, palette, uiRoot, mapListPanel;
     TMP_InputField nameField, searchField, familyField;
     TMP_InputField sharePathField;
     TMP_Text status;
@@ -96,6 +96,7 @@ public sealed class MapEditor : MonoBehaviour
         MapPlaytest.ReturnToEditor = false;
         autosaveAt = Time.unscaledTime + 60f;
         var canvas = UIKit.Canvas("Creador UI", 20);
+        uiRoot = canvas.transform;
         var background = UIKit.Box(canvas.transform, Vector2.zero, Vector2.zero, UIKit.Ink, "Fons");
         UIKit.Stretch(background);
         UIKit.Text(canvas.transform, "CREADOR DE MAPES", new Vector2(0, 420), new Vector2(900, 58), 34,
@@ -427,9 +428,34 @@ public sealed class MapEditor : MonoBehaviour
 
     void Load()
     {
-        string first = MapStore.List().FirstOrDefault();
-        if (first == null) { status.text = "Encara no hi ha mapes guardats."; return; }
-        if (MapStore.Load(first, out map, out var error)) { nameField.text = first; currentSavedName=first; dirty=false; DrawGrid(); status.text = "Obert: " + first; }
+        var names = MapStore.List();
+        if (names.Length == 0) { status.text = "Encara no hi ha mapes guardats."; return; }
+        if (mapListPanel != null) Destroy(mapListPanel.gameObject);
+        mapListPanel = UIKit.Box(uiRoot, Vector2.zero, new Vector2(720, 620), new Color(.04f, .06f, .09f, .98f), "Llista mapes guardats");
+        UIKit.Text(mapListPanel, "OBRIR MAPA", new Vector2(0, 270), new Vector2(620, 38), 24, TextAlignmentOptions.Center, UIKit.Gold);
+        var content = UIKit.ScrollList(mapListPanel, new Vector2(0, -5), new Vector2(660, 500), out _, 4);
+        int i = 0;
+        foreach (string savedName in names)
+        {
+            string captured = savedName;
+            if (!MapStore.Load(captured, out var savedMap, out _)) continue;
+            var row = UIKit.ListRow(content, 52, i++ % 2 == 0 ? UIKit.Row : UIKit.RowAlt);
+            row.name = "Mapa guardat " + captured;
+            var button = row.gameObject.AddComponent<Button>();
+            button.onClick.AddListener(() => LoadSavedMap(captured));
+            var modified = MapStore.LastModifiedUtc(captured);
+            string date = modified == System.DateTime.MinValue ? "data desconeguda" : modified.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
+            var label = UIKit.Text(row, captured + "  ·  " + savedMap.width + "×" + savedMap.height + "  ·  " + date,
+                Vector2.zero, new Vector2(620, 46), 16, TextAlignmentOptions.MidlineLeft, UIKit.TextColor);
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+        }
+        UIKit.Button(mapListPanel, "TANCAR", new Vector2(0, -275), new Vector2(150, 42), () => { Destroy(mapListPanel.gameObject); mapListPanel = null; }, UIKit.Style.Normal, 15);
+    }
+
+    void LoadSavedMap(string savedName)
+    {
+        if (mapListPanel != null) { Destroy(mapListPanel.gameObject); mapListPanel = null; }
+        if (MapStore.Load(savedName, out map, out var error)) { nameField.text = savedName; currentSavedName = savedName; dirty = false; DrawGrid(); status.text = "Obert: " + savedName; }
         else status.text = error;
     }
 }

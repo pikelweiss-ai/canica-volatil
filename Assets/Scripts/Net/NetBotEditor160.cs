@@ -54,6 +54,10 @@ public partial class NetBot
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         buttons.First(b => b.gameObject.name == "Boto OBRIR").onClick.Invoke();
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        var savedMapButton = buttons.FirstOrDefault(b => b.gameObject.name == "Mapa guardat Mapa");
+        if (savedMapButton == null) { Fail("Obrir no mostra la llista amb nom del mapa"); yield break; }
+        savedMapButton.onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         buttons.First(b => b.gameObject.name == "Boto JUGADOR").onClick.Invoke();
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         buttons.First(b => b.gameObject.name == "Cel·la 0,0").onClick.Invoke();
