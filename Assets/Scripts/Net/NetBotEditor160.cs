@@ -132,8 +132,8 @@ public partial class NetBot
         buttons.First(b => b.gameObject.name == "Boto KIT CASA").onClick.Invoke();
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
-        if (!MapStore.Load("Mapa", out saved, out error) || saved.layers.ground.Length == 0 || saved.layers.objects.Length == 0)
-        { Fail("el kit de casa no ha col·locat terres i parets"); yield break; }
+        if (!MapStore.Load("Mapa", out saved, out error) || saved.layers.ground.Length == 0 || saved.layers.objects.Length == 0 || !saved.layers.objects.Any(c => c.blockId == "Objectes/Planta_test"))
+        { Fail("el kit de casa no ha col·locat terres, parets i planta temàtica"); yield break; }
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         buttons.First(b => b.gameObject.name == "Boto COPIAR").onClick.Invoke();
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
@@ -196,6 +196,18 @@ public partial class NetBot
         if (buttons.Any(b => b.gameObject.name == "Boto CONFIRMAR")) buttons.First(b => b.gameObject.name == "Boto CONFIRMAR").onClick.Invoke();
         if (!MapStore.Load("Mapa", out saved, out error) || saved.layers.ground.Length != 8 || saved.layers.ground.Any(c => c.x == 3 && c.y == 3))
         { Fail("el rectangle buit no ha deixat només el contorn: " + (saved == null || saved.layers == null ? -1 : saved.layers.ground.Length)); yield break; }
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto KIT CASTELL").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
+        if (!MapStore.Load("Mapa", out saved, out error) || !saved.layers.objects.Any(c => c.blockId == "Vegetacio/Seto_verd" && c.x >= 0))
+        { Fail("el kit de castell no ha posat vegetació temàtica"); yield break; }
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto KIT SUPERMERCAT").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
+        if (!MapStore.Load("Mapa", out saved, out error) || !saved.layers.objects.Any(c => c.blockId == "Objectes/Carro_compra") || !saved.layers.objects.Any(c => c.blockId == "Natura/Gespa_flors_mixtes"))
+        { Fail("el kit de supermercat no ha posat els elements temàtics"); yield break; }
         MapStore.Delete("Mapa");
         Ok("editor, objectes, prova, kits i copiar/enganxar regions");
         Pass();

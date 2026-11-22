@@ -136,9 +136,9 @@ public sealed class MapEditor : MonoBehaviour
         chestChoiceLabel = UIKit.Text(canvas.transform, "", new Vector2(245, 230), new Vector2(150, 32), 13, TextAlignmentOptions.Center, UIKit.TextColor);
         UIKit.Button(canvas.transform, "COFRE +", new Vector2(385, 230), new Vector2(95, 32), () => CycleChest(1), UIKit.Style.Normal, 12);
         UpdateObjectChoices();
-        UIKit.Button(canvas.transform, "KIT CASTELL", new Vector2(-360, 315), new Vector2(140, 34), () => PlaceKit("Parets/Castell_blocs", "Parets/Castell_fosc"), UIKit.Style.Normal, 13);
-        UIKit.Button(canvas.transform, "KIT CASA", new Vector2(-205, 315), new Vector2(140, 34), () => PlaceKit("Parets/Paret_casa", "Terres/Terra"), UIKit.Style.Normal, 13);
-        UIKit.Button(canvas.transform, "KIT SUPERMERCAT", new Vector2(-35, 315), new Vector2(165, 34), () => PlaceKit("Moderns/Paret_supermercat", "Terres/Rajola_supermercat"), UIKit.Style.Normal, 12);
+        UIKit.Button(canvas.transform, "KIT CASTELL", new Vector2(-360, 315), new Vector2(140, 34), () => PlaceKit("Parets/Castell_blocs", "Parets/Castell_fosc", "Vegetacio/Seto_verd", "Natura/Gespa_flors_grogues"), UIKit.Style.Normal, 13);
+        UIKit.Button(canvas.transform, "KIT CASA", new Vector2(-205, 315), new Vector2(140, 34), () => PlaceKit("Parets/Paret_casa", "Terres/Terra", "Objectes/Planta_test"), UIKit.Style.Normal, 13);
+        UIKit.Button(canvas.transform, "KIT SUPERMERCAT", new Vector2(-35, 315), new Vector2(165, 34), () => PlaceKit("Moderns/Paret_supermercat", "Terres/Rajola_supermercat", "Objectes/Carro_compra", "Objectes/Estanteria_fruita", "Natura/Gespa_flors_mixtes"), UIKit.Style.Normal, 12);
         string[] toolNames = { "PINTAR", "ESBORRAR", "OMPLIR", "RECTANGLE", "R. PLE/BUIT", "LÍNIA", "COMPTAGOTES", "DESFER", "REFER", "CAPA", "JUGADOR", "ENEMIC", "COFRE", "FINAL", "MERCADER", "COPIAR", "ENGANXAR", "V. CAPA" };
         float toolX = -575;
         foreach (string toolName in toolNames)
@@ -353,7 +353,7 @@ public sealed class MapEditor : MonoBehaviour
     {
         var result=new List<MapCell>(target); foreach(var c0 in source) { var c=c0; c.x+=x; c.y+=y; if(c.x<0||c.y<0||c.x>=map.width||c.y>=map.height) continue; result.RemoveAll(v=>v.x==c.x&&v.y==c.y); result.Add(c); } return result.ToArray();
     }
-    void PlaceKit(string wallId,string floorId)
+    void PlaceKit(string wallId,string floorId,params string[] decorIds)
     {
         var wall=BlockCatalog.Instance.blocks.FirstOrDefault(b=>b.id==wallId); var floor=BlockCatalog.Instance.blocks.FirstOrDefault(b=>b.id==floorId);
         if(wall==null||floor==null){ status.text="Falta una peça del kit."; return; }
@@ -361,6 +361,15 @@ public sealed class MapEditor : MonoBehaviour
         var ground=map.layers.ground.Where(c=>c.x<sx||c.x>=sx+w||c.y<sy||c.y>=sy+h).ToList();
         var objects=map.layers.objects.Where(c=>c.x<sx||c.x>=sx+w||c.y<sy||c.y>=sy+h).ToList();
         for(int y=0;y<h;y++) for(int x=0;x<w;x++) { int px=sx+x,py=sy+y; bool edge=x==0||y==0||x==w-1||y==h-1; var cell=new MapCell{x=px,y=py,blockId=edge?wall.id:floor.id}; (edge?objects:ground).Add(cell); }
+        Vector2Int[] decorSpots = { new Vector2Int(sx + 2, sy + 2), new Vector2Int(sx + w - 3, sy + 2), new Vector2Int(sx + 2, sy + h - 3), new Vector2Int(sx + w - 3, sy + h - 3) };
+        for (int i = 0; i < decorIds.Length && i < decorSpots.Length; i++)
+        {
+            var decor = BlockCatalog.Instance.blocks.FirstOrDefault(b => b != null && b.id == decorIds[i]);
+            if (decor == null) continue;
+            var p = decorSpots[i];
+            objects.RemoveAll(c => c.x == p.x && c.y == p.y);
+            objects.Add(new MapCell { x = p.x, y = p.y, blockId = decor.id });
+        }
         map.layers.ground=ground.ToArray(); map.layers.objects=objects.ToArray(); DrawGrid(); status.text="Kit col·locat: "+wallId;
     }
     void Fill(int x, int y)
