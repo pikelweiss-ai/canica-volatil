@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 public sealed class MapEditor : MonoBehaviour
 {
-    enum EditTool { Paint, Erase, Fill, Rectangle, Line, Eyedropper }
+    enum EditTool { Paint, Erase, Fill, Rectangle, Line, Eyedropper, Copy, Paste }
     enum EditLayer { Ground, Objects, Overlay }
     enum PlaceMode { Blocks, Player, Enemy, Chest, Goal }
     MapData map;
@@ -21,6 +21,7 @@ public sealed class MapEditor : MonoBehaviour
     EditLayer layer;
     PlaceMode placeMode;
     Vector2Int? dragStart;
+    MapLayers clipboard;
     sealed class Snapshot { public MapCell[] ground, objects, overlay; }
     readonly Stack<Snapshot> undo = new Stack<Snapshot>();
     readonly Stack<Snapshot> redo = new Stack<Snapshot>();
@@ -54,7 +55,10 @@ public sealed class MapEditor : MonoBehaviour
         UIKit.Button(canvas.transform, "EIXIR", new Vector2(550, 360), new Vector2(120, 42),
             () => SceneManager.LoadScene("MainMenu"), UIKit.Style.Ghost, 16);
         status = UIKit.Text(canvas.transform, "", new Vector2(0, 315), new Vector2(800, 30), 16, TextAlignmentOptions.Center, UIKit.Muted);
-        string[] toolNames = { "PINTAR", "ESBORRAR", "OMPLIR", "RECTANGLE", "LÍNIA", "COMPTAGOTES", "DESFER", "REFER", "CAPA", "JUGADOR", "ENEMIC", "COFRE", "FINAL" };
+        UIKit.Button(canvas.transform, "KIT CASTELL", new Vector2(-360, 315), new Vector2(140, 34), () => PlaceKit("Parets/Castell_blocs", "Parets/Castell_fosc"), UIKit.Style.Normal, 13);
+        UIKit.Button(canvas.transform, "KIT CASA", new Vector2(-205, 315), new Vector2(140, 34), () => PlaceKit("Parets/Paret_casa", "Terres/Terra"), UIKit.Style.Normal, 13);
+        UIKit.Button(canvas.transform, "KIT SUPERMERCAT", new Vector2(-35, 315), new Vector2(165, 34), () => PlaceKit("Moderns/Paret_supermercat", "Terres/Rajola_supermercat"), UIKit.Style.Normal, 12);
+        string[] toolNames = { "PINTAR", "ESBORRAR", "OMPLIR", "RECTANGLE", "LÍNIA", "COMPTAGOTES", "DESFER", "REFER", "CAPA", "JUGADOR", "ENEMIC", "COFRE", "FINAL", "COPIAR", "ENGANXAR" };
         float toolX = -575;
         foreach (string toolName in toolNames)
         {
@@ -126,6 +130,8 @@ public sealed class MapEditor : MonoBehaviour
     void Paint(int x, int y)
     {
         if (placeMode != PlaceMode.Blocks) { PlaceObject(x, y); return; }
+        if (tool == EditTool.Copy) { CopyRegion(x, y); return; }
+        if (tool == EditTool.Paste) { PasteRegion(x, y); return; }
         if (tool == EditTool.Fill) { Fill(x, y); return; }
         if (tool == EditTool.Eyedropper) { selected = ActiveCells().FirstOrDefault(c => c.x == x && c.y == y).blockId == null ? null :
             BlockCatalog.Instance.blocks.FirstOrDefault(b => b.id == ActiveCells().First(c => c.x == x && c.y == y).blockId); return; }
@@ -164,6 +170,7 @@ public sealed class MapEditor : MonoBehaviour
         {
             "ESBORRAR" => EditTool.Erase, "OMPLIR" => EditTool.Fill, "RECTANGLE" => EditTool.Rectangle,
             "LÍNIA" => EditTool.Line, "COMPTAGOTES" => EditTool.Eyedropper,
+            "COPIAR" => EditTool.Copy, "ENGANXAR" => EditTool.Paste,
             "DESFER" => EditTool.Paint, "REFER" => EditTool.Paint, _ => EditTool.Paint
         };
         if (name == "DESFER") Undo();
@@ -189,6 +196,36 @@ public sealed class MapEditor : MonoBehaviour
     {
         Save();
         if (MapStore.Load(map.name, out var saved, out _)) { MapPlaytest.MapName = map.name; SceneManager.LoadScene("MapaProva"); }
+    }
+    void CopyRegion(int x, int y)
+    {
+        if (!dragStart.HasValue) { dragStart = new Vector2Int(x,y); status.text = "Tria l'altre cantó de la selecció."; return; }
+        int minX=Mathf.Min(x,dragStart.Value.x), maxX=Mathf.Max(x,dragStart.Value.x), minY=Mathf.Min(y,dragStart.Value.y), maxY=Mathf.Max(y,dragStart.Value.y);
+        clipboard = new MapLayers { ground=Crop(map.layers.ground,minX,minY,maxX,maxY), objects=Crop(map.layers.objects,minX,minY,maxX,maxY), overlay=Crop(map.layers.overlay,minX,minY,maxX,maxY) };
+        dragStart = null; status.text = "Regió copiada.";
+    }
+    static MapCell[] Crop(MapCell[] cells,int minX,int minY,int maxX,int maxY) => cells.Where(c=>c.x>=minX&&c.x<=maxX&&c.y>=minY&&c.y<=maxY)
+        .Select(c=> { c.x-=minX; c.y-=minY; return c; }).ToArray();
+    void PasteRegion(int x,int y)
+    {
+        if (clipboard == null) { status.text="Copia una regió primer."; return; }
+        PushUndo();
+        map.layers.ground=PasteCells(map.layers.ground,clipboard.ground,x,y); map.layers.objects=PasteCells(map.layers.objects,clipboard.objects,x,y); map.layers.overlay=PasteCells(map.layers.overlay,clipboard.overlay,x,y);
+        DrawGrid(); status.text="Regió enganxada.";
+    }
+    MapCell[] PasteCells(MapCell[] target,MapCell[] source,int x,int y)
+    {
+        var result=new List<MapCell>(target); foreach(var c0 in source) { var c=c0; c.x+=x; c.y+=y; if(c.x<0||c.y<0||c.x>=map.width||c.y>=map.height) continue; result.RemoveAll(v=>v.x==c.x&&v.y==c.y); result.Add(c); } return result.ToArray();
+    }
+    void PlaceKit(string wallId,string floorId)
+    {
+        var wall=BlockCatalog.Instance.blocks.FirstOrDefault(b=>b.id==wallId); var floor=BlockCatalog.Instance.blocks.FirstOrDefault(b=>b.id==floorId);
+        if(wall==null||floor==null){ status.text="Falta una peça del kit."; return; }
+        PushUndo(); int w=Mathf.Min(9,map.width), h=Mathf.Min(9,map.height), sx=(map.width-w)/2, sy=(map.height-h)/2;
+        var ground=map.layers.ground.Where(c=>c.x<sx||c.x>=sx+w||c.y<sy||c.y>=sy+h).ToList();
+        var objects=map.layers.objects.Where(c=>c.x<sx||c.x>=sx+w||c.y<sy||c.y>=sy+h).ToList();
+        for(int y=0;y<h;y++) for(int x=0;x<w;x++) { int px=sx+x,py=sy+y; bool edge=x==0||y==0||x==w-1||y==h-1; var cell=new MapCell{x=px,y=py,blockId=edge?wall.id:floor.id}; (edge?objects:ground).Add(cell); }
+        map.layers.ground=ground.ToArray(); map.layers.objects=objects.ToArray(); DrawGrid(); status.text="Kit col·locat: "+wallId;
     }
     void Fill(int x, int y)
     {
