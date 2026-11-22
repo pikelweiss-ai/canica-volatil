@@ -15,6 +15,21 @@ public partial class NetBot
         };
         var resolved = MapAutoTile160.Resolve(cells[0], cells);
         if (resolved.blockId != "Natura/Gespa_cami_T") { Fail("autotile no ha triat la peça T: " + resolved.blockId); yield break; }
+        var cornerCells = new[] {
+            new MapCell { x=1,y=1,blockId="Oficina/Panell_recte_H" },
+            new MapCell { x=1,y=2,blockId="Oficina/Panell_T" },
+            new MapCell { x=2,y=1,blockId="Oficina/Panell_creu" }
+        };
+        if (MapAutoTile160.Resolve(cornerCells[0], cornerCells).blockId != "Oficina/Panell_canto_NE")
+        { Fail("autotile de cantonada de panell incorrecte"); yield break; }
+        var pipeCells = new[] {
+            new MapCell { x=1,y=1,blockId="Laboratori/Tuberia_H" },
+            new MapCell { x=1,y=2,blockId="Laboratori/Tuberia_V" },
+            new MapCell { x=2,y=1,blockId="Laboratori/Tuberia_H" },
+            new MapCell { x=0,y=1,blockId="Laboratori/Tuberia_H" }
+        };
+        if (MapAutoTile160.Resolve(pipeCells[0], pipeCells).blockId != "Laboratori/Tuberia_T")
+        { Fail("autotile de T de canonada incorrecte"); yield break; }
         var rect = MapAutoTile160.RotateHitbox(new Rect(-.25f,-.5f,.5f,1f), 1);
         if (Mathf.Abs(rect.width - 1f) > .001f || Mathf.Abs(rect.height - .5f) > .001f)
         { Fail("la hitbox no gira amb el bloc"); yield break; }
