@@ -167,12 +167,14 @@ public partial class DungeonGenerator : MonoBehaviour
         };
         Rooms.Add(room);
         var all = data.layers.ground.Concat(data.layers.objects).Concat(data.layers.overlay).ToArray();
-        PaintMapLayer(data.layers.ground, all, false, partialHitboxes.transform);
-        PaintMapLayer(data.layers.objects, all, false, partialHitboxes.transform);
-        PaintMapLayer(data.layers.overlay, all, true, partialHitboxes.transform);
+        var cellsByPosition = MapAutoTile160.Index(all);
+        PaintMapLayer(data.layers.ground, cellsByPosition, false, partialHitboxes.transform);
+        PaintMapLayer(data.layers.objects, cellsByPosition, false, partialHitboxes.transform);
+        PaintMapLayer(data.layers.overlay, cellsByPosition, true, partialHitboxes.transform);
         for (int y = 0; y < data.height; y++)
             for (int x = 0; x < data.width; x++) floor.Add(new Vector2Int(x, y));
         ground.CompressBounds(); walls.CompressBounds();
+        FindFirstObjectByType<BlockShadow>()?.Rebuild();
         var spawn = data.spawns.FirstOrDefault(s => s.kind == "player");
         Vector2Int start = data.spawns.Any(s => s.kind == "player") ? new Vector2Int(spawn.x, spawn.y) : Vector2Int.zero;
         Vector3 startPos = ground.GetCellCenterWorld(new Vector3Int(start.x, start.y, 0));
@@ -188,16 +190,16 @@ public partial class DungeonGenerator : MonoBehaviour
         runtime.Initialize(data, this);
     }
 
-    void PaintMapLayer(MapCell[] cells, MapCell[] all, bool forceOverPlayer, Transform partialHitboxes)
+    void PaintMapLayer(MapCell[] cells, MapAutoTile160.CellIndex cellsByPosition, bool forceOverPlayer, Transform partialHitboxes)
     {
         foreach (var source in cells)
         {
-            var cell = MapAutoTile160.Resolve(source, all);
+            var cell = MapAutoTile160.Resolve(source, cellsByPosition);
             var block = BlockCatalog.Instance.blocks.FirstOrDefault(b => b != null && b.id == cell.blockId);
             if (block == null || block.sprite == null) continue;
             var tile = ScriptableObject.CreateInstance<Tile>();
             tile.name = "Mapa prova " + cell.blockId;
-            tile.sprite = block.sprite;
+            tile.sprite = cell.resolvedSprite != null ? cell.resolvedSprite : block.sprite;
             tile.colliderType = !block.passable && block.fullBlock ? Tile.ColliderType.Grid : Tile.ColliderType.None;
             tile.transform = Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(0, 0, -90 * cell.rot), new Vector3(cell.flip ? -1 : 1, 1, 1));
             tile.flags = TileFlags.None;

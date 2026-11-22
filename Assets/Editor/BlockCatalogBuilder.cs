@@ -11,6 +11,10 @@ public static class BlockCatalogBuilder
     const string Textures = "Assets/Resources/Pixel/Blocs/Cataleg";
     const string Data = "Assets/Blocks";
     const string CatalogPath = "Assets/Resources/BlockCatalog.asset";
+    static readonly string[] AutoTileBlocks = {
+        "Roca_cova_1", "Roca_cova_marro", "Roca_cova_gran", "Roca_cova_molsa", "Roca_cova_magma", "Roca_cova_blava",
+        "Aigua_profunda", "Aigua_nit", "Aigua_fosca"
+    };
 
     [MenuItem("Canica/Almanac de blocs v1.5")]
     public static void Build()
@@ -38,6 +42,8 @@ public static class BlockCatalogBuilder
             imports.Add((entry.family, entry.name, sprite, sprite == legacy ? legacy : null));
         }
         AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+        ConfigureAutoTileImports();
+        AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
         var entries = new List<BlockData>(imports.Count);
         AssetDatabase.StartAssetEditing();
         try
@@ -47,11 +53,13 @@ public static class BlockCatalogBuilder
                 string id = entry.family + "/" + entry.name;
                 string path = Data + "/" + id + ".asset";
                 var block = AssetDatabase.LoadAssetAtPath<BlockData>(path);
+                bool created = block == null;
                 if (block == null)
                 {
                     block = ScriptableObject.CreateInstance<BlockData>();
                     AssetDatabase.CreateAsset(block, path);
                 }
+                string before = created ? null : JsonUtility.ToJson(block);
 
                 block.id = id;
                 block.displayName = entry.name.Replace('_', ' ');
@@ -59,8 +67,13 @@ public static class BlockCatalogBuilder
                 block.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(entry.sprite);
                 block.scenerySprite = entry.legacy != null ? AssetDatabase.LoadAssetAtPath<Sprite>(entry.legacy) : null;
                 if (block.sprite == null) throw new InvalidOperationException("Falta la textura de " + id);
+                if (AutoTileBlocks.Contains(entry.name))
+                    block.autoTileSprites = Enumerable.Range(0, 16).Select(mask => AssetDatabase.LoadAssetAtPath<Sprite>(
+                        Textures + "/Natura/Autotile/" + entry.name + "_mask" + mask.ToString("00") + ".png")).ToArray();
+                if (AutoTileBlocks.Contains(entry.name) && block.autoTileSprites.Any(sprite => sprite == null))
+                    throw new InvalidOperationException("Falten variants autotile per a " + id);
                 ApplyProperties(block, entry.name);
-                EditorUtility.SetDirty(block);
+                if (created || before != JsonUtility.ToJson(block)) EditorUtility.SetDirty(block);
                 entries.Add(block);
             }
         }
@@ -81,6 +94,29 @@ public static class BlockCatalogBuilder
         EditorUtility.SetDirty(catalog);
         AssetDatabase.SaveAssets();
         Debug.Log("BLOCK_CATALOG: " + entries.Count + " blocs");
+    }
+
+    static void ConfigureAutoTileImports()
+    {
+        foreach (string name in AutoTileBlocks)
+        foreach (int mask in Enumerable.Range(0, 16))
+        {
+            string path = Textures + "/Natura/Autotile/" + name + "_mask" + mask.ToString("00") + ".png";
+            var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer == null) throw new InvalidOperationException("No s'ha importat el sprite autotile: " + path);
+            if (importer.textureType != TextureImporterType.Sprite || importer.spritePixelsPerUnit != 16 ||
+                importer.filterMode != FilterMode.Point || importer.mipmapEnabled ||
+                importer.textureCompression != TextureImporterCompression.Uncompressed || !importer.alphaIsTransparency)
+            {
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spritePixelsPerUnit = 16;
+                importer.filterMode = FilterMode.Point;
+                importer.mipmapEnabled = false;
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                importer.alphaIsTransparency = true;
+                importer.SaveAndReimport();
+            }
+        }
     }
 
     static void ApplyProperties(BlockData block, string name)

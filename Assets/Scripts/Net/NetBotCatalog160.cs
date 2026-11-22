@@ -15,6 +15,15 @@ public partial class NetBot
         { Fail("el catàleg necessita 626 blocs, 15 famílies i ids únics"); yield break; }
         Ok("626 blocs, 15 famílies i ids únics");
 
+        string[] autoTileIds = { "Roca_cova_1", "Roca_cova_marro", "Roca_cova_gran", "Roca_cova_molsa", "Roca_cova_magma", "Roca_cova_blava", "Aigua_profunda", "Aigua_nit", "Aigua_fosca" };
+        foreach (string name in autoTileIds)
+        {
+            var block = blocks.FirstOrDefault(b => b.id == "Natura/" + name);
+            if (block == null || block.autoTileSprites == null || block.autoTileSprites.Length != 16 || block.autoTileSprites.Any(sprite => sprite == null))
+            { Fail("falten les 16 variants direccionals de " + name); yield break; }
+        }
+        Ok("roques de cova i aigües amb les 16 màscares d'autotile");
+
         if (blocks.Any(b => b.family == "Objectes" && !b.passable &&
             (b.hitbox.width <= 0f || b.hitbox.height <= 0f)))
         { Fail("objecte sòlid sense hitbox"); yield break; }

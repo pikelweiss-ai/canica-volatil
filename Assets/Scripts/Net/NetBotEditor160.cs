@@ -3,6 +3,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Tilemaps;
 using UnityEngine.UI;
 
 public partial class NetBot
@@ -163,6 +164,23 @@ public partial class NetBot
             : saved.layers.ground.Any(c => c.x == 4 && c.y == 0 && c.blockId == partialBlock.id);
         if (!partialRouted) { Fail("el bloc no s'ha enviat a la capa indicada per BlockData"); yield break; }
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Bloc Natura/Roca_cova_1").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto PINTAR").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Cel·la 5,1").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Bloc Terres/Terra").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto PINTAR").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Cel·la 5,0").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
+        if (!MapStore.Load("Mapa", out saved, out error) || !saved.layers.overlay.Any(c => c.x == 5 && c.y == 1 && c.blockId == "Natura/Roca_cova_1" && c.rot == 1) ||
+            !saved.layers.ground.Any(c => c.x == 5 && c.y == 0 && c.blockId == "Terres/Terra"))
+        { Fail("no s'ha pogut preparar l'ombra: error=" + error + "; objectes=" + string.Join(",", saved.layers.objects.Select(c => c.blockId + "@" + c.x + "," + c.y + ",r" + c.rot)) + "; terra=" + string.Join(",", saved.layers.ground.Select(c => c.blockId + "@" + c.x + "," + c.y))); yield break; }
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         buttons.First(b => b.gameObject.name == "Boto PROVAR").onClick.Invoke();
         yield return WaitFor(() => Scene == "Dungeon", 8, "escena real de masmorra per a provar el mapa");
         if (failed) yield break;
@@ -177,6 +195,16 @@ public partial class NetBot
             GameObject.Find("Hitboxes parcials del mapa") == null ||
             GameObject.Find("Hitboxes parcials del mapa").GetComponents<BoxCollider2D>().Length == 0)
         { Fail("PROVAR no ha creat jugador, enemic, cofre, mercader i portal reals"); yield break; }
+        var blockShadow = FindFirstObjectByType<BlockShadow>();
+        var shadowPosition = new Vector3Int(5, 0, 0);
+        bool shadowExists = blockShadow != null && blockShadow.shadowTilemap != null && blockShadow.shadowTilemap.HasTile(shadowPosition);
+        float wallRotation = blockShadow != null && blockShadow.wallsTilemap != null
+            ? blockShadow.wallsTilemap.GetTransformMatrix(new Vector3Int(5, 1, 0)).rotation.eulerAngles.z : -1f;
+        var rotatedShadow = shadowExists ? blockShadow.shadowTilemap.GetTile(shadowPosition) as Tile : null;
+        float shadowRotation = rotatedShadow != null ? rotatedShadow.transform.rotation.eulerAngles.z : -1f;
+        if (blockShadow == null || !blockShadow.shadowTilemap.HasTile(shadowPosition) ||
+            Mathf.Abs(Mathf.DeltaAngle(shadowRotation, -90f)) > .1f)
+        { Fail("l'ombra no conserva la rotació del bloc (shadow=" + shadowExists + ", wall=" + wallRotation + ", shadowRot=" + shadowRotation + ")"); yield break; }
         if (!FindObjectsByType<TMP_Text>(FindObjectsSortMode.None).Any(t => t.text == "MAPA COMPLETAT!"))
         { Fail("el jugador no ha completat el mapa en arribar al portal"); yield break; }
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);

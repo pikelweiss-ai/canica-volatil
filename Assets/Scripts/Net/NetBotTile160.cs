@@ -40,6 +40,28 @@ public partial class NetBot
         for (int i = 0; i < carpetCells.Length; i++)
             if (MapAutoTile160.Resolve(carpetCells[i], carpetCells).blockId != carpetCorners[i])
             { Fail("autotile de cantonada de catifa incorrecte en " + i); yield break; }
+        var overlappingLayers = new[] {
+            new MapCell { x=0,y=0,blockId="Natura/Gespa_cami_recte" },
+            new MapCell { x=1,y=0,blockId="Terres/Terra" },
+            new MapCell { x=1,y=0,blockId="Natura/Gespa_cami_recte" }
+        };
+        var overlapIndex = MapAutoTile160.Index(overlappingLayers);
+        if (MapAutoTile160.Resolve(overlappingLayers[0], overlapIndex).blockId != "Natura/Gespa_cami_final")
+        { Fail("l'índex d'autotile ha perdut una capa superposada"); yield break; }
+        var directions = new[] { new Vector2Int(0,1), new Vector2Int(1,0), new Vector2Int(0,-1), new Vector2Int(-1,0) };
+        foreach (string name in new[] { "Roca_cova_1", "Roca_cova_marro", "Roca_cova_gran", "Roca_cova_molsa", "Roca_cova_magma", "Roca_cova_blava", "Aigua_profunda", "Aigua_nit", "Aigua_fosca" })
+        {
+            var block = BlockCatalog.Instance.blocks.First(b => b.id == "Natura/" + name);
+            for (int mask = 0; mask < 16; mask++)
+            {
+                var fixture = new System.Collections.Generic.List<MapCell> { new MapCell { x=0,y=0,blockId=block.id } };
+                for (int bit = 0; bit < directions.Length; bit++)
+                    if ((mask & (1 << bit)) != 0) fixture.Add(new MapCell { x=directions[bit].x,y=directions[bit].y,blockId=block.id });
+                var resolvedMask = MapAutoTile160.Resolve(fixture[0], MapAutoTile160.Index(fixture.ToArray()));
+                if (resolvedMask.resolvedSprite != block.autoTileSprites[mask])
+                { Fail("màscara d'autotile incorrecta per a " + name + ": " + mask); yield break; }
+            }
+        }
         var railingCorner = new[] {
             new MapCell { x=1,y=1,blockId="Port/Barana_H" },
             new MapCell { x=1,y=2,blockId="Port/Barana_V" },
@@ -65,6 +87,6 @@ public partial class NetBot
             ground=new[] { new MapCell {x=0,y=0,blockId="Terres/Terra"} },
             objects=new[] { new MapCell {x=0,y=0,blockId="Bany/Catifa_bany_centre"} } } };
         if (!MapStore.Validate(map, out var error)) { Fail("no permet superposar capes: " + error); yield break; }
-        Ok("autotile de camí, catifa, barana, hitbox rotada i capes superposades"); Pass();
+        Ok("autotile de roques/aigua (144 màscares), camí, catifa, barana, hitbox i capes"); Pass();
     }
 }

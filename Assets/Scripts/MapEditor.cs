@@ -259,6 +259,7 @@ public sealed class MapEditor : MonoBehaviour
         UIKit.Clear(grid);
         float cell = Mathf.Min(650f / map.width, 540f / map.height);
         var cells = VisibleCells();
+        var cellsByPosition = MapAutoTile160.Index(cells);
         for (int y = 0; y < map.height; y++)
         for (int x = 0; x < map.width; x++)
         {
@@ -267,13 +268,14 @@ public sealed class MapEditor : MonoBehaviour
                 () => { if (suppressGridClick == new Vector2Int(cx, cy)) { suppressGridClick = null; return; } suppressGridClick = null; Paint(cx, cy); }, UIKit.Style.Normal, 10);
             button.rect.name = "Cel·la " + cx + "," + cy;
             button.image.color = gridVisible ? UIKit.ButtonColor : new Color(0f, 0f, 0f, 0f);
-            var item = MapAutoTile160.Resolve(cells.FirstOrDefault(c => c.x == cx && c.y == cy), cells);
+            cellsByPosition.TryGetValue(new Vector2Int(cx, cy), out var source);
+            var item = MapAutoTile160.Resolve(source, cellsByPosition);
             if (!string.IsNullOrEmpty(item.blockId))
             {
                 var block = BlockCatalog.Instance.blocks.FirstOrDefault(b => b.id == item.blockId);
                 if (block != null)
                 {
-                    var image = UIKit.Picture(button.rect, block.sprite, Vector2.zero, new Vector2(cell - 3, cell - 3));
+                    var image = UIKit.Picture(button.rect, item.resolvedSprite != null ? item.resolvedSprite : block.sprite, Vector2.zero, new Vector2(cell - 3, cell - 3));
                     image.rectTransform.localEulerAngles = new Vector3(0, 0, -90 * item.rot);
                     image.rectTransform.localScale = new Vector3(item.flip ? -1 : 1, 1, 1);
                     image.raycastTarget = false;

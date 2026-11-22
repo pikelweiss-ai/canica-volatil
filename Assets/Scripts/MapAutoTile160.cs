@@ -1,13 +1,58 @@
 using System.Linq;
+using System.Collections.Generic;
 using UnityEngine;
 
 public static class MapAutoTile160
 {
+    public sealed class CellIndex
+    {
+        readonly Dictionary<Vector2Int, MapCell> firstCell = new Dictionary<Vector2Int, MapCell>();
+        readonly Dictionary<string, HashSet<Vector2Int>> styles = new Dictionary<string, HashSet<Vector2Int>>();
+
+        internal void Add(MapCell cell)
+        {
+            var position = new Vector2Int(cell.x, cell.y);
+            if (!firstCell.ContainsKey(position)) firstCell.Add(position, cell);
+            string prefix = StylePrefix(cell.blockId);
+            if (prefix == null) return;
+            if (!styles.TryGetValue(prefix, out var positions)) styles[prefix] = positions = new HashSet<Vector2Int>();
+            positions.Add(position);
+        }
+
+        public bool TryGetValue(Vector2Int position, out MapCell cell) => firstCell.TryGetValue(position, out cell);
+        internal bool HasStyle(Vector2Int position, string prefix) =>
+            styles.TryGetValue(prefix, out var positions) && positions.Contains(position);
+    }
+
     public static bool IsPath(string id) => id != null && id.StartsWith("Natura/Gespa_cami_");
     public static MapCell Resolve(MapCell cell, MapCell[] cells)
     {
+        return Resolve(cell, Index(cells));
+    }
+
+    public static CellIndex Index(MapCell[] cells)
+    {
+        var index = new CellIndex();
+        if (cells != null)
+            foreach (var cell in cells) index.Add(cell);
+        return index;
+    }
+
+    public static MapCell Resolve(MapCell cell, CellIndex cells)
+    {
         string prefix = StylePrefix(cell.blockId);
         if (prefix == null || cells == null) return cell;
+        if (prefix == "Natura/Roca_cova_" || prefix == "Natura/Aigua_")
+        {
+            int mask = (Has(cells, cell.x, cell.y + 1, prefix) ? 1 : 0) |
+                (Has(cells, cell.x + 1, cell.y, prefix) ? 2 : 0) |
+                (Has(cells, cell.x, cell.y - 1, prefix) ? 4 : 0) |
+                (Has(cells, cell.x - 1, cell.y, prefix) ? 8 : 0);
+            var block = BlockCatalog.Instance.blocks.FirstOrDefault(b => b != null && b.id == cell.blockId);
+            if (block != null && block.autoTileSprites != null && block.autoTileSprites.Length == 16)
+                cell.resolvedSprite = block.autoTileSprites[mask];
+            return cell;
+        }
         if (prefix == "Bany/Catifa_bany_") return ResolveCarpet(cell, cells, prefix);
         bool path = IsPath(cell.blockId);
         bool U = Has(cells, cell.x, cell.y + 1, prefix), R = Has(cells, cell.x + 1, cell.y, prefix), D = Has(cells, cell.x, cell.y - 1, prefix), L = Has(cells, cell.x - 1, cell.y, prefix);
@@ -46,7 +91,7 @@ public static class MapAutoTile160
         return cell;
     }
 
-    static MapCell ResolveCarpet(MapCell cell, MapCell[] cells, string prefix)
+    static MapCell ResolveCarpet(MapCell cell, CellIndex cells, string prefix)
     {
         var component = new System.Collections.Generic.HashSet<Vector2Int>();
         var queue = new System.Collections.Generic.Queue<Vector2Int>();
@@ -56,7 +101,7 @@ public static class MapAutoTile160
         {
             var p = queue.Dequeue();
             if (!component.Add(p)) continue;
-            if (!cells.Any(c => c.x == p.x && c.y == p.y && StylePrefix(c.blockId) == prefix))
+            if (!cells.HasStyle(p, prefix))
             { component.Remove(p); continue; }
             queue.Enqueue(p + Vector2Int.up); queue.Enqueue(p + Vector2Int.down);
             queue.Enqueue(p + Vector2Int.left); queue.Enqueue(p + Vector2Int.right);
@@ -76,6 +121,8 @@ public static class MapAutoTile160
     static string StylePrefix(string id)
     {
         if (id == null) return null;
+        if (id.StartsWith("Natura/Roca_cova_")) return "Natura/Roca_cova_";
+        if (id.StartsWith("Natura/Aigua_")) return "Natura/Aigua_";
         if (id.StartsWith("Natura/Gespa_cami_")) return "Natura/Gespa_cami_";
         if (id.StartsWith("Oficina/Panell_") && id != "Oficina/Panell_tela") return "Oficina/Panell_";
         if (id.StartsWith("Laboratori/Tuberia_verda_")) return "Laboratori/Tuberia_verda_";
@@ -84,7 +131,7 @@ public static class MapAutoTile160
         if (id.StartsWith("Bany/Catifa_bany_")) return "Bany/Catifa_bany_";
         return null;
     }
-    static bool Has(MapCell[] cells, int x, int y, string prefix) => cells.Any(c => c.x == x && c.y == y && StylePrefix(c.blockId) == prefix);
+    static bool Has(CellIndex cells, int x, int y, string prefix) => cells.HasStyle(new Vector2Int(x, y), prefix);
     public static Rect RotateHitbox(Rect rect, int rotation)
     {
         rotation = ((rotation % 4) + 4) % 4;

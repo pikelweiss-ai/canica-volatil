@@ -64,15 +64,17 @@ public sealed class MapPlaytest : MonoBehaviour
         var old = canvas.Find("Graella"); if (old != null) Destroy(old.gameObject);
         var grid = UIKit.Empty(canvas, "Graella");
         float size = Mathf.Min(680f / map.width, 600f / map.height);
+        var all = map.layers.ground.Concat(map.layers.objects).Concat(map.layers.overlay).ToArray();
+        var cellsByPosition = MapAutoTile160.Index(all);
         for (int y = 0; y < map.height; y++) for (int x = 0; x < map.width; x++)
         {
             var cell = UIKit.Box(grid, new Vector2(-((map.width - 1) * size) / 2 + x * size, 250 - y * size), new Vector2(size - 1, size - 1), new Color(.12f,.17f,.2f), "Cel·la");
-            var all = map.layers.ground.Concat(map.layers.objects).Concat(map.layers.overlay).ToArray();
-            var block = MapAutoTile160.Resolve(all.FirstOrDefault(c => c.x == x && c.y == y), all);
+            cellsByPosition.TryGetValue(new Vector2Int(x, y), out var source);
+            var block = MapAutoTile160.Resolve(source, cellsByPosition);
             if (!string.IsNullOrEmpty(block.blockId))
             {
                 var data = BlockCatalog.Instance.blocks.FirstOrDefault(b => b.id == block.blockId);
-                if (data != null) { var image = UIKit.Picture(cell, data.sprite, Vector2.zero, new Vector2(size - 2, size - 2)); image.rectTransform.localEulerAngles = new Vector3(0, 0, -90 * block.rot); image.rectTransform.localScale = new Vector3(block.flip ? -1 : 1, 1, 1); }
+                if (data != null) { var image = UIKit.Picture(cell, block.resolvedSprite != null ? block.resolvedSprite : data.sprite, Vector2.zero, new Vector2(size - 2, size - 2)); image.rectTransform.localEulerAngles = new Vector3(0, 0, -90 * block.rot); image.rectTransform.localScale = new Vector3(block.flip ? -1 : 1, 1, 1); }
                 else
                 {
                     UIKit.Box(cell, Vector2.zero, new Vector2(size - 2, size - 2), new Color(.55f, .18f, .55f), "Bloc desconegut");

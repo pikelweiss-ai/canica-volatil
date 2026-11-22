@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 [Serializable]
 public sealed class MapData
@@ -27,6 +28,7 @@ public struct MapCell
     public int x, y, rot;
     public string blockId;
     public bool flip;
+    [System.NonSerialized] public Sprite resolvedSprite;
 }
 
 [Serializable]

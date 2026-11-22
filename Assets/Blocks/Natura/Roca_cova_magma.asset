@@ -18,6 +18,23 @@ MonoBehaviour:
   theme: "Volc\xE0"
   sprite: {fileID: 21300000, guid: 197a9bfbad2817e4bb561833d8188bd5, type: 3}
   scenerySprite: {fileID: 21300000, guid: 197a9bfbad2817e4bb561833d8188bd5, type: 3}
+  autoTileSprites:
+  - {fileID: 21300000, guid: 9d1e0833978509b4195711248bb6619a, type: 3}
+  - {fileID: 21300000, guid: 599d71fac3163f34682917ce60906dd6, type: 3}
+  - {fileID: 21300000, guid: 15d538a3425a5364880949855187750e, type: 3}
+  - {fileID: 21300000, guid: b391abb44f95acb4194a92d31f62fbc2, type: 3}
+  - {fileID: 21300000, guid: dc610b641e16cc946bca4f056bf99e6b, type: 3}
+  - {fileID: 21300000, guid: a9655a6fccf18b3439d5f6f23ea2f048, type: 3}
+  - {fileID: 21300000, guid: 34f8782cd28cd5645a5455d0f87b3e7b, type: 3}
+  - {fileID: 21300000, guid: 87e7dd9d423776642a2296ae5acf84c1, type: 3}
+  - {fileID: 21300000, guid: 62d6eaf84006b054098c23f739b156d8, type: 3}
+  - {fileID: 21300000, guid: c8912a170ac0eb74ca39eb1b3fa8b339, type: 3}
+  - {fileID: 21300000, guid: a73b578b31255864ea4b0032bff0521a, type: 3}
+  - {fileID: 21300000, guid: 1759cb6dd6a33554bb3ab0ef49fa2249, type: 3}
+  - {fileID: 21300000, guid: 4121603e7536f1046be88bb75334d069, type: 3}
+  - {fileID: 21300000, guid: a6b0cac9e66c0d741b05655aaed54aaa, type: 3}
+  - {fileID: 21300000, guid: 9bf4b9a902fee0b4aa0e5e999c3ce4c5, type: 3}
+  - {fileID: 21300000, guid: 5d7e8e8803677cc4484e51ccf9614ae3, type: 3}
   passable: 0
   blocksBullets: 1
   breakable: 1
