@@ -30,6 +30,14 @@ public partial class NetBot
         MapStore.Delete("__autosave");
         if (!rejected || !deleted || !hiddenAutosave)
         { Fail("el fitxer corrupte no es rebutja o no es pot esborrar"); yield break; }
+        var futureBlock = new MapData { width = 1, height = 1,
+            layers = new MapLayers { ground = new[] { new MapCell { x = 0, y = 0, blockId = "Antic/BlocRetirat" } } } };
+        if (!MapStore.Save(futureBlock, "NETBOT-BlocDesconegut", out error) ||
+            !MapStore.Load("NETBOT-BlocDesconegut", out var unknownLoaded, out error) ||
+            unknownLoaded.layers.ground.Length != 1 || unknownLoaded.layers.ground[0].blockId != "Antic/BlocRetirat" ||
+            BlockCatalog.Instance.blocks.Any(b => b.id == unknownLoaded.layers.ground[0].blockId))
+        { MapStore.Delete("NETBOT-BlocDesconegut"); Fail("el bloc desconegut no es conserva com a dada"); yield break; }
+        MapStore.Delete("NETBOT-BlocDesconegut");
         Ok("guardar, carregar, llistar, esborrar i rebutjar JSON corrupte");
         Pass();
     }

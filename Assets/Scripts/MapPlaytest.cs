@@ -48,6 +48,11 @@ public sealed class MapPlaytest : MonoBehaviour
             {
                 var data = BlockCatalog.Instance.blocks.FirstOrDefault(b => b.id == block.blockId);
                 if (data != null) { var image = UIKit.Picture(cell, data.sprite, Vector2.zero, new Vector2(size - 2, size - 2)); image.rectTransform.localEulerAngles = new Vector3(0, 0, -90 * block.rot); image.rectTransform.localScale = new Vector3(block.flip ? -1 : 1, 1, 1); }
+                else
+                {
+                    UIKit.Box(cell, Vector2.zero, new Vector2(size - 2, size - 2), new Color(.55f, .18f, .55f), "Bloc desconegut");
+                    UIKit.Text(cell, "?", Vector2.zero, new Vector2(size - 2, size - 2), Mathf.Max(10, size * .55f), TextAlignmentOptions.Center, Color.white);
+                }
             }
             if (map.goal != null && map.goal.x == x && map.goal.y == y) cell.GetComponent<UnityEngine.UI.Image>().color = Color.green;
             if (map.spawns.Any(s => s.kind == "enemy" && s.x == x && s.y == y)) cell.GetComponent<UnityEngine.UI.Image>().color = Color.red;

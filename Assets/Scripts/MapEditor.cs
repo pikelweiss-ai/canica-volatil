@@ -164,6 +164,11 @@ public sealed class MapEditor : MonoBehaviour
             {
                 var block = BlockCatalog.Instance.blocks.FirstOrDefault(b => b.id == item.blockId);
                 if (block != null) { var image = UIKit.Picture(button.rect, block.sprite, Vector2.zero, new Vector2(cell - 3, cell - 3)); image.rectTransform.localEulerAngles = new Vector3(0, 0, -90 * item.rot); image.rectTransform.localScale = new Vector3(item.flip ? -1 : 1, 1, 1); }
+                else
+                {
+                    button.image.color = new Color(.55f, .18f, .55f);
+                    UIKit.Text(button.rect, "?", Vector2.zero, new Vector2(cell - 3, cell - 3), Mathf.Max(10, cell * .55f), TextAlignmentOptions.Center, Color.white);
+                }
             }
         }
     }
