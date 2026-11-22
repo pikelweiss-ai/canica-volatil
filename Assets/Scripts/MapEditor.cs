@@ -30,6 +30,7 @@ public sealed class MapEditor : MonoBehaviour
     Vector2Int? dragStart;
     MapLayers clipboard;
     bool dirty;
+    bool gridVisible = true, hitboxesVisible;
     bool[] layerVisible = { true, true, true };
     float autosaveAt;
     string currentSavedName;
@@ -42,6 +43,8 @@ public sealed class MapEditor : MonoBehaviour
     sealed class Snapshot { public MapCell[] ground, objects, overlay; public MapSpawn[] spawns; public MapChest[] chests; public MapGoal goal; }
     readonly Stack<Snapshot> undo = new Stack<Snapshot>();
     readonly Stack<Snapshot> redo = new Stack<Snapshot>();
+    internal bool GridVisibleForTest => gridVisible;
+    internal bool HitboxesVisibleForTest => hitboxesVisible;
 
     void Update()
     {
@@ -157,6 +160,8 @@ public sealed class MapEditor : MonoBehaviour
         }
         UIKit.Button(canvas.transform, "ROTAR POSAT", new Vector2(-125, 190), new Vector2(150, 32), () => SelectTool("ROTAR POSAT"), UIKit.Style.Normal, 12);
         UIKit.Button(canvas.transform, "VOLTEJAR POSAT", new Vector2(45, 190), new Vector2(165, 32), () => SelectTool("VOLTEJAR POSAT"), UIKit.Style.Normal, 12);
+        UIKit.Button(canvas.transform, "GRAELLA: SÍ", new Vector2(225, 190), new Vector2(145, 32), ToggleGrid, UIKit.Style.Normal, 12);
+        UIKit.Button(canvas.transform, "HITBOXES: NO", new Vector2(390, 190), new Vector2(160, 32), ToggleHitboxes, UIKit.Style.Normal, 12);
         var panel = UIKit.Box(canvas.transform, new Vector2(-470, -20), new Vector2(245, 580), UIKit.Panel, "Panell paleta");
         searchField = UIKit.Input(panel, new Vector2(0, 258), new Vector2(220, 34), "Busca bloc", 40, fontSize: 14);
         familyField = UIKit.Input(panel, new Vector2(0, 216), new Vector2(220, 34), "Família (opcional)", 30, fontSize: 13);
@@ -216,12 +221,26 @@ public sealed class MapEditor : MonoBehaviour
             var button = UIKit.Button(grid, "", new Vector2(-150 + x * cell, 240 - y * cell), new Vector2(cell - 2, cell - 2),
                 () => { if (suppressGridClick == new Vector2Int(cx, cy)) { suppressGridClick = null; return; } suppressGridClick = null; Paint(cx, cy); }, UIKit.Style.Normal, 10);
             button.rect.name = "Cel·la " + cx + "," + cy;
+            button.image.color = gridVisible ? UIKit.ButtonColor : new Color(0f, 0f, 0f, 0f);
             var cells = VisibleCells();
             var item = MapAutoTile160.Resolve(cells.FirstOrDefault(c => c.x == cx && c.y == cy), cells);
             if (!string.IsNullOrEmpty(item.blockId))
             {
                 var block = BlockCatalog.Instance.blocks.FirstOrDefault(b => b.id == item.blockId);
-                if (block != null) { var image = UIKit.Picture(button.rect, block.sprite, Vector2.zero, new Vector2(cell - 3, cell - 3)); image.rectTransform.localEulerAngles = new Vector3(0, 0, -90 * item.rot); image.rectTransform.localScale = new Vector3(item.flip ? -1 : 1, 1, 1); }
+                if (block != null)
+                {
+                    var image = UIKit.Picture(button.rect, block.sprite, Vector2.zero, new Vector2(cell - 3, cell - 3));
+                    image.rectTransform.localEulerAngles = new Vector3(0, 0, -90 * item.rot);
+                    image.rectTransform.localScale = new Vector3(item.flip ? -1 : 1, 1, 1);
+                    image.raycastTarget = false;
+                    if (hitboxesVisible && !block.passable && block.hitbox.width > 0f && block.hitbox.height > 0f)
+                    {
+                        Rect hitbox = MapAutoTile160.TransformHitbox(block.hitbox, item.rot, item.flip);
+                        var visual = UIKit.Box(button.rect, new Vector2(hitbox.center.x * cell, -hitbox.center.y * cell),
+                            new Vector2(hitbox.width * cell, hitbox.height * cell), new Color(.95f, .15f, .12f, .32f), "Hitbox depuració");
+                        visual.GetComponent<Image>().raycastTarget = false;
+                    }
+                }
                 else
                 {
                     button.image.color = new Color(.55f, .18f, .55f);
@@ -229,6 +248,22 @@ public sealed class MapEditor : MonoBehaviour
                 }
             }
         }
+    }
+
+    void ToggleGrid()
+    {
+        gridVisible = !gridVisible;
+        var button = FindObjectsByType<Button>(FindObjectsSortMode.None).FirstOrDefault(b => b.gameObject.name == "Boto GRAELLA: SÍ" || b.gameObject.name == "Boto GRAELLA: NO");
+        if (button != null) button.GetComponentInChildren<TMP_Text>().text = "GRAELLA: " + (gridVisible ? "SÍ" : "NO");
+        DrawGrid();
+    }
+
+    void ToggleHitboxes()
+    {
+        hitboxesVisible = !hitboxesVisible;
+        var button = FindObjectsByType<Button>(FindObjectsSortMode.None).FirstOrDefault(b => b.gameObject.name == "Boto HITBOXES: SÍ" || b.gameObject.name == "Boto HITBOXES: NO");
+        if (button != null) button.GetComponentInChildren<TMP_Text>().text = "HITBOXES: " + (hitboxesVisible ? "SÍ" : "NO");
+        DrawGrid();
     }
 
     void Paint(int x, int y)

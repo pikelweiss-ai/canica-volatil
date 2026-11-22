@@ -20,6 +20,18 @@ public partial class NetBot
         creator.onClick.Invoke();
         yield return WaitFor(() => Scene == "Creador", 5, "escena Creador");
         if (failed) yield break;
+        var mapEditor = FindFirstObjectByType<MapEditor>();
+        var viewButtons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        viewButtons.First(b => b.gameObject.name == "Boto GRAELLA: SÍ").onClick.Invoke();
+        if (mapEditor == null || mapEditor.GridVisibleForTest) { Fail("no s'ha pogut ocultar la quadrícula"); yield break; }
+        viewButtons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        viewButtons.First(b => b.gameObject.name == "Boto GRAELLA: SÍ").onClick.Invoke();
+        viewButtons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        viewButtons.First(b => b.gameObject.name == "Boto HITBOXES: NO").onClick.Invoke();
+        if (!mapEditor.HitboxesVisibleForTest) { Fail("no s'ha pogut activar la visualització de hitboxes"); yield break; }
+        viewButtons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        viewButtons.First(b => b.gameObject.name == "Boto HITBOXES: NO").onClick.Invoke();
+        yield return null;
         var enemyCatalog = Resources.Load<NetContentCatalog>("NetContent");
         if (enemyCatalog == null || enemyCatalog.enemies == null || !enemyCatalog.enemies.Any(e => e != null && e.GetComponent<EnemyBoss>() != null))
         { Fail("el catàleg d'enemics no inclou bosses seleccionables"); yield break; }
@@ -103,7 +115,14 @@ public partial class NetBot
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         buttons.First(b => b.gameObject.name == "Boto PINTAR").onClick.Invoke();
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto HITBOXES: NO").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         buttons.First(b => b.gameObject.name == "Cel·la 4,0").onClick.Invoke();
+        if (!FindObjectsByType<RectTransform>(FindObjectsSortMode.None).Any(r => r.gameObject.name == "Hitbox depuració"))
+        { Fail("el semibloc no dibuixa la hitbox de depuració"); yield break; }
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto HITBOXES: NO").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
         if (!MapStore.Load("Mapa", out saved, out error) || saved.goal == null || !saved.spawns.Any(s => s.kind == "player") || !saved.spawns.Any(s => s.kind == "enemy" && s.id == "Llim") || !saved.spawns.Any(s => s.kind == "merchant" && s.id == "Mercader") || saved.chests.Length != 1)
