@@ -16,7 +16,11 @@ public sealed class MapEditor : MonoBehaviour
     Transform grid, palette, uiRoot, mapListPanel;
     TMP_InputField nameField, searchField, familyField;
     TMP_InputField sharePathField;
-    TMP_Text status;
+    TMP_Text status, enemyChoiceLabel, chestChoiceLabel;
+    GameObject[] enemyChoices = System.Array.Empty<GameObject>();
+    int enemyChoiceIndex;
+    ChestRarity[] chestChoices = { ChestRarity.Comu, ChestRarity.Rar, ChestRarity.Epic, ChestRarity.Llegendari };
+    int chestChoiceIndex;
     int rotation;
     bool flip, eraseMode;
     bool filledRectangle;
@@ -98,6 +102,12 @@ public sealed class MapEditor : MonoBehaviour
         autosaveAt = Time.unscaledTime + 60f;
         var canvas = UIKit.Canvas("Creador UI", 20);
         uiRoot = canvas.transform;
+        var contentCatalog = Resources.Load<NetContentCatalog>("NetContent");
+        enemyChoices = contentCatalog != null && contentCatalog.enemies != null
+            ? contentCatalog.enemies.Where(e => e != null && !(e.TryGetComponent<EnemyHealth>(out var h) && h.arenaPart)).ToArray()
+            : System.Array.Empty<GameObject>();
+        enemyChoiceIndex = System.Array.FindIndex(enemyChoices, e => e.name == "Llim");
+        if (enemyChoiceIndex < 0) enemyChoiceIndex = 0;
         var background = UIKit.Box(canvas.transform, Vector2.zero, Vector2.zero, UIKit.Ink, "Fons");
         UIKit.Stretch(background);
         UIKit.Text(canvas.transform, "CREADOR DE MAPES", new Vector2(0, 420), new Vector2(900, 58), 34,
@@ -119,6 +129,13 @@ public sealed class MapEditor : MonoBehaviour
         UIKit.Button(filePanel, "IMPORTAR", new Vector2(60, -18), new Vector2(110, 36), ImportFile, UIKit.Style.Normal, 13);
         UIKit.Text(filePanel, "El fitxer és només dada; es valida en importar.", new Vector2(0, -60), new Vector2(250, 35), 11, TextAlignmentOptions.Center, UIKit.Muted);
         status = UIKit.Text(canvas.transform, "", new Vector2(0, 315), new Vector2(800, 30), 16, TextAlignmentOptions.Center, UIKit.Muted);
+        UIKit.Button(canvas.transform, "ENEMIC −", new Vector2(-285, 230), new Vector2(105, 32), () => CycleEnemy(-1), UIKit.Style.Normal, 12);
+        enemyChoiceLabel = UIKit.Text(canvas.transform, "", new Vector2(-155, 230), new Vector2(155, 32), 13, TextAlignmentOptions.Center, UIKit.TextColor);
+        UIKit.Button(canvas.transform, "ENEMIC +", new Vector2(-35, 230), new Vector2(105, 32), () => CycleEnemy(1), UIKit.Style.Normal, 12);
+        UIKit.Button(canvas.transform, "COFRE −", new Vector2(90, 230), new Vector2(95, 32), () => CycleChest(-1), UIKit.Style.Normal, 12);
+        chestChoiceLabel = UIKit.Text(canvas.transform, "", new Vector2(245, 230), new Vector2(150, 32), 13, TextAlignmentOptions.Center, UIKit.TextColor);
+        UIKit.Button(canvas.transform, "COFRE +", new Vector2(385, 230), new Vector2(95, 32), () => CycleChest(1), UIKit.Style.Normal, 12);
+        UpdateObjectChoices();
         UIKit.Button(canvas.transform, "KIT CASTELL", new Vector2(-360, 315), new Vector2(140, 34), () => PlaceKit("Parets/Castell_blocs", "Parets/Castell_fosc"), UIKit.Style.Normal, 13);
         UIKit.Button(canvas.transform, "KIT CASA", new Vector2(-205, 315), new Vector2(140, 34), () => PlaceKit("Parets/Paret_casa", "Terres/Terra"), UIKit.Style.Normal, 13);
         UIKit.Button(canvas.transform, "KIT SUPERMERCAT", new Vector2(-35, 315), new Vector2(165, 34), () => PlaceKit("Moderns/Paret_supermercat", "Terres/Rajola_supermercat"), UIKit.Style.Normal, 12);
@@ -274,13 +291,31 @@ public sealed class MapEditor : MonoBehaviour
             map.spawns = map.spawns.Where(s => s.kind != "player").Concat(new[] { new MapSpawn { x = x, y = y, kind = "player" } }).ToArray();
         }
         else if (placeMode == PlaceMode.Enemy)
-            map.spawns = map.spawns.Concat(new[] { new MapSpawn { x = x, y = y, kind = "enemy", id = "Llim" } }).ToArray();
+            map.spawns = map.spawns.Concat(new[] { new MapSpawn { x = x, y = y, kind = "enemy", id = SelectedEnemyId() } }).ToArray();
         else if (placeMode == PlaceMode.Chest)
-            map.chests = map.chests.Concat(new[] { new MapChest { x = x, y = y, rarity = "Comu" } }).ToArray();
+            map.chests = map.chests.Concat(new[] { new MapChest { x = x, y = y, rarity = chestChoices[chestChoiceIndex].ToString() } }).ToArray();
         else if (placeMode == PlaceMode.Goal) map.goal = new MapGoal { x = x, y = y };
         else if (placeMode == PlaceMode.Merchant)
             map.spawns = map.spawns.Concat(new[] { new MapSpawn { x = x, y = y, kind = "merchant", id = "Mercader" } }).ToArray();
         DrawGrid();
+    }
+
+    string SelectedEnemyId() => enemyChoices.Length == 0 ? "Llim" : enemyChoices[Mathf.Clamp(enemyChoiceIndex, 0, enemyChoices.Length - 1)].name;
+    void CycleEnemy(int delta)
+    {
+        if (enemyChoices.Length == 0) { status.text = "No hi ha enemics al catàleg."; return; }
+        enemyChoiceIndex = (enemyChoiceIndex + delta + enemyChoices.Length) % enemyChoices.Length;
+        UpdateObjectChoices();
+    }
+    void CycleChest(int delta)
+    {
+        chestChoiceIndex = (chestChoiceIndex + delta + chestChoices.Length) % chestChoices.Length;
+        UpdateObjectChoices();
+    }
+    void UpdateObjectChoices()
+    {
+        if (enemyChoiceLabel != null) enemyChoiceLabel.text = "Enemic: " + SelectedEnemyId();
+        if (chestChoiceLabel != null) chestChoiceLabel.text = "Cofre: " + chestChoices[chestChoiceIndex];
     }
     void Playtest()
     {

@@ -214,7 +214,9 @@ public partial class DungeonGenerator : MonoBehaviour
             Vector3 position = ground.GetCellCenterWorld(new Vector3Int(spawn.x, spawn.y, 0));
             if (spawn.kind == "enemy")
             {
+                var content = Resources.Load<NetContentCatalog>("NetContent");
                 var candidates = (enemyPrefabs ?? System.Array.Empty<GameObject>())
+                    .Concat(content != null ? content.enemies ?? System.Array.Empty<GameObject>() : System.Array.Empty<GameObject>())
                     .Concat(Theme != null ? Theme.enemies ?? System.Array.Empty<GameObject>() : System.Array.Empty<GameObject>())
                     .Concat(Theme != null ? Theme.microbosses ?? System.Array.Empty<GameObject>() : System.Array.Empty<GameObject>())
                     .Concat(Theme != null ? Theme.bossVariants ?? System.Array.Empty<GameObject>() : System.Array.Empty<GameObject>())

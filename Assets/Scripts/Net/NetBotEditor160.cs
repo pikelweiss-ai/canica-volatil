@@ -20,6 +20,21 @@ public partial class NetBot
         creator.onClick.Invoke();
         yield return WaitFor(() => Scene == "Creador", 5, "escena Creador");
         if (failed) yield break;
+        var enemyCatalog = Resources.Load<NetContentCatalog>("NetContent");
+        if (enemyCatalog == null || enemyCatalog.enemies == null || !enemyCatalog.enemies.Any(e => e != null && e.GetComponent<EnemyBoss>() != null))
+        { Fail("el catàleg d'enemics no inclou bosses seleccionables"); yield break; }
+        var choiceButtons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        choiceButtons.First(b => b.gameObject.name == "Boto ENEMIC +").onClick.Invoke();
+        if (!FindObjectsByType<TMP_Text>(FindObjectsSortMode.None).Any(t => t.text.StartsWith("Enemic: ") && t.text != "Enemic: Llim"))
+        { Fail("no es pot canviar l'enemic seleccionat"); yield break; }
+        choiceButtons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        choiceButtons.First(b => b.gameObject.name == "Boto ENEMIC −").onClick.Invoke();
+        choiceButtons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        choiceButtons.First(b => b.gameObject.name == "Boto COFRE +").onClick.Invoke();
+        if (!FindObjectsByType<TMP_Text>(FindObjectsSortMode.None).Any(t => t.text == "Cofre: Rar"))
+        { Fail("no es pot canviar la raresa del cofre"); yield break; }
+        choiceButtons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        choiceButtons.First(b => b.gameObject.name == "Boto COFRE −").onClick.Invoke();
         var dragTrace = MapEditor.TraceLine(new Vector2Int(1, 1), new Vector2Int(4, 4));
         if (dragTrace.Length != 4 || dragTrace[0] != new Vector2Int(1, 1) || dragTrace[3] != new Vector2Int(4, 4))
         { Fail("la interpolació del traç deixa buits entre cel·les"); yield break; }
