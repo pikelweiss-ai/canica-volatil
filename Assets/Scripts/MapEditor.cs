@@ -14,6 +14,7 @@ public sealed class MapEditor : MonoBehaviour
     BlockData selected;
     Transform grid, palette;
     TMP_InputField nameField, searchField, familyField;
+    TMP_InputField sharePathField;
     TMP_Text status;
     int rotation;
     bool flip, eraseMode;
@@ -52,8 +53,16 @@ public sealed class MapEditor : MonoBehaviour
         UIKit.Button(canvas.transform, "OBRIR", new Vector2(55, 360), new Vector2(110, 42), Load, UIKit.Style.Normal, 16);
         UIKit.Button(canvas.transform, "ROTAR", new Vector2(185, 360), new Vector2(110, 42), () => rotation = (rotation + 1) % 4, UIKit.Style.Normal, 16);
         UIKit.Button(canvas.transform, "PROVAR", new Vector2(315, 360), new Vector2(115, 42), Playtest, UIKit.Style.Primary, 16);
-        UIKit.Button(canvas.transform, "EIXIR", new Vector2(550, 360), new Vector2(120, 42),
+        UIKit.Button(canvas.transform, "COPIAR CODI", new Vector2(445, 360), new Vector2(135, 42), ExportCode, UIKit.Style.Normal, 14);
+        UIKit.Button(canvas.transform, "IMPORTAR CODI", new Vector2(585, 360), new Vector2(140, 42), ImportCode, UIKit.Style.Normal, 13);
+        UIKit.Button(canvas.transform, "EIXIR", new Vector2(735, 360), new Vector2(100, 42),
             () => SceneManager.LoadScene("MainMenu"), UIKit.Style.Ghost, 16);
+        var filePanel = UIKit.Box(canvas.transform, new Vector2(650, -80), new Vector2(270, 180), UIKit.Panel, "Panell fitxers");
+        UIKit.Text(filePanel, "COMPARTIR FITXER", new Vector2(0, 65), new Vector2(240, 28), 16, TextAlignmentOptions.Center, UIKit.Gold);
+        sharePathField = UIKit.Input(filePanel, new Vector2(0, 30), new Vector2(245, 34), "Ruta .canicamap", 240, fontSize: 12);
+        UIKit.Button(filePanel, "EXPORTAR", new Vector2(-60, -18), new Vector2(110, 36), ExportFile, UIKit.Style.Normal, 13);
+        UIKit.Button(filePanel, "IMPORTAR", new Vector2(60, -18), new Vector2(110, 36), ImportFile, UIKit.Style.Normal, 13);
+        UIKit.Text(filePanel, "El fitxer és només dada; es valida en importar.", new Vector2(0, -60), new Vector2(250, 35), 11, TextAlignmentOptions.Center, UIKit.Muted);
         status = UIKit.Text(canvas.transform, "", new Vector2(0, 315), new Vector2(800, 30), 16, TextAlignmentOptions.Center, UIKit.Muted);
         UIKit.Button(canvas.transform, "KIT CASTELL", new Vector2(-360, 315), new Vector2(140, 34), () => PlaceKit("Parets/Castell_blocs", "Parets/Castell_fosc"), UIKit.Style.Normal, 13);
         UIKit.Button(canvas.transform, "KIT CASA", new Vector2(-205, 315), new Vector2(140, 34), () => PlaceKit("Parets/Paret_casa", "Terres/Terra"), UIKit.Style.Normal, 13);
@@ -285,6 +294,33 @@ public sealed class MapEditor : MonoBehaviour
         map.name = string.IsNullOrWhiteSpace(nameField.text) ? "Mapa" : nameField.text.Trim();
         if (MapStore.Save(map, map.name, out var error)) status.text = "Guardat: " + map.name;
         else status.text = error;
+    }
+    void ExportCode()
+    {
+        if (!MapShare160.Encode(map, out var code, out var error)) { status.text = error; return; }
+        GUIUtility.systemCopyBuffer = code; status.text = "Codi CVM1 copiat al portapapers.";
+    }
+    void ImportCode()
+    {
+        if (!MapShare160.Decode(GUIUtility.systemCopyBuffer, out var imported, out var error)) { status.text = error; return; }
+        map = imported; nameField.text = map.name; DrawGrid(); status.text = "Codi importat. Guarda'l per conservar-lo.";
+    }
+    string SharePath()
+    {
+        string path = sharePathField.text.Trim();
+        if (string.IsNullOrEmpty(path)) path = System.IO.Path.Combine(Application.persistentDataPath, "Mapes", map.name + ".canicamap");
+        if (System.IO.Path.GetExtension(path).Length == 0) path += ".canicamap";
+        return path;
+    }
+    void ExportFile()
+    {
+        string path = SharePath();
+        if (MapShare160.ExportFile(map, path, out var error)) status.text = "Exportat: " + path; else status.text = error;
+    }
+    void ImportFile()
+    {
+        if (!MapShare160.ImportFile(SharePath(), out var imported, out var error)) { status.text = error; return; }
+        map = imported; nameField.text = map.name; DrawGrid(); status.text = "Fitxer importat: " + map.name;
     }
 
     void Load()
