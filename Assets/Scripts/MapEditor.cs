@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public sealed class MapEditor : MonoBehaviour
 {
-    enum EditTool { Paint, Erase, Fill, Rectangle, Line, Eyedropper, Copy, Paste }
+    enum EditTool { Paint, Erase, Fill, Rectangle, Line, Eyedropper, Copy, Paste, RotatePlaced, FlipPlaced }
     enum EditLayer { Ground, Objects, Overlay }
     enum PlaceMode { Blocks, Player, Enemy, Chest, Goal, Merchant }
     MapData map;
@@ -35,6 +35,7 @@ public sealed class MapEditor : MonoBehaviour
     string currentSavedName;
     bool mousePainting;
     Vector2Int? lastDragCell, suppressGridClick;
+    Vector2 middlePanPosition;
     RectTransform promptPanel;
     TMP_Text promptText;
     System.Action pendingConfirm;
@@ -90,6 +91,13 @@ public sealed class MapEditor : MonoBehaviour
             grid.localPosition += pan;
             float zoom = Input.mouseScrollDelta.y;
             if (Mathf.Abs(zoom) > .01f) grid.localScale = Vector3.one * Mathf.Clamp(grid.localScale.x + zoom * .08f, .5f, 2f);
+            if (Input.GetMouseButtonDown(2)) middlePanPosition = Input.mousePosition;
+            if (Input.GetMouseButton(2))
+            {
+                Vector2 delta = (Vector2)Input.mousePosition - middlePanPosition;
+                grid.localPosition += new Vector3(delta.x, delta.y, 0);
+                middlePanPosition = Input.mousePosition;
+            }
         }
     }
 
@@ -147,6 +155,8 @@ public sealed class MapEditor : MonoBehaviour
             UIKit.Button(canvas.transform, action, new Vector2(toolX, 270), new Vector2(82, 34), () => SelectTool(action), UIKit.Style.Normal, 11);
             toolX += 88;
         }
+        UIKit.Button(canvas.transform, "ROTAR POSAT", new Vector2(-125, 190), new Vector2(150, 32), () => SelectTool("ROTAR POSAT"), UIKit.Style.Normal, 12);
+        UIKit.Button(canvas.transform, "VOLTEJAR POSAT", new Vector2(45, 190), new Vector2(165, 32), () => SelectTool("VOLTEJAR POSAT"), UIKit.Style.Normal, 12);
         var panel = UIKit.Box(canvas.transform, new Vector2(-470, -20), new Vector2(245, 580), UIKit.Panel, "Panell paleta");
         searchField = UIKit.Input(panel, new Vector2(0, 258), new Vector2(220, 34), "Busca bloc", 40, fontSize: 14);
         familyField = UIKit.Input(panel, new Vector2(0, 216), new Vector2(220, 34), "Família (opcional)", 30, fontSize: 13);
@@ -226,6 +236,7 @@ public sealed class MapEditor : MonoBehaviour
         if (placeMode != PlaceMode.Blocks) { PlaceObject(x, y); return; }
         if (tool == EditTool.Copy) { CopyRegion(x, y); return; }
         if (tool == EditTool.Paste) { PasteRegion(x, y); return; }
+        if (tool == EditTool.RotatePlaced || tool == EditTool.FlipPlaced) { TransformPlaced(x, y); return; }
         if (tool == EditTool.Fill) { Fill(x, y); return; }
         if (tool == EditTool.Eyedropper) { selected = ActiveCells().FirstOrDefault(c => c.x == x && c.y == y).blockId == null ? null :
             BlockCatalog.Instance.blocks.FirstOrDefault(b => b.id == ActiveCells().First(c => c.x == x && c.y == y).blockId); return; }
@@ -276,12 +287,25 @@ public sealed class MapEditor : MonoBehaviour
             "ESBORRAR" => EditTool.Erase, "OMPLIR" => EditTool.Fill, "RECTANGLE" => EditTool.Rectangle,
             "LÍNIA" => EditTool.Line, "COMPTAGOTES" => EditTool.Eyedropper,
             "COPIAR" => EditTool.Copy, "ENGANXAR" => EditTool.Paste,
+            "ROTAR POSAT" => EditTool.RotatePlaced, "VOLTEJAR POSAT" => EditTool.FlipPlaced,
             "DESFER" => EditTool.Paint, "REFER" => EditTool.Paint, _ => EditTool.Paint
         };
         if (name == "DESFER") Undo();
         if (name == "REFER") Redo();
         if (name == "CAPA") layer = (EditLayer)(((int)layer + 1) % 3);
         status.text = "Eina: " + name + (name == "CAPA" ? " · " + layer : "");
+    }
+
+    void TransformPlaced(int x, int y)
+    {
+        var cells = ActiveCells().ToArray();
+        int index = System.Array.FindIndex(cells, c => c.x == x && c.y == y);
+        if (index < 0) { status.text = "No hi ha cap bloc en esta cel·la de la capa."; return; }
+        PushUndo();
+        if (tool == EditTool.RotatePlaced) cells[index].rot = (cells[index].rot + 1) % 4;
+        else cells[index].flip = !cells[index].flip;
+        SetActiveCells(cells);
+        DrawGrid();
     }
     void PlaceObject(int x, int y)
     {

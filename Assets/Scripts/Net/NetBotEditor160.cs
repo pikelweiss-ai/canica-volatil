@@ -208,6 +208,37 @@ public partial class NetBot
         buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
         if (!MapStore.Load("Mapa", out saved, out error) || !saved.layers.objects.Any(c => c.blockId == "Objectes/Carro_compra") || !saved.layers.objects.Any(c => c.blockId == "Natura/Gespa_flors_mixtes"))
         { Fail("el kit de supermercat no ha posat els elements temàtics"); yield break; }
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto NOU 16×16").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Bloc Terres/Terra").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto PINTAR").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Cel·la 0,0").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        if (buttons.Any(b => b.gameObject.name == "Boto CONFIRMAR")) buttons.First(b => b.gameObject.name == "Boto CONFIRMAR").onClick.Invoke();
+        if (!MapStore.Load("Mapa", out saved, out error) || saved.layers.ground.Length != 1)
+        { Fail("el bloc base per a provar rotació no s'ha guardat: " + error); yield break; }
+        int rotationBeforePlacedTool = saved.layers.ground[0].rot;
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto ROTAR POSAT").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Cel·la 0,0").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
+        if (!MapStore.Load("Mapa", out saved, out error) || saved.layers.ground.Length != 1 || saved.layers.ground[0].rot != (rotationBeforePlacedTool + 1) % 4)
+        { Fail("rotar un bloc col·locat no ha guardat la nova rotació; abans=" + rotationBeforePlacedTool + ", després=" + (saved == null || saved.layers == null || saved.layers.ground.Length == 0 ? -1 : saved.layers.ground[0].rot)); yield break; }
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto VOLTEJAR POSAT").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Cel·la 0,0").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
+        if (!MapStore.Load("Mapa", out saved, out error) || saved.layers.ground.Length != 1 || !saved.layers.ground[0].flip || saved.layers.ground[0].rot != (rotationBeforePlacedTool + 1) % 4)
+        { Fail("voltejar un bloc col·locat no ha guardat el flip"); yield break; }
         MapStore.Delete("Mapa");
         Ok("editor, objectes, prova, kits i copiar/enganxar regions");
         Pass();
