@@ -1,6 +1,7 @@
 using System.Collections;
 using System.IO;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -28,8 +29,17 @@ public partial class NetBot
         if (playButton == null) { Fail("no s'ha trobat JUGAR per obrir el selector"); yield break; }
         playButton.onClick.Invoke();
         yield return WaitFor(() => FindFirstObjectByType<MapSelectUI>() != null, 4, "selector amb importació de mapes per codi");
-        if (FindObjectsByType<Button>(FindObjectsSortMode.None).All(b => b.gameObject.name != "Boto IMPORTAR CODI I JUGAR"))
+        var importButton = FindObjectsByType<Button>(FindObjectsSortMode.None).FirstOrDefault(b => b.gameObject.name == "Boto IMPORTAR CODI I JUGAR");
+        if (importButton == null)
         { Fail("falta l'opció per jugar codis de mapa des del selector"); yield break; }
-        Ok("CVM1, fitxer .canicamap, mapa importat consumible i selector amb importació per codi"); Pass();
+        importButton.onClick.Invoke();
+        var codeField = FindObjectsByType<TMP_InputField>(FindObjectsSortMode.None).FirstOrDefault(f => f.gameObject.name == "Camp Codi CVM1");
+        var playMapButton = FindObjectsByType<Button>(FindObjectsSortMode.None).FirstOrDefault(b => b.gameObject.name == "Boto JUGAR MAPA");
+        if (codeField == null || playMapButton == null) { Fail("el panell d'importació no mostra el codi i el botó de jugar"); yield break; }
+        codeField.text = code; playMapButton.onClick.Invoke();
+        yield return WaitFor(() => Scene == "Dungeon" && FindFirstObjectByType<MapPlaytestRuntime>() != null, 10,
+            "mapa CVM1 carregat en el joc real");
+        if (failed) yield break;
+        Ok("CVM1, fitxer .canicamap, selector mòbil i joc real del mapa importat"); Pass();
     }
 }
