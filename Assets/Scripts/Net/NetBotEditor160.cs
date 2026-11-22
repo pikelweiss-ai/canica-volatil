@@ -262,6 +262,82 @@ public partial class NetBot
         buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
         if (!MapStore.Load("Mapa", out saved, out error) || !saved.layers.objects.Any(c => c.blockId == "Objectes/Carro_compra") || !saved.layers.objects.Any(c => c.blockId == "Natura/Gespa_flors_mixtes"))
         { Fail("el kit de supermercat no ha posat els elements temàtics"); yield break; }
+        var multipartMid = BlockCatalog.Instance.blocks.FirstOrDefault(b => b != null && b.multiPart && b.id.EndsWith("_mig"));
+        if (multipartMid == null) { Fail("no hi ha cap grup multipart de tres peces per provar"); yield break; }
+        string multipartStem = multipartMid.id.Substring(0, multipartMid.id.LastIndexOf('_'));
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto NOU 16×16").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Bloc " + multipartMid.id).onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto PINTAR").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Cel·la 8,8").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        if (buttons.Any(b => b.gameObject.name == "Boto CONFIRMAR")) buttons.First(b => b.gameObject.name == "Boto CONFIRMAR").onClick.Invoke();
+        if (!MapStore.Load("Mapa", out saved, out error)) { Fail("no s'ha guardat l'objecte multipart: " + error); yield break; }
+        var mapCells = saved.layers.ground.Concat(saved.layers.objects).Concat(saved.layers.overlay);
+        var multipartPlaced = mapCells.Where(c => c.blockId.StartsWith(multipartStem + "_")).ToArray();
+        if (multipartPlaced.Length != 3) { Fail("un objecte de tres peces s'ha col·locat com " + multipartPlaced.Length + " cel·les"); yield break; }
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto COPIAR").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Cel·la 8,8").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Cel·la 8,8").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto ENGANXAR").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Cel·la 12,8").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
+        if (!MapStore.Load("Mapa", out saved, out error)) { Fail("no s'ha guardat la còpia multipart"); yield break; }
+        mapCells = saved.layers.ground.Concat(saved.layers.objects).Concat(saved.layers.overlay);
+        multipartPlaced = mapCells.Where(c => c.blockId.StartsWith(multipartStem + "_")).ToArray();
+        if (multipartPlaced.Length != 6) { Fail("copiar i enganxar ha separat les peces multipart: " + multipartPlaced.Length); yield break; }
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto ESBORRAR").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Cel·la 8,8").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
+        if (!MapStore.Load("Mapa", out saved, out error)) { Fail("no s'ha guardat l'esborrat de l'objecte original"); yield break; }
+        mapCells = saved.layers.ground.Concat(saved.layers.objects).Concat(saved.layers.overlay);
+        multipartPlaced = mapCells.Where(c => c.blockId.StartsWith(multipartStem + "_")).ToArray();
+        if (multipartPlaced.Length != 3) { Fail("esborrar l'original ha eliminat també la còpia multipart"); yield break; }
+        bool horizontalBefore = multipartPlaced.Select(c => c.x).Distinct().Count() > 1;
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto ROTAR POSAT").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Cel·la 12,8").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
+        if (!MapStore.Load("Mapa", out saved, out error)) { Fail("no s'ha guardat la rotació de l'objecte multipart"); yield break; }
+        mapCells = saved.layers.ground.Concat(saved.layers.objects).Concat(saved.layers.overlay);
+        multipartPlaced = mapCells.Where(c => c.blockId.StartsWith(multipartStem + "_")).ToArray();
+        if (multipartPlaced.Length != 3 || (multipartPlaced.Select(c => c.x).Distinct().Count() > 1) == horizontalBefore)
+        { Fail("la rotació no ha girat juntes les tres peces multipart"); yield break; }
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto VOLTEJAR POSAT").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Cel·la 12,8").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
+        if (!MapStore.Load("Mapa", out saved, out error)) { Fail("no s'ha guardat el volteig de l'objecte multipart"); yield break; }
+        mapCells = saved.layers.ground.Concat(saved.layers.objects).Concat(saved.layers.overlay);
+        multipartPlaced = mapCells.Where(c => c.blockId.StartsWith(multipartStem + "_")).ToArray();
+        if (multipartPlaced.Length != 3 || multipartPlaced.Any(c => !c.flip))
+        { Fail("el volteig no s'ha aplicat a totes les peces multipart"); yield break; }
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto ESBORRAR").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Cel·la 12,8").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
+        if (!MapStore.Load("Mapa", out saved, out error) || saved.layers.ground.Concat(saved.layers.objects).Concat(saved.layers.overlay).Any(c => c.blockId.StartsWith(multipartStem + "_")))
+        { Fail("esborrar una peça no ha eliminat l'objecte multipart sencer"); yield break; }
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         buttons.First(b => b.gameObject.name == "Boto NOU 16×16").onClick.Invoke();
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);

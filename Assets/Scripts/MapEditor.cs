@@ -42,6 +42,7 @@ public sealed class MapEditor : MonoBehaviour
     TMP_Text promptText;
     System.Action pendingConfirm;
     sealed class Snapshot { public MapCell[] ground, objects, overlay; public MapSpawn[] spawns; public MapChest[] chests; public MapGoal goal; }
+    struct MultipartPart { public BlockData block; public Vector2Int offset; }
     readonly Stack<Snapshot> undo = new Stack<Snapshot>();
     readonly Stack<Snapshot> redo = new Stack<Snapshot>();
     internal bool GridVisibleForTest => gridVisible;
@@ -327,13 +328,112 @@ public sealed class MapEditor : MonoBehaviour
             return;
         }
         if (tool == EditTool.Rectangle || tool == EditTool.Line) { dragStart = new Vector2Int(x, y); status.text = "Tria el segon cantó."; return; }
-        var active = ActiveCells();
-        var cells = new List<MapCell>(active);
+        if ((tool == EditTool.Fill || tool == EditTool.Rectangle || tool == EditTool.Line) && selected != null && selected.multiPart)
+        { status.text = "Les peces multipart es pinten com un objecte sencer."; return; }
+        var cells = new List<MapCell>(ActiveCells());
+        Vector2Int anchorOffset = Vector2Int.zero;
+        List<MultipartPart> multipart = selected != null && selected.multiPart && tool != EditTool.Erase && !eraseMode
+            ? MultipartParts(selected, out anchorOffset) : null;
+        var placed = new List<MapCell>();
+        if (multipart != null && multipart.Count > 1)
+        {
+            foreach (var part in multipart)
+            {
+                var offset = TransformOffset(part.offset - anchorOffset, rotation, flip);
+                int px = x + offset.x, py = y + offset.y;
+                if (px < 0 || py < 0 || px >= map.width || py >= map.height)
+                { status.text = "No cap l'objecte sencer dins del mapa."; return; }
+                placed.Add(new MapCell { x = px, y = py, blockId = part.block.id, rot = rotation, flip = flip });
+            }
+        }
         PushUndo();
-        cells.RemoveAll(c => c.x == x && c.y == y);
-        if (tool != EditTool.Erase && !eraseMode && selected != null) cells.Add(new MapCell { x = x, y = y, blockId = selected.id, rot = rotation, flip = flip });
+        RemovePlacedAt(cells, x, y);
+        if (placed.Count == 0 && tool != EditTool.Erase && !eraseMode && selected != null)
+            placed.Add(new MapCell { x = x, y = y, blockId = selected.id, rot = rotation, flip = flip });
+        foreach (var part in placed)
+        {
+            RemovePlacedAt(cells, part.x, part.y);
+            cells.RemoveAll(c => c.x == part.x && c.y == part.y);
+            cells.Add(part);
+        }
         SetActiveCells(cells.ToArray());
         DrawGrid();
+    }
+
+    List<MultipartPart> MultipartParts(BlockData block, out Vector2Int selectedOffset)
+    {
+        selectedOffset = Vector2Int.zero;
+        var result = new List<MultipartPart>();
+        if (block == null || !block.multiPart) return result;
+        int split = block.id.LastIndexOf('_');
+        if (split < 0) { result.Add(new MultipartPart { block = block }); return result; }
+        string stem = block.id.Substring(0, split);
+        var byPart = BlockCatalog.Instance.blocks.Where(b => b != null && b.multiPart && b.id.StartsWith(stem + "_", System.StringComparison.Ordinal))
+            .ToDictionary(b => b.id.Substring(stem.Length + 1), b => b, System.StringComparer.OrdinalIgnoreCase);
+        string[] layout;
+        Vector2Int[] offsets;
+        if (byPart.ContainsKey("esq") && byPart.ContainsKey("mig") && byPart.ContainsKey("dre"))
+        { layout = new[] { "esq", "mig", "dre" }; offsets = new[] { Vector2Int.zero, Vector2Int.right, Vector2Int.right * 2 }; }
+        else if (byPart.ContainsKey("esq") && byPart.ContainsKey("dre"))
+        { layout = new[] { "esq", "dre" }; offsets = new[] { Vector2Int.zero, Vector2Int.right }; }
+        else if (byPart.ContainsKey("cap") && byPart.ContainsKey("peus"))
+        { layout = new[] { "peus", "cap" }; offsets = new[] { Vector2Int.zero, Vector2Int.up }; }
+        else if (byPart.ContainsKey("cap") && byPart.ContainsKey("popa"))
+        { layout = new[] { "cap", "popa" }; offsets = new[] { Vector2Int.zero, Vector2Int.right }; }
+        else { result.Add(new MultipartPart { block = block }); return result; }
+        for (int i = 0; i < layout.Length; i++)
+        {
+            result.Add(new MultipartPart { block = byPart[layout[i]], offset = offsets[i] });
+            if (byPart[layout[i]].id == block.id) selectedOffset = offsets[i];
+        }
+        return result;
+    }
+
+    static Vector2Int TransformOffset(Vector2Int offset, int rotation, bool flip)
+    {
+        if (flip) offset.x = -offset.x;
+        for (int i = 0; i < ((rotation % 4) + 4) % 4; i++) offset = new Vector2Int(offset.y, -offset.x);
+        return offset;
+    }
+
+    void RemovePlacedAt(List<MapCell> cells, int x, int y)
+    {
+        var clicked = cells.FirstOrDefault(c => c.x == x && c.y == y);
+        if (clicked.blockId == null) return;
+        var block = BlockCatalog.Instance.blocks.FirstOrDefault(b => b != null && b.id == clicked.blockId);
+        var group = block != null && block.multiPart ? FindPlacedMultipartGroup(cells, clicked, block) : new List<MapCell> { clicked };
+        foreach (var member in group) cells.RemoveAll(c => c.x == member.x && c.y == member.y);
+    }
+
+    List<MapCell> FindPlacedMultipartGroup(List<MapCell> cells, MapCell clicked, BlockData block)
+    {
+        var parts = MultipartParts(block, out var clickedOffset);
+        if (parts.Count <= 1) return new List<MapCell> { clicked };
+        var group = new List<MapCell>();
+        foreach (var part in parts)
+        {
+            var offset = TransformOffset(part.offset - clickedOffset, clicked.rot, clicked.flip);
+            var placed = cells.FirstOrDefault(c => c.x == clicked.x + offset.x && c.y == clicked.y + offset.y && c.blockId == part.block.id);
+            if (placed.blockId != null) group.Add(placed);
+        }
+        if (group.Count == parts.Count) return group;
+
+        var expectedIds = new HashSet<string>(parts.Select(p => p.block.id), System.StringComparer.Ordinal);
+        var foundIds = new HashSet<string>(group.Select(c => c.blockId), System.StringComparer.Ordinal);
+        var visited = new HashSet<Vector2Int>();
+        var queue = new Queue<Vector2Int>();
+        queue.Enqueue(new Vector2Int(clicked.x, clicked.y));
+        while (queue.Count > 0 && foundIds.Count < expectedIds.Count)
+        {
+            var position = queue.Dequeue();
+            if (!visited.Add(position)) continue;
+            var candidate = cells.FirstOrDefault(c => c.x == position.x && c.y == position.y && expectedIds.Contains(c.blockId));
+            if (candidate.blockId == null) continue;
+            if (foundIds.Add(candidate.blockId) && !group.Any(c => c.x == candidate.x && c.y == candidate.y)) group.Add(candidate);
+            queue.Enqueue(position + Vector2Int.up); queue.Enqueue(position + Vector2Int.down);
+            queue.Enqueue(position + Vector2Int.left); queue.Enqueue(position + Vector2Int.right);
+        }
+        return group.Count > 0 ? group : new List<MapCell> { clicked };
     }
 
     static EditLayer LayerFor(BlockData block)
@@ -388,6 +488,35 @@ public sealed class MapEditor : MonoBehaviour
         var cells = ActiveCells().ToArray();
         int index = System.Array.FindIndex(cells, c => c.x == x && c.y == y);
         if (index < 0) { status.text = "No hi ha cap bloc en esta cel·la de la capa."; return; }
+        var clicked = cells[index];
+        var block = BlockCatalog.Instance.blocks.FirstOrDefault(b => b != null && b.id == clicked.blockId);
+        if (block != null && block.multiPart)
+        {
+            var list = new List<MapCell>(cells);
+            var group = FindPlacedMultipartGroup(list, clicked, block);
+            if (group.Count > 1)
+            {
+                bool rotate = tool == EditTool.RotatePlaced;
+                var groupCoordinates = new HashSet<Vector2Int>(group.Select(c => new Vector2Int(c.x, c.y)));
+                var transformed = new List<MapCell>();
+                foreach (var member in group)
+                {
+                    var offset = TransformOffset(new Vector2Int(member.x - clicked.x, member.y - clicked.y), rotate ? 1 : 0, !rotate);
+                    int nx = clicked.x + offset.x, ny = clicked.y + offset.y;
+                    if (nx < 0 || ny < 0 || nx >= map.width || ny >= map.height ||
+                        list.Any(c => c.x == nx && c.y == ny && !groupCoordinates.Contains(new Vector2Int(c.x, c.y))))
+                    { status.text = "No hi ha espai per transformar l'objecte multipart."; return; }
+                    var moved = member;
+                    moved.x = nx; moved.y = ny;
+                    if (rotate) moved.rot = (moved.rot + 1) % 4; else moved.flip = !moved.flip;
+                    transformed.Add(moved);
+                }
+                PushUndo();
+                list.RemoveAll(c => groupCoordinates.Contains(new Vector2Int(c.x, c.y)));
+                list.AddRange(transformed);
+                SetActiveCells(list.ToArray()); DrawGrid(); return;
+            }
+        }
         PushUndo();
         if (tool == EditTool.RotatePlaced) cells[index].rot = (cells[index].rot + 1) % 4;
         else cells[index].flip = !cells[index].flip;
@@ -449,6 +578,24 @@ public sealed class MapEditor : MonoBehaviour
     {
         if (!dragStart.HasValue) { dragStart = new Vector2Int(x,y); status.text = "Tria l'altre cantó de la selecció."; return; }
         int minX=Mathf.Min(x,dragStart.Value.x), maxX=Mathf.Max(x,dragStart.Value.x), minY=Mathf.Min(y,dragStart.Value.y), maxY=Mathf.Max(y,dragStart.Value.y);
+        bool expanded;
+        do
+        {
+            expanded = false;
+            foreach (var layerCells in new[] { map.layers.ground, map.layers.objects, map.layers.overlay })
+            foreach (var cell in layerCells.Where(c => c.x >= minX && c.x <= maxX && c.y >= minY && c.y <= maxY).ToArray())
+            {
+                var block = BlockCatalog.Instance.blocks.FirstOrDefault(b => b != null && b.id == cell.blockId);
+                if (block == null || !block.multiPart) continue;
+                foreach (var part in FindPlacedMultipartGroup(layerCells.ToList(), cell, block))
+                {
+                    if (part.x < minX) { minX = part.x; expanded = true; }
+                    if (part.x > maxX) { maxX = part.x; expanded = true; }
+                    if (part.y < minY) { minY = part.y; expanded = true; }
+                    if (part.y > maxY) { maxY = part.y; expanded = true; }
+                }
+            }
+        } while (expanded);
         clipboard = new MapLayers { ground=Crop(map.layers.ground,minX,minY,maxX,maxY), objects=Crop(map.layers.objects,minX,minY,maxX,maxY), overlay=Crop(map.layers.overlay,minX,minY,maxX,maxY) };
         dragStart = null; status.text = "Regió copiada.";
     }
@@ -463,7 +610,17 @@ public sealed class MapEditor : MonoBehaviour
     }
     MapCell[] PasteCells(MapCell[] target,MapCell[] source,int x,int y)
     {
-        var result=new List<MapCell>(target); foreach(var c0 in source) { var c=c0; c.x+=x; c.y+=y; if(c.x<0||c.y<0||c.x>=map.width||c.y>=map.height) continue; result.RemoveAll(v=>v.x==c.x&&v.y==c.y); result.Add(c); } return result.ToArray();
+        var result = new List<MapCell>(target);
+        var pasted = new List<MapCell>();
+        foreach (var sourceCell in source)
+        {
+            var cell = sourceCell; cell.x += x; cell.y += y;
+            if (cell.x < 0 || cell.y < 0 || cell.x >= map.width || cell.y >= map.height) continue;
+            pasted.Add(cell);
+        }
+        foreach (var cell in pasted) RemovePlacedAt(result, cell.x, cell.y);
+        foreach (var cell in pasted) { result.RemoveAll(v => v.x == cell.x && v.y == cell.y); result.Add(cell); }
+        return result.ToArray();
     }
     void PlaceKit(string wallId,string floorId,params string[] decorIds)
     {
@@ -486,6 +643,7 @@ public sealed class MapEditor : MonoBehaviour
     }
     void Fill(int x, int y)
     {
+        if (selected != null && selected.multiPart) { status.text = "No es pot omplir amb un bloc multipart."; return; }
         if (selected == null) return;
         var cells = new List<MapCell>(ActiveCells());
         string original = cells.FirstOrDefault(c => c.x == x && c.y == y).blockId;
@@ -506,6 +664,7 @@ public sealed class MapEditor : MonoBehaviour
     }
     void DrawShape(Vector2Int start, Vector2Int end, bool rectangle)
     {
+        if (selected != null && selected.multiPart) { status.text = "No es pot dibuixar una forma amb un bloc multipart."; return; }
         if (selected == null) return;
         var cells = new List<MapCell>(ActiveCells());
         PushUndo();
