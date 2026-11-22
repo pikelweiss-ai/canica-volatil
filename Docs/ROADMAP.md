@@ -38,5 +38,5 @@ Release `v1.5.0-alpha` publicada a GitHub i marcada **Latest** (commit `6675b44`
 
 
 ## v1.6 · en desenvolupament · [Disseny](Dissenys/v1.6-creador-de-mapes.md) · [Traspàs](../TRASPAS_CODEX_V160.md)
-Decisions D1–D10 resoltes per Ferran el 2026-11-22 amb les propostes per defecte. Les fases 1–7 tenen increments locals i bots NETBOT PASS, però alguns criteris complets del disseny encara estan pendents; consultar [TRASPAS_V161](../TRASPAS_V161.md). El mode Creador inclou catàleg, editor, magatzem, eines bàsiques, marcadors de joc, kits i compartir per fitxer/codi.
+Decisions D1–D10 resoltes per Ferran el 2026-11-22 amb les propostes per defecte. El mode Creador inclou catàleg, editor, magatzem, eines, marcadors de joc, kits i compartir per fitxer/codi; els mapes importats per codi es poden llançar també des del selector mòbil. Els bots `catalog160`, `mapdata160`, `editor160`, `tile160` i `share160` donen `NETBOT PASS`; Linux i Android també s'han recompilat i els manifests coincideixen. Queden pendents QA física/visual i alguns detalls del disseny; consulta [TRASPAS_V161](../TRASPAS_V161.md).
 - **Online de mapes (fase 8)**: es trasllada a la v1.7, tal com permet D2, perquè requereix integrar el mapa personalitzat al flux de sala, transferir-lo en trossos i carregar una partida cooperativa pròpia. No s'ha implementat ni provat.

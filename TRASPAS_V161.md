@@ -26,6 +26,13 @@ Commits locals de les fases inicials:
 - `a249d11` — el final usa el portal animat real i comprova la victòria sense canviar de pis.
 - `3cbc88b` — hitboxes dels semiblocs aplicades en el món de prova, amb la mateixa rotació horària i flip que el sprite.
 - `be69cf5` — kits de Castell, Casa i Supermercat amb decoració/plantes pròpies i validació dels tres al bot.
+- `50ff33c` — eines per a girar/voltejar blocs col·locats i panoràmica amb botó del mig.
+- `5fc1ccc`, `7678f14` — autotile de catifes de bany i correcció de les baranes; `tile160` prova les cantonades.
+- `efb12e4`, `d109b2e` — importar codi CVM1 des del selector per a jugar en Android/PC, netejant el mapa temporal després de carregar-lo; `share160` prova el flux real.
+- `6d14909` — quadrícula opcional i visualització de hitboxes per a depurar; `editor160` ho valida.
+- `9d243c9` — filtres de favorits i recents de la paleta, amb persistència local; `editor160` ho valida.
+- `a271e2f` — ruta automàtica de blocs a la capa segons `BlockData.layer` i `fullBlock`.
+- `18e57ce` — dreceres de teclat desactivades mentre s'editen camps de text.
 
 La versió visible/package 1.6.0-alpha, el Changelog, el codi Android 17, el cubell, la línia Bresenham, la càmera WASD/zoom, la visibilitat de capes, l'autosave recuperable, els avisos de confirmació i el desfés dels marcadors ja es van incloure en el tancament de la v1.6. La versió del worktree pot continuar diferint del número de release perquè la v1.6 no s'ha publicat.
 
@@ -34,17 +41,19 @@ Validació a `Builds/Candidats/Alpha-v1.6.0-final`:
 - Windows, Linux i Android: `ALPHA_BUILD_OK`.
 - `check-crossplay.ps1`: `CROSSPLAY_MANIFEST: PASS`, protocol 24, versió 1.6.0-alpha, 29 armes i 4 cures.
 - Bots `catalog160`, `mapdata160`, `editor160`, `tile160`, `share160`: `NETBOT PASS` en la revisió més recent. `catalog160` comprova 626 fitxes, 15 famílies, hitboxes, grups multiparts i sufixos `_esq/_mig/_dre`; `mapdata160` comprova també que els ids de bloc desconeguts es preserven; `editor160` comprova rectangles ple/buit, selecció d'enemics i cofres, i una prova dins de `Dungeon` amb jugador (vida/atac), enemic, cofre, mercader, portal, victòria i retorn.
-- `test-online.ps1 -MobileClient`: 6/6 per al joc online existent. No és prova de mapes creats online.
-- No s'han provat executables en PC Linux físic ni APK en mòbil físic.
+- Passada final del candidat Windows: `catalog160`, `mapdata160`, `editor160`, `tile160` i `share160` donen `NETBOT PASS`. `editor160` cobreix capes, favorits/recents, quadrícula/hitboxes, kits i PROVAR amb retorn; `share160` obri un CVM1 des del selector i el carrega en `Dungeon`.
+- Builds Windows, Linux i Android: `ALPHA_BUILD_OK`. `check-crossplay.ps1`: `CROSSPLAY_MANIFEST: PASS`, protocol 24, paquet 1.6.0-alpha, 29 armes i 4 cures; Android bundle code 17.
+- `test-online.ps1 -MobileClient`: 6/6 en la validació anterior de les sales ja existents. No és prova de mapes creats online, que es deixa a v1.7.
+- No s'han provat executables en PC Linux físic ni APK en mòbil físic. El selector i el flux d'importació s'han comprovat amb el bot Windows, no en un telèfon.
 
 ## Pendents abans de dir que el Creador està complet
 
 - PROVAR ara reutilitza el jugador i els sistemes reals del joc, i dibuixa els blocs en Tilemaps. El bot valida els actors i la victòria, però encara falta una prova manual de combat/interacció amb cofre i mercader, i provar mapes grans en dispositiu real.
 - Online de mapes: D2 permet passar-ho a v1.7 si s'allarga. No hi ha protocol 25 ni transmissió en chunks; el protocol es queda en 24.
-- Autotile ara inclou `Natura/Gespa_cami_*`, `Oficina/Panell_*` i `Laboratori/Tuberia_*`; falten catifes, roques de cova, aigua i baranes connectades, així com rotació d'ombres. Les hitboxes dels semiblocs ja es creen al món amb rotació/flip i es proven amb `tile160`/`editor160`.
+- Autotile ara inclou camins, panells, canonades, baranes i catifes de bany. Les textures de roques de cova i d'aigua del catàleg no tenen peces direccionals per a formar connexions; falta una regla visual adequada si s'han d'autotilejar. La rotació d'ombres no està implementada/provada. Les hitboxes dels semiblocs giren i es voltegen al món de prova.
 - Els tres kits ja col·loquen decoració temàtica (seto/flors, planta interior, carro/expositor de fruita) i `editor160` ho valida. Queda pendent QA visual manual de disposició i espais de pas.
-- L'editor encara no té selecció/copiat de multipart com a objecte; la pintura amb arrossegament i la llista d'obertura ja estan implementades. La prova Android de jugar mapes importats està pendent.
-- Revisar el rendiment en un mapa 64×64 i fer QA visual en 16:9/4:3.
+- L'editor encara no col·loca, selecciona, esborra o copia peces multipart com un únic objecte. La pintura amb arrossegament i la llista d'obertura estan implementades.
+- Revisar rendiment en mapes 64×64 i fer QA visual en 16:9/4:3; els botons de cel·la del canvas no s'han perfilat amb gràfics actius.
 - `MapStore` conserva ids de blocs desconeguts, que es dibuixen amb «?»; no hi ha encara migració automàtica d'un mapa per a formats futurs.
 
 No publicar ni pujar el repositori del joc sense permís explícit de Ferran. Les notes d'Obsidian s'han actualitzat després de `git pull --rebase` i el commit `a37eee1` ja està pujat al repositori de notes.

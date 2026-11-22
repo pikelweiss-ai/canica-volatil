@@ -20,22 +20,19 @@
 
 ## 3. Estat actual (corregit 2026-11-22)
 - **Alpha v1.5.0 publicada** a GitHub com `v1.5.0-alpha`, marcada **Latest**; release del 2026-11-22, commit `6675b44`. Confirmat amb `gh release list --repo pikelweiss-ai/canica-volatil`. D1 està resolta; no cal una publicació prèvia.
-- Ja existeix: `BlockData` + `BlockCatalog` + 626 fitxes (`BlockCatalogBuilder`), pestanya **BLOCS** de l'Almanac, targeta **CREADOR** apagada a `MapSelectUI.cs`, `CreativeMode.cs` (model per als objectes de joc) i el bot `almanac150` que comprova que la targeta no carrega res (**s'ha d'actualitzar** quan l'actives).
-- Bots: `-canicaBot phase0 | bosses150 | keys150 | amulets150 | store150 | almanac150 | menushot | dungeon140 | solo | v141 | scenery`. Patró de bot a `Assets/Scripts/Net/NetBotV141.cs` i `NetBotAlmanac150.cs`.
-- Fases 1–7 tenen commits locals `f72beb8`, `b768424`, `3dc44fe`, `b8828b5`, `4a45276`, `b022a8e` i `69768c8`; els bots de catàleg, dades, editor, autotile i compartir han passat `NETBOT PASS`.
-- La fase 8 (mapes online) queda per a v1.7 segons D2 si la integració s'allarga. Fase 9: builds finals Windows/Linux/Android, manifests i suite online existent passen; notes d'Obsidian actualitzades. La vista de prova encara no instancia enemics/cofres com a entitats de combat.
-- Els bots validen els fluxos implementats, però això no completa tot el disseny: PROVAR és una vista local en graella amb marcadors; l'autotile cobreix Gespa_cami i no calcula ombres ni col·lisions en el món; els tres kits són habitacions simples de paret/terra. Falta comprovar en dispositius reals i jugar mapes importats en Android.
+- Ja existeix el catàleg de 626 blocs i l'editor Creador està actiu en PC. En dispositius mòbils, la targeta informa que l'editor és només per a PC i el selector permet importar un codi CVM1 per a jugar el mapa.
+- Rols de bot v1.6: `catalog160`, `mapdata160`, `editor160`, `tile160` i `share160`, a més dels rols anteriors. En la revisió final del 22/11/2026 tots cinc han donat `NETBOT PASS`.
+- Fases 1–7 tenen commits locals, començant per `f72beb8`, `b768424`, `3dc44fe`, `b8828b5`, `4a45276`, `b022a8e` i `69768c8`. Els commits posteriors i els pendents estan detallats a [TRASPAS_V161.md](TRASPAS_V161.md).
+- D2 deixa el joc online de mapes a v1.7 si s'allarga; no hi ha protocol 25. Windows, Linux i Android s'han compilat; els manifests coincideixen. No s'han provat dispositius físics.
+- `PROVAR` reutilitza `Dungeon` amb jugador, enemics, cofres, mercader i portal reals. L'autotile inclou camins, panells, canonades, baranes i catifes de bany; les hitboxes giren i es voltegen. Encara falta QA manual, proves de mapes grans i completar els grups multipart com un sol objecte.
 
 ## 4. Contingut de la v1.6 (tancat; **no hi afigues res sense preguntar a Ferran**)
 
 Segueix **les fases 0–9 de la secció 10 del disseny**, en ordre, amb compilació i prova al final de cada una, i diu a Ferran què has comprovat i què no.
 
-**Fase 0 està feta.** Ferran va confirmar la publicació de v1.5.0 i usar les propostes per defecte D2–D10. No tornes a preguntar-les. D2 permet passar l'online a v1.7 si s'allarga.
-- **D1** publicar la v1.5 primer.
-- **D2** si els mapes creats es juguen online (i si va a la v1.6 o a la v1.7).
-- **D3** com es comparteixen els mapes.
-- **D4** mida màxima.
-- **D6** si els llums fan llum 2D de veres.
+**Fase 0 està feta.** Ferran va confirmar que v1.5.0-alpha és Latest a GitHub (22/11/2026, `6675b44`) i va acceptar les propostes per defecte D2–D10. No tornes a preguntar-les. D2 permet passar l'online a v1.7 si s'allarga.
+- **D1 resolta:** v1.5.0 ja està publicada; no cal fer cap publicació prèvia.
+- **D2–D10 resoltes:** usa les propostes per defecte de la secció 9 del disseny, inclòs deixar online en l'última fase o v1.7 si s'allarga.
 
 Anota qualsevol canvi d'abast al traspàs.
 
@@ -50,12 +47,12 @@ Anota qualsevol canvi d'abast al traspàs.
 
 ## 6. Com provar
 - Compila en mode batch (Editor tancat): `./Tools/Build/build-alpha.ps1 -Target Windows -BuildRoot "Builds\Candidats\Alpha-v1.6.0-<data>"` (el mateix `BuildRoot` per a Windows, Linux i Android).
-- Bots: `<BuildRoot>\Windows\CanicaAlphaReview.exe -canicaBot <rol> -botShots <carpeta> -screen-width 1600 -screen-height 900 -screen-fullscreen 0 -logFile <log>`. Afig'n de nous per a cada fase (`catalog160`, `mapdata160`, `editor160`, `playtest160`, `autotile160`, `kits160`, `share160`, i `mapnet160` si hi ha online). Han de donar `NETBOT PASS`.
+- Bots: `<BuildRoot>\Windows\CanicaAlphaReview.exe -canicaBot <rol> -botShots <carpeta> -screen-width 1600 -screen-height 900 -screen-fullscreen 0 -logFile <log>`. Rols v1.6: `catalog160`, `mapdata160`, `editor160`, `tile160` i `share160`; han de donar `NETBOT PASS`.
 - Online: `./Tools/Net/test-online.ps1 -Exe <exe> -MobileClient` ha de donar **6/6** (o més, si afegeixes casos).
 - Els dos casos amb directori públic (ntfy.sh) depenen de la xarxa; si fallen per això, repeteix amb el directori local de prova i **diu-ho**.
 
 ## 7. Com publicar (només amb permís explícit de Ferran)
-Igual que a la v1.5: [TRASPAS_CODEX_V150.md § 6](TRASPAS_CODEX_V150.md#6-com-publicar-només-amb-permís-explícit-de-ferran). Resum: compilar les tres plataformes amb el mateix `BuildRoot`, pegats oficials d'Unity a Windows i Android, `check-crossplay.ps1` en PASS, `package-alpha.ps1`, etiqueta `v1.6.0-alpha`, `push` en fast-forward i `gh release create`. No reescriguis cap etiqueta ja publicada. Puja `bundleVersionCode` d'Android (a la v1.5 és 16).
+Igual que a la v1.5: [TRASPAS_CODEX_V150.md § 6](TRASPAS_CODEX_V150.md#6-com-publicar-només-amb-permís-explícit-de-ferran). Resum: compilar les tres plataformes amb el mateix `BuildRoot`, pegats oficials d'Unity a Windows i Android, `check-crossplay.ps1` en PASS, `package-alpha.ps1`, etiqueta `v1.6.0-alpha`, `push` en fast-forward i `gh release create`. No reescriguis cap etiqueta ja publicada. L'Android bundle code actual del candidat és 17. **No publiques ni faces push sense permís explícit.**
 
 ## 8. Fase 9 · Tancament
 Versió `1.6.0-alpha` (`GameVersion.cs`), entrada a `Changelog.cs`, `NetProtocol.Version` i `ONLINE.md` si hi ha missatges nous, notes de `memoria-claude`, documentació (`README`, `RELEASE_NOTES`, `ALPHA_PROGRESS`, `MOBILE_ALPHA`, `GITHUB_PREPARACIO`, `Docs/INDEX.md`, `Docs/ROADMAP.md`) i un traspàs nou (`TRASPAS_V161.md`).
@@ -63,8 +60,8 @@ Versió `1.6.0-alpha` (`GameVersion.cs`), entrada a `Changelog.cs`, `NetProtocol
 ### Validació de tancament en curs · 2026-11-22
 
 - `gh release list --repo pikelweiss-ai/canica-volatil`: Alpha v1.5.0 Latest. La v1.6 continua local, sense push ni release.
-- Windows, Linux i Android batch build: `ALPHA_BUILD_OK`; `check-crossplay.ps1`: `CROSSPLAY_MANIFEST: PASS`, protocol 24, paquet 1.6.0-alpha, 29 armes i 4 cures. Codi Android 17 al builder. No provat en dispositius físics.
-- `test-online.ps1 -MobileClient`: 6/6 per a les sales ja existents; no valida transferència de mapes, que no està implementada.
-- Bots específics: `catalog160`, `mapdata160`, `editor160`, `tile160`, `share160`: NETBOT PASS. Logs a `Builds/Candidats/Alpha-v1.6.0-final/Logs`.
+- Windows, Linux i Android batch build: `ALPHA_BUILD_OK`; `check-crossplay.ps1`: `CROSSPLAY_MANIFEST: PASS`, protocol 24, paquet 1.6.0-alpha, 29 armes i 4 cures. Codi Android 17. No provat en dispositius físics.
+- Passada final del 22/11/2026: `catalog160`, `mapdata160`, `editor160`, `tile160`, `share160`: `NETBOT PASS`. `editor160` prova graella/hitboxes, favorits/recents, ruta de capes, rotació/flip i PROVAR; `share160` importa un CVM1 des del selector i el carrega en `Dungeon`.
+- `test-online.ps1 -MobileClient`: 6/6 en una validació anterior de les sales ja existents; no valida transferència de mapes, que es deixa a v1.7.
 - Notes d'Obsidian actualitzades després de pull i publicades al repositori de notes en commit `a37eee1` (aquest push és només al repositori de notes, segons la instrucció de Ferran).
-- Pendent: decidir i implementar el que falta del disseny per a dir el Creador complet; deixar online per a v1.7; cap release de joc publicada.
+- Pendent: QA manual de combat/cofres/mercader, 64×64, UI en 4:3 i dispositius físics; gestionar les peces multipart com un objecte; acabar de definir autotile i ombres amb els sprites disponibles. Online queda a v1.7. Cap release de joc publicada.
