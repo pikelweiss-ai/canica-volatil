@@ -10,7 +10,7 @@ public sealed class MapEditor : MonoBehaviour
 {
     enum EditTool { Paint, Erase, Fill, Rectangle, Line, Eyedropper, Copy, Paste }
     enum EditLayer { Ground, Objects, Overlay }
-    enum PlaceMode { Blocks, Player, Enemy, Chest, Goal }
+    enum PlaceMode { Blocks, Player, Enemy, Chest, Goal, Merchant }
     MapData map;
     BlockData selected;
     Transform grid, palette, uiRoot, mapListPanel;
@@ -121,7 +121,7 @@ public sealed class MapEditor : MonoBehaviour
         UIKit.Button(canvas.transform, "KIT CASTELL", new Vector2(-360, 315), new Vector2(140, 34), () => PlaceKit("Parets/Castell_blocs", "Parets/Castell_fosc"), UIKit.Style.Normal, 13);
         UIKit.Button(canvas.transform, "KIT CASA", new Vector2(-205, 315), new Vector2(140, 34), () => PlaceKit("Parets/Paret_casa", "Terres/Terra"), UIKit.Style.Normal, 13);
         UIKit.Button(canvas.transform, "KIT SUPERMERCAT", new Vector2(-35, 315), new Vector2(165, 34), () => PlaceKit("Moderns/Paret_supermercat", "Terres/Rajola_supermercat"), UIKit.Style.Normal, 12);
-        string[] toolNames = { "PINTAR", "ESBORRAR", "OMPLIR", "RECTANGLE", "R. PLE/BUIT", "LÍNIA", "COMPTAGOTES", "DESFER", "REFER", "CAPA", "JUGADOR", "ENEMIC", "COFRE", "FINAL", "COPIAR", "ENGANXAR", "V. CAPA" };
+        string[] toolNames = { "PINTAR", "ESBORRAR", "OMPLIR", "RECTANGLE", "R. PLE/BUIT", "LÍNIA", "COMPTAGOTES", "DESFER", "REFER", "CAPA", "JUGADOR", "ENEMIC", "COFRE", "FINAL", "MERCADER", "COPIAR", "ENGANXAR", "V. CAPA" };
         float toolX = -575;
         foreach (string toolName in toolNames)
         {
@@ -250,6 +250,7 @@ public sealed class MapEditor : MonoBehaviour
         if (name == "ENEMIC") { placeMode = PlaceMode.Enemy; status.text = "Posa un Llim"; return; }
         if (name == "COFRE") { placeMode = PlaceMode.Chest; status.text = "Posa un cofre comú"; return; }
         if (name == "FINAL") { placeMode = PlaceMode.Goal; status.text = "Posa o mou el portal final"; return; }
+        if (name == "MERCADER") { placeMode = PlaceMode.Merchant; status.text = "Posa un mercader"; return; }
         if (name == "V. CAPA") { placeMode = PlaceMode.Blocks; layerVisible[(int)layer] = !layerVisible[(int)layer]; DrawGrid(); status.text = "Visibilitat " + layer + ": " + (layerVisible[(int)layer] ? "activa" : "oculta"); return; }
         placeMode = PlaceMode.Blocks;
         tool = name switch
@@ -276,6 +277,8 @@ public sealed class MapEditor : MonoBehaviour
         else if (placeMode == PlaceMode.Chest)
             map.chests = map.chests.Concat(new[] { new MapChest { x = x, y = y, rarity = "Comu" } }).ToArray();
         else if (placeMode == PlaceMode.Goal) map.goal = new MapGoal { x = x, y = y };
+        else if (placeMode == PlaceMode.Merchant)
+            map.spawns = map.spawns.Concat(new[] { new MapSpawn { x = x, y = y, kind = "merchant", id = "Mercader" } }).ToArray();
         DrawGrid();
     }
     void Playtest()

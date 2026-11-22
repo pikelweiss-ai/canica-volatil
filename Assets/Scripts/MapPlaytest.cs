@@ -68,6 +68,7 @@ public sealed class MapPlaytest : MonoBehaviour
             }
             if (map.goal != null && map.goal.x == x && map.goal.y == y) cell.GetComponent<UnityEngine.UI.Image>().color = Color.green;
             if (map.spawns.Any(s => s.kind == "enemy" && s.x == x && s.y == y)) cell.GetComponent<UnityEngine.UI.Image>().color = Color.red;
+            if (map.spawns.Any(s => s.kind == "merchant" && s.x == x && s.y == y)) cell.GetComponent<UnityEngine.UI.Image>().color = new Color(.25f, .75f, .9f);
             if (map.chests.Any(c => c.x == x && c.y == y)) cell.GetComponent<UnityEngine.UI.Image>().color = UIKit.Gold;
             if (player.x == x && player.y == y) cell.GetComponent<UnityEngine.UI.Image>().color = Color.cyan;
         }

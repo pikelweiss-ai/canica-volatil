@@ -74,9 +74,13 @@ public partial class NetBot
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         buttons.First(b => b.gameObject.name == "Cel·la 1,0").onClick.Invoke();
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto MERCADER").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Cel·la 2,0").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
-        if (!MapStore.Load("Mapa", out saved, out error) || saved.goal == null || !saved.spawns.Any(s => s.kind == "player") || !saved.spawns.Any(s => s.kind == "enemy" && s.id == "Llim"))
-        { Fail("no s'han guardat el jugador, l'enemic i el portal"); yield break; }
+        if (!MapStore.Load("Mapa", out saved, out error) || saved.goal == null || !saved.spawns.Any(s => s.kind == "player") || !saved.spawns.Any(s => s.kind == "enemy" && s.id == "Llim") || !saved.spawns.Any(s => s.kind == "merchant" && s.id == "Mercader"))
+        { Fail("no s'han guardat el jugador, l'enemic, el mercader i el portal"); yield break; }
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         buttons.First(b => b.gameObject.name == "Boto PROVAR").onClick.Invoke();
         yield return WaitFor(() => Scene == "MapaProva", 5, "prova de mapa");

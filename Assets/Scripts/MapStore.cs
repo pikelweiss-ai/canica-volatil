@@ -27,7 +27,7 @@ public static class MapStore
             if (layer.Select(c => c.x + c.y * map.width).Distinct().Count() != layer.Length)
             { error = "Hi ha cel·les duplicades dins d'una capa."; return false; }
         if (map.spawns.Any(s => s.x < 0 || s.y < 0 || s.x >= map.width || s.y >= map.height ||
-            (s.kind != "player" && s.kind != "enemy") || s.kind == "enemy" && string.IsNullOrWhiteSpace(s.id)) ||
+            (s.kind != "player" && s.kind != "enemy" && s.kind != "merchant") || (s.kind == "enemy" || s.kind == "merchant") && string.IsNullOrWhiteSpace(s.id)) ||
             map.chests.Any(c => c.x < 0 || c.y < 0 || c.x >= map.width || c.y >= map.height ||
             string.IsNullOrWhiteSpace(c.rarity)) ||
             map.goal != null && (map.goal.x < 0 || map.goal.y < 0 || map.goal.x >= map.width || map.goal.y >= map.height))
