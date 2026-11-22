@@ -29,6 +29,8 @@ public sealed class MapEditor : MonoBehaviour
     bool[] layerVisible = { true, true, true };
     float autosaveAt;
     string currentSavedName;
+    bool mousePainting;
+    Vector2Int? lastDragCell, suppressGridClick;
     RectTransform promptPanel;
     TMP_Text promptText;
     System.Action pendingConfirm;
@@ -50,6 +52,32 @@ public sealed class MapEditor : MonoBehaviour
             if (dirty) { MapStore.Save(map, "__autosave", out _); status.text = "Còpia automàtica guardada."; }
         }
         bool typing = EventSystem.current != null && EventSystem.current.currentSelectedGameObject != null && EventSystem.current.currentSelectedGameObject.GetComponent<TMP_InputField>() != null;
+        if (!typing && grid != null && EventSystem.current != null)
+        {
+            if (Input.GetMouseButtonDown(0)) { mousePainting = true; lastDragCell = null; }
+            if (mousePainting && Input.GetMouseButton(0) && placeMode == PlaceMode.Blocks && (tool == EditTool.Paint || tool == EditTool.Erase))
+            {
+                var pointer = new PointerEventData(EventSystem.current) { position = Input.mousePosition };
+                var hits = new List<RaycastResult>();
+                EventSystem.current.RaycastAll(pointer, hits);
+                var hit = hits.FirstOrDefault(h => h.gameObject.name.StartsWith("Cel·la "));
+                if (hit.gameObject != null)
+                {
+                    string[] coords = hit.gameObject.name.Substring("Cel·la ".Length).Split(',');
+                    if (coords.Length == 2 && int.TryParse(coords[0], out int x) && int.TryParse(coords[1], out int y))
+                    {
+                        var next = new Vector2Int(x, y);
+                        if (!lastDragCell.HasValue || lastDragCell.Value != next)
+                        {
+                            suppressGridClick = next;
+                            foreach (var point in lastDragCell.HasValue ? TraceLine(lastDragCell.Value, next).Skip(1) : new[] { next }) Paint(point.x, point.y);
+                            lastDragCell = next;
+                        }
+                    }
+                }
+            }
+            if (Input.GetMouseButtonUp(0)) { mousePainting = false; lastDragCell = null; }
+        }
         if (!typing && grid != null)
         {
             Vector3 pan = Vector3.zero;
@@ -157,7 +185,7 @@ public sealed class MapEditor : MonoBehaviour
         {
             int cx = x, cy = y;
             var button = UIKit.Button(grid, "", new Vector2(-150 + x * cell, 240 - y * cell), new Vector2(cell - 2, cell - 2),
-                () => Paint(cx, cy), UIKit.Style.Normal, 10);
+                () => { if (suppressGridClick == new Vector2Int(cx, cy)) { suppressGridClick = null; return; } suppressGridClick = null; Paint(cx, cy); }, UIKit.Style.Normal, 10);
             button.rect.name = "Cel·la " + cx + "," + cy;
             var cells = VisibleCells();
             var item = MapAutoTile160.Resolve(cells.FirstOrDefault(c => c.x == cx && c.y == cy), cells);
@@ -318,12 +346,25 @@ public sealed class MapEditor : MonoBehaviour
                 if (filledRectangle || x == minX || x == maxX || y == minY || y == maxY) points.Add(new Vector2Int(x,y));
         }
         else
-        {
-            int x0=start.x,y0=start.y,x1=end.x,y1=end.y,dx=Mathf.Abs(x1-x0),sx=x0<x1?1:-1,dy=-Mathf.Abs(y1-y0),sy=y0<y1?1:-1,err=dx+dy;
-            while(true){points.Add(new Vector2Int(x0,y0));if(x0==x1&&y0==y1)break;int e2=2*err;if(e2>=dy){err+=dy;x0+=sx;}if(e2<=dx){err+=dx;y0+=sy;}}
-        }
+            points.AddRange(TraceLine(start, end));
         foreach (var p in points) { int x=p.x,y=p.y; cells.RemoveAll(c => c.x == x && c.y == y); cells.Add(new MapCell { x = x, y = y, blockId = selected.id, rot = rotation, flip = flip }); }
         SetActiveCells(cells.ToArray()); DrawGrid();
+    }
+
+    internal static Vector2Int[] TraceLine(Vector2Int start, Vector2Int end)
+    {
+        var points = new List<Vector2Int>();
+        int x = start.x, y = start.y, dx = Mathf.Abs(end.x - x), sx = x < end.x ? 1 : -1;
+        int dy = -Mathf.Abs(end.y - y), sy = y < end.y ? 1 : -1, error = dx + dy;
+        while (true)
+        {
+            points.Add(new Vector2Int(x, y));
+            if (x == end.x && y == end.y) break;
+            int twice = 2 * error;
+            if (twice >= dy) { error += dy; x += sx; }
+            if (twice <= dx) { error += dx; y += sy; }
+        }
+        return points.ToArray();
     }
 
     void Undo()

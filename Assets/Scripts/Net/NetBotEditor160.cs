@@ -20,6 +20,9 @@ public partial class NetBot
         creator.onClick.Invoke();
         yield return WaitFor(() => Scene == "Creador", 5, "escena Creador");
         if (failed) yield break;
+        var dragTrace = MapEditor.TraceLine(new Vector2Int(1, 1), new Vector2Int(4, 4));
+        if (dragTrace.Length != 4 || dragTrace[0] != new Vector2Int(1, 1) || dragTrace[3] != new Vector2Int(4, 4))
+        { Fail("la interpolació del traç deixa buits entre cel·les"); yield break; }
         var buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         if (buttons.Count(b => b.gameObject.name.StartsWith("Cel·la ")) != 256 ||
             !buttons.Any(b => b.gameObject.name.StartsWith("Bloc Terres/")) ||
