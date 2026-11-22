@@ -24,6 +24,7 @@ Commits locals de les fases inicials:
 - `08f2c67` — PROVAR reutilitza l'escena real de masmorra i genera el mapa en Tilemaps, amb jugador, enemics, cofres, botiga i final.
 - `abffbf5` — selecció d'enemics (catàleg complet, inclosos bosses) i raresa de cofres.
 - `a249d11` — el final usa el portal animat real i comprova la victòria sense canviar de pis.
+- `3cbc88b` — hitboxes dels semiblocs aplicades en el món de prova, amb la mateixa rotació horària i flip que el sprite.
 
 La versió visible/package 1.6.0-alpha, el Changelog, el codi Android 17, el cubell, la línia Bresenham, la càmera WASD/zoom, la visibilitat de capes, l'autosave recuperable, els avisos de confirmació i el desfés dels marcadors ja es van incloure en el tancament de la v1.6. La versió del worktree pot continuar diferint del número de release perquè la v1.6 no s'ha publicat.
 
@@ -39,7 +40,7 @@ Validació a `Builds/Candidats/Alpha-v1.6.0-final`:
 
 - PROVAR ara reutilitza el jugador i els sistemes reals del joc, i dibuixa els blocs en Tilemaps. El bot valida els actors i la victòria, però encara falta una prova manual de combat/interacció amb cofre i mercader, i provar mapes grans en dispositiu real.
 - Online de mapes: D2 permet passar-ho a v1.7 si s'allarga. No hi ha protocol 25 ni transmissió en chunks; el protocol es queda en 24.
-- Autotile ara inclou `Natura/Gespa_cami_*`, `Oficina/Panell_*` i `Laboratori/Tuberia_*`; falten catifes, roques de cova, aigua i baranes connectades, així com ombres/col·lisions rotades en el món.
+- Autotile ara inclou `Natura/Gespa_cami_*`, `Oficina/Panell_*` i `Laboratori/Tuberia_*`; falten catifes, roques de cova, aigua i baranes connectades, així com rotació d'ombres. Les hitboxes dels semiblocs ja es creen al món amb rotació/flip i es proven amb `tile160`/`editor160`.
 - Els kits són habitacions de 9×9 amb paret perimetral i terra; falta provar/afinar el contingut temàtic i les plantes.
 - L'editor encara no té selecció/copiat de multipart com a objecte; la pintura amb arrossegament i la llista d'obertura ja estan implementades. La prova Android de jugar mapes importats està pendent.
 - Revisar el rendiment en un mapa 64×64 i fer QA visual en 16:9/4:3.
