@@ -42,8 +42,8 @@ Validació a `Builds/Candidats/Alpha-v1.6.0-final`:
 - Windows, Linux i Android: `ALPHA_BUILD_OK`.
 - `check-crossplay.ps1`: `CROSSPLAY_MANIFEST: PASS`, protocol 24, versió 1.6.0-alpha, 29 armes i 4 cures.
 - Bots `catalog160`, `mapdata160`, `editor160`, `tile160`, `share160`: `NETBOT PASS` en la revisió més recent. `catalog160` comprova 626 fitxes, 15 famílies, hitboxes, grups multiparts i sufixos `_esq/_mig/_dre`; `mapdata160` comprova també que els ids de bloc desconeguts es preserven; `editor160` comprova rectangles ple/buit, selecció d'enemics i cofres, i una prova dins de `Dungeon` amb jugador (vida/atac), enemic, cofre, mercader, portal, victòria i retorn.
-- Passada final del candidat Windows abans del canvi multipart: `catalog160`, `mapdata160`, `editor160`, `tile160` i `share160` donen `NETBOT PASS`. El canvi multipart nou també s'ha compilat i `editor160` ha donat `NETBOT PASS`, incloent col·locació, còpia/enganxat, rotació, volteig i esborrat d'un grup de tres peces.
-- Builds Windows, Linux i Android: `ALPHA_BUILD_OK`. `check-crossplay.ps1`: `CROSSPLAY_MANIFEST: PASS`, protocol 24, paquet 1.6.0-alpha, 29 armes i 4 cures; Android bundle code 17.
+- Passada final del candidat Windows: `catalog160`, `mapdata160`, `editor160`, `tile160` i `share160` donen `NETBOT PASS`. Després del canvi multipart, `editor160` ha tornat a donar `NETBOT PASS`, incloent col·locació, còpia/enganxat, rotació, volteig i esborrat d'un grup de tres peces.
+- Builds Windows, Linux i Android posteriors al canvi multipart: `ALPHA_BUILD_OK`. `check-crossplay.ps1`: `CROSSPLAY_MANIFEST: PASS`, protocol 24, paquet 1.6.0-alpha, 29 armes i 4 cures; Android bundle code 17.
 - `test-online.ps1 -MobileClient`: 6/6 en la validació anterior de les sales ja existents. No és prova de mapes creats online, que es deixa a v1.7.
 - No s'han provat executables en PC Linux físic ni APK en mòbil físic. El selector i el flux d'importació s'han comprovat amb el bot Windows, no en un telèfon.
 

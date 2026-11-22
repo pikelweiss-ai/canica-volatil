@@ -61,7 +61,8 @@ Versió `1.6.0-alpha` (`GameVersion.cs`), entrada a `Changelog.cs`, `NetProtocol
 
 - `gh release list --repo pikelweiss-ai/canica-volatil`: Alpha v1.5.0 Latest. La v1.6 continua local, sense push ni release.
 - Windows, Linux i Android batch build: `ALPHA_BUILD_OK`; `check-crossplay.ps1`: `CROSSPLAY_MANIFEST: PASS`, protocol 24, paquet 1.6.0-alpha, 29 armes i 4 cures. Codi Android 17. No provat en dispositius físics.
-- Passada final del 22/11/2026: `catalog160`, `mapdata160`, `editor160`, `tile160`, `share160`: `NETBOT PASS`. `editor160` prova graella/hitboxes, favorits/recents, ruta de capes, rotació/flip i PROVAR; `share160` importa un CVM1 des del selector i el carrega en `Dungeon`.
+- Passada final del 22/11/2026: `catalog160`, `mapdata160`, `editor160`, `tile160`, `share160`: `NETBOT PASS`. Després d'afegir la gestió multipart, `editor160` torna a passar amb còpia/enganxat, rotació, volteig i esborrat d'un grup de tres peces; els altres quatre rols passen sobre el mateix codi que no els afecta.
+- Builds Windows/Linux/Android posteriors al canvi multipart donen `ALPHA_BUILD_OK`; `check-crossplay.ps1` dona `CROSSPLAY_MANIFEST: PASS` amb protocol 24 i versió 1.6.0-alpha.
 - `test-online.ps1 -MobileClient`: 6/6 en una validació anterior de les sales ja existents; no valida transferència de mapes, que es deixa a v1.7.
 - Notes d'Obsidian actualitzades després de pull i publicades al repositori de notes en commit `a37eee1` (aquest push és només al repositori de notes, segons la instrucció de Ferran).
 - Pendent: QA manual de combat/cofres/mercader, 64×64, UI en 4:3 i dispositius físics; acabar de definir autotile i ombres amb els sprites disponibles. Online queda a v1.7. Cap release de joc publicada.
