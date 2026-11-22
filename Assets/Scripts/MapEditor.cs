@@ -354,6 +354,7 @@ public sealed class MapEditor : MonoBehaviour
         if (!MapStore.Load(map.name, out _, out var error)) { status.text = error; return; }
         MapPlaytest.MapName = map.name;
         MapPlaytest.StartInDungeon = true;
+        MapPlaytest.DeleteMapAfterConsume = false;
         RunStats.DontSave = true;
         SceneManager.LoadScene("Dungeon");
     }

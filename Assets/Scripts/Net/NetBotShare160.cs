@@ -1,6 +1,8 @@
 using System.Collections;
 using System.IO;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 
 public partial class NetBot
 {
@@ -16,6 +18,18 @@ public partial class NetBot
         File.WriteAllText(path,"{ invalid json");
         bool rejects=!MapShare160.ImportFile(path,out _,out _); File.Delete(path);
         if(!rejects){Fail("s'ha acceptat un fitxer corrupta");yield break;}
-        Ok("codi CVM1, exportació/importació .canicamap i rebuig de fitxer corrupta"); Pass();
+        if (!MapImport160.SaveCodeForPlay(code, out var temporaryName, out error) ||
+            !MapStore.Load(temporaryName, out var temporaryMap, out error) || temporaryMap.layers.ground[0].blockId != "Terres/Terra")
+        { Fail("no es pot preparar el mapa importat per a jugar: " + error); yield break; }
+        MapPlaytest.MapName = temporaryName; MapPlaytest.StartInDungeon = true; MapPlaytest.DeleteMapAfterConsume = true;
+        if (!MapPlaytest.TryConsumeDungeonMap(out var consumed) || consumed == null || MapStore.List().Contains(temporaryName))
+        { Fail("el mapa de codi no s'ha consumit o no s'ha netejat després de carregar-lo"); yield break; }
+        var playButton = FindObjectsByType<Button>(FindObjectsSortMode.None).FirstOrDefault(b => b.gameObject.name == "Boto JUGAR");
+        if (playButton == null) { Fail("no s'ha trobat JUGAR per obrir el selector"); yield break; }
+        playButton.onClick.Invoke();
+        yield return WaitFor(() => FindFirstObjectByType<MapSelectUI>() != null, 4, "selector amb importació de mapes per codi");
+        if (FindObjectsByType<Button>(FindObjectsSortMode.None).All(b => b.gameObject.name != "Boto IMPORTAR CODI I JUGAR"))
+        { Fail("falta l'opció per jugar codis de mapa des del selector"); yield break; }
+        Ok("CVM1, fitxer .canicamap, mapa importat consumible i selector amb importació per codi"); Pass();
     }
 }

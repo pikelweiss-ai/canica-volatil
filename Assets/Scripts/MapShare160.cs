@@ -7,7 +7,7 @@ using UnityEngine;
 public static class MapShare160
 {
     const string Prefix = "CVM1:";
-    const int MaxCodeChars = 20000;
+    public const int MaxCodeChars = 20000;
     public static bool Encode(MapData map, out string code, out string error)
     {
         code = null;

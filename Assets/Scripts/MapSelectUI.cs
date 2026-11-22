@@ -23,6 +23,9 @@ public class MapSelectUI : MonoBehaviour
 
     private TMP_FontAsset font;
     TextMeshProUGUI creatorNotice;
+    Transform importPanel;
+    TMP_InputField importCodeField;
+    TMP_Text importStatus;
     float noticeUntil;
 
     public static MapSelectUI Create(MapInfo[] maps, TMP_FontAsset font)
@@ -65,6 +68,8 @@ public class MapSelectUI : MonoBehaviour
         creatorNotice.gameObject.name = "Avís Creador";
         creatorNotice.gameObject.SetActive(false);
 
+        UIKit.Button(transform, "IMPORTAR CODI I JUGAR", new Vector2(0, -350), new Vector2(350, 48), OpenCodeImport,
+            UIKit.Style.Success, 17);
         UIKit.Button(transform, "TORNAR", new Vector2(0, -272), new Vector2(224, 58), Hide,
             UIKit.Style.Normal, 22);
     }
@@ -82,6 +87,8 @@ public class MapSelectUI : MonoBehaviour
             "Creador" => ("CREADOR", "Dibuixa i guarda els teus mapes.", "OBRIR EDITOR", new Color(.62f, .82f, .56f)),
             _ => ("CREADOR", "", "PRÒXIMAMENT", new Color(.62f, .65f, .68f))
         };
+        bool creatorMobile = creator && Application.isMobilePlatform;
+        if (creatorMobile) details = "L'editor és només per a PC. Pots jugar codis de mapa ací.";
 
         var frame = UIKit.Box(transform, position, new Vector2(CardWidth, CardHeight), Color.white, "Mapa " + (coming ? "Creador" : scene));
         var card = frame.gameObject.AddComponent<Button>();
@@ -91,7 +98,7 @@ public class MapSelectUI : MonoBehaviour
         colors.highlightedColor = colors.selectedColor = accent;
         colors.pressedColor = Color.Lerp(accent, Color.black, .2f);
         card.colors = colors;
-        card.interactable = coming || creator && Application.CanStreamedLevelBeLoaded(scene) || Application.CanStreamedLevelBeLoaded(scene);
+        card.interactable = coming || creator && !creatorMobile && Application.CanStreamedLevelBeLoaded(scene) || !creator && Application.CanStreamedLevelBeLoaded(scene);
         if (coming && !creator) card.onClick.AddListener(() =>
         {
             noticeUntil = Time.unscaledTime + 2.5f;
@@ -148,8 +155,35 @@ public class MapSelectUI : MonoBehaviour
         if (!coming || creator)
         {
             Label(frame, details, new Vector2(0, -98), new Vector2(textWidth, 48), 18, alignment, UIKit.TextColor);
-            Label(frame, card.interactable ? action : "NO DISPONIBLE", new Vector2(0, -141), new Vector2(textWidth, 26), 17, alignment, accent);
+            Label(frame, creatorMobile ? "CREADOR NOMÉS A PC" : card.interactable ? action : "NO DISPONIBLE", new Vector2(0, -141), new Vector2(textWidth, 26), 17, alignment, accent);
         }
+    }
+
+    void OpenCodeImport()
+    {
+        if (importPanel != null) { importPanel.gameObject.SetActive(true); return; }
+        importPanel = UIKit.Box(transform, Vector2.zero, new Vector2(900, 390), new Color(.035f, .065f, .10f, .99f), "Importar codi mapa");
+        UIKit.Text(importPanel, "IMPORTAR UN MAPA PER CODI", new Vector2(0, 135), new Vector2(820, 42), 26,
+            TextAlignmentOptions.Center, new Color(1f, .89f, .65f));
+        UIKit.Text(importPanel, "Enganxa un codi CVM1 per jugar este mapa en este dispositiu.", new Vector2(0, 92), new Vector2(820, 36), 16,
+            TextAlignmentOptions.Center, UIKit.TextColor);
+        importCodeField = UIKit.Input(importPanel, new Vector2(0, 30), new Vector2(820, 48), "Codi CVM1", MapShare160.MaxCodeChars, fontSize: 13);
+        importStatus = UIKit.Text(importPanel, "", new Vector2(0, -24), new Vector2(820, 35), 15, TextAlignmentOptions.Center, UIKit.Muted);
+        UIKit.Button(importPanel, "JUGAR MAPA", new Vector2(-190, -90), new Vector2(220, 48), ImportAndPlayCode, UIKit.Style.Primary, 17);
+        UIKit.Button(importPanel, "CANCEL·LAR", new Vector2(190, -90), new Vector2(220, 48), () => importPanel.gameObject.SetActive(false), UIKit.Style.Normal, 17);
+    }
+
+    void ImportAndPlayCode()
+    {
+        if (!MapImport160.SaveCodeForPlay(importCodeField.text, out var storedName, out var error))
+        { importStatus.text = error; return; }
+        MapPlaytest.MapName = storedName;
+        MapPlaytest.ReturnToEditor = false;
+        MapPlaytest.DeleteMapAfterConsume = true;
+        MapPlaytest.StartInDungeon = true;
+        RunStats.DontSave = true;
+        RunState.Reset();
+        SceneManager.LoadScene("Dungeon");
     }
 
     TextMeshProUGUI Label(Transform parent, string text, Vector2 position, Vector2 size, float fontSize,

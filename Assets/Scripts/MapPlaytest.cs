@@ -8,12 +8,16 @@ public sealed class MapPlaytest : MonoBehaviour
     public static string MapName;
     public static bool ReturnToEditor;
     public static bool StartInDungeon;
+    public static bool DeleteMapAfterConsume;
     public static bool TryConsumeDungeonMap(out MapData map)
     {
         map = null;
         if (!StartInDungeon) return false;
         StartInDungeon = false;
-        return MapStore.Load(MapName, out map, out _);
+        bool loaded = MapStore.Load(MapName, out map, out _);
+        if (DeleteMapAfterConsume) MapStore.Delete(MapName);
+        DeleteMapAfterConsume = false;
+        return loaded;
     }
 
     MapData map;
