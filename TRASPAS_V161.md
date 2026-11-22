@@ -13,14 +13,17 @@ Commits locals de les fases inicials:
 - `4a45276` — autotile de camins, helper de hitbox rotada i superposició de capes.
 - `b022a8e` — kits simples i copiar/enganxar regions.
 - `69768c8` — compartir `.canicamap` i codi comprimit `CVM1:`.
+- `32fe0e7` — tancament documental i builds finals de la v1.6.
+- `d088973` — els blocs desconeguts es conserven i es representen amb «?» en editar/provar.
+- `ce773c4`, `8de74ab` — rectangles plens/buits i comprovació dels dos modes al `editor160`.
 
-Canvis posteriors encara pendents de commit: versió visible/package 1.6.0-alpha, Changelog, builder Android amb codi 17, cubell de farciment corregit, línia Bresenham, càmera WASD/zoom, visibilitat de capes, autosave recuperable cada minut, avisos de sobreescriptura/eixida/mapa nou, desfés també els marcadors, i actualització de documentació. Revisa `git status` i no afiges al commit el soroll local de Ferran.
+La versió visible/package 1.6.0-alpha, el Changelog, el codi Android 17, el cubell, la línia Bresenham, la càmera WASD/zoom, la visibilitat de capes, l'autosave recuperable, els avisos de confirmació i el desfés dels marcadors ja es van incloure en el tancament de la v1.6. La versió del worktree pot continuar diferint del número de release perquè la v1.6 no s'ha publicat.
 
 Validació a `Builds/Candidats/Alpha-v1.6.0-final`:
 
 - Windows, Linux i Android: `ALPHA_BUILD_OK`.
 - `check-crossplay.ps1`: `CROSSPLAY_MANIFEST: PASS`, protocol 24, versió 1.6.0-alpha, 29 armes i 4 cures.
-- Bots `catalog160`, `mapdata160`, `editor160`, `tile160`, `share160`: `NETBOT PASS`.
+- Bots `catalog160`, `mapdata160`, `editor160`, `tile160`, `share160`: `NETBOT PASS` en la revisió més recent. `catalog160` comprova 626 fitxes, 15 famílies, hitboxes, grups multiparts i sufixos `_esq/_mig/_dre`; `mapdata160` comprova també que els ids de bloc desconeguts es preserven; `editor160` comprova rectangles plens i buits.
 - `test-online.ps1 -MobileClient`: 6/6 per al joc online existent. No és prova de mapes creats online.
 - No s'han provat executables en PC Linux físic ni APK en mòbil físic.
 
@@ -32,5 +35,6 @@ Validació a `Builds/Candidats/Alpha-v1.6.0-final`:
 - Els kits són habitacions de 9×9 amb paret perimetral i terra; falta provar/afinar el contingut temàtic i les plantes.
 - L'editor encara no té pintura d'arrossegament ni selecció/copiat de multipart com a objecte; la prova Android de jugar mapes importats està pendent.
 - Revisar el rendiment en un mapa 64×64 i fer QA visual en 16:9/4:3.
+- `MapStore` conserva ids de blocs desconeguts, que es dibuixen amb «?»; no hi ha encara migració automàtica d'un mapa per a formats futurs.
 
 No publicar ni pujar el repositori del joc sense permís explícit de Ferran. Les notes d'Obsidian s'han actualitzat després de `git pull --rebase` i el commit `a37eee1` ja està pujat al repositori de notes.
