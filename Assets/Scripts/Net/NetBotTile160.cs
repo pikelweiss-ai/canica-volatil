@@ -40,6 +40,20 @@ public partial class NetBot
         for (int i = 0; i < carpetCells.Length; i++)
             if (MapAutoTile160.Resolve(carpetCells[i], carpetCells).blockId != carpetCorners[i])
             { Fail("autotile de cantonada de catifa incorrecte en " + i); yield break; }
+        var railingCorner = new[] {
+            new MapCell { x=1,y=1,blockId="Port/Barana_H" },
+            new MapCell { x=1,y=2,blockId="Port/Barana_V" },
+            new MapCell { x=2,y=1,blockId="Port/Barana_H" }
+        };
+        if (MapAutoTile160.Resolve(railingCorner[0], railingCorner).blockId != "Port/Barana_canto_NE")
+        { Fail("autotile de cantonada de barana incorrecte"); yield break; }
+        var railingStraight = new[] {
+            new MapCell { x=1,y=1,blockId="Port/Barana_H" },
+            new MapCell { x=1,y=2,blockId="Port/Barana_V" },
+            new MapCell { x=1,y=0,blockId="Port/Barana_V" }
+        };
+        if (MapAutoTile160.Resolve(railingStraight[0], railingStraight).blockId != "Port/Barana_V")
+        { Fail("autotile recte de barana incorrecte"); yield break; }
         var rect = MapAutoTile160.RotateHitbox(new Rect(-.25f,-.5f,.5f,1f), 1);
         if (Mathf.Abs(rect.xMin + .5f) > .001f || Mathf.Abs(rect.yMin + .25f) > .001f ||
             Mathf.Abs(rect.width - 1f) > .001f || Mathf.Abs(rect.height - .5f) > .001f)
@@ -51,6 +65,6 @@ public partial class NetBot
             ground=new[] { new MapCell {x=0,y=0,blockId="Terres/Terra"} },
             objects=new[] { new MapCell {x=0,y=0,blockId="Bany/Catifa_bany_centre"} } } };
         if (!MapStore.Validate(map, out var error)) { Fail("no permet superposar capes: " + error); yield break; }
-        Ok("autotile de camí, catifa, hitbox rotada i capes superposades"); Pass();
+        Ok("autotile de camí, catifa, barana, hitbox rotada i capes superposades"); Pass();
     }
 }

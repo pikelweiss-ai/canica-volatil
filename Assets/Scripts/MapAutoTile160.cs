@@ -13,6 +13,15 @@ public static class MapAutoTile160
         bool U = Has(cells, cell.x, cell.y + 1, prefix), R = Has(cells, cell.x + 1, cell.y, prefix), D = Has(cells, cell.x, cell.y - 1, prefix), L = Has(cells, cell.x - 1, cell.y, prefix);
         int count = (U?1:0)+(R?1:0)+(D?1:0)+(L?1:0);
         if (count == 0) return cell;
+        if (prefix == "Port/Barana_")
+        {
+            bool corner = count == 2 && !(U && D || L && R);
+            string railingPart = corner ? "canto_" + (U && R ? "NE" : U && L ? "NO" : D && R ? "SE" : "SO") :
+                U || D ? "V" : "H";
+            var railing = BlockCatalog.Instance.blocks.FirstOrDefault(b => b.id == prefix + railingPart);
+            if (railing != null) { cell.blockId = railing.id; cell.rot = 0; }
+            return cell;
+        }
         string part; int rot = 0;
         if (count == 2)
         {
