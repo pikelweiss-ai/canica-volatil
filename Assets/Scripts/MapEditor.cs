@@ -31,6 +31,7 @@ public sealed class MapEditor : MonoBehaviour
     MapLayers clipboard;
     bool dirty;
     bool gridVisible = true, hitboxesVisible;
+    int paletteMode;
     bool[] layerVisible = { true, true, true };
     float autosaveAt;
     string currentSavedName;
@@ -168,6 +169,7 @@ public sealed class MapEditor : MonoBehaviour
         searchField.onValueChanged.AddListener(_ => BuildPalette());
         familyField.onValueChanged.AddListener(_ => BuildPalette());
         palette = UIKit.ScrollList(panel, new Vector2(0, -35), new Vector2(225, 455), out _, 2);
+        UIKit.Button(panel, "VISTA: TOTS", new Vector2(0, 175), new Vector2(220, 32), CyclePaletteMode, UIKit.Style.Normal, 12);
         grid = UIKit.Empty(canvas.transform, "Graella");
         promptPanel = UIKit.Box(canvas.transform, Vector2.zero, new Vector2(420, 200), UIKit.Panel, "Confirmació");
         promptText = UIKit.Text(promptPanel, "", new Vector2(0, 45), new Vector2(380, 60), 20, TextAlignmentOptions.Center, UIKit.TextColor);
@@ -193,9 +195,13 @@ public sealed class MapEditor : MonoBehaviour
         UIKit.Clear(palette);
         string search = searchField.text.Trim();
         string family = familyField.text.Trim();
+        var favorites = ReadPaletteIds("Canica.MapEditor.Favorites");
+        var recent = ReadPaletteIds("Canica.MapEditor.Recent");
         var blocks = BlockCatalog.Instance.blocks.Where(b => b != null)
             .Where(b => string.IsNullOrEmpty(search) || b.displayName.IndexOf(search, System.StringComparison.OrdinalIgnoreCase) >= 0)
             .Where(b => string.IsNullOrEmpty(family) || b.family.IndexOf(family, System.StringComparison.OrdinalIgnoreCase) >= 0)
+            .Where(b => paletteMode != 1 || favorites.Contains(b.id))
+            .Where(b => paletteMode != 2 || recent.Contains(b.id))
             .OrderBy(b => b.family).ThenBy(b => b.displayName);
         int rowIndex = 0;
         foreach (var block in blocks)
@@ -203,12 +209,46 @@ public sealed class MapEditor : MonoBehaviour
             var row = UIKit.ListRow(palette, 38, rowIndex++ % 2 == 0 ? UIKit.Row : UIKit.RowAlt);
             row.name = "Bloc " + block.id;
             var button = row.gameObject.AddComponent<Button>();
-            button.onClick.AddListener(() => selected = block);
+            button.onClick.AddListener(() => { selected = block; RememberRecent(block.id); });
             UIKit.Picture(row, block.sprite, new Vector2(-84, 0), new Vector2(26, 26));
-            var label = UIKit.Text(row, block.displayName, new Vector2(35, 0), new Vector2(158, 32), 13, TextAlignmentOptions.MidlineLeft, UIKit.TextColor);
+            bool favorite = favorites.Contains(block.id);
+            var star = UIKit.Button(row, favorite ? "★" : "☆", new Vector2(95, 0), new Vector2(30, 30), () => ToggleFavorite(block.id), UIKit.Style.Ghost, 17, false);
+            star.rect.name = "Favorit " + block.id;
+            star.button.navigation = new Navigation { mode = Navigation.Mode.None };
+            var label = UIKit.Text(row, block.displayName, new Vector2(24, 0), new Vector2(126, 32), 13, TextAlignmentOptions.MidlineLeft, UIKit.TextColor);
             label.textWrappingMode = TextWrappingModes.NoWrap;
         }
     }
+
+    void CyclePaletteMode()
+    {
+        paletteMode = (paletteMode + 1) % 3;
+        string label = paletteMode == 1 ? "VISTA: FAVORITS" : paletteMode == 2 ? "VISTA: RECENTS" : "VISTA: TOTS";
+        var button = FindObjectsByType<Button>(FindObjectsSortMode.None).FirstOrDefault(b => b.gameObject.name.StartsWith("Boto VISTA:"));
+        if (button != null) button.GetComponentInChildren<TMP_Text>().text = label;
+        BuildPalette();
+    }
+
+    void ToggleFavorite(string id)
+    {
+        var ids = ReadPaletteIds("Canica.MapEditor.Favorites");
+        if (!ids.Add(id)) ids.Remove(id);
+        PlayerPrefs.SetString("Canica.MapEditor.Favorites", string.Join("|", ids)); PlayerPrefs.Save();
+        BuildPalette();
+    }
+
+    void RememberRecent(string id)
+    {
+        var ids = ReadPaletteIds("Canica.MapEditor.Recent");
+        ids.Remove(id);
+        var ordered = new List<string> { id };
+        ordered.AddRange(ids.Take(11));
+        PlayerPrefs.SetString("Canica.MapEditor.Recent", string.Join("|", ordered)); PlayerPrefs.Save();
+        if (paletteMode == 2) BuildPalette();
+    }
+
+    static HashSet<string> ReadPaletteIds(string key) => new HashSet<string>(PlayerPrefs.GetString(key, "")
+        .Split(new[] { '|' }, System.StringSplitOptions.RemoveEmptyEntries), System.StringComparer.Ordinal);
 
     void DrawGrid()
     {

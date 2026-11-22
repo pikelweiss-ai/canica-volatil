@@ -32,6 +32,36 @@ public partial class NetBot
         viewButtons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         viewButtons.First(b => b.gameObject.name == "Boto HITBOXES: NO").onClick.Invoke();
         yield return null;
+        // Remove only test-run leftovers from this new, isolated bot preference namespace.
+        PlayerPrefs.DeleteKey("Canica.MapEditor.Favorites"); PlayerPrefs.DeleteKey("Canica.MapEditor.Recent"); PlayerPrefs.Save();
+        bool hadFavorites = PlayerPrefs.HasKey("Canica.MapEditor.Favorites");
+        bool hadRecents = PlayerPrefs.HasKey("Canica.MapEditor.Recent");
+        string savedFavorites = PlayerPrefs.GetString("Canica.MapEditor.Favorites", "");
+        string savedRecents = PlayerPrefs.GetString("Canica.MapEditor.Recent", "");
+        System.Action restorePalettePreferences = () => {
+            if (hadFavorites) PlayerPrefs.SetString("Canica.MapEditor.Favorites", savedFavorites); else PlayerPrefs.DeleteKey("Canica.MapEditor.Favorites");
+            if (hadRecents) PlayerPrefs.SetString("Canica.MapEditor.Recent", savedRecents); else PlayerPrefs.DeleteKey("Canica.MapEditor.Recent");
+            PlayerPrefs.Save();
+        };
+        PlayerPrefs.SetString("Canica.MapEditor.Favorites", ""); PlayerPrefs.SetString("Canica.MapEditor.Recent", ""); PlayerPrefs.Save();
+        viewButtons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        viewButtons.First(b => b.gameObject.name == "Favorit Terres/Terra").onClick.Invoke();
+        viewButtons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        viewButtons.First(b => b.gameObject.name == "Boto VISTA: TOTS").onClick.Invoke();
+        yield return null;
+        var filteredRows = FindObjectsByType<Button>(FindObjectsSortMode.None).Where(b => b.gameObject.name.StartsWith("Bloc ")).ToArray();
+        if (filteredRows.Length != 1 || filteredRows[0].gameObject.name != "Bloc Terres/Terra")
+        { restorePalettePreferences(); Fail("la paleta no filtra pels favorits: " + string.Join(",", filteredRows.Select(b => b.gameObject.name))); yield break; }
+        filteredRows[0].onClick.Invoke();
+        viewButtons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        viewButtons.First(b => b.gameObject.name == "Boto VISTA: TOTS").onClick.Invoke();
+        yield return null;
+        if (!FindObjectsByType<Button>(FindObjectsSortMode.None).Any(b => b.gameObject.name == "Bloc Terres/Terra"))
+        { restorePalettePreferences(); Fail("la paleta no mostra els blocs recents"); yield break; }
+        restorePalettePreferences();
+        viewButtons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        viewButtons.First(b => b.gameObject.name == "Boto VISTA: TOTS").onClick.Invoke();
+        yield return null;
         var enemyCatalog = Resources.Load<NetContentCatalog>("NetContent");
         if (enemyCatalog == null || enemyCatalog.enemies == null || !enemyCatalog.enemies.Any(e => e != null && e.GetComponent<EnemyBoss>() != null))
         { Fail("el catàleg d'enemics no inclou bosses seleccionables"); yield break; }
