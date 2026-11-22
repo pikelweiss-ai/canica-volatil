@@ -34,7 +34,7 @@ public static class MapShare160
             using var input = new GZipStream(new MemoryStream(compressed), CompressionMode.Decompress);
             using var output = new MemoryStream(); byte[] buffer = new byte[4096]; int read;
             while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
-            { if (output.Length + read > MapStore.MaxFileBytes) throw new InvalidDataException("El mapa descomprimit és massa gran."); output.Write(buffer, 0, read); }
+            { if (output.Length + read > MapStore.MaxUncompressedBytes) throw new InvalidDataException("El mapa descomprimit és massa gran."); output.Write(buffer, 0, read); }
             map = JsonUtility.FromJson<MapData>(Encoding.UTF8.GetString(output.ToArray()));
             if (!MapStore.Validate(map, out error)) { map = null; return false; }
             error = null; return true;
@@ -43,7 +43,7 @@ public static class MapShare160
     }
     public static bool ExportFile(MapData map, string path, out string error)
     {
-        try { if (!MapStore.Validate(map, out error)) return false; File.WriteAllText(path, JsonUtility.ToJson(map)); error = null; return true; }
+        try { if (!MapStore.TryEncodeFile(map, out var bytes, out error)) return false; File.WriteAllBytes(path, bytes); error = null; return true; }
         catch (Exception e) { error = e.Message; return false; }
     }
     public static bool ImportFile(string path, out MapData map, out string error)
@@ -52,9 +52,7 @@ public static class MapShare160
         try
         {
             var info = new FileInfo(path); if (!info.Exists || info.Length > MapStore.MaxFileBytes) throw new InvalidDataException("Fitxer absent o massa gran.");
-            map = JsonUtility.FromJson<MapData>(File.ReadAllText(path));
-            if (!MapStore.Validate(map, out error)) { map = null; return false; }
-            error = null; return true;
+            return MapStore.TryDecodeFile(File.ReadAllBytes(path), out map, out error);
         }
         catch (Exception e) { map = null; error = e.Message; return false; }
     }

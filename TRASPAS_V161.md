@@ -47,9 +47,11 @@ Validació a `Builds/Candidats/Alpha-v1.6.0-final`:
 - Builds Windows, Linux i Android posteriors al canvi multipart: `ALPHA_BUILD_OK`. `check-crossplay.ps1`: `CROSSPLAY_MANIFEST: PASS`, protocol 24, paquet 1.6.0-alpha, 29 armes i 4 cures; Android bundle code 17.
 - `test-online.ps1 -MobileClient`: 6/6 en la validació anterior de les sales ja existents. No és prova de mapes creats online, que es deixa a v1.7.
 - No s'han provat executables en PC Linux físic ni APK en mòbil físic. El selector i el flux d'importació s'han comprovat amb el bot Windows, no en un telèfon.
-- Després de `451e514`, Windows, Linux i Android tornen a donar `ALPHA_BUILD_OK`; els manifests coincideixen (`CROSSPLAY_MANIFEST: PASS`) i `editor160` dona `NETBOT PASS`. L'optimització no substitueix la prova pendent de rendiment 64×64 amb gràfics actius.
+- Després de `451e514`, Windows, Linux i Android tornen a donar `ALPHA_BUILD_OK`; els manifests coincideixen (`CROSSPLAY_MANIFEST: PASS`) i `editor160` dona `NETBOT PASS`. La prova de rendiment 64×64 amb gràfics actius s'ha fet després amb `perf160` (detall més avall).
 - Tancament de la fase 5: `catalog160`, `tile160` i `editor160` donen `NETBOT PASS`; `tile160` valida les 144 màscares de roca/aigua i `editor160` valida l'ombra d'una paret girada. Windows, Linux i Android donen `ALPHA_BUILD_OK`, amb protocol 24 i manifest 1.6.0-alpha compatible.
 - Després del tancament de fase 5, el commit `ab87215` registra les 144 variants i la validació de l'ombra. He tornat a executar `mapdata160` i `share160` en el candidat Windows: tots dos `NETBOT PASS`; els logs de build ja existents indiquen Windows/Linux/Android `Succeeded; errors=0`. No s'ha fet push ni release.
+- Per a complir la mida màxima real, el botó `NOU MAPA` deixa triar amplària/alçària d'1 a 64. `editor160` comprova 4096 cel·les a 64×64. Els `.canicamap` s'han canviat a gzip (màxim 200 KB comprimides i 1 MB en descomprimir, amb compatibilitat amb JSON pla); `mapdata160` i `share160` ho validen.
+- `perf160`, executat amb finestra/gràfics actius en el PC de prova a 1600×900, va dibuixar un mapa ple de 64×64 en 585 ms i va mesurar una mitjana de 219,9 FPS durant 10 s; el frame més lent equival a 60 FPS. La captura del segon intent amb 1200×900 va continuar eixint a 1600×900, així que la QA visual 4:3 continua pendent.
 
 ## Pendents abans de dir que el Creador està complet
 
@@ -58,7 +60,16 @@ Validació a `Builds/Candidats/Alpha-v1.6.0-final`:
 - Autotile ara inclou camins, panells, canonades, baranes, catifes de bany i 144 variants direccionals per als sis sprites de roca i tres d'aigua. `tile160` prova les 16 màscares de cada sprite. `BlockShadow` copia la transformació del bloc al shadow tile; `editor160` ho verifica amb un bloc girat al món real de prova. Les hitboxes dels semiblocs giren i es voltegen al món de prova.
 - Els tres kits ja col·loquen decoració temàtica (seto/flors, planta interior, carro/expositor de fruita) i `editor160` ho valida. Queda pendent QA visual manual de disposició i espais de pas.
 - L'editor gestiona els grups multipart en col·locar, copiar/enganxar, rotar, voltejar i esborrar; `editor160` valida un grup representatiu de tres peces. La pintura amb arrossegament i la llista d'obertura també estan implementades.
-- L'índex de cel·les elimina cerques repetides de veïns i s'usa a l'editor, preview i món real. Encara falta mesurar 60 FPS amb un mapa 64×64 ple i gràfics actius, i fer QA visual en 16:9/4:3.
+- L'índex de cel·les elimina cerques repetides de veïns i s'usa a l'editor, preview i món real. `perf160` mesura 239,2 FPS de mitjana amb 64×64 ple; falta QA visual en 16:9/4:3 i dispositius físics.
 - `MapStore` conserva ids de blocs desconeguts, que es dibuixen amb «?»; no hi ha encara migració automàtica d'un mapa per a formats futurs.
 
 No publicar ni pujar el repositori del joc sense permís explícit de Ferran. Les notes d'Obsidian s'han actualitzat després de `git pull --rebase` i el commit `a37eee1` ja està pujat al repositori de notes.
+
+## Estat en la pausa del 2026-11-22 (WIP, per a Claude Code)
+
+Ferran ha hagut de marxar d'urgència i ha demanat pujar la branca a GitHub com a còpia de seguretat. **No és una release**: cap etiqueta, `main` sense tocar.
+
+- Branca `alpha/arsenal`. Els canvis d'esta part són a `Assets/Scripts/MapEditor.cs`, `MapStore.cs`, `MapShare160.cs`, `Assets/Scripts/Net/NetBotEditor160.cs`, `NetBotMapData160.cs` i `NetBot.cs`.
+- La compilació Windows va acabar bé, però **l'última execució del bot `editor160` falla al final** amb «el cubell no ha omplit la zona buida connectada». **Encara no s'ha investigat.** També falta revisar a ull l'últim ajust de la paleta i continuar les fases pendents.
+- No s'han inclòs en el commit (soroll de reimportació d'Unity de Ferran): fonts, `.meta`, prefabs d'enemics, `UniversalRP`, `ProjectSettings`, `Creador.unity`, `MapaProva.unity` i les previsualitzacions de `Tools/PixelArt`.
+- Fase 8 (online de mapes) passada a la v1.7. Pendents apuntats per a la v1.6.1: `Docs/ROADMAP.md`, secció v1.6.1.

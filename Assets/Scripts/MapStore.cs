@@ -1,12 +1,15 @@
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 
 public static class MapStore
 {
     public const int MaxDimension = 64;
     public const int MaxFileBytes = 200 * 1024;
+    public const int MaxUncompressedBytes = 1024 * 1024;
     static string DirectoryPath => Path.Combine(Application.persistentDataPath, "Mapes");
 
     public static bool Validate(MapData map, out string error)
@@ -37,22 +40,66 @@ public static class MapStore
 
     public static bool Save(MapData map, string fileName, out string error)
     {
-        if (!Validate(map, out error)) return false;
+        if (!TryEncodeFile(map, out var bytes, out error)) return false;
         string path;
         try { path = SafePath(fileName); }
         catch (Exception e) { error = e.Message; return false; }
-        string json = JsonUtility.ToJson(map);
-        if (System.Text.Encoding.UTF8.GetByteCount(json) > MaxFileBytes) { error = "El mapa és massa gran."; return false; }
         string temporary = path + ".tmp";
         try
         {
             Directory.CreateDirectory(DirectoryPath);
-            File.WriteAllText(temporary, json);
+            File.WriteAllBytes(temporary, bytes);
             if (File.Exists(path)) File.Delete(path);
             File.Move(temporary, path);
             error = null; return true;
         }
         catch (Exception e) { error = e.Message; return false; }
+    }
+
+    public static bool TryEncodeFile(MapData map, out byte[] bytes, out string error)
+    {
+        bytes = null;
+        if (!Validate(map, out error)) return false;
+        try
+        {
+            byte[] json = Encoding.UTF8.GetBytes(JsonUtility.ToJson(map));
+            if (json.Length > MaxUncompressedBytes) { error = "El mapa és massa gran."; return false; }
+            using var output = new MemoryStream();
+            using (var gzip = new GZipStream(output, CompressionMode.Compress, true)) gzip.Write(json, 0, json.Length);
+            bytes = output.ToArray();
+            if (bytes.Length > MaxFileBytes) { bytes = null; error = "El mapa és massa gran."; return false; }
+            error = null; return true;
+        }
+        catch (Exception e) { bytes = null; error = e.Message; return false; }
+    }
+
+    public static bool TryDecodeFile(byte[] bytes, out MapData map, out string error)
+    {
+        map = null;
+        try
+        {
+            if (bytes == null || bytes.Length == 0 || bytes.Length > MaxFileBytes)
+                throw new InvalidDataException("Fitxer absent o massa gran.");
+            byte[] json;
+            if (bytes.Length >= 2 && bytes[0] == 0x1f && bytes[1] == 0x8b)
+            {
+                using var input = new GZipStream(new MemoryStream(bytes), CompressionMode.Decompress);
+                using var output = new MemoryStream();
+                byte[] buffer = new byte[4096]; int read;
+                while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    if (output.Length + read > MaxUncompressedBytes) throw new InvalidDataException("El mapa descomprimit és massa gran.");
+                    output.Write(buffer, 0, read);
+                }
+                json = output.ToArray();
+            }
+            else json = bytes;
+            if (json.Length > MaxUncompressedBytes) throw new InvalidDataException("El mapa descomprimit és massa gran.");
+            map = JsonUtility.FromJson<MapData>(Encoding.UTF8.GetString(json));
+            if (!Validate(map, out error)) { map = null; return false; }
+            error = null; return true;
+        }
+        catch (Exception e) { error = e.Message; map = null; return false; }
     }
 
     public static string[] List()
@@ -70,9 +117,7 @@ public static class MapStore
             string path = SafePath(fileName);
             var info = new FileInfo(path);
             if (!info.Exists || info.Length > MaxFileBytes) throw new InvalidDataException("Fitxer absent o massa gran.");
-            map = JsonUtility.FromJson<MapData>(File.ReadAllText(path));
-            if (!Validate(map, out error)) { map = null; return false; }
-            error = null; return true;
+            return TryDecodeFile(File.ReadAllBytes(path), out map, out error);
         }
         catch (Exception e) { error = e.Message; map = null; return false; }
     }

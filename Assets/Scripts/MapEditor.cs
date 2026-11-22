@@ -14,7 +14,8 @@ public sealed class MapEditor : MonoBehaviour
     MapData map;
     BlockData selected;
     Transform grid, palette, uiRoot, mapListPanel;
-    TMP_InputField nameField, searchField, familyField;
+    RectTransform palettePanel, paletteMoveHandle;
+    TMP_InputField nameField, mapWidthField, mapHeightField, searchField, familyField;
     TMP_InputField sharePathField;
     TMP_Text status, enemyChoiceLabel, chestChoiceLabel;
     GameObject[] enemyChoices = System.Array.Empty<GameObject>();
@@ -47,6 +48,14 @@ public sealed class MapEditor : MonoBehaviour
     readonly Stack<Snapshot> redo = new Stack<Snapshot>();
     internal bool GridVisibleForTest => gridVisible;
     internal bool HitboxesVisibleForTest => hitboxesVisible;
+    internal Vector2Int MapSizeForTest => new Vector2Int(map.width, map.height);
+    internal RectTransform PaletteMoveHandleForTest => paletteMoveHandle;
+    internal Vector2 PalettePositionForTest => palettePanel != null ? palettePanel.anchoredPosition : Vector2.zero;
+    internal void MovePaletteForTest(Vector2 position) => SetPalettePosition(position);
+    internal bool IsPointerOverMapGridForTest(Vector2 screenPosition) => IsPointOverMapGrid(screenPosition);
+    internal Vector2 GridCenterScreenPositionForTest => RectTransformUtility.WorldToScreenPoint(null,
+        grid.TransformPoint(new Vector3(-150 + (map.width - 1) * Mathf.Min(650f / map.width, 540f / map.height) * .5f,
+            130 - (map.height - 1) * Mathf.Min(650f / map.width, 540f / map.height) * .5f, 0)));
 
     void Update()
     {
@@ -67,7 +76,12 @@ public sealed class MapEditor : MonoBehaviour
         }
         if (!typing && grid != null && EventSystem.current != null)
         {
-            if (Input.GetMouseButtonDown(0)) { mousePainting = true; lastDragCell = null; }
+            if (Input.GetMouseButtonDown(0))
+            {
+                bool overPaletteHandle = paletteMoveHandle != null && RectTransformUtility.RectangleContainsScreenPoint(paletteMoveHandle, Input.mousePosition, null);
+                mousePainting = !overPaletteHandle;
+                lastDragCell = null;
+            }
             if (mousePainting && Input.GetMouseButton(0) && placeMode == PlaceMode.Blocks && (tool == EditTool.Paint || tool == EditTool.Erase))
             {
                 var pointer = new PointerEventData(EventSystem.current) { position = Input.mousePosition };
@@ -97,7 +111,7 @@ public sealed class MapEditor : MonoBehaviour
             if (Input.GetKey(KeyCode.A)) pan.x += 5; if (Input.GetKey(KeyCode.D)) pan.x -= 5;
             if (Input.GetKey(KeyCode.W)) pan.y -= 5; if (Input.GetKey(KeyCode.S)) pan.y += 5;
             grid.localPosition += pan;
-            float zoom = Input.mouseScrollDelta.y;
+            float zoom = IsPointOverMapGrid(Input.mousePosition) ? Input.mouseScrollDelta.y : 0f;
             if (Mathf.Abs(zoom) > .01f) grid.localScale = Vector3.one * Mathf.Clamp(grid.localScale.x + zoom * .08f, .5f, 2f);
             if (Input.GetMouseButtonDown(2)) middlePanPosition = Input.mousePosition;
             if (Input.GetMouseButton(2))
@@ -129,7 +143,12 @@ public sealed class MapEditor : MonoBehaviour
         UIKit.Text(canvas.transform, "CREADOR DE MAPES", new Vector2(0, 420), new Vector2(900, 58), 34,
             TextAlignmentOptions.Center, UIKit.Gold);
         nameField = UIKit.Input(canvas.transform, new Vector2(-550, 360), new Vector2(260, 42), "Nom del mapa", 40, fontSize: 18);
-        UIKit.Button(canvas.transform, "NOU 16×16", new Vector2(-250, 360), new Vector2(140, 42), ConfirmNewMap, UIKit.Style.Normal, 16);
+        mapWidthField = UIKit.Input(canvas.transform, new Vector2(-386, 360), new Vector2(52, 42), "An.", 2, fontSize: 16);
+        mapWidthField.text = map.width.ToString();
+        UIKit.Text(canvas.transform, "×", new Vector2(-350, 360), new Vector2(18, 36), 20, TextAlignmentOptions.Center, UIKit.TextColor);
+        mapHeightField = UIKit.Input(canvas.transform, new Vector2(-314, 360), new Vector2(52, 42), "Alt.", 2, fontSize: 16);
+        mapHeightField.text = map.height.ToString();
+        UIKit.Button(canvas.transform, "NOU MAPA", new Vector2(-220, 360), new Vector2(120, 42), ConfirmNewMap, UIKit.Style.Normal, 15);
         UIKit.Button(canvas.transform, "GUARDAR", new Vector2(-90, 360), new Vector2(130, 42), Save, UIKit.Style.Primary, 16);
         UIKit.Button(canvas.transform, "OBRIR", new Vector2(55, 360), new Vector2(110, 42), Load, UIKit.Style.Normal, 16);
         UIKit.Button(canvas.transform, "ROTAR", new Vector2(185, 360), new Vector2(110, 42), () => rotation = (rotation + 1) % 4, UIKit.Style.Normal, 16);
@@ -144,7 +163,7 @@ public sealed class MapEditor : MonoBehaviour
         UIKit.Button(filePanel, "EXPORTAR", new Vector2(-60, -18), new Vector2(110, 36), ExportFile, UIKit.Style.Normal, 13);
         UIKit.Button(filePanel, "IMPORTAR", new Vector2(60, -18), new Vector2(110, 36), ImportFile, UIKit.Style.Normal, 13);
         UIKit.Text(filePanel, "El fitxer és només dada; es valida en importar.", new Vector2(0, -60), new Vector2(250, 35), 11, TextAlignmentOptions.Center, UIKit.Muted);
-        status = UIKit.Text(canvas.transform, "", new Vector2(0, 315), new Vector2(800, 30), 16, TextAlignmentOptions.Center, UIKit.Muted);
+        status = UIKit.Text(canvas.transform, "", new Vector2(0, -430), new Vector2(800, 30), 16, TextAlignmentOptions.Center, UIKit.Muted);
         UIKit.Button(canvas.transform, "ENEMIC −", new Vector2(-285, 230), new Vector2(105, 32), () => CycleEnemy(-1), UIKit.Style.Normal, 12);
         enemyChoiceLabel = UIKit.Text(canvas.transform, "", new Vector2(-155, 230), new Vector2(155, 32), 13, TextAlignmentOptions.Center, UIKit.TextColor);
         UIKit.Button(canvas.transform, "ENEMIC +", new Vector2(-35, 230), new Vector2(105, 32), () => CycleEnemy(1), UIKit.Style.Normal, 12);
@@ -167,13 +186,18 @@ public sealed class MapEditor : MonoBehaviour
         UIKit.Button(canvas.transform, "VOLTEJAR POSAT", new Vector2(45, 190), new Vector2(165, 32), () => SelectTool("VOLTEJAR POSAT"), UIKit.Style.Normal, 12);
         UIKit.Button(canvas.transform, "GRAELLA: SÍ", new Vector2(225, 190), new Vector2(145, 32), ToggleGrid, UIKit.Style.Normal, 12);
         UIKit.Button(canvas.transform, "HITBOXES: NO", new Vector2(390, 190), new Vector2(160, 32), ToggleHitboxes, UIKit.Style.Normal, 12);
-        var panel = UIKit.Box(canvas.transform, new Vector2(-470, -20), new Vector2(245, 580), UIKit.Panel, "Panell paleta");
-        searchField = UIKit.Input(panel, new Vector2(0, 258), new Vector2(220, 34), "Busca bloc", 40, fontSize: 14);
-        familyField = UIKit.Input(panel, new Vector2(0, 216), new Vector2(220, 34), "Família (opcional)", 30, fontSize: 13);
+        var panel = UIKit.Box(canvas.transform, new Vector2(-470, -124), new Vector2(245, 580), UIKit.Panel, "Panell paleta");
+        palettePanel = panel.GetComponent<RectTransform>();
+        var moveHandle = UIKit.Box(panel.transform, new Vector2(0, 280), new Vector2(225, 22), UIKit.ButtonColor, "Mou la paleta");
+        paletteMoveHandle = moveHandle.GetComponent<RectTransform>();
+        moveHandle.gameObject.AddComponent<PaletteDragHandle>().Initialize(this);
+        UIKit.Text(moveHandle.transform, "ARROSSEGA PER A MOURE", Vector2.zero, new Vector2(235, 20), 11, TextAlignmentOptions.Center, UIKit.TextColor);
+        searchField = UIKit.Input(panel, new Vector2(0, 230), new Vector2(220, 34), "Busca bloc", 40, fontSize: 14);
+        familyField = UIKit.Input(panel, new Vector2(0, 188), new Vector2(220, 34), "Família (opcional)", 30, fontSize: 13);
         searchField.onValueChanged.AddListener(_ => BuildPalette());
         familyField.onValueChanged.AddListener(_ => BuildPalette());
-        palette = UIKit.ScrollList(panel, new Vector2(0, -35), new Vector2(225, 455), out _, 2);
-        UIKit.Button(panel, "VISTA: TOTS", new Vector2(0, 175), new Vector2(220, 32), CyclePaletteMode, UIKit.Style.Normal, 12);
+        palette = UIKit.ScrollList(panel, new Vector2(0, -68), new Vector2(225, 375), out _, 2);
+        UIKit.Button(panel, "VISTA: TOTS", new Vector2(0, 147), new Vector2(220, 32), CyclePaletteMode, UIKit.Style.Normal, 12);
         grid = UIKit.Empty(canvas.transform, "Graella");
         promptPanel = UIKit.Box(canvas.transform, Vector2.zero, new Vector2(420, 200), UIKit.Panel, "Confirmació");
         promptText = UIKit.Text(promptPanel, "", new Vector2(0, 45), new Vector2(380, 60), 20, TextAlignmentOptions.Center, UIKit.TextColor);
@@ -185,11 +209,49 @@ public sealed class MapEditor : MonoBehaviour
         if (MapStore.Load("__autosave", out _, out _)) ShowPrompt("Hi ha una còpia automàtica. La vols recuperar?", RecoverAutosave);
     }
 
+    sealed class PaletteDragHandle : MonoBehaviour, IBeginDragHandler, IDragHandler
+    {
+        MapEditor owner;
+        Vector2 offset;
+        public void Initialize(MapEditor editor) => owner = editor;
+        public void OnBeginDrag(PointerEventData eventData)
+        {
+            if (owner != null && RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)owner.uiRoot, eventData.position, eventData.pressEventCamera, out var pointer))
+                offset = owner.palettePanel.anchoredPosition - pointer;
+        }
+        public void OnDrag(PointerEventData eventData)
+        {
+            if (owner != null && RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)owner.uiRoot, eventData.position, eventData.pressEventCamera, out var pointer))
+                owner.SetPalettePosition(pointer + offset);
+        }
+    }
+
+    bool IsPointOverMapGrid(Vector2 screenPosition)
+    {
+        if (grid == null || map == null || !RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)grid, screenPosition, null, out var local)) return false;
+        float cell = Mathf.Min(650f / map.width, 540f / map.height);
+        float left = -150f - cell * .5f, right = -150f + (map.width - .5f) * cell;
+        float top = 130f + cell * .5f, bottom = 130f - (map.height - .5f) * cell;
+        return local.x >= left && local.x <= right && local.y >= bottom && local.y <= top;
+    }
+
+    void SetPalettePosition(Vector2 position)
+    {
+        if (palettePanel == null || uiRoot == null) return;
+        Rect bounds = ((RectTransform)uiRoot).rect;
+        Vector2 half = palettePanel.rect.size * .5f;
+        position.x = Mathf.Clamp(position.x, bounds.xMin + half.x, bounds.xMax - half.x);
+        position.y = Mathf.Clamp(position.y, bounds.yMin + half.y, bounds.yMax - half.y);
+        palettePanel.anchoredPosition = position;
+    }
+
     void NewMap(int width, int height)
     {
         currentSavedName = null; dirty = false;
         undo.Clear(); redo.Clear();
         map = new MapData { width = width, height = height, layers = new MapLayers() };
+        mapWidthField.text = width.ToString();
+        mapHeightField.text = height.ToString();
         DrawGrid();
         status.text = "Mapa nou " + width + "×" + height;
     }
@@ -264,7 +326,7 @@ public sealed class MapEditor : MonoBehaviour
         for (int x = 0; x < map.width; x++)
         {
             int cx = x, cy = y;
-            var button = UIKit.Button(grid, "", new Vector2(-150 + x * cell, 240 - y * cell), new Vector2(cell - 2, cell - 2),
+            var button = UIKit.Button(grid, "", new Vector2(-150 + x * cell, 130 - y * cell), new Vector2(cell - 2, cell - 2),
                 () => { if (suppressGridClick == new Vector2Int(cx, cy)) { suppressGridClick = null; return; } suppressGridClick = null; Paint(cx, cy); }, UIKit.Style.Normal, 10);
             button.rect.name = "Cel·la " + cx + "," + cy;
             button.image.color = gridVisible ? UIKit.ButtonColor : new Color(0f, 0f, 0f, 0f);
@@ -727,8 +789,15 @@ public sealed class MapEditor : MonoBehaviour
     }
     bool SaveAs(string target) { map.name = target; if (MapStore.Save(map, map.name, out var error)) { currentSavedName=map.name; dirty=false; status.text = "Guardat: " + map.name; return true; } status.text = error; return false; }
     void ShowPrompt(string message, System.Action action) { pendingConfirm=action; promptText.text=message; promptPanel.gameObject.SetActive(true); }
-    void ConfirmNewMap() { if (dirty) ShowPrompt("Hi ha canvis sense guardar. Vols començar un mapa nou?", () => NewMap(16,16)); else NewMap(16,16); }
-    void RecoverAutosave() { if (MapStore.Load("__autosave",out var recovered,out var error)) { map=recovered; nameField.text=map.name; currentSavedName=null; dirty=true; DrawGrid(); status.text="Còpia automàtica recuperada; guarda-la amb un nom."; } else status.text=error; }
+    void ConfirmNewMap()
+    {
+        if (!int.TryParse(mapWidthField.text, out int width) || !int.TryParse(mapHeightField.text, out int height) ||
+            width < 1 || height < 1 || width > MapStore.MaxDimension || height > MapStore.MaxDimension)
+        { status.text = "La mida ha d'estar entre 1 i 64 blocs."; return; }
+        if (dirty) ShowPrompt("Hi ha canvis sense guardar. Vols començar un mapa nou?", () => NewMap(width, height));
+        else NewMap(width, height);
+    }
+    void RecoverAutosave() { if (MapStore.Load("__autosave",out var recovered,out var error)) { map=recovered; nameField.text=map.name; mapWidthField.text=map.width.ToString(); mapHeightField.text=map.height.ToString(); currentSavedName=null; dirty=true; DrawGrid(); status.text="Còpia automàtica recuperada; guarda-la amb un nom."; } else status.text=error; }
     void ConfirmExit() { if (dirty) ShowPrompt("Hi ha canvis sense guardar. Vols eixir igualment?", () => SceneManager.LoadScene("MainMenu")); else SceneManager.LoadScene("MainMenu"); }
     void ExportCode()
     {
@@ -738,7 +807,7 @@ public sealed class MapEditor : MonoBehaviour
     void ImportCode()
     {
         if (!MapShare160.Decode(GUIUtility.systemCopyBuffer, out var imported, out var error)) { status.text = error; return; }
-        map = imported; nameField.text = map.name; currentSavedName=null; dirty=true; undo.Clear(); redo.Clear(); DrawGrid(); status.text = "Codi importat. Guarda'l per conservar-lo.";
+        map = imported; nameField.text = map.name; mapWidthField.text=map.width.ToString(); mapHeightField.text=map.height.ToString(); currentSavedName=null; dirty=true; undo.Clear(); redo.Clear(); DrawGrid(); status.text = "Codi importat. Guarda'l per conservar-lo.";
     }
     string SharePath()
     {
@@ -755,7 +824,7 @@ public sealed class MapEditor : MonoBehaviour
     void ImportFile()
     {
         if (!MapShare160.ImportFile(SharePath(), out var imported, out var error)) { status.text = error; return; }
-        map = imported; nameField.text = map.name; currentSavedName=null; dirty=true; undo.Clear(); redo.Clear(); DrawGrid(); status.text = "Fitxer importat: " + map.name;
+        map = imported; nameField.text = map.name; mapWidthField.text=map.width.ToString(); mapHeightField.text=map.height.ToString(); currentSavedName=null; dirty=true; undo.Clear(); redo.Clear(); DrawGrid(); status.text = "Fitxer importat: " + map.name;
     }
 
     void Load()
@@ -787,7 +856,7 @@ public sealed class MapEditor : MonoBehaviour
     void LoadSavedMap(string savedName)
     {
         if (mapListPanel != null) { Destroy(mapListPanel.gameObject); mapListPanel = null; }
-        if (MapStore.Load(savedName, out map, out var error)) { nameField.text = savedName; currentSavedName = savedName; dirty = false; DrawGrid(); status.text = "Obert: " + savedName; }
+        if (MapStore.Load(savedName, out map, out var error)) { nameField.text = savedName; mapWidthField.text=map.width.ToString(); mapHeightField.text=map.height.ToString(); currentSavedName = savedName; dirty = false; DrawGrid(); status.text = "Obert: " + savedName; }
         else status.text = error;
     }
 }

@@ -8,6 +8,63 @@ using UnityEngine.UI;
 
 public partial class NetBot
 {
+    IEnumerator Perf160()
+    {
+#if UNITY_ANDROID
+        Fail("la prova de rendiment perf160 és només per a Windows");
+        yield break;
+#else
+        yield return WaitFor(() => Scene == "MainMenu", 20, "menú per a la prova de rendiment");
+        if (failed) yield break;
+        string testMapName = "Perf64-" + System.Guid.NewGuid().ToString("N");
+        var cells = new MapCell[64 * 64];
+        for (int y = 0; y < 64; y++)
+        for (int x = 0; x < 64; x++) cells[y * 64 + x] = new MapCell { x = x, y = y, blockId = "Terres/Terra" };
+        var testMap = new MapData { name = testMapName, width = 64, height = 64,
+            layers = new MapLayers { ground = cells, objects = System.Array.Empty<MapCell>(), overlay = System.Array.Empty<MapCell>() } };
+        if (!MapStore.Save(testMap, testMapName, out var saveError)) { Fail("no s'ha pogut preparar el 64×64: " + saveError); yield break; }
+
+        ClickButton("JUGAR");
+        yield return WaitFor(() => FindFirstObjectByType<MapSelectUI>() != null, 5, "selector per a prova de rendiment");
+        if (failed) { MapStore.Delete(testMapName); yield break; }
+        var creator = FindObjectsByType<Button>(FindObjectsSortMode.None).FirstOrDefault(b => b.gameObject.name == "Mapa Creador");
+        if (creator == null) { MapStore.Delete(testMapName); Fail("falta la targeta Creador"); yield break; }
+        creator.onClick.Invoke();
+        yield return WaitFor(() => Scene == "Creador", 5, "editor per a prova de rendiment");
+        if (failed) { MapStore.Delete(testMapName); yield break; }
+        var open = FindObjectsByType<Button>(FindObjectsSortMode.None).FirstOrDefault(b => b.gameObject.name == "Boto OBRIR");
+        if (open == null) { MapStore.Delete(testMapName); Fail("falta el botó Obrir"); yield break; }
+        open.onClick.Invoke();
+        var saved = FindObjectsByType<Button>(FindObjectsSortMode.None).FirstOrDefault(b => b.gameObject.name == "Mapa guardat " + testMapName);
+        if (saved == null) { MapStore.Delete(testMapName); Fail("la llista no mostra el mapa 64×64 de prova"); yield break; }
+        var drawTimer = System.Diagnostics.Stopwatch.StartNew();
+        saved.onClick.Invoke();
+        drawTimer.Stop();
+        var editor = FindFirstObjectByType<MapEditor>();
+        if (editor == null || editor.MapSizeForTest != new Vector2Int(64, 64))
+        { MapStore.Delete(testMapName); Fail("el mapa dens 64×64 no s'ha carregat a l'editor"); yield break; }
+        Ok("graella densa 64×64 dibuixada en " + drawTimer.ElapsedMilliseconds + " ms");
+        if (shots != null) { yield return new WaitForSecondsRealtime(.5f); yield return Shot("mapa-64x64-ple"); }
+
+        for (int i = 0; i < 120; i++) yield return null; // calentament, fora de la mostra
+        float elapsed = 0f, worstFrame = 0f;
+        int samples = 600;
+        for (int i = 0; i < samples; i++)
+        {
+            yield return null;
+            float dt = Time.unscaledDeltaTime;
+            elapsed += dt;
+            if (dt > worstFrame) worstFrame = dt;
+        }
+        float averageFps = samples / elapsed;
+        float worstFps = worstFrame > 0f ? 1f / worstFrame : 0f;
+        Ok("64×64 ple amb gràfics actius durant 10 s: mitjana " + averageFps.ToString("F1") + " FPS; pitjor frame " + worstFps.ToString("F1") + " FPS");
+        MapStore.Delete(testMapName);
+        if (averageFps < 59.5f) { Fail("mitjana de rendiment inferior a 60 FPS"); yield break; }
+        Pass();
+#endif
+    }
+
     IEnumerator Editor160()
     {
         yield return WaitFor(() => Scene == "MainMenu", 20, "menú v1.6");
@@ -22,6 +79,33 @@ public partial class NetBot
         yield return WaitFor(() => Scene == "Creador", 5, "escena Creador");
         if (failed) yield break;
         var mapEditor = FindFirstObjectByType<MapEditor>();
+        if (mapEditor == null) { Fail("falta l'editor del mapa"); yield break; }
+        var paletteHandle = mapEditor.PaletteMoveHandleForTest;
+        if (paletteHandle == null) { Fail("falta la nansa per a moure la paleta"); yield break; }
+        Vector2 handleScreen = RectTransformUtility.WorldToScreenPoint(null, paletteHandle.position);
+        Vector2 gridScreen = mapEditor.GridCenterScreenPositionForTest;
+        if (mapEditor.IsPointerOverMapGridForTest(handleScreen) || !mapEditor.IsPointerOverMapGridForTest(gridScreen))
+        { Fail("la roda del ratolí no distingix la paleta de la graella"); yield break; }
+        Vector2 paletteStart = mapEditor.PalettePositionForTest;
+        mapEditor.MovePaletteForTest(paletteStart + new Vector2(24, -18));
+        if (Vector2.Distance(mapEditor.PalettePositionForTest, paletteStart) < 20f)
+        { Fail("la paleta no es pot reposicionar dins de la finestra"); yield break; }
+        mapEditor.MovePaletteForTest(paletteStart);
+        Ok("la roda només apunta a la graella i la paleta és reposicionable");
+        var widthField = FindObjectsByType<TMP_InputField>(FindObjectsSortMode.None).FirstOrDefault(f => f.gameObject.name == "Camp An.");
+        var heightField = FindObjectsByType<TMP_InputField>(FindObjectsSortMode.None).FirstOrDefault(f => f.gameObject.name == "Camp Alt.");
+        var newMapButton = FindObjectsByType<Button>(FindObjectsSortMode.None).FirstOrDefault(b => b.gameObject.name == "Boto NOU MAPA");
+        if (widthField == null || heightField == null || newMapButton == null)
+        { Fail("falten els camps de mida o el botó de mapa nou"); yield break; }
+        widthField.text = "64"; heightField.text = "64"; newMapButton.onClick.Invoke();
+        if (mapEditor.MapSizeForTest != new Vector2Int(64, 64))
+        { Fail("no es pot crear un mapa de 64×64"); yield break; }
+        yield return null;
+        int largeGridCells = FindObjectsByType<Button>(FindObjectsSortMode.None).Count(b => b.gameObject.name.StartsWith("Cel·la "));
+        if (largeGridCells != 4096) { Fail("la graella 64×64 té " + largeGridCells + " cel·les"); yield break; }
+        Ok("mapa nou 64×64 crea les 4096 cel·les");
+        widthField.text = "16"; heightField.text = "16"; newMapButton.onClick.Invoke();
+        yield return null;
         var viewButtons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         viewButtons.First(b => b.gameObject.name == "Boto GRAELLA: SÍ").onClick.Invoke();
         if (mapEditor == null || mapEditor.GridVisibleForTest) { Fail("no s'ha pogut ocultar la quadrícula"); yield break; }
@@ -231,7 +315,7 @@ public partial class NetBot
         if (!MapStore.Load("Mapa", out saved, out error) || !saved.layers.ground.Any(c => c.x == 11 && c.y == 11) || !saved.layers.objects.Any(c => c.x == 10 && c.y == 10))
         { Fail("copiar i enganxar no ha conservat les capes"); yield break; }
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
-        buttons.First(b => b.gameObject.name == "Boto NOU 16×16").onClick.Invoke();
+        buttons.First(b => b.gameObject.name == "Boto NOU MAPA").onClick.Invoke();
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         if (buttons.Any(b => b.gameObject.name == "Boto CONFIRMAR")) buttons.First(b => b.gameObject.name == "Boto CONFIRMAR").onClick.Invoke();
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
@@ -247,7 +331,7 @@ public partial class NetBot
         if (!MapStore.Load("Mapa", out saved, out error) || saved.layers.ground.Length != 256)
         { Fail("el cubell no ha omplit la zona buida connectada"); yield break; }
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
-        buttons.First(b => b.gameObject.name == "Boto NOU 16×16").onClick.Invoke();
+        buttons.First(b => b.gameObject.name == "Boto NOU MAPA").onClick.Invoke();
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         buttons.First(b => b.gameObject.name == "Boto R. PLE/BUIT").onClick.Invoke();
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
@@ -263,7 +347,7 @@ public partial class NetBot
         if (!MapStore.Load("Mapa", out saved, out error) || saved.layers.ground.Length != 9)
         { Fail("el rectangle ple ha guardat " + (saved == null || saved.layers == null ? -1 : saved.layers.ground.Length) + " cel·les: " + error); yield break; }
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
-        buttons.First(b => b.gameObject.name == "Boto NOU 16×16").onClick.Invoke();
+        buttons.First(b => b.gameObject.name == "Boto NOU MAPA").onClick.Invoke();
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         buttons.First(b => b.gameObject.name == "Boto R. PLE/BUIT").onClick.Invoke();
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
@@ -294,7 +378,7 @@ public partial class NetBot
         if (multipartMid == null) { Fail("no hi ha cap grup multipart de tres peces per provar"); yield break; }
         string multipartStem = multipartMid.id.Substring(0, multipartMid.id.LastIndexOf('_'));
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
-        buttons.First(b => b.gameObject.name == "Boto NOU 16×16").onClick.Invoke();
+        buttons.First(b => b.gameObject.name == "Boto NOU MAPA").onClick.Invoke();
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         buttons.First(b => b.gameObject.name == "Bloc " + multipartMid.id).onClick.Invoke();
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
@@ -367,7 +451,7 @@ public partial class NetBot
         if (!MapStore.Load("Mapa", out saved, out error) || saved.layers.ground.Concat(saved.layers.objects).Concat(saved.layers.overlay).Any(c => c.blockId.StartsWith(multipartStem + "_")))
         { Fail("esborrar una peça no ha eliminat l'objecte multipart sencer"); yield break; }
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
-        buttons.First(b => b.gameObject.name == "Boto NOU 16×16").onClick.Invoke();
+        buttons.First(b => b.gameObject.name == "Boto NOU MAPA").onClick.Invoke();
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         buttons.First(b => b.gameObject.name == "Bloc Terres/Terra").onClick.Invoke();
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);

@@ -30,6 +30,23 @@ public partial class NetBot
         MapStore.Delete("__autosave");
         if (!rejected || !deleted || !hiddenAutosave)
         { Fail("el fitxer corrupte no es rebutja o no es pot esborrar"); yield break; }
+        var denseCells = new MapCell[64 * 64];
+        for (int y = 0; y < 64; y++)
+        for (int x = 0; x < 64; x++) denseCells[y * 64 + x] = new MapCell { x = x, y = y, blockId = "Terres/Terra" };
+        var denseMap = new MapData { name = "Mapa dens", width = 64, height = 64,
+            layers = new MapLayers { ground = denseCells, objects = System.Array.Empty<MapCell>(), overlay = System.Array.Empty<MapCell>() } };
+        if (!MapStore.Save(denseMap, "NETBOT-Dens64", out error) ||
+            !MapStore.Load("NETBOT-Dens64", out var denseLoaded, out error) || denseLoaded.layers.ground.Length != 4096)
+        { MapStore.Delete("NETBOT-Dens64"); Fail("no es pot guardar i carregar un 64×64 ple: " + error); yield break; }
+        var denseFile = new FileInfo(Path.Combine(Application.persistentDataPath, "Mapes", "NETBOT-Dens64.canicamap"));
+        if (!denseFile.Exists || denseFile.Length > MapStore.MaxFileBytes)
+        { MapStore.Delete("NETBOT-Dens64"); Fail("el 64×64 comprimit supera el límit de fitxer"); yield break; }
+        byte[] legacyJson = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(map));
+        if (!MapStore.TryDecodeFile(legacyJson, out var legacyLoaded, out error) ||
+            legacyLoaded.layers.ground[0].blockId != "Terres/Terra" || legacyLoaded.layers.ground[0].rot != 3 || !legacyLoaded.layers.ground[0].flip)
+        { MapStore.Delete("NETBOT-Dens64"); Fail("no es poden llegir mapes JSON antics: " + error); yield break; }
+        Ok("mapa ple 64×64 en " + denseFile.Length + " bytes comprimits; JSON antic compatible");
+        MapStore.Delete("NETBOT-Dens64");
         var futureBlock = new MapData { width = 1, height = 1,
             layers = new MapLayers { ground = new[] { new MapCell { x = 0, y = 0, blockId = "Antic/BlocRetirat" } } } };
         if (!MapStore.Save(futureBlock, "NETBOT-BlocDesconegut", out error) ||
