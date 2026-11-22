@@ -73,3 +73,8 @@ Ferran ha hagut de marxar d'urgència i ha demanat pujar la branca a GitHub com 
 - La compilació Windows va acabar bé, però **l'última execució del bot `editor160` falla al final** amb «el cubell no ha omplit la zona buida connectada». **Encara no s'ha investigat.** També falta revisar a ull l'últim ajust de la paleta i continuar les fases pendents.
 - No s'han inclòs en el commit (soroll de reimportació d'Unity de Ferran): fonts, `.meta`, prefabs d'enemics, `UniversalRP`, `ProjectSettings`, `Creador.unity`, `MapaProva.unity` i les previsualitzacions de `Tools/PixelArt`.
 - Fase 8 (online de mapes) passada a la v1.7. Pendents apuntats per a la v1.6.1: `Docs/ROADMAP.md`, secció v1.6.1.
+
+### Diagnòstic del cubell (Claude, 2026-11-22 vesprada)
+- Reproduït amb `Builds/Candidats/Alpha-v1.6.0-final/Windows/CanicaAlphaReview.exe`: `editor160` falla a «el cubell no ha omplit la zona buida connectada».
+- **Però l'executable és més antic que el codi:** `Assembly-CSharp.dll` és de les 19:49, `NetBotEditor160.cs` de les 19:54 i `MapEditor.cs` de les 20:08. Així que el fallo pot no ser real: **cal recompilar Windows** (`./Tools/Build/build-alpha.ps1 -Target Windows -BuildRoot Builds\Candidats\Alpha-v1.6.0-final`, Editor tancat) i tornar a executar `editor160` abans de tocar `MapEditor.Fill`.
+- La lògica de `MapEditor.Fill` (flood fill) llegida a ull sembla correcta. Si falla després de recompilar, el missatge ara diu les cel·les i la mida del mapa guardat (canvi local al bot, sense commitejar).
