@@ -33,6 +33,7 @@ Commits locals de les fases inicials:
 - `9d243c9` — filtres de favorits i recents de la paleta, amb persistència local; `editor160` ho valida.
 - `a271e2f` — ruta automàtica de blocs a la capa segons `BlockData.layer` i `fullBlock`.
 - `18e57ce` — dreceres de teclat desactivades mentre s'editen camps de text.
+- `7bc6567` — col·locar, copiar, girar, voltejar i esborrar mobles multipart com un sol objecte; `editor160` ho valida amb un grup de tres peces.
 
 La versió visible/package 1.6.0-alpha, el Changelog, el codi Android 17, el cubell, la línia Bresenham, la càmera WASD/zoom, la visibilitat de capes, l'autosave recuperable, els avisos de confirmació i el desfés dels marcadors ja es van incloure en el tancament de la v1.6. La versió del worktree pot continuar diferint del número de release perquè la v1.6 no s'ha publicat.
 
@@ -41,7 +42,7 @@ Validació a `Builds/Candidats/Alpha-v1.6.0-final`:
 - Windows, Linux i Android: `ALPHA_BUILD_OK`.
 - `check-crossplay.ps1`: `CROSSPLAY_MANIFEST: PASS`, protocol 24, versió 1.6.0-alpha, 29 armes i 4 cures.
 - Bots `catalog160`, `mapdata160`, `editor160`, `tile160`, `share160`: `NETBOT PASS` en la revisió més recent. `catalog160` comprova 626 fitxes, 15 famílies, hitboxes, grups multiparts i sufixos `_esq/_mig/_dre`; `mapdata160` comprova també que els ids de bloc desconeguts es preserven; `editor160` comprova rectangles ple/buit, selecció d'enemics i cofres, i una prova dins de `Dungeon` amb jugador (vida/atac), enemic, cofre, mercader, portal, victòria i retorn.
-- Passada final del candidat Windows: `catalog160`, `mapdata160`, `editor160`, `tile160` i `share160` donen `NETBOT PASS`. `editor160` cobreix capes, favorits/recents, quadrícula/hitboxes, kits i PROVAR amb retorn; `share160` obri un CVM1 des del selector i el carrega en `Dungeon`.
+- Passada final del candidat Windows abans del canvi multipart: `catalog160`, `mapdata160`, `editor160`, `tile160` i `share160` donen `NETBOT PASS`. El canvi multipart nou també s'ha compilat i `editor160` ha donat `NETBOT PASS`, incloent col·locació, còpia/enganxat, rotació, volteig i esborrat d'un grup de tres peces.
 - Builds Windows, Linux i Android: `ALPHA_BUILD_OK`. `check-crossplay.ps1`: `CROSSPLAY_MANIFEST: PASS`, protocol 24, paquet 1.6.0-alpha, 29 armes i 4 cures; Android bundle code 17.
 - `test-online.ps1 -MobileClient`: 6/6 en la validació anterior de les sales ja existents. No és prova de mapes creats online, que es deixa a v1.7.
 - No s'han provat executables en PC Linux físic ni APK en mòbil físic. El selector i el flux d'importació s'han comprovat amb el bot Windows, no en un telèfon.
@@ -52,7 +53,7 @@ Validació a `Builds/Candidats/Alpha-v1.6.0-final`:
 - Online de mapes: D2 permet passar-ho a v1.7 si s'allarga. No hi ha protocol 25 ni transmissió en chunks; el protocol es queda en 24.
 - Autotile ara inclou camins, panells, canonades, baranes i catifes de bany. Les textures de roques de cova i d'aigua del catàleg no tenen peces direccionals per a formar connexions; falta una regla visual adequada si s'han d'autotilejar. La rotació d'ombres no està implementada/provada. Les hitboxes dels semiblocs giren i es voltegen al món de prova.
 - Els tres kits ja col·loquen decoració temàtica (seto/flors, planta interior, carro/expositor de fruita) i `editor160` ho valida. Queda pendent QA visual manual de disposició i espais de pas.
-- L'editor encara no col·loca, selecciona, esborra o copia peces multipart com un únic objecte. La pintura amb arrossegament i la llista d'obertura estan implementades.
+- L'editor gestiona els grups multipart en col·locar, copiar/enganxar, rotar, voltejar i esborrar; `editor160` valida un grup representatiu de tres peces. La pintura amb arrossegament i la llista d'obertura també estan implementades.
 - Revisar rendiment en mapes 64×64 i fer QA visual en 16:9/4:3; els botons de cel·la del canvas no s'han perfilat amb gràfics actius.
 - `MapStore` conserva ids de blocs desconeguts, que es dibuixen amb «?»; no hi ha encara migració automàtica d'un mapa per a formats futurs.
 

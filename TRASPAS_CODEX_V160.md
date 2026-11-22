@@ -24,7 +24,7 @@
 - Rols de bot v1.6: `catalog160`, `mapdata160`, `editor160`, `tile160` i `share160`, a més dels rols anteriors. En la revisió final del 22/11/2026 tots cinc han donat `NETBOT PASS`.
 - Fases 1–7 tenen commits locals, començant per `f72beb8`, `b768424`, `3dc44fe`, `b8828b5`, `4a45276`, `b022a8e` i `69768c8`. Els commits posteriors i els pendents estan detallats a [TRASPAS_V161.md](TRASPAS_V161.md).
 - D2 deixa el joc online de mapes a v1.7 si s'allarga; no hi ha protocol 25. Windows, Linux i Android s'han compilat; els manifests coincideixen. No s'han provat dispositius físics.
-- `PROVAR` reutilitza `Dungeon` amb jugador, enemics, cofres, mercader i portal reals. L'autotile inclou camins, panells, canonades, baranes i catifes de bany; les hitboxes giren i es voltegen. Encara falta QA manual, proves de mapes grans i completar els grups multipart com un sol objecte.
+- `PROVAR` reutilitza `Dungeon` amb jugador, enemics, cofres, mercader i portal reals. L'autotile inclou camins, panells, canonades, baranes i catifes de bany; les hitboxes giren i es voltegen. Els grups multipart es col·loquen, copien, transformen i esborren com un sol objecte. Encara falta QA manual i proves de mapes grans.
 
 ## 4. Contingut de la v1.6 (tancat; **no hi afigues res sense preguntar a Ferran**)
 
@@ -64,4 +64,4 @@ Versió `1.6.0-alpha` (`GameVersion.cs`), entrada a `Changelog.cs`, `NetProtocol
 - Passada final del 22/11/2026: `catalog160`, `mapdata160`, `editor160`, `tile160`, `share160`: `NETBOT PASS`. `editor160` prova graella/hitboxes, favorits/recents, ruta de capes, rotació/flip i PROVAR; `share160` importa un CVM1 des del selector i el carrega en `Dungeon`.
 - `test-online.ps1 -MobileClient`: 6/6 en una validació anterior de les sales ja existents; no valida transferència de mapes, que es deixa a v1.7.
 - Notes d'Obsidian actualitzades després de pull i publicades al repositori de notes en commit `a37eee1` (aquest push és només al repositori de notes, segons la instrucció de Ferran).
-- Pendent: QA manual de combat/cofres/mercader, 64×64, UI en 4:3 i dispositius físics; gestionar les peces multipart com un objecte; acabar de definir autotile i ombres amb els sprites disponibles. Online queda a v1.7. Cap release de joc publicada.
+- Pendent: QA manual de combat/cofres/mercader, 64×64, UI en 4:3 i dispositius físics; acabar de definir autotile i ombres amb els sprites disponibles. Online queda a v1.7. Cap release de joc publicada.
