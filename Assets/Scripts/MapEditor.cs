@@ -9,6 +9,7 @@ public sealed class MapEditor : MonoBehaviour
 {
     enum EditTool { Paint, Erase, Fill, Rectangle, Line, Eyedropper }
     enum EditLayer { Ground, Objects, Overlay }
+    enum PlaceMode { Blocks, Player, Enemy, Chest, Goal }
     MapData map;
     BlockData selected;
     Transform grid, palette;
@@ -18,6 +19,7 @@ public sealed class MapEditor : MonoBehaviour
     bool flip, eraseMode;
     EditTool tool;
     EditLayer layer;
+    PlaceMode placeMode;
     Vector2Int? dragStart;
     sealed class Snapshot { public MapCell[] ground, objects, overlay; }
     readonly Stack<Snapshot> undo = new Stack<Snapshot>();
@@ -36,6 +38,8 @@ public sealed class MapEditor : MonoBehaviour
     void Start()
     {
         map = new MapData();
+        if (MapPlaytest.ReturnToEditor && MapStore.Load(MapPlaytest.MapName, out var restored, out _)) map = restored;
+        MapPlaytest.ReturnToEditor = false;
         var canvas = UIKit.Canvas("Creador UI", 20);
         var background = UIKit.Box(canvas.transform, Vector2.zero, Vector2.zero, UIKit.Ink, "Fons");
         UIKit.Stretch(background);
@@ -46,16 +50,17 @@ public sealed class MapEditor : MonoBehaviour
         UIKit.Button(canvas.transform, "GUARDAR", new Vector2(-90, 360), new Vector2(130, 42), Save, UIKit.Style.Primary, 16);
         UIKit.Button(canvas.transform, "OBRIR", new Vector2(55, 360), new Vector2(110, 42), Load, UIKit.Style.Normal, 16);
         UIKit.Button(canvas.transform, "ROTAR", new Vector2(185, 360), new Vector2(110, 42), () => rotation = (rotation + 1) % 4, UIKit.Style.Normal, 16);
+        UIKit.Button(canvas.transform, "PROVAR", new Vector2(315, 360), new Vector2(115, 42), Playtest, UIKit.Style.Primary, 16);
         UIKit.Button(canvas.transform, "EIXIR", new Vector2(550, 360), new Vector2(120, 42),
             () => SceneManager.LoadScene("MainMenu"), UIKit.Style.Ghost, 16);
         status = UIKit.Text(canvas.transform, "", new Vector2(0, 315), new Vector2(800, 30), 16, TextAlignmentOptions.Center, UIKit.Muted);
-        string[] toolNames = { "PINTAR", "ESBORRAR", "OMPLIR", "RECTANGLE", "LÍNIA", "COMPTAGOTES", "DESFER", "REFER", "CAPA" };
-        float toolX = -425;
+        string[] toolNames = { "PINTAR", "ESBORRAR", "OMPLIR", "RECTANGLE", "LÍNIA", "COMPTAGOTES", "DESFER", "REFER", "CAPA", "JUGADOR", "ENEMIC", "COFRE", "FINAL" };
+        float toolX = -575;
         foreach (string toolName in toolNames)
         {
             string action = toolName;
-            UIKit.Button(canvas.transform, action, new Vector2(toolX, 270), new Vector2(94, 34), () => SelectTool(action), UIKit.Style.Normal, 12);
-            toolX += 98;
+            UIKit.Button(canvas.transform, action, new Vector2(toolX, 270), new Vector2(82, 34), () => SelectTool(action), UIKit.Style.Normal, 11);
+            toolX += 88;
         }
         var panel = UIKit.Box(canvas.transform, new Vector2(-470, -20), new Vector2(245, 580), UIKit.Panel, "Panell paleta");
         searchField = UIKit.Input(panel, new Vector2(0, 258), new Vector2(220, 34), "Busca bloc", 40, fontSize: 14);
@@ -120,6 +125,7 @@ public sealed class MapEditor : MonoBehaviour
 
     void Paint(int x, int y)
     {
+        if (placeMode != PlaceMode.Blocks) { PlaceObject(x, y); return; }
         if (tool == EditTool.Fill) { Fill(x, y); return; }
         if (tool == EditTool.Eyedropper) { selected = ActiveCells().FirstOrDefault(c => c.x == x && c.y == y).blockId == null ? null :
             BlockCatalog.Instance.blocks.FirstOrDefault(b => b.id == ActiveCells().First(c => c.x == x && c.y == y).blockId); return; }
@@ -149,6 +155,11 @@ public sealed class MapEditor : MonoBehaviour
     }
     void SelectTool(string name)
     {
+        if (name == "JUGADOR") { placeMode = PlaceMode.Player; status.text = "Posa el punt inicial"; return; }
+        if (name == "ENEMIC") { placeMode = PlaceMode.Enemy; status.text = "Posa un Llim"; return; }
+        if (name == "COFRE") { placeMode = PlaceMode.Chest; status.text = "Posa un cofre comú"; return; }
+        if (name == "FINAL") { placeMode = PlaceMode.Goal; status.text = "Posa o mou el portal final"; return; }
+        placeMode = PlaceMode.Blocks;
         tool = name switch
         {
             "ESBORRAR" => EditTool.Erase, "OMPLIR" => EditTool.Fill, "RECTANGLE" => EditTool.Rectangle,
@@ -159,6 +170,25 @@ public sealed class MapEditor : MonoBehaviour
         if (name == "REFER") Redo();
         if (name == "CAPA") layer = (EditLayer)(((int)layer + 1) % 3);
         status.text = "Eina: " + name + (name == "CAPA" ? " · " + layer : "");
+    }
+    void PlaceObject(int x, int y)
+    {
+        PushUndo();
+        if (placeMode == PlaceMode.Player)
+        {
+            map.spawns = map.spawns.Where(s => s.kind != "player").Concat(new[] { new MapSpawn { x = x, y = y, kind = "player" } }).ToArray();
+        }
+        else if (placeMode == PlaceMode.Enemy)
+            map.spawns = map.spawns.Concat(new[] { new MapSpawn { x = x, y = y, kind = "enemy", id = "Llim" } }).ToArray();
+        else if (placeMode == PlaceMode.Chest)
+            map.chests = map.chests.Concat(new[] { new MapChest { x = x, y = y, rarity = "Comu" } }).ToArray();
+        else if (placeMode == PlaceMode.Goal) map.goal = new MapGoal { x = x, y = y };
+        DrawGrid();
+    }
+    void Playtest()
+    {
+        Save();
+        if (MapStore.Load(map.name, out var saved, out _)) { MapPlaytest.MapName = map.name; SceneManager.LoadScene("MapaProva"); }
     }
     void Fill(int x, int y)
     {

@@ -20,6 +20,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Creador.unity
     guid: 5cf5d23f8acd94f4ab04aa182e731599
+  - enabled: 1
+    path: Assets/Scenes/MapaProva.unity
+    guid: 2c60df00dee14b2459906e960f40244e
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0

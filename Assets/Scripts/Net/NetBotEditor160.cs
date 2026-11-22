@@ -49,8 +49,34 @@ public partial class NetBot
         { Fail("refer no ha recuperat la cel·la"); yield break; }
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         buttons.First(b => b.gameObject.name == "Boto OBRIR").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto JUGADOR").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Cel·la 0,0").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto FINAL").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Cel·la 0,0").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto ENEMIC").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Cel·la 1,0").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
+        if (!MapStore.Load("Mapa", out saved, out error) || saved.goal == null || !saved.spawns.Any(s => s.kind == "player") || !saved.spawns.Any(s => s.kind == "enemy" && s.id == "Llim"))
+        { Fail("no s'han guardat el jugador, l'enemic i el portal"); yield break; }
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto PROVAR").onClick.Invoke();
+        yield return WaitFor(() => Scene == "MapaProva", 5, "prova de mapa");
+        if (failed) yield break;
+        yield return null;
+        if (!FindObjectsByType<TMP_Text>(FindObjectsSortMode.None).Any(t => t.text == "MAPA COMPLETAT!"))
+        { Fail("el jugador no ha completat el mapa en arribar al portal"); yield break; }
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto TORNAR A L'EDITOR").onClick.Invoke();
+        yield return WaitFor(() => Scene == "Creador", 5, "retorn a l'editor");
         MapStore.Delete("Mapa");
-        Ok("targeta, escena, graella 16×16, rotació, desfer/refer, guardar i obrir");
+        Ok("editor, rotació, desfer/refer, guardar/obrir, jugador, portal i prova guanyada");
         Pass();
     }
 }
