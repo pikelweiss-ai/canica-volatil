@@ -49,18 +49,21 @@ public sealed class MapEditor : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.R)) rotation = (rotation + 1) % 4;
-        if (Input.GetKeyDown(KeyCode.F)) flip = !flip;
-        if (Input.GetKeyDown(KeyCode.E)) eraseMode = !eraseMode;
-        if (Input.GetKeyDown(KeyCode.Z) && Input.GetKey(KeyCode.LeftControl)) Undo();
-        if (Input.GetKeyDown(KeyCode.Y) && Input.GetKey(KeyCode.LeftControl)) Redo();
-        if (Input.GetKeyDown(KeyCode.S) && Input.GetKey(KeyCode.LeftControl)) Save();
+        bool typing = EventSystem.current != null && EventSystem.current.currentSelectedGameObject != null && EventSystem.current.currentSelectedGameObject.GetComponent<TMP_InputField>() != null;
+        if (!typing)
+        {
+            if (Input.GetKeyDown(KeyCode.R)) rotation = (rotation + 1) % 4;
+            if (Input.GetKeyDown(KeyCode.F)) flip = !flip;
+            if (Input.GetKeyDown(KeyCode.E)) eraseMode = !eraseMode;
+            if (Input.GetKeyDown(KeyCode.Z) && Input.GetKey(KeyCode.LeftControl)) Undo();
+            if (Input.GetKeyDown(KeyCode.Y) && Input.GetKey(KeyCode.LeftControl)) Redo();
+            if (Input.GetKeyDown(KeyCode.S) && Input.GetKey(KeyCode.LeftControl)) Save();
+        }
         if (Time.unscaledTime >= autosaveAt)
         {
             autosaveAt = Time.unscaledTime + 60f;
             if (dirty) { MapStore.Save(map, "__autosave", out _); status.text = "Còpia automàtica guardada."; }
         }
-        bool typing = EventSystem.current != null && EventSystem.current.currentSelectedGameObject != null && EventSystem.current.currentSelectedGameObject.GetComponent<TMP_InputField>() != null;
         if (!typing && grid != null && EventSystem.current != null)
         {
             if (Input.GetMouseButtonDown(0)) { mousePainting = true; lastDragCell = null; }
