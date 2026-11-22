@@ -55,7 +55,7 @@ public class MapSelectUI : MonoBehaviour
         if (maps != null)
             foreach (var map in maps)
                 if (map != null) cards.Add(map);
-        cards.Add(new MapInfo { displayName = "Creador", sceneName = "" });
+        cards.Add(new MapInfo { displayName = "Creador", sceneName = "Creador" });
         float step = CardWidth + CardSpacing;
         float start = -(cards.Count - 1) * step * .5f;
         for (int i = 0; i < cards.Count; i++) CreateCard(cards[i], new Vector2(start + i * step, 12));
@@ -73,11 +73,13 @@ public class MapSelectUI : MonoBehaviour
     {
         string scene = map.sceneName;
         bool coming = string.IsNullOrEmpty(scene);
+        bool creator = scene == "Creador";
         var (title, details, action, accent) = scene switch
         {
             "Dungeon" => ("Masmorra", "Tresors, trampes i bosses.", "JUGAR EN SOLITARI", new Color(1f, .72f, .35f)),
             "GameScene" => ("Mapa de proves", "Practica el moviment i la punteria.", "PRACTICAR", new Color(.73f, .88f, .48f)),
             "Lobby" => ("Online", "Per codi, LAN o Internet.", "VEURE SALES", new Color(.43f, .89f, .87f)),
+            "Creador" => ("CREADOR", "Dibuixa i guarda els teus mapes.", "OBRIR EDITOR", new Color(.62f, .82f, .56f)),
             _ => ("CREADOR", "", "PRÒXIMAMENT", new Color(.62f, .65f, .68f))
         };
 
@@ -89,12 +91,13 @@ public class MapSelectUI : MonoBehaviour
         colors.highlightedColor = colors.selectedColor = accent;
         colors.pressedColor = Color.Lerp(accent, Color.black, .2f);
         card.colors = colors;
-        card.interactable = coming || Application.CanStreamedLevelBeLoaded(scene);
-        if (coming) card.onClick.AddListener(() =>
+        card.interactable = coming || creator && Application.CanStreamedLevelBeLoaded(scene) || Application.CanStreamedLevelBeLoaded(scene);
+        if (coming && !creator) card.onClick.AddListener(() =>
         {
             noticeUntil = Time.unscaledTime + 2.5f;
             creatorNotice.gameObject.SetActive(true);
         });
+        else if (creator) card.onClick.AddListener(() => SceneManager.LoadScene("Creador"));
         else if (scene == "Lobby") card.onClick.AddListener(() => { Hide(); RoomBrowserUI.Open(); });
         else card.onClick.AddListener(() => { RunState.Reset(); SceneManager.LoadScene(scene); });
 
@@ -117,7 +120,7 @@ public class MapSelectUI : MonoBehaviour
             fitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
         }
 
-        if (coming)
+        if (coming || creator)
         {
             for (int y = 0; y < 4; y++)
                 for (int x = 0; x < 7; x++)
@@ -127,9 +130,12 @@ public class MapSelectUI : MonoBehaviour
                         new Color(tone, tone + .012f, tone + .025f), "Bloc");
                     cell.GetComponent<Image>().raycastTarget = false;
                 }
-            var ribbon = UIKit.Box(window, Vector2.zero, new Vector2(263, 41), new Color(.16f, .18f, .22f), "Cinta");
-            ribbon.GetComponent<Image>().raycastTarget = false;
-            Label(ribbon, action, Vector2.zero, new Vector2(255, 38), 25, TextAlignmentOptions.Center, accent);
+            if (coming)
+            {
+                var ribbon = UIKit.Box(window, Vector2.zero, new Vector2(263, 41), new Color(.16f, .18f, .22f), "Cinta");
+                ribbon.GetComponent<Image>().raycastTarget = false;
+                Label(ribbon, action, Vector2.zero, new Vector2(255, 38), 25, TextAlignmentOptions.Center, accent);
+            }
         }
 
         float coverBottom = coverY - CoverHeight * .5f;
@@ -139,7 +145,7 @@ public class MapSelectUI : MonoBehaviour
         var alignment = TextAlignmentOptions.MidlineLeft;
         Label(frame, title, new Vector2(0, coming ? -100 : -55), new Vector2(textWidth, 41), 28,
             coming ? TextAlignmentOptions.Center : alignment, coming ? accent : Color.white);
-        if (!coming)
+        if (!coming || creator)
         {
             Label(frame, details, new Vector2(0, -98), new Vector2(textWidth, 48), 18, alignment, UIKit.TextColor);
             Label(frame, card.interactable ? action : "NO DISPONIBLE", new Vector2(0, -141), new Vector2(textWidth, 26), 17, alignment, accent);
