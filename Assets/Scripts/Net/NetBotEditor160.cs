@@ -329,7 +329,11 @@ public partial class NetBot
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         if (buttons.Any(b => b.gameObject.name == "Boto CONFIRMAR")) buttons.First(b => b.gameObject.name == "Boto CONFIRMAR").onClick.Invoke();
         if (!MapStore.Load("Mapa", out saved, out error) || saved.layers.ground.Length != 256)
-        { Fail("el cubell no ha omplit la zona buida connectada"); yield break; }
+        {
+            string detail = saved == null ? "no s'ha pogut carregar: " + error
+                : "terra=" + saved.layers.ground.Length + " objectes=" + saved.layers.objects.Length + " damunt=" + saved.layers.overlay.Length + " mida=" + saved.width + "x" + saved.height;
+            Fail("el cubell no ha omplit la zona buida connectada (esperava 256 cel·les de terra; " + detail + ")"); yield break;
+        }
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         buttons.First(b => b.gameObject.name == "Boto NOU MAPA").onClick.Invoke();
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
