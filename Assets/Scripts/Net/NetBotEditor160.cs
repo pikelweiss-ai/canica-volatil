@@ -275,10 +275,20 @@ public partial class NetBot
             !FindObjectsByType<EnemyHealth>(FindObjectsSortMode.None).Any() ||
             !FindObjectsByType<Chest>(FindObjectsSortMode.None).Any() ||
             !FindObjectsByType<Shop>(FindObjectsSortMode.None).Any(s => s.IsMerchant) ||
-            FindFirstObjectByType<DungeonPortal>() == null ||
+            !FindObjectsByType<DungeonPortal>(FindObjectsSortMode.None).Any(p => p.name == "Portal") ||
             GameObject.Find("Hitboxes parcials del mapa") == null ||
             GameObject.Find("Hitboxes parcials del mapa").GetComponents<BoxCollider2D>().Length == 0)
         { Fail("PROVAR no ha creat jugador, enemic, cofre, mercader i portal reals"); yield break; }
+        if (GameObject.Find("Portal d'arribada") == null)
+        { Fail("PROVAR no ha posat el portal d'arribada a l'spawn"); yield break; }
+        if (FindObjectsByType<TMP_Text>(FindObjectsSortMode.None).Any(t => t.text != null && t.text.StartsWith("Pis ")))
+        { Fail("en un mapa propi no hauria d'eixir «Pis 1 · …»"); yield break; }
+        var arrivalPortal = GameObject.Find("Portal d'arribada");
+        var arrivalPlayer = GameObject.FindWithTag("Player");
+        if (arrivalPlayer != null) arrivalPlayer.transform.position += Vector3.right * 3f;
+        yield return new WaitForSecondsRealtime(1.5f);
+        if (arrivalPortal != null)
+        { Fail("el portal d'arribada no ha desaparegut quan el jugador s'ha allunyat"); yield break; }
         var blockShadow = FindFirstObjectByType<BlockShadow>();
         var shadowPosition = new Vector3Int(5, 0, 0);
         bool shadowExists = blockShadow != null && blockShadow.shadowTilemap != null && blockShadow.shadowTilemap.HasTile(shadowPosition);

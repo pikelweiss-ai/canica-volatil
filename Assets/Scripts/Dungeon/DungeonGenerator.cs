@@ -156,8 +156,12 @@ public partial class DungeonGenerator : MonoBehaviour
         ui = DungeonUI.Create(this);
     }
 
+    // Cert quan es juga un mapa creat al Creador (PROVAR o un mapa guardat): la UI no mostra «Pis 1 · Cova» i posa el botó de tornar a l'editor.
+    public bool IsCustomMap { get; private set; }
+
     void InitializeMapPlaytest(MapData data)
     {
+        IsCustomMap = true;
         floor.Clear(); solid.Clear(); reserved.Clear(); Rooms.Clear();
         var partialHitboxes = new GameObject("Hitboxes parcials del mapa");
         var room = new Room

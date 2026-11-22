@@ -49,7 +49,12 @@ public class DungeonUI : MonoBehaviour
         frameRt.anchoredPosition=new Vector2(-20,-86);
         frameRt.sizeDelta=new Vector2(240,190);
         frame.gameObject.AddComponent<DungeonRadar>().gen=gen;
-        var floorText=NewText("Pis",frameRt,"Pis " + RunState.Floor + " · N ↑",20);
+        var floorText=NewText("Pis",frameRt,gen.IsCustomMap ? "N ↑" : "Pis " + RunState.Floor + " · N ↑",20);
+        if (gen.IsCustomMap)
+        {
+            frameRt.anchoredPosition = new Vector2(-20, -134); // deixa lloc sota les 3 barres per al botó de tornar a l'editor
+            MapPlaytest.CreateReturnButton(transform);
+        }
         var fr=floorText.rectTransform;fr.anchorMin=fr.anchorMax=new Vector2(0.5f,0);fr.anchoredPosition=new Vector2(0,-22);fr.sizeDelta=new Vector2(240,40);
         keyText = NewText("Clau del boss", frameRt, gen.BossKeyLabel, 18);
         keyText.color = UIKit.Gold;
@@ -66,7 +71,7 @@ public class DungeonUI : MonoBehaviour
 
         RefreshMap();
         string theme = gen.Theme != null ? gen.Theme.themeName : "";
-        ShowBanner($"Pis {RunState.Floor}" + (theme != "" ? " · " + theme : ""), 2.5f);
+        if (!gen.IsCustomMap) ShowBanner($"Pis {RunState.Floor}" + (theme != "" ? " · " + theme : ""), 2.5f); // en un mapa propi no hi ha pisos
     }
 
     void LateUpdate()
