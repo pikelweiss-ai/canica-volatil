@@ -157,6 +157,11 @@ public partial class NetBot
         buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
         if (!MapStore.Load("Mapa", out saved, out error) || saved.goal == null || !saved.spawns.Any(s => s.kind == "player") || !saved.spawns.Any(s => s.kind == "enemy" && s.id == "Llim") || !saved.spawns.Any(s => s.kind == "merchant" && s.id == "Mercader") || saved.chests.Length != 1)
         { Fail("no s'han guardat el jugador, l'enemic, el mercader i el portal"); yield break; }
+        bool partialRouted = partialBlock.layer == BlockData.DrawLayer.OverPlayer && !partialBlock.fullBlock
+            ? saved.layers.overlay.Any(c => c.x == 4 && c.y == 0 && c.blockId == partialBlock.id)
+            : !partialBlock.passable ? saved.layers.objects.Any(c => c.x == 4 && c.y == 0 && c.blockId == partialBlock.id)
+            : saved.layers.ground.Any(c => c.x == 4 && c.y == 0 && c.blockId == partialBlock.id);
+        if (!partialRouted) { Fail("el bloc no s'ha enviat a la capa indicada per BlockData"); yield break; }
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         buttons.First(b => b.gameObject.name == "Boto PROVAR").onClick.Invoke();
         yield return WaitFor(() => Scene == "Dungeon", 8, "escena real de masmorra per a provar el mapa");

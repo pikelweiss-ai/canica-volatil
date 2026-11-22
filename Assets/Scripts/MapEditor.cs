@@ -309,6 +309,8 @@ public sealed class MapEditor : MonoBehaviour
     void Paint(int x, int y)
     {
         if (placeMode != PlaceMode.Blocks) { PlaceObject(x, y); return; }
+        if (!eraseMode && selected != null && (tool == EditTool.Paint || tool == EditTool.Fill || tool == EditTool.Rectangle || tool == EditTool.Line))
+            layer = LayerFor(selected);
         if (tool == EditTool.Copy) { CopyRegion(x, y); return; }
         if (tool == EditTool.Paste) { PasteRegion(x, y); return; }
         if (tool == EditTool.RotatePlaced || tool == EditTool.FlipPlaced) { TransformPlaced(x, y); return; }
@@ -329,6 +331,13 @@ public sealed class MapEditor : MonoBehaviour
         if (tool != EditTool.Erase && !eraseMode && selected != null) cells.Add(new MapCell { x = x, y = y, blockId = selected.id, rot = rotation, flip = flip });
         SetActiveCells(cells.ToArray());
         DrawGrid();
+    }
+
+    static EditLayer LayerFor(BlockData block)
+    {
+        if (block.layer == BlockData.DrawLayer.OverPlayer && !block.fullBlock) return EditLayer.Overlay;
+        if (!block.passable) return EditLayer.Objects;
+        return EditLayer.Ground;
     }
 
     MapCell[] ActiveCells() => layer == EditLayer.Ground ? map.layers.ground :
