@@ -313,8 +313,10 @@ public sealed class MapEditor : MonoBehaviour
         int minY = Mathf.Min(start.y, end.y), maxY = Mathf.Max(start.y, end.y);
         var points = new List<Vector2Int>();
         if (rectangle)
+        {
             for (int y = minY; y <= maxY; y++) for (int x = minX; x <= maxX; x++)
                 if (filledRectangle || x == minX || x == maxX || y == minY || y == maxY) points.Add(new Vector2Int(x,y));
+        }
         else
         {
             int x0=start.x,y0=start.y,x1=end.x,y1=end.y,dx=Mathf.Abs(x1-x0),sx=x0<x1?1:-1,dy=-Mathf.Abs(y1-y0),sy=y0<y1?1:-1,err=dx+dy;

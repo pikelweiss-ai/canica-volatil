@@ -128,6 +128,22 @@ public partial class NetBot
         if (buttons.Any(b => b.gameObject.name == "Boto CONFIRMAR")) buttons.First(b => b.gameObject.name == "Boto CONFIRMAR").onClick.Invoke();
         if (!MapStore.Load("Mapa", out saved, out error) || saved.layers.ground.Length != 9)
         { Fail("el rectangle ple ha guardat " + (saved == null || saved.layers == null ? -1 : saved.layers.ground.Length) + " cel·les: " + error); yield break; }
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto NOU 16×16").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto R. PLE/BUIT").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto RECTANGLE").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Cel·la 2,2").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Cel·la 4,4").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        if (buttons.Any(b => b.gameObject.name == "Boto CONFIRMAR")) buttons.First(b => b.gameObject.name == "Boto CONFIRMAR").onClick.Invoke();
+        if (!MapStore.Load("Mapa", out saved, out error) || saved.layers.ground.Length != 8 || saved.layers.ground.Any(c => c.x == 3 && c.y == 3))
+        { Fail("el rectangle buit no ha deixat només el contorn: " + (saved == null || saved.layers == null ? -1 : saved.layers.ground.Length)); yield break; }
         MapStore.Delete("Mapa");
         Ok("editor, objectes, prova, kits i copiar/enganxar regions");
         Pass();
