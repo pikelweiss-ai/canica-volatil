@@ -489,6 +489,19 @@ public partial class NetBot
         buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
         if (!MapStore.Load("Mapa", out saved, out error) || saved.layers.ground.Length != 1 || !saved.layers.ground[0].flip || saved.layers.ground[0].rot != (rotationBeforePlacedTool + 1) % 4)
         { Fail("voltejar un bloc col·locat no ha guardat el flip"); yield break; }
+        // NETEJAR ZONA: esborra blocs i objectes de joc de la zona, només d'eixa zona; DESFER ho recupera.
+        void Click(string buttonName) => FindObjectsByType<Button>(FindObjectsSortMode.None).First(b => b.gameObject.name == buttonName).onClick.Invoke();
+        Click("Boto JUGADOR"); Click("Cel·la 1,1");
+        Click("Boto ENEMIC"); Click("Cel·la 2,2");
+        Click("Boto COFRE"); Click("Cel·la 3,3");
+        Click("Boto FINAL"); Click("Cel·la 4,4");
+        Click("Boto NETEJAR ZONA"); Click("Cel·la 0,0"); Click("Cel·la 2,2");
+        Click("Boto GUARDAR");
+        if (!MapStore.Load("Mapa", out saved, out error) || saved.layers.ground.Length != 0 || saved.spawns.Any(s => s.kind == "player" || s.kind == "enemy") || saved.chests.Length != 1 || saved.goal == null)
+        { Fail("NETEJAR ZONA no ha esborrat just el de dins de la zona: terra=" + (saved == null ? -1 : saved.layers.ground.Length) + " spawns=" + (saved == null ? -1 : saved.spawns.Length) + " cofres=" + (saved == null ? -1 : saved.chests.Length) + " final=" + (saved != null && saved.goal != null)); yield break; }
+        Click("Boto DESFER"); Click("Boto GUARDAR");
+        if (!MapStore.Load("Mapa", out saved, out error) || saved.layers.ground.Length != 1 || !saved.spawns.Any(s => s.kind == "player") || !saved.spawns.Any(s => s.kind == "enemy") || saved.chests.Length != 1 || saved.goal == null)
+        { Fail("DESFER no ha recuperat el que havia esborrat NETEJAR ZONA"); yield break; }
         MapStore.Delete("Mapa");
         Ok("editor, objectes, prova, kits i copiar/enganxar regions");
         Pass();

@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public sealed class MapEditor : MonoBehaviour
 {
-    enum EditTool { Paint, Erase, Fill, Rectangle, Line, Eyedropper, Copy, Paste, RotatePlaced, FlipPlaced }
+    enum EditTool { Paint, Erase, Fill, Rectangle, Line, Eyedropper, Copy, Paste, RotatePlaced, FlipPlaced, ClearZone }
     enum EditLayer { Ground, Objects, Overlay }
     enum PlaceMode { Blocks, Player, Enemy, Chest, Goal, Merchant }
     MapData map;
@@ -194,6 +194,7 @@ public sealed class MapEditor : MonoBehaviour
         UIKit.Button(canvas.transform, "VOLTEJAR POSAT", new Vector2(45, 190), new Vector2(165, 32), () => SelectTool("VOLTEJAR POSAT"), UIKit.Style.Normal, 12);
         UIKit.Button(canvas.transform, "GRAELLA: SÍ", new Vector2(225, 190), new Vector2(145, 32), ToggleGrid, UIKit.Style.Normal, 12);
         UIKit.Button(canvas.transform, "HITBOXES: NO", new Vector2(390, 190), new Vector2(160, 32), ToggleHitboxes, UIKit.Style.Normal, 12);
+        UIKit.Button(canvas.transform, "NETEJAR ZONA", new Vector2(590, 190), new Vector2(160, 32), () => SelectTool("NETEJAR ZONA"), UIKit.Style.Danger, 12);
         layerLabel = UIKit.Text(canvas.transform, "", new Vector2(-560, 190), new Vector2(380, 32), 17, TextAlignmentOptions.Left, UIKit.Gold);
         layerLabel.overflowMode = TextOverflowModes.Overflow;
         var panel = UIKit.Box(canvas.transform, new Vector2(-470, -124), new Vector2(245, 580), UIKit.Panel, "Panell paleta");
@@ -460,6 +461,7 @@ public sealed class MapEditor : MonoBehaviour
             layer = LayerFor(selected);
         if (tool == EditTool.Copy) { CopyRegion(x, y); return; }
         if (tool == EditTool.Paste) { PasteRegion(x, y); return; }
+        if (tool == EditTool.ClearZone) { ClearZone(x, y); return; }
         if (tool == EditTool.RotatePlaced || tool == EditTool.FlipPlaced) { TransformPlaced(x, y); return; }
         if (tool == EditTool.Fill) { Fill(x, y); return; }
         if (tool == EditTool.Eyedropper) { selected = ActiveCells().FirstOrDefault(c => c.x == x && c.y == y).blockId == null ? null :
@@ -607,6 +609,7 @@ public sealed class MapEditor : MonoBehaviour
         "<b>ESBORRAR</b> (o la tecla E): lleva el bloc de la capa activa.   <b>OMPLIR</b>: cubell sobre blocs iguals connectats.\n" +
         "<b>RECTANGLE</b> i <b>LÍNIA</b>: clica dos punts.   <b>R. PLE/BUIT</b>: canvia entre rectangle ple i buit.   <b>COMPTAGOTES</b>: agafa el bloc de sota el ratolí.\n" +
         "<b>COPIAR</b> / <b>ENGANXAR</b>: copia una regió i posa-la on vulgues.\n" +
+        "<b>NETEJAR ZONA</b> (roig, a la dreta): clica dos cantons i esborra TOT el que hi haja a dins: blocs de les 3 capes, enemics, cofres, spawn, final i mercader. Ctrl+Z ho desfà.\n" +
         "<b>ROTAR</b> (R) i <b>VOLTEJAR</b> (F) giren el bloc que vas a posar; <b>ROTAR POSAT</b> i <b>VOLTEJAR POSAT</b>, un bloc que ja és al mapa.\n" +
         "<b>DESFER</b> (Ctrl+Z) i <b>REFER</b> (Ctrl+Y).   <b>GUARDAR</b> (Ctrl+S): posa-li un nom teu, no «Mapa».\n\n" +
         "<b>LES CAPES</b> (cada cel·la en té 3, i tu veus quina és dalt a l'esquerra, a CAPA):\n" +
@@ -645,6 +648,13 @@ public sealed class MapEditor : MonoBehaviour
         if (name == "MERCADER") { placeMode = PlaceMode.Merchant; status.text = "Posa un mercader"; return; }
         if (name == "V. CAPA") { placeMode = PlaceMode.Blocks; layerVisible[(int)layer] = !layerVisible[(int)layer]; DrawGrid(); status.text = "Visibilitat " + layer + ": " + (layerVisible[(int)layer] ? "activa" : "oculta"); return; }
         placeMode = PlaceMode.Blocks;
+        dragStart = null; // si havies començat una selecció (rectangle, línia, copiar...) i canvies d'eina, no s'arrossega a la nova
+        if (name == "NETEJAR ZONA")
+        {
+            tool = EditTool.ClearZone;
+            status.text = "NETEJAR ZONA: clica dos cantons (la mateixa cel·la dues vegades per a una de sola). Esborra TOT: blocs, enemics, cofres, spawn, final i mercader.";
+            return;
+        }
         tool = name switch
         {
             "ESBORRAR" => EditTool.Erase, "OMPLIR" => EditTool.Fill, "RECTANGLE" => EditTool.Rectangle,
@@ -699,6 +709,41 @@ public sealed class MapEditor : MonoBehaviour
         SetActiveCells(cells);
         DrawGrid();
     }
+    // Esborra TOT el que hi haja dins d'una zona rectangular: les 3 capes de blocs i també els objectes de joc (spawn, enemics, mercader, cofres, final).
+    // Dos clics (dos cantons); Ctrl+Z ho desfà perquè PushUndo guarda també els objectes de joc.
+    void ClearZone(int x, int y)
+    {
+        if (!dragStart.HasValue)
+        {
+            dragStart = new Vector2Int(x, y);
+            status.text = "Tria l'altre cantó de la zona a netejar (la mateixa cel·la per a una de sola).";
+            return;
+        }
+        var first = dragStart.Value; dragStart = null;
+        int minX = Mathf.Min(first.x, x), maxX = Mathf.Max(first.x, x), minY = Mathf.Min(first.y, y), maxY = Mathf.Max(first.y, y);
+        PushUndo();
+        int blocksBefore = map.layers.ground.Length + map.layers.objects.Length + map.layers.overlay.Length;
+        int gameBefore = map.spawns.Length + map.chests.Length + (map.goal != null ? 1 : 0);
+        MapCell[] RemoveInZone(MapCell[] source)
+        {
+            var list = new List<MapCell>(source);
+            for (int cy = minY; cy <= maxY; cy++)
+                for (int cx = minX; cx <= maxX; cx++) RemovePlacedAt(list, cx, cy); // un moble de diverses peces s'esborra sencer
+            return list.ToArray();
+        }
+        bool Inside(int px, int py) => px >= minX && px <= maxX && py >= minY && py <= maxY;
+        map.layers.ground = RemoveInZone(map.layers.ground);
+        map.layers.objects = RemoveInZone(map.layers.objects);
+        map.layers.overlay = RemoveInZone(map.layers.overlay);
+        map.spawns = map.spawns.Where(s => !Inside(s.x, s.y)).ToArray();
+        map.chests = map.chests.Where(c => !Inside(c.x, c.y)).ToArray();
+        if (map.goal != null && Inside(map.goal.x, map.goal.y)) map.goal = null;
+        int blocksAfter = map.layers.ground.Length + map.layers.objects.Length + map.layers.overlay.Length;
+        int gameAfter = map.spawns.Length + map.chests.Length + (map.goal != null ? 1 : 0);
+        DrawGrid();
+        status.text = "Zona netejada: " + (blocksBefore - blocksAfter) + " blocs i " + (gameBefore - gameAfter) + " objectes de joc. Ctrl+Z ho desfà.";
+    }
+
     void PlaceObject(int x, int y)
     {
         PushUndo();
