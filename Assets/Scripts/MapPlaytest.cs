@@ -30,9 +30,21 @@ public sealed class MapPlaytest : MonoBehaviour
         else if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W)) d = Vector2Int.up;
         else if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S)) d = Vector2Int.down;
         if (d == Vector2Int.zero) return;
-        player.x = Mathf.Clamp(player.x + d.x, 0, map.width - 1); player.y = Mathf.Clamp(player.y + d.y, 0, map.height - 1);
+        int nextX = Mathf.Clamp(player.x + d.x, 0, map.width - 1), nextY = Mathf.Clamp(player.y + d.y, 0, map.height - 1);
+        if (!CellIsPassable(map, nextX, nextY)) { status.text = "Un bloc sòlid et talla el pas."; return; }
+        player.x = nextX; player.y = nextY;
         if (map.goal != null && player.x == map.goal.x && player.y == map.goal.y) status.text = "MAPA COMPLETAT!";
         Draw(GameObject.Find("Prova mapa").transform);
+    }
+    public static bool CellIsPassable(MapData data, int x, int y)
+    {
+        if (data == null || data.layers == null) return false;
+        foreach (var cell in data.layers.ground.Concat(data.layers.objects).Where(c => c.x == x && c.y == y))
+        {
+            var block = BlockCatalog.Instance.blocks.FirstOrDefault(b => b != null && b.id == cell.blockId);
+            if (block != null && !block.passable) return false;
+        }
+        return true;
     }
     void Draw(Transform canvas)
     {

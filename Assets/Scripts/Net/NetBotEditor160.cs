@@ -23,6 +23,10 @@ public partial class NetBot
         var dragTrace = MapEditor.TraceLine(new Vector2Int(1, 1), new Vector2Int(4, 4));
         if (dragTrace.Length != 4 || dragTrace[0] != new Vector2Int(1, 1) || dragTrace[3] != new Vector2Int(4, 4))
         { Fail("la interpolació del traç deixa buits entre cel·les"); yield break; }
+        var solidBlock = BlockCatalog.Instance.blocks.FirstOrDefault(b => b != null && !b.passable);
+        if (solidBlock == null || MapPlaytest.CellIsPassable(new MapData { width = 1, height = 1,
+                layers = new MapLayers { ground = new[] { new MapCell { x = 0, y = 0, blockId = solidBlock.id } } } }, 0, 0))
+        { Fail("el jugador pot travessar un bloc sòlid durant PROVAR"); yield break; }
         var buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         if (buttons.Count(b => b.gameObject.name.StartsWith("Cel·la ")) != 256 ||
             !buttons.Any(b => b.gameObject.name.StartsWith("Bloc Terres/")) ||
