@@ -35,7 +35,23 @@ public partial class NetBot
         if (!MapStore.Save(savedMap, savedName, out error)) { Fail("no s'ha pogut preparar el mapa guardat: " + error); yield break; }
         var savedButton = FindObjectsByType<Button>(FindObjectsSortMode.None).FirstOrDefault(b => b.gameObject.name == "Boto JUGAR MAPA GUARDAT");
         if (savedButton == null) { MapStore.Delete(savedName); Fail("falta el botó JUGAR MAPA GUARDAT al selector"); yield break; }
+        const string trashName = "NETBOT-Paperera";
+        if (!MapStore.Save(new MapData { name = trashName, width = 2, height = 2 }, trashName, out error)) { MapStore.Delete(savedName); Fail("no s'ha pogut preparar el mapa per a la paperera: " + error); yield break; }
         savedButton.onClick.Invoke();
+        // Paperera: el primer clic només arma l'esborrat (el mapa continua), el segon l'esborra; l'altre mapa no es toca.
+        var trashButton = FindObjectsByType<Button>(FindObjectsSortMode.None).FirstOrDefault(b => b.gameObject.name == "Paperera " + trashName);
+        if (trashButton == null) { MapStore.Delete(savedName); MapStore.Delete(trashName); Fail("falta la paperera a la llista de mapes guardats"); yield break; }
+        trashButton.onClick.Invoke();
+        if (!MapStore.List().Contains(trashName)) { MapStore.Delete(savedName); Fail("la paperera ha esborrat el mapa al primer clic: ha de demanar confirmació"); yield break; }
+        yield return null; // la llista es reconstrueix
+        trashButton = FindObjectsByType<Button>(FindObjectsSortMode.None).FirstOrDefault(b => b.gameObject.name == "Paperera " + trashName);
+        if (trashButton == null) { MapStore.Delete(savedName); MapStore.Delete(trashName); Fail("la paperera ha desaparegut després del primer clic"); yield break; }
+        trashButton.onClick.Invoke();
+        bool trashStillThere = MapStore.List().Contains(trashName);
+        if (trashStillThere) MapStore.Delete(trashName);
+        if (trashStillThere) { MapStore.Delete(savedName); Fail("la paperera no ha esborrat el mapa al segon clic"); yield break; }
+        if (!MapStore.List().Contains(savedName)) { Fail("la paperera ha esborrat un altre mapa"); yield break; }
+        yield return null;
         var savedRow = FindObjectsByType<Button>(FindObjectsSortMode.None).FirstOrDefault(b => b.gameObject.name == "Mapa per jugar " + savedName);
         if (savedRow == null) { MapStore.Delete(savedName); Fail("la llista de mapes guardats no mostra el mapa"); yield break; }
         savedRow.onClick.Invoke();

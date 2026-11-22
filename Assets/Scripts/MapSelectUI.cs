@@ -45,6 +45,11 @@ public class MapSelectUI : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Escape)) Hide();
         if (creatorNotice != null && Time.unscaledTime >= noticeUntil) creatorNotice.gameObject.SetActive(false);
+        if (pendingDelete != null && Time.unscaledTime >= pendingDeleteUntil)
+        {   // si no confirmes en 4 s, l'esborrat es desarma i la paperera torna al roig normal
+            pendingDelete = null; savedMessage = "";
+            if (savedPanel != null) OpenSavedMaps();
+        }
     }
 
     void Build(MapInfo[] maps)
@@ -162,6 +167,45 @@ public class MapSelectUI : MonoBehaviour
     }
 
     Transform savedPanel;
+    string pendingDelete, savedMessage = "";
+    float pendingDeleteUntil;
+    static Sprite trashIcon;
+
+    // Paperera: el primer clic només «arma» l'esborrat (4 s) i el segon l'esborra de debò. Un mapa esborrat no es pot recuperar.
+    void TrashClicked(string savedName)
+    {
+        if (pendingDelete == savedName && Time.unscaledTime < pendingDeleteUntil)
+        {
+            bool deleted = MapStore.Delete(savedName);
+            pendingDelete = null;
+            savedMessage = deleted ? "Mapa «" + savedName + "» esborrat." : "No s'ha pogut esborrar «" + savedName + "».";
+        }
+        else
+        {
+            pendingDelete = savedName; pendingDeleteUntil = Time.unscaledTime + 4f;
+            savedMessage = "Torna a clicar la paperera de «" + savedName + "» per esborrar-lo. No es pot desfer.";
+        }
+        OpenSavedMaps();
+    }
+
+    // Icona de paperera en píxel art (16×16), feta per codi.
+    static Sprite TrashIcon()
+    {
+        if (trashIcon != null) return trashIcon;
+        var texture = new Texture2D(16, 16, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
+        var pixels = new Color32[16 * 16];
+        void Put(int x, int y) { pixels[y * 16 + x] = new Color32(245, 245, 245, 255); }
+        for (int x = 6; x <= 9; x++) Put(x, 14);                       // l'agafador
+        Put(6, 13); Put(9, 13);
+        for (int x = 2; x <= 13; x++) Put(x, 12);                      // la tapa
+        for (int y = 2; y <= 11; y++) { Put(4, y); Put(11, y); }       // els costats
+        for (int x = 4; x <= 11; x++) Put(x, 1);                       // el fons
+        for (int y = 3; y <= 10; y++) { Put(6, y); Put(9, y); }        // les ratlles
+        texture.SetPixels32(pixels);
+        texture.Apply();
+        trashIcon = Sprite.Create(texture, new Rect(0, 0, 16, 16), new Vector2(.5f, .5f), 16f);
+        return trashIcon;
+    }
 
     // Llista els mapes guardats (els del Creador i els importats) perquè es puguen jugar sense passar per l'editor.
     void OpenSavedMaps()
@@ -174,7 +218,7 @@ public class MapSelectUI : MonoBehaviour
             UIKit.Text(savedPanel, "Encara no hi ha mapes guardats. Crea'n un al Creador.", new Vector2(0, 0), new Vector2(620, 60), 18, TextAlignmentOptions.Center, UIKit.Muted);
         else
         {
-            var content = UIKit.ScrollList(savedPanel, new Vector2(0, -5), new Vector2(660, 500), out _, 4);
+            var content = UIKit.ScrollList(savedPanel, new Vector2(0, 10), new Vector2(660, 450), out _, 4);
             int i = 0;
             foreach (string savedName in names)
             {
@@ -186,10 +230,16 @@ public class MapSelectUI : MonoBehaviour
                 var modified = MapStore.LastModifiedUtc(captured);
                 string date = modified == System.DateTime.MinValue ? "data desconeguda" : modified.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
                 var label = UIKit.Text(row, captured + "  ·  " + savedMap.width + "×" + savedMap.height + "  ·  " + date,
-                    Vector2.zero, new Vector2(620, 46), 16, TextAlignmentOptions.MidlineLeft, UIKit.TextColor);
+                    new Vector2(-30, 0), new Vector2(560, 46), 16, TextAlignmentOptions.MidlineLeft, UIKit.TextColor);
                 label.textWrappingMode = TextWrappingModes.NoWrap;
+                bool armed = pendingDelete == captured && Time.unscaledTime < pendingDeleteUntil;
+                var trash = UIKit.Box(row, new Vector2(307, 0), new Vector2(46, 38), armed ? new Color(.95f, .12f, .12f) : new Color(.50f, .12f, .12f), "Paperera " + captured);
+                trash.gameObject.AddComponent<Button>().onClick.AddListener(() => TrashClicked(captured));
+                UIKit.Picture(trash, TrashIcon(), Vector2.zero, new Vector2(28, 28)).raycastTarget = false;
             }
         }
+        UIKit.Text(savedPanel, savedMessage, new Vector2(0, -238), new Vector2(680, 28), 15, TextAlignmentOptions.Center,
+            pendingDelete != null ? new Color(1f, .89f, .65f) : UIKit.Muted);
         UIKit.Button(savedPanel, "TANCAR", new Vector2(0, -275), new Vector2(150, 42), () => { Destroy(savedPanel.gameObject); savedPanel = null; }, UIKit.Style.Normal, 15);
     }
 
