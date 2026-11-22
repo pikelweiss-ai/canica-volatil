@@ -175,7 +175,7 @@ public sealed class MapEditor : MonoBehaviour
         UIKit.Button(canvas.transform, "KIT CASA", new Vector2(-205, 315), new Vector2(140, 34), () => PlaceKit("Parets/Paret_casa", "Terres/Terra", "Objectes/Planta_test"), UIKit.Style.Normal, 13);
         UIKit.Button(canvas.transform, "KIT SUPERMERCAT", new Vector2(-35, 315), new Vector2(165, 34), () => PlaceKit("Moderns/Paret_supermercat", "Terres/Rajola_supermercat", "Objectes/Carro_compra", "Objectes/Estanteria_fruita", "Natura/Gespa_flors_mixtes"), UIKit.Style.Normal, 12);
         string[] toolNames = { "PINTAR", "ESBORRAR", "OMPLIR", "RECTANGLE", "R. PLE/BUIT", "LÍNIA", "COMPTAGOTES", "DESFER", "REFER", "CAPA", "JUGADOR", "ENEMIC", "COFRE", "FINAL", "MERCADER", "COPIAR", "ENGANXAR", "V. CAPA" };
-        float toolX = -575;
+        float toolX = -(toolNames.Length - 1) * 88f * .5f; // fila centrada: a 16:9 (1600 de ample) abans se n'eixia per la dreta i V. CAPA no es veia
         foreach (string toolName in toolNames)
         {
             string action = toolName;
@@ -198,7 +198,20 @@ public sealed class MapEditor : MonoBehaviour
         familyField.onValueChanged.AddListener(_ => BuildPalette());
         palette = UIKit.ScrollList(panel, new Vector2(0, -68), new Vector2(225, 375), out _, 2);
         UIKit.Button(panel, "VISTA: TOTS", new Vector2(0, 147), new Vector2(220, 32), CyclePaletteMode, UIKit.Style.Normal, 12);
-        grid = UIKit.Empty(canvas.transform, "Graella");
+        // La graella viu dins d'un marc que la retalla per dalt (RectMask2D) i va DARRERE de tota la UI: en fer zoom o moure-la ja no tapa els botons.
+        // El marc té el seu origen al centre del Canvas, així les coordenades de la graella no canvien.
+        const float gridClipTop = 172f, gridClipDepth = 6000f;
+        var gridViewport = new GameObject("Graella marc", typeof(RectTransform), typeof(RectMask2D)).GetComponent<RectTransform>();
+        gridViewport.SetParent(canvas.transform, false);
+        gridViewport.anchorMin = gridViewport.anchorMax = Vector2.one * .5f;
+        gridViewport.sizeDelta = new Vector2(8000f, gridClipDepth + gridClipTop);
+        gridViewport.pivot = new Vector2(.5f, gridClipDepth / (gridClipDepth + gridClipTop));
+        gridViewport.anchoredPosition = Vector2.zero;
+        gridViewport.SetSiblingIndex(background.GetSiblingIndex() + 1);
+        var gridRect = UIKit.Empty(gridViewport, "Graella");
+        gridRect.anchorMin = gridRect.anchorMax = gridViewport.pivot;
+        gridRect.anchoredPosition = Vector2.zero; gridRect.sizeDelta = Vector2.zero;
+        grid = gridRect;
         promptPanel = UIKit.Box(canvas.transform, Vector2.zero, new Vector2(420, 200), UIKit.Panel, "Confirmació");
         promptText = UIKit.Text(promptPanel, "", new Vector2(0, 45), new Vector2(380, 60), 20, TextAlignmentOptions.Center, UIKit.TextColor);
         UIKit.Button(promptPanel, "CONFIRMAR", new Vector2(-95, -55), new Vector2(160, 46), () => { var action = pendingConfirm; promptPanel.gameObject.SetActive(false); pendingConfirm = null; action?.Invoke(); }, UIKit.Style.Danger, 16);
