@@ -314,6 +314,10 @@ public partial class NetBot
         buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
         if (!MapStore.Load("Mapa", out saved, out error) || !saved.layers.ground.Any(c => c.x == 11 && c.y == 11) || !saved.layers.objects.Any(c => c.x == 10 && c.y == 10))
         { Fail("copiar i enganxar no ha conservat les capes"); yield break; }
+        // Una còpia automàtica d'una sessió anterior fa eixir el prompt «recuperar-la?»; el bot no ha de confirmar-lo per error en clicar CONFIRMAR.
+        var autosavePrompt = FindObjectsByType<TMP_Text>(FindObjectsSortMode.None).FirstOrDefault(t => t.text != null && t.text.StartsWith("Hi ha una còpia automàtica"));
+        if (autosavePrompt != null)
+            autosavePrompt.transform.parent.GetComponentsInChildren<Button>(true).FirstOrDefault(b => b.gameObject.name == "Boto CANCEL·LAR")?.onClick.Invoke();
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
         buttons.First(b => b.gameObject.name == "Boto NOU MAPA").onClick.Invoke();
         buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);

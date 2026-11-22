@@ -17,7 +17,8 @@ public sealed class MapEditor : MonoBehaviour
     RectTransform palettePanel, paletteMoveHandle;
     TMP_InputField nameField, mapWidthField, mapHeightField, searchField, familyField;
     TMP_InputField sharePathField;
-    TMP_Text status, enemyChoiceLabel, chestChoiceLabel;
+    TMP_Text status, enemyChoiceLabel, chestChoiceLabel, layerLabel;
+    RectTransform helpPanel;
     GameObject[] enemyChoices = System.Array.Empty<GameObject>();
     int enemyChoiceIndex;
     ChestRarity[] chestChoices = { ChestRarity.Comu, ChestRarity.Rar, ChestRarity.Epic, ChestRarity.Llegendari };
@@ -68,6 +69,12 @@ public sealed class MapEditor : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.Z) && Input.GetKey(KeyCode.LeftControl)) Undo();
             if (Input.GetKeyDown(KeyCode.Y) && Input.GetKey(KeyCode.LeftControl)) Redo();
             if (Input.GetKeyDown(KeyCode.S) && Input.GetKey(KeyCode.LeftControl)) Save();
+            if (Input.GetKeyDown(KeyCode.F1)) ToggleHelp();
+        }
+        if (layerLabel != null)
+        {
+            string layerText = "CAPA: " + LayerName(EffectiveLayer()) + (eraseMode ? "  ·  ESBORRANT (E)" : "");
+            if (layerLabel.text != layerText) layerLabel.text = layerText;
         }
         if (Time.unscaledTime >= autosaveAt)
         {
@@ -174,6 +181,7 @@ public sealed class MapEditor : MonoBehaviour
         UIKit.Button(canvas.transform, "KIT CASTELL", new Vector2(-360, 315), new Vector2(140, 34), () => PlaceKit("Parets/Castell_blocs", "Parets/Castell_fosc", "Vegetacio/Seto_verd", "Natura/Gespa_flors_grogues"), UIKit.Style.Normal, 13);
         UIKit.Button(canvas.transform, "KIT CASA", new Vector2(-205, 315), new Vector2(140, 34), () => PlaceKit("Parets/Paret_casa", "Terres/Terra", "Objectes/Planta_test"), UIKit.Style.Normal, 13);
         UIKit.Button(canvas.transform, "KIT SUPERMERCAT", new Vector2(-35, 315), new Vector2(165, 34), () => PlaceKit("Moderns/Paret_supermercat", "Terres/Rajola_supermercat", "Objectes/Carro_compra", "Objectes/Estanteria_fruita", "Natura/Gespa_flors_mixtes"), UIKit.Style.Normal, 12);
+        UIKit.Button(canvas.transform, "AJUDA", new Vector2(140, 315), new Vector2(110, 34), ToggleHelp, UIKit.Style.Primary, 13);
         string[] toolNames = { "PINTAR", "ESBORRAR", "OMPLIR", "RECTANGLE", "R. PLE/BUIT", "LÍNIA", "COMPTAGOTES", "DESFER", "REFER", "CAPA", "JUGADOR", "ENEMIC", "COFRE", "FINAL", "MERCADER", "COPIAR", "ENGANXAR", "V. CAPA" };
         float toolX = -(toolNames.Length - 1) * 88f * .5f; // fila centrada: a 16:9 (1600 de ample) abans se n'eixia per la dreta i V. CAPA no es veia
         foreach (string toolName in toolNames)
@@ -186,6 +194,8 @@ public sealed class MapEditor : MonoBehaviour
         UIKit.Button(canvas.transform, "VOLTEJAR POSAT", new Vector2(45, 190), new Vector2(165, 32), () => SelectTool("VOLTEJAR POSAT"), UIKit.Style.Normal, 12);
         UIKit.Button(canvas.transform, "GRAELLA: SÍ", new Vector2(225, 190), new Vector2(145, 32), ToggleGrid, UIKit.Style.Normal, 12);
         UIKit.Button(canvas.transform, "HITBOXES: NO", new Vector2(390, 190), new Vector2(160, 32), ToggleHitboxes, UIKit.Style.Normal, 12);
+        layerLabel = UIKit.Text(canvas.transform, "", new Vector2(-560, 190), new Vector2(380, 32), 17, TextAlignmentOptions.Left, UIKit.Gold);
+        layerLabel.overflowMode = TextOverflowModes.Overflow;
         var panel = UIKit.Box(canvas.transform, new Vector2(-470, -124), new Vector2(245, 580), UIKit.Panel, "Panell paleta");
         palettePanel = panel.GetComponent<RectTransform>();
         var moveHandle = UIKit.Box(panel.transform, new Vector2(0, 280), new Vector2(225, 22), UIKit.ButtonColor, "Mou la paleta");
@@ -217,6 +227,12 @@ public sealed class MapEditor : MonoBehaviour
         UIKit.Button(promptPanel, "CONFIRMAR", new Vector2(-95, -55), new Vector2(160, 46), () => { var action = pendingConfirm; promptPanel.gameObject.SetActive(false); pendingConfirm = null; action?.Invoke(); }, UIKit.Style.Danger, 16);
         UIKit.Button(promptPanel, "CANCEL·LAR", new Vector2(95, -55), new Vector2(160, 46), () => { promptPanel.gameObject.SetActive(false); pendingConfirm = null; }, UIKit.Style.Normal, 16);
         promptPanel.gameObject.SetActive(false);
+        helpPanel = UIKit.Box(canvas.transform, Vector2.zero, new Vector2(920, 660), UIKit.Panel, "Guia");
+        UIKit.Text(helpPanel, "GUIA DEL CREADOR  (F1 per obrir i tancar)", new Vector2(0, 300), new Vector2(880, 40), 24, TextAlignmentOptions.Center, UIKit.Gold);
+        var guideText = UIKit.Text(helpPanel, GuideText, new Vector2(0, 12), new Vector2(870, 540), 15, TextAlignmentOptions.TopLeft, UIKit.TextColor);
+        guideText.overflowMode = TextOverflowModes.Overflow;
+        UIKit.Button(helpPanel, "TANCAR", new Vector2(0, -300), new Vector2(170, 42), ToggleHelp, UIKit.Style.Primary, 16);
+        helpPanel.gameObject.SetActive(false);
         BuildPalette();
         DrawGrid();
         if (MapStore.Load("__autosave", out _, out _)) ShowPrompt("Hi ha una còpia automàtica. La vols recuperar?", RecoverAutosave);
@@ -329,12 +345,27 @@ public sealed class MapEditor : MonoBehaviour
     static HashSet<string> ReadPaletteIds(string key) => new HashSet<string>(PlayerPrefs.GetString(key, "")
         .Split(new[] { '|' }, System.StringSplitOptions.RemoveEmptyEntries), System.StringComparer.Ordinal);
 
+    // Dibuixa només l'sprite (girat/voltejat) d'una cel·la d'una capa de sota, sense hitbox ni «?».
+    void DrawLayerSprite(RectTransform parent, MapCell item, float cell)
+    {
+        var block = BlockCatalog.Instance.blocks.FirstOrDefault(b => b != null && b.id == item.blockId);
+        if (block == null) return;
+        var image = UIKit.Picture(parent, item.resolvedSprite != null ? item.resolvedSprite : block.sprite, Vector2.zero, new Vector2(cell - 3, cell - 3));
+        image.rectTransform.localEulerAngles = new Vector3(0, 0, -90 * item.rot);
+        image.rectTransform.localScale = new Vector3(item.flip ? -1 : 1, 1, 1);
+        image.raycastTarget = false;
+    }
+
     void DrawGrid()
     {
         UIKit.Clear(grid);
         float cell = Mathf.Min(650f / map.width, 540f / map.height);
         var cells = VisibleCells();
         var cellsByPosition = MapAutoTile160.Index(cells);
+        // Un índex per capa: la graella ensenya la capa de dalt de tot, però ara també dibuixa les de sota (p. ex. el terra sota d'un carro).
+        var layerArrays = new[] { map.layers.ground, map.layers.objects, map.layers.overlay };
+        var layerIndexes = new MapAutoTile160.CellIndex[3];
+        for (int i = 0; i < 3; i++) layerIndexes[i] = layerVisible[i] ? MapAutoTile160.Index(layerArrays[i]) : null;
         for (int y = 0; y < map.height; y++)
         for (int x = 0; x < map.width; x++)
         {
@@ -345,6 +376,12 @@ public sealed class MapEditor : MonoBehaviour
             button.image.color = gridVisible ? UIKit.ButtonColor : new Color(0f, 0f, 0f, 0f);
             cellsByPosition.TryGetValue(new Vector2Int(cx, cy), out var source);
             var item = MapAutoTile160.Resolve(source, cellsByPosition);
+            var cellPosition = new Vector2Int(cx, cy);
+            int topLayer = -1;
+            for (int l = 2; l >= 0 && topLayer < 0; l--) if (layerIndexes[l] != null && layerIndexes[l].TryGetValue(cellPosition, out _)) topLayer = l;
+            for (int l = 0; l < topLayer; l++)
+                if (layerIndexes[l] != null && layerIndexes[l].TryGetValue(cellPosition, out var lower))
+                    DrawLayerSprite(button.rect, MapAutoTile160.Resolve(lower, layerIndexes[l]), cell);
             if (!string.IsNullOrEmpty(item.blockId))
             {
                 var block = BlockCatalog.Instance.blocks.FirstOrDefault(b => b.id == item.blockId);
@@ -536,6 +573,38 @@ public sealed class MapEditor : MonoBehaviour
         else if (layer == EditLayer.Objects) map.layers.objects = cells;
         else map.layers.overlay = cells;
     }
+    const string GuideText =
+        "<b>PINTAR</b>: tria un bloc a la paleta (esquerra) i clica o arrossega per la graella.\n" +
+        "<b>ESBORRAR</b> (o la tecla E): lleva el bloc de la capa activa.   <b>OMPLIR</b>: cubell sobre blocs iguals connectats.\n" +
+        "<b>RECTANGLE</b> i <b>LÍNIA</b>: clica dos punts.   <b>R. PLE/BUIT</b>: canvia entre rectangle ple i buit.   <b>COMPTAGOTES</b>: agafa el bloc de sota el ratolí.\n" +
+        "<b>COPIAR</b> / <b>ENGANXAR</b>: copia una regió i posa-la on vulgues.\n" +
+        "<b>ROTAR</b> (R) i <b>VOLTEJAR</b> (F) giren el bloc que vas a posar; <b>ROTAR POSAT</b> i <b>VOLTEJAR POSAT</b>, un bloc que ja és al mapa.\n" +
+        "<b>DESFER</b> (Ctrl+Z) i <b>REFER</b> (Ctrl+Y).   <b>GUARDAR</b> (Ctrl+S): posa-li un nom teu, no «Mapa».\n\n" +
+        "<b>LES CAPES</b> (cada cel·la en té 3, i tu veus quina és dalt a l'esquerra, a CAPA):\n" +
+        "   · <b>TERRA</b>: el que es pot travessar: terres, herba, flors i aigua.\n" +
+        "   · <b>OBJECTES</b>: parets i blocs que ocupen la cel·la sencera.\n" +
+        "   · <b>DAMUNT</b>: objectes que no omplin la cel·la i van sobre el jugador (carros, llums, copes d'arbre...).\n" +
+        "En pintar, el bloc va sol a la seua capa. Pots combinar capes en una cel·la (un carro sobre terra),\n" +
+        "però dos blocs de la mateixa capa es substitueixen entre ells (p. ex. una flor lleva el terra).\n" +
+        "El botó <b>CAPA</b> canvia la capa activa (per a esborrar, copiar...) i <b>V. CAPA</b> amaga o mostra la capa.\n\n" +
+        "<b>OBJECTES DE JOC</b>: JUGADOR (punt d'inici), ENEMIC, COFRE, FINAL (portal) i MERCADER. ENEMIC −/+ i COFRE −/+ trien quin. <b>PROVAR</b> juga el mapa i torna a l'editor.\n" +
+        "<b>MOURE LA VISTA</b>: WASD o botó del mig del ratolí; la roda fa zoom. GRAELLA i HITBOXES ajuden a depurar. La paleta es mou arrossegant la barra de dalt.\n" +
+        "<b>KITS</b>: Castell, Casa i Supermercat posen una base feta.\n" +
+        "<b>COMPARTIR</b>: COPIAR CODI i IMPORTAR CODI, o el panell de fitxers. Importa només mapes de gent que conegues.";
+
+    static string LayerName(EditLayer value) => value == EditLayer.Ground ? "TERRA" : value == EditLayer.Objects ? "OBJECTES" : "DAMUNT";
+
+    // La capa on anirà el bloc: en pintar, es tria sola segons el bloc triat; si no, és la capa activa.
+    EditLayer EffectiveLayer() =>
+        placeMode == PlaceMode.Blocks && !eraseMode && selected != null &&
+        (tool == EditTool.Paint || tool == EditTool.Fill || tool == EditTool.Rectangle || tool == EditTool.Line)
+            ? LayerFor(selected) : layer;
+
+    void ToggleHelp()
+    {
+        if (helpPanel != null) helpPanel.gameObject.SetActive(!helpPanel.gameObject.activeSelf);
+    }
+
     void SelectTool(string name)
     {
         if (name == "R. PLE/BUIT") { filledRectangle = !filledRectangle; status.text = filledRectangle ? "Rectangle ple" : "Rectangle buit"; return; }
@@ -800,7 +869,8 @@ public sealed class MapEditor : MonoBehaviour
         { ShowPrompt("Ja existeix un mapa amb este nom. Vols sobreescriure'l?", () => SaveAs(target)); return; }
         SaveAs(target);
     }
-    bool SaveAs(string target) { map.name = target; if (MapStore.Save(map, map.name, out var error)) { currentSavedName=map.name; dirty=false; status.text = "Guardat: " + map.name; return true; } status.text = error; return false; }
+    // En guardar de debò, la còpia automàtica ja no fa falta: si es quedara, el Creador preguntaria «recuperar-la?» cada vegada que s'obri.
+    bool SaveAs(string target) { map.name = target; if (MapStore.Save(map, map.name, out var error)) { currentSavedName=map.name; dirty=false; MapStore.Delete("__autosave"); status.text = "Guardat: " + map.name; return true; } status.text = error; return false; }
     void ShowPrompt(string message, System.Action action) { pendingConfirm=action; promptText.text=message; promptPanel.gameObject.SetActive(true); }
     void ConfirmNewMap()
     {
@@ -811,7 +881,8 @@ public sealed class MapEditor : MonoBehaviour
         else NewMap(width, height);
     }
     void RecoverAutosave() { if (MapStore.Load("__autosave",out var recovered,out var error)) { map=recovered; nameField.text=map.name; mapWidthField.text=map.width.ToString(); mapHeightField.text=map.height.ToString(); currentSavedName=null; dirty=true; DrawGrid(); status.text="Còpia automàtica recuperada; guarda-la amb un nom."; } else status.text=error; }
-    void ConfirmExit() { if (dirty) ShowPrompt("Hi ha canvis sense guardar. Vols eixir igualment?", () => SceneManager.LoadScene("MainMenu")); else SceneManager.LoadScene("MainMenu"); }
+    void ConfirmExit() { if (dirty) ShowPrompt("Hi ha canvis sense guardar. Vols eixir igualment?", LeaveEditor); else LeaveEditor(); }
+    void LeaveEditor() { MapStore.Delete("__autosave"); SceneManager.LoadScene("MainMenu"); } // eixir a consciència: la còpia automàtica és per a quan el joc es tanca de cop
     void ExportCode()
     {
         if (!MapShare160.Encode(map, out var code, out var error)) { status.text = error; return; }
