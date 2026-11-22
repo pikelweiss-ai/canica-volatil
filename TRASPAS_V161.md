@@ -16,6 +16,8 @@ Commits locals de les fases inicials:
 - `32fe0e7` — tancament documental i builds finals de la v1.6.
 - `d088973` — els blocs desconeguts es conserven i es representen amb «?» en editar/provar.
 - `ce773c4`, `8de74ab` — rectangles plens/buits i comprovació dels dos modes al `editor160`.
+- `98a0ff1` — pintura amb arrossegament i interpolació de cel·les.
+- `44c257f` — llista seleccionable de mapes guardats amb nom, dimensions i data.
 
 La versió visible/package 1.6.0-alpha, el Changelog, el codi Android 17, el cubell, la línia Bresenham, la càmera WASD/zoom, la visibilitat de capes, l'autosave recuperable, els avisos de confirmació i el desfés dels marcadors ja es van incloure en el tancament de la v1.6. La versió del worktree pot continuar diferint del número de release perquè la v1.6 no s'ha publicat.
 
@@ -33,7 +35,7 @@ Validació a `Builds/Candidats/Alpha-v1.6.0-final`:
 - Online de mapes: D2 permet passar-ho a v1.7 si s'allarga. No hi ha protocol 25 ni transmissió en chunks; el protocol es queda en 24.
 - Autotile limitat als camins `Natura/Gespa_cami_*`; falta cobrir la resta de famílies del disseny i fer ombres/col·lisions rotades en el món.
 - Els kits són habitacions de 9×9 amb paret perimetral i terra; falta provar/afinar el contingut temàtic i les plantes.
-- L'editor encara no té pintura d'arrossegament ni selecció/copiat de multipart com a objecte; la prova Android de jugar mapes importats està pendent.
+- L'editor encara no té selecció/copiat de multipart com a objecte; la pintura amb arrossegament i la llista d'obertura ja estan implementades. La prova Android de jugar mapes importats està pendent.
 - Revisar el rendiment en un mapa 64×64 i fer QA visual en 16:9/4:3.
 - `MapStore` conserva ids de blocs desconeguts, que es dibuixen amb «?»; no hi ha encara migració automàtica d'un mapa per a formats futurs.
 
