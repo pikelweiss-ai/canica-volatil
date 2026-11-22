@@ -58,7 +58,7 @@ public static class MapStore
     public static string[] List()
     {
         try { return Directory.Exists(DirectoryPath) ? Directory.GetFiles(DirectoryPath, "*.canicamap")
-            .Select(Path.GetFileNameWithoutExtension).OrderBy(n => n, StringComparer.OrdinalIgnoreCase).ToArray() : Array.Empty<string>(); }
+            .Select(Path.GetFileNameWithoutExtension).Where(n => n != "__autosave").OrderBy(n => n, StringComparer.OrdinalIgnoreCase).ToArray() : Array.Empty<string>(); }
         catch { return Array.Empty<string>(); }
     }
 

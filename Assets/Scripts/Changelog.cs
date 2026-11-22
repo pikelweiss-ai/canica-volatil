@@ -12,6 +12,18 @@ public static class Changelog
     {
         new Entry
         {
+            version = "Alpha v1.6.0", title = "Creador de mapes",
+            lines = new[]
+            {
+                "CREADOR DE MAPES",
+                "Dibuixa mapes amb el catàleg complet de blocs: pinta, esborra, ompli, rota i volteja les peces.",
+                "Guarda i obri mapes, crea habitacions amb els kits Castell, Casa i Supermercat, i copia/enganxa regions.",
+                "Col·loca el punt inicial, enemics, cofres i un portal opcional. Prova el mapa i comparteix-lo com a fitxer o codi CVM1.",
+                "La partida online amb mapes creats queda prevista per a la v1.7."
+            }
+        },
+        new Entry
+        {
             version = "Alpha v1.5.0", title = "Huit bosses, claus i amulets",
             lines = new[]
             {

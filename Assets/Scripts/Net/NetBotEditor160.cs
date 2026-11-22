@@ -11,6 +11,7 @@ public partial class NetBot
     {
         yield return WaitFor(() => Scene == "MainMenu", 20, "menú v1.6");
         if (failed) yield break;
+        MapStore.Delete("Mapa");
         ClickButton("JUGAR");
         yield return WaitFor(() => FindFirstObjectByType<MapSelectUI>() != null, 5, "selector de mapes");
         var creator = FindObjectsByType<Button>(FindObjectsSortMode.None)
@@ -95,6 +96,20 @@ public partial class NetBot
         buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
         if (!MapStore.Load("Mapa", out saved, out error) || !saved.layers.ground.Any(c => c.x == 11 && c.y == 11) || !saved.layers.objects.Any(c => c.x == 10 && c.y == 10))
         { Fail("copiar i enganxar no ha conservat les capes"); yield break; }
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto NOU 16×16").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Bloc Terres/Terra").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto OMPLIR").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Cel·la 2,2").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        buttons.First(b => b.gameObject.name == "Boto GUARDAR").onClick.Invoke();
+        buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+        if (buttons.Any(b => b.gameObject.name == "Boto CONFIRMAR")) buttons.First(b => b.gameObject.name == "Boto CONFIRMAR").onClick.Invoke();
+        if (!MapStore.Load("Mapa", out saved, out error) || saved.layers.ground.Length != 256)
+        { Fail("el cubell no ha omplit la zona buida connectada"); yield break; }
         MapStore.Delete("Mapa");
         Ok("editor, objectes, prova, kits i copiar/enganxar regions");
         Pass();

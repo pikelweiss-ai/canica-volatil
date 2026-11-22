@@ -1,7 +1,7 @@
 # GitHub de Canica Volàtil
 
 Repositori públic: https://github.com/pikelweiss-ai/canica-volatil
-Branca principal: main. Alpha oficial: **Alpha v1.4.2**, etiqueta `v1.4.2-alpha` (les anteriors es conserven, fins a `v1.0.0-alpha`).
+Branca principal: main. Alpha oficial Latest: **Alpha v1.5.0**, etiqueta `v1.5.0-alpha`. La v1.6.0 està en desenvolupament local i no s'ha de publicar sense permís explícit.
 
 Descàrregues: https://github.com/pikelweiss-ai/canica-volatil/releases/tag/v1.4.2-alpha
 
@@ -10,7 +10,7 @@ Descàrregues: https://github.com/pikelweiss-ai/canica-volatil/releases/tag/v1.4
 - Android 8+: APK ARM64/ARMv7 amb controls tàctils.
 - SHA256SUMS.txt i BUILD_INFO.json amb identificació de codi/commit i catàlegs.
 
-La candidata **Alpha v1.5.0** porta el protocol 24. La publicació depén del permís explícit de Ferran i seguix els passos del [traspàs de la v1.5](TRASPAS_CODEX_V150.md#6-com-publicar-només-amb-permís-explícit-de-ferran).
+La release **Alpha v1.5.0** porta el protocol 24 i està publicada. La v1.6.0 en desenvolupament encara no té release; qualsevol publicació depén d'un permís explícit de Ferran.
 
 Assets, Packages, ProjectSettings, eines i documentació versionats. Library, Temp, Logs, UserSettings, Builds i .utmp exclosos. Executables en Releases, no dins del Git. Les fonts dinàmiques i les metadades antigues reimportades per Unity es conserven localment sense incloure soroll de compilació en el commit.
 

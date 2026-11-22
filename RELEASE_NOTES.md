@@ -1,4 +1,10 @@
-# Alpha v1.5.0
+# Alpha v1.6.0 · desenvolupament (no publicada)
+
+Editor de mapes disponible en esta branca de treball. Inclou el catàleg de blocs, eines de pintura, kits Castell/Casa/Supermercat, copiar/enganxar regions, marcadors d'objectes de joc, prova local i compartir per `.canicamap`/codi `CVM1:`.
+
+La fase online de mapes es trasllada a v1.7 segons D2. La prova local encara representa enemics i cofres com a marcadors, no com a entitats de combat. Vegeu [l'estat de desenvolupament](ALPHA_PROGRESS.md) i el [traspàs](TRASPAS_CODEX_V160.md). No hi ha paquet publicat de v1.6.
+
+# Alpha v1.5.0 · publicada (Latest)
 
 Protocol online **24**. Disponible per a Windows, Linux i Android.
 

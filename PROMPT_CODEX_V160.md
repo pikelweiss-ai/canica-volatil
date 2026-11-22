@@ -9,7 +9,7 @@ Parla'm en valencià, informal. Estic aprenent: explica'm pas a pas el que fas.
 
 2) Abans de res, llig en este ordre: AGENTS.md, Docs/INDEX.md, Docs/ROADMAP.md (v1.5 i v1.6), Docs/Dissenys/v1.6-creador-de-mapes.md, Docs/Dissenys/v1.5-almanac-blocs-i-mode-creador.md, TRASPAS_V151.md i TRASPAS_CODEX_V160.md. El traspàs té les regles, els punts delicats, com compilar i provar i com publicar. El disseny té el format del mapa, les eines de l'editor i les fases 0-9.
 
-3) FASE 0 PRIMER: abans de tocar codi, pregunta'm les decisions D1-D10 del disseny (secció 9), una per una o en bloc, amb la proposta per defecte de cada una. Les importants: si publiquem la v1.5 abans (D1), si els mapes es juguen online i si va a la v1.6 o a la v1.7 (D2), com es comparteixen (D3), mida màxima (D4) i llums (D6). Espera la meua resposta.
+3) FASE 0 JA RESOLTA: la v1.5.0 està publicada com Latest (`v1.5.0-alpha`, commit `6675b44`). Usa les propostes per defecte D2-D10. D2: online de mapes al final i passa a v1.7 si s'allarga. No tornes a preguntar estes decisions; consulta el traspàs v1.6 per a l'estat actual.
 
 4) Després fes les fases EN ORDRE: (1) catàleg de blocs complet, (2) format de mapa i magatzem, (3) escena Creador i editor bàsic, (4) objectes de joc i botó PROVAR, (5) autotile i rotació, (6) plantilles, plantes temàtiques i kits (Castell, Casa, Supermercat), (7) compartir mapes, (8) online si ho decidim, (9) tancament i documentació. Després de cada fase, compila, prova amb un bot (NETBOT PASS) i diga'm què has comprovat i què no. No afigues res que no estiga al disseny sense preguntar-m'ho.
 
@@ -23,5 +23,5 @@ Parla'm en valencià, informal. Estic aprenent: explica'm pas a pas el que fas.
 
 9) No guardes mai contrasenyes ni tokens. Les notes d'Obsidian són a C:\Users\Usuario\memoria-claude (fes pull abans de llegir i commit+push després d'editar).
 
-Comença confirmant-me en 5 línies què has entés, i fes-me les preguntes de la fase 0.
+Comença llegint el traspàs actual i continua des dels commits ja fets, sense repetir fases que passen NETBOT PASS.
 ```

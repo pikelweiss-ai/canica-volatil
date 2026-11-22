@@ -7,7 +7,7 @@
 - **Mai toques «Canica 1».** Treballa només en este worktree: `C:\Users\Usuario\Canica Alpha\Builds\StabilityWorkspace`, branca `alpha/arsenal` (o la branca que acorde amb Ferran per a la v1.6).
 - **No facis `git push` ni publiques cap release sense el permís explícit de Ferran** en la conversa. El permís de publicar una versió no val per a la següent.
 - No guardes mai contrasenyes, tokens ni claus.
-- Notes d'Obsidian: `C:\Users\Usuario\memoria-claude` (`git pull --rebase` abans de llegir; `git add -A`, `commit` i `push` després d'editar). Si hi ha conflicte, explica'l i pregunta.
+- Notes d'Obsidian: `C:\Users\Usuario\memoria-claude` (pull abans de llegir; commit+push allí després d'editar, segons la instrucció de Ferran). Este worktree del joc no es puja ni es publica sense permís.
 - Unity **6000.0.53f1**, URP 2D, **Input Manager antic**. El món usa `TextMeshPro`; el Canvas, `TextMeshProUGUI`. Mira el codi abans d'assumir-ho.
 - Contingut generat (armes, enemics, bosses, cosmètics, catàleg de blocs): canvia `Assets/Editor/AlphaContentBuilder.cs`, `V141ContentBuilder.cs`, `DungeonBuilder.cs` i `BlockCatalogBuilder`, **no els `.asset` ni els prefabs**: els builders els reescriuen a cada compilació.
 - **Mai** `reset --hard`, `clean` ni `stash` global: el worktree té canvis de Ferran (fonts, `.meta` reimportats, `ProjectSettings`, `UniversalRP`). No els incloguis als commits; afig fitxers de manera explícita.
@@ -18,24 +18,26 @@
 ## 2. Lectura obligatòria (en este ordre)
 1. `AGENTS.md` · 2. `Docs/INDEX.md` · 3. `Docs/ROADMAP.md` (seccions v1.5 i v1.6) · 4. `Docs/Dissenys/v1.6-creador-de-mapes.md` · 5. `Docs/Dissenys/v1.5-almanac-blocs-i-mode-creador.md` · 6. `TRASPAS_V151.md` (estat de la v1.5.0) · 7. `ONLINE.md` (només si arribes a la fase online).
 
-## 3. Estat actual
-- **Publicada: Alpha v1.4.2.** La **v1.5.0** és una candidata local (`alpha/arsenal`, commit `6675b44`, protocol **24**, Android codi 16), **sense publicar**: Ferran decidirà (decisió D1 del disseny). Si no es publica, la v1.6 parteix de la v1.5 igualment i heretarà el protocol 24.
+## 3. Estat actual (corregit 2026-11-22)
+- **Alpha v1.5.0 publicada** a GitHub com `v1.5.0-alpha`, marcada **Latest**; release del 2026-11-22, commit `6675b44`. Confirmat amb `gh release list --repo pikelweiss-ai/canica-volatil`. D1 està resolta; no cal una publicació prèvia.
 - Ja existeix: `BlockData` + `BlockCatalog` + 626 fitxes (`BlockCatalogBuilder`), pestanya **BLOCS** de l'Almanac, targeta **CREADOR** apagada a `MapSelectUI.cs`, `CreativeMode.cs` (model per als objectes de joc) i el bot `almanac150` que comprova que la targeta no carrega res (**s'ha d'actualitzar** quan l'actives).
 - Bots: `-canicaBot phase0 | bosses150 | keys150 | amulets150 | store150 | almanac150 | menushot | dungeon140 | solo | v141 | scenery`. Patró de bot a `Assets/Scripts/Net/NetBotV141.cs` i `NetBotAlmanac150.cs`.
-- **El que NO existeix**: format de mapa, magatzem, escena `Creador`, editor, autotile, plantilles i kits, compartir i enviament online de mapes. Tot això és la v1.6.
+- Fases 1–7 tenen commits locals `f72beb8`, `b768424`, `3dc44fe`, `b8828b5`, `4a45276`, `b022a8e` i `69768c8`; els bots de catàleg, dades, editor, autotile i compartir han passat `NETBOT PASS`.
+- La fase 8 (mapes online) queda per a v1.7 segons D2 si la integració s'allarga. Fase 9: builds finals Windows/Linux/Android, manifests i suite online existent passen; notes d'Obsidian actualitzades. La vista de prova encara no instancia enemics/cofres com a entitats de combat.
+- Els bots validen els fluxos implementats, però això no completa tot el disseny: PROVAR és una vista local en graella amb marcadors; l'autotile cobreix Gespa_cami i no calcula ombres ni col·lisions en el món; els tres kits són habitacions simples de paret/terra. Falta comprovar en dispositius reals i jugar mapes importats en Android.
 
 ## 4. Contingut de la v1.6 (tancat; **no hi afigues res sense preguntar a Ferran**)
 
 Segueix **les fases 0–9 de la secció 10 del disseny**, en ordre, amb compilació i prova al final de cada una, i diu a Ferran què has comprovat i què no.
 
-**Fase 0 és obligatòria**: abans de tocar codi, **pregunta a Ferran les decisions D1–D10** del disseny (§9), amb la proposta per defecte de cada una, i espera la resposta. Les més importants perquè canvien l'abast:
+**Fase 0 està feta.** Ferran va confirmar la publicació de v1.5.0 i usar les propostes per defecte D2–D10. No tornes a preguntar-les. D2 permet passar l'online a v1.7 si s'allarga.
 - **D1** publicar la v1.5 primer.
 - **D2** si els mapes creats es juguen online (i si va a la v1.6 o a la v1.7).
 - **D3** com es comparteixen els mapes.
 - **D4** mida màxima.
 - **D6** si els llums fan llum 2D de veres.
 
-Si Ferran no respon alguna, usa la proposta per defecte i **anota-ho al traspàs**.
+Anota qualsevol canvi d'abast al traspàs.
 
 ## 5. Punts delicats (llegits al codi)
 - `BlockData.hitbox` és un `Rect`; la rotació/flip ha de **rotar també la hitbox i l'ombra** (`BlockShadow`) i l'ordenació per altura.
@@ -57,3 +59,12 @@ Igual que a la v1.5: [TRASPAS_CODEX_V150.md § 6](TRASPAS_CODEX_V150.md#6-com-pu
 
 ## 8. Fase 9 · Tancament
 Versió `1.6.0-alpha` (`GameVersion.cs`), entrada a `Changelog.cs`, `NetProtocol.Version` i `ONLINE.md` si hi ha missatges nous, notes de `memoria-claude`, documentació (`README`, `RELEASE_NOTES`, `ALPHA_PROGRESS`, `MOBILE_ALPHA`, `GITHUB_PREPARACIO`, `Docs/INDEX.md`, `Docs/ROADMAP.md`) i un traspàs nou (`TRASPAS_V161.md`).
+
+### Validació de tancament en curs · 2026-11-22
+
+- `gh release list --repo pikelweiss-ai/canica-volatil`: Alpha v1.5.0 Latest. La v1.6 continua local, sense push ni release.
+- Windows, Linux i Android batch build: `ALPHA_BUILD_OK`; `check-crossplay.ps1`: `CROSSPLAY_MANIFEST: PASS`, protocol 24, paquet 1.6.0-alpha, 29 armes i 4 cures. Codi Android 17 al builder. No provat en dispositius físics.
+- `test-online.ps1 -MobileClient`: 6/6 per a les sales ja existents; no valida transferència de mapes, que no està implementada.
+- Bots específics: `catalog160`, `mapdata160`, `editor160`, `tile160`, `share160`: NETBOT PASS. Logs a `Builds/Candidats/Alpha-v1.6.0-final/Logs`.
+- Notes d'Obsidian actualitzades després de pull i publicades al repositori de notes en commit `a37eee1` (aquest push és només al repositori de notes, segons la instrucció de Ferran).
+- Pendent: decidir i implementar el que falta del disseny per a dir el Creador complet; deixar online per a v1.7; cap release de joc publicada.

@@ -1,8 +1,8 @@
 # Canica Volàtil
 
-**Candidata Alpha v1.5.0** en `alpha/arsenal`, protocol online **24**. Inclou huit bosses nous, portes amb clau, setze amulets, tenda de cosmètics i un Almanac amb 626 blocs. La targeta **Creador** anuncia la v1.6.
+**En desenvolupament: Alpha v1.6.0** (`alpha/arsenal`), protocol online **24**. La v1.5.0 ja està publicada com a Latest. Esta branca afegeix el mode Creador; els mapes online es reserven per a la v1.7 i la v1.6 encara no està publicada.
 
-**Última publicació:** Alpha v1.4.2, protocol **19**. Tots els participants han d'usar una compilació amb el mateix protocol.
+**Última publicació:** Alpha v1.5.0, protocol **24** ([release](https://github.com/pikelweiss-ai/canica-volatil/releases/tag/v1.5.0-alpha)). Tots els participants han d'usar una compilació amb el mateix protocol.
 
 Joc 2D de caniques, combat i masmorres fet amb Unity. Explora huit ambients, combina armes i juga en solitari o en cooperatiu **per Internet sense escriure cap IP**.
 

@@ -1,6 +1,6 @@
 # Alpha Android i joc entre plataformes
 
-Windows, Linux i Android es compilen des del mateix projecte, amb el mateix catàleg d'armes i cures. **Candidata Alpha v1.5.0, protocol 24 i codi d'Android 16.** L'última publicació és la v1.4.2 (protocol 19). Els jugadors han d'usar compilacions amb el mateix protocol.
+Windows, Linux i Android es compilen des del mateix projecte, amb el mateix catàleg d'armes i cures. **v1.5.0 està publicada (protocol 24, Android 16); v1.6.0 està en desenvolupament i no publicada.** L'editor de mapes de v1.6 és només PC; jugar mapes importats en Android continua pendent. Els mapes online es reserven per a v1.7. Els jugadors han d'usar compilacions amb el mateix protocol.
 
 ## Jugar
 

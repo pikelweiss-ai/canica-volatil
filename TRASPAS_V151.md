@@ -1,6 +1,6 @@
-# Traspàs · candidata Alpha v1.5.0
+# Traspàs històric · Alpha v1.5.0 publicada
 
-**21 de novembre de 2026.** Branca local `alpha/arsenal` de `StabilityWorkspace`, Unity 6000.0.53f1, paquet `1.5.0-alpha`, protocol **24** i codi de versió Android **16**. L'última versió publicada és la v1.4.2.
+**Estat corregit el 22 de novembre de 2026.** La release `v1.5.0-alpha` està publicada a GitHub i marcada **Latest** (release 2026-11-22, commit `6675b44`). El text següent descriu l'estat tècnic de la candidata en el moment del traspàs original: paquet `1.5.0-alpha`, protocol **24** i codi de versió Android **16**. Ja no és una candidata local sense publicar.
 
 ## Joc i fonts
 
@@ -31,8 +31,8 @@ Windows, Linux i Android han compilat sense errors i els manifests coincidixen. 
 
 La compilació final ha passat els quatre casos de LAN i relay amb client mòbil simulat. Els dos casos amb directori públic esperen una nova passada quan ntfy.sh torne a admetre els anuncis d'este entorn. La mateixa suite ha donat **6/6** amb un directori local de prova i el túnel real. Els registres són a `Online-repeticio` i `Online-directori-local` dins del directori de la candidata.
 
-## Publicació pendent del permís de Ferran
+## Publicació completada
 
-Aplica els pegats oficials d'Unity a Windows i Android, comprova els manifests, empaqueta i valida les sumes. Crea l'etiqueta i la release quan Ferran ho autoritze. [Passos de publicació](TRASPAS_CODEX_V150.md#6-com-publicar-només-amb-permís-explícit-de-ferran).
+La release v1.5.0-alpha està publicada; la decisió D1 de la v1.6 queda resolta. No cal cap publicació abans del treball de v1.6.
 
-La v1.6 queda reservada per a l'editor de mapes i les seues plantilles. En la v1.5, la targeta «Creador» mostra «Pròximament» i es queda al selector.
+La v1.6 està dedicada a l'editor de mapes i les seues plantilles. L'estat actual és al [traspàs v1.6](TRASPAS_CODEX_V160.md).

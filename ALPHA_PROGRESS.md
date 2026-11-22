@@ -1,5 +1,11 @@
 # Canica Volàtil · Progrés de l'Alpha
 
+## v1.6.0 · desenvolupament local (2026-11-22)
+
+- Fases 1–7 tenen increments amb commits `f72beb8`, `b768424`, `3dc44fe`, `b8828b5`, `4a45276`, `b022a8e`, `69768c8`; els bots `catalog160`, `mapdata160`, `editor160`, `tile160` i `share160` donen **NETBOT PASS**. Alguns criteris del disseny continuen pendents; vegeu [TRASPAS_V161.md](TRASPAS_V161.md).
+- Windows batch build ha passat en cada fase. La fase 4 prova els marcadors jugador/enemic/portal en una vista local; encara no crea enemics ni cofres funcionals de combat. El test de mapa està en vista separada i no és encara la partida cooperativa normal.
+- Fase 8 online traslladada a v1.7 segons D2. Windows/Linux/Android compilen i manifests passen; suite online existent 6/6. Notes d'Obsidian i traspàs actualitzats. v1.6 no està publicada ni s'ha fet push. Queden funcions del disseny pendents; llista a `TRASPAS_V161.md`.
+
 ## v1.5.0 · 21 de novembre de 2026
 
 - Fase 0. Arreglos i microbosses verificats amb `phase0`, `dungeon140`, `v141` i `scenery`. Prova dedicada de Talp, Mímic, Torreta, mercader i paret trencable en cooperatiu.

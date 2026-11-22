@@ -25,7 +25,10 @@ public partial class NetBot
         bool rejected = !MapStore.Load("NETBOT-Corrupte", out _, out _);
         File.Delete(path);
         bool deleted = MapStore.Delete("NETBOT-Prova-fase2");
-        if (!rejected || !deleted)
+        MapStore.Save(map,"__autosave",out _);
+        bool hiddenAutosave = !MapStore.List().Contains("__autosave") && MapStore.Load("__autosave",out _,out _);
+        MapStore.Delete("__autosave");
+        if (!rejected || !deleted || !hiddenAutosave)
         { Fail("el fitxer corrupte no es rebutja o no es pot esborrar"); yield break; }
         Ok("guardar, carregar, llistar, esborrar i rebutjar JSON corrupte");
         Pass();

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -23,7 +24,14 @@ public sealed class MapEditor : MonoBehaviour
     PlaceMode placeMode;
     Vector2Int? dragStart;
     MapLayers clipboard;
-    sealed class Snapshot { public MapCell[] ground, objects, overlay; }
+    bool dirty;
+    bool[] layerVisible = { true, true, true };
+    float autosaveAt;
+    string currentSavedName;
+    RectTransform promptPanel;
+    TMP_Text promptText;
+    System.Action pendingConfirm;
+    sealed class Snapshot { public MapCell[] ground, objects, overlay; public MapSpawn[] spawns; public MapChest[] chests; public MapGoal goal; }
     readonly Stack<Snapshot> undo = new Stack<Snapshot>();
     readonly Stack<Snapshot> redo = new Stack<Snapshot>();
 
@@ -35,20 +43,36 @@ public sealed class MapEditor : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Z) && Input.GetKey(KeyCode.LeftControl)) Undo();
         if (Input.GetKeyDown(KeyCode.Y) && Input.GetKey(KeyCode.LeftControl)) Redo();
         if (Input.GetKeyDown(KeyCode.S) && Input.GetKey(KeyCode.LeftControl)) Save();
+        if (Time.unscaledTime >= autosaveAt)
+        {
+            autosaveAt = Time.unscaledTime + 60f;
+            if (dirty) { MapStore.Save(map, "__autosave", out _); status.text = "Còpia automàtica guardada."; }
+        }
+        bool typing = EventSystem.current != null && EventSystem.current.currentSelectedGameObject != null && EventSystem.current.currentSelectedGameObject.GetComponent<TMP_InputField>() != null;
+        if (!typing && grid != null)
+        {
+            Vector3 pan = Vector3.zero;
+            if (Input.GetKey(KeyCode.A)) pan.x += 5; if (Input.GetKey(KeyCode.D)) pan.x -= 5;
+            if (Input.GetKey(KeyCode.W)) pan.y -= 5; if (Input.GetKey(KeyCode.S)) pan.y += 5;
+            grid.localPosition += pan;
+            float zoom = Input.mouseScrollDelta.y;
+            if (Mathf.Abs(zoom) > .01f) grid.localScale = Vector3.one * Mathf.Clamp(grid.localScale.x + zoom * .08f, .5f, 2f);
+        }
     }
 
     void Start()
     {
         map = new MapData();
-        if (MapPlaytest.ReturnToEditor && MapStore.Load(MapPlaytest.MapName, out var restored, out _)) map = restored;
+        if (MapPlaytest.ReturnToEditor && MapStore.Load(MapPlaytest.MapName, out var restored, out _)) { map = restored; currentSavedName = map.name; }
         MapPlaytest.ReturnToEditor = false;
+        autosaveAt = Time.unscaledTime + 60f;
         var canvas = UIKit.Canvas("Creador UI", 20);
         var background = UIKit.Box(canvas.transform, Vector2.zero, Vector2.zero, UIKit.Ink, "Fons");
         UIKit.Stretch(background);
         UIKit.Text(canvas.transform, "CREADOR DE MAPES", new Vector2(0, 420), new Vector2(900, 58), 34,
             TextAlignmentOptions.Center, UIKit.Gold);
         nameField = UIKit.Input(canvas.transform, new Vector2(-550, 360), new Vector2(260, 42), "Nom del mapa", 40, fontSize: 18);
-        UIKit.Button(canvas.transform, "NOU 16×16", new Vector2(-250, 360), new Vector2(140, 42), () => NewMap(16, 16), UIKit.Style.Normal, 16);
+        UIKit.Button(canvas.transform, "NOU 16×16", new Vector2(-250, 360), new Vector2(140, 42), ConfirmNewMap, UIKit.Style.Normal, 16);
         UIKit.Button(canvas.transform, "GUARDAR", new Vector2(-90, 360), new Vector2(130, 42), Save, UIKit.Style.Primary, 16);
         UIKit.Button(canvas.transform, "OBRIR", new Vector2(55, 360), new Vector2(110, 42), Load, UIKit.Style.Normal, 16);
         UIKit.Button(canvas.transform, "ROTAR", new Vector2(185, 360), new Vector2(110, 42), () => rotation = (rotation + 1) % 4, UIKit.Style.Normal, 16);
@@ -56,7 +80,7 @@ public sealed class MapEditor : MonoBehaviour
         UIKit.Button(canvas.transform, "COPIAR CODI", new Vector2(445, 360), new Vector2(135, 42), ExportCode, UIKit.Style.Normal, 14);
         UIKit.Button(canvas.transform, "IMPORTAR CODI", new Vector2(585, 360), new Vector2(140, 42), ImportCode, UIKit.Style.Normal, 13);
         UIKit.Button(canvas.transform, "EIXIR", new Vector2(735, 360), new Vector2(100, 42),
-            () => SceneManager.LoadScene("MainMenu"), UIKit.Style.Ghost, 16);
+            ConfirmExit, UIKit.Style.Ghost, 16);
         var filePanel = UIKit.Box(canvas.transform, new Vector2(650, -80), new Vector2(270, 180), UIKit.Panel, "Panell fitxers");
         UIKit.Text(filePanel, "COMPARTIR FITXER", new Vector2(0, 65), new Vector2(240, 28), 16, TextAlignmentOptions.Center, UIKit.Gold);
         sharePathField = UIKit.Input(filePanel, new Vector2(0, 30), new Vector2(245, 34), "Ruta .canicamap", 240, fontSize: 12);
@@ -67,7 +91,7 @@ public sealed class MapEditor : MonoBehaviour
         UIKit.Button(canvas.transform, "KIT CASTELL", new Vector2(-360, 315), new Vector2(140, 34), () => PlaceKit("Parets/Castell_blocs", "Parets/Castell_fosc"), UIKit.Style.Normal, 13);
         UIKit.Button(canvas.transform, "KIT CASA", new Vector2(-205, 315), new Vector2(140, 34), () => PlaceKit("Parets/Paret_casa", "Terres/Terra"), UIKit.Style.Normal, 13);
         UIKit.Button(canvas.transform, "KIT SUPERMERCAT", new Vector2(-35, 315), new Vector2(165, 34), () => PlaceKit("Moderns/Paret_supermercat", "Terres/Rajola_supermercat"), UIKit.Style.Normal, 12);
-        string[] toolNames = { "PINTAR", "ESBORRAR", "OMPLIR", "RECTANGLE", "LÍNIA", "COMPTAGOTES", "DESFER", "REFER", "CAPA", "JUGADOR", "ENEMIC", "COFRE", "FINAL", "COPIAR", "ENGANXAR" };
+        string[] toolNames = { "PINTAR", "ESBORRAR", "OMPLIR", "RECTANGLE", "LÍNIA", "COMPTAGOTES", "DESFER", "REFER", "CAPA", "JUGADOR", "ENEMIC", "COFRE", "FINAL", "COPIAR", "ENGANXAR", "V. CAPA" };
         float toolX = -575;
         foreach (string toolName in toolNames)
         {
@@ -82,12 +106,20 @@ public sealed class MapEditor : MonoBehaviour
         familyField.onValueChanged.AddListener(_ => BuildPalette());
         palette = UIKit.ScrollList(panel, new Vector2(0, -35), new Vector2(225, 455), out _, 2);
         grid = UIKit.Empty(canvas.transform, "Graella");
+        promptPanel = UIKit.Box(canvas.transform, Vector2.zero, new Vector2(420, 200), UIKit.Panel, "Confirmació");
+        promptText = UIKit.Text(promptPanel, "", new Vector2(0, 45), new Vector2(380, 60), 20, TextAlignmentOptions.Center, UIKit.TextColor);
+        UIKit.Button(promptPanel, "CONFIRMAR", new Vector2(-95, -55), new Vector2(160, 46), () => { var action = pendingConfirm; promptPanel.gameObject.SetActive(false); pendingConfirm = null; action?.Invoke(); }, UIKit.Style.Danger, 16);
+        UIKit.Button(promptPanel, "CANCEL·LAR", new Vector2(95, -55), new Vector2(160, 46), () => { promptPanel.gameObject.SetActive(false); pendingConfirm = null; }, UIKit.Style.Normal, 16);
+        promptPanel.gameObject.SetActive(false);
         BuildPalette();
         DrawGrid();
+        if (MapStore.Load("__autosave", out _, out _)) ShowPrompt("Hi ha una còpia automàtica. La vols recuperar?", RecoverAutosave);
     }
 
     void NewMap(int width, int height)
     {
+        currentSavedName = null; dirty = false;
+        undo.Clear(); redo.Clear();
         map = new MapData { width = width, height = height, layers = new MapLayers() };
         DrawGrid();
         status.text = "Mapa nou " + width + "×" + height;
@@ -126,7 +158,7 @@ public sealed class MapEditor : MonoBehaviour
             var button = UIKit.Button(grid, "", new Vector2(-150 + x * cell, 240 - y * cell), new Vector2(cell - 2, cell - 2),
                 () => Paint(cx, cy), UIKit.Style.Normal, 10);
             button.rect.name = "Cel·la " + cx + "," + cy;
-            var cells = ActiveCells();
+            var cells = VisibleCells();
             var item = MapAutoTile160.Resolve(cells.FirstOrDefault(c => c.x == cx && c.y == cy), cells);
             if (!string.IsNullOrEmpty(item.blockId))
             {
@@ -162,6 +194,14 @@ public sealed class MapEditor : MonoBehaviour
 
     MapCell[] ActiveCells() => layer == EditLayer.Ground ? map.layers.ground :
         layer == EditLayer.Objects ? map.layers.objects : map.layers.overlay;
+    MapCell[] VisibleCells()
+    {
+        var visible = new List<MapCell>();
+        if (layerVisible[0]) visible.AddRange(map.layers.ground);
+        if (layerVisible[1]) visible.AddRange(map.layers.objects);
+        if (layerVisible[2]) visible.AddRange(map.layers.overlay);
+        return visible.GroupBy(c => c.x + "," + c.y).Select(g => g.Last()).ToArray();
+    }
     void SetActiveCells(MapCell[] cells)
     {
         if (layer == EditLayer.Ground) map.layers.ground = cells;
@@ -174,6 +214,7 @@ public sealed class MapEditor : MonoBehaviour
         if (name == "ENEMIC") { placeMode = PlaceMode.Enemy; status.text = "Posa un Llim"; return; }
         if (name == "COFRE") { placeMode = PlaceMode.Chest; status.text = "Posa un cofre comú"; return; }
         if (name == "FINAL") { placeMode = PlaceMode.Goal; status.text = "Posa o mou el portal final"; return; }
+        if (name == "V. CAPA") { placeMode = PlaceMode.Blocks; layerVisible[(int)layer] = !layerVisible[(int)layer]; DrawGrid(); status.text = "Visibilitat " + layer + ": " + (layerVisible[(int)layer] ? "activa" : "oculta"); return; }
         placeMode = PlaceMode.Blocks;
         tool = name switch
         {
@@ -243,11 +284,12 @@ public sealed class MapEditor : MonoBehaviour
         string original = cells.FirstOrDefault(c => c.x == x && c.y == y).blockId;
         if (original == selected.id) return;
         PushUndo();
+        var sourceCells = cells.ToArray();
         var visited = new HashSet<Vector2Int>(); var queue = new Queue<Vector2Int>(); queue.Enqueue(new Vector2Int(x, y));
         while (queue.Count > 0)
         {
             var p = queue.Dequeue(); if (!visited.Add(p) || p.x < 0 || p.y < 0 || p.x >= map.width || p.y >= map.height) continue;
-            string id = cells.FirstOrDefault(c => c.x == p.x && c.y == p.y).blockId;
+            string id = sourceCells.FirstOrDefault(c => c.x == p.x && c.y == p.y).blockId;
             if (id != original) continue;
             cells.RemoveAll(c => c.x == p.x && c.y == p.y);
             if (selected != null) cells.Add(new MapCell { x = p.x, y = p.y, blockId = selected.id, rot = rotation, flip = flip });
@@ -262,12 +304,16 @@ public sealed class MapEditor : MonoBehaviour
         PushUndo();
         int minX = Mathf.Min(start.x, end.x), maxX = Mathf.Max(start.x, end.x);
         int minY = Mathf.Min(start.y, end.y), maxY = Mathf.Max(start.y, end.y);
-        for (int y = minY; y <= maxY; y++) for (int x = minX; x <= maxX; x++)
+        var points = new List<Vector2Int>();
+        if (rectangle)
+            for (int y = minY; y <= maxY; y++) for (int x = minX; x <= maxX; x++)
+                if (x == minX || x == maxX || y == minY || y == maxY) points.Add(new Vector2Int(x,y));
+        else
         {
-            if (rectangle && x != minX && x != maxX && y != minY && y != maxY) continue;
-            cells.RemoveAll(c => c.x == x && c.y == y);
-            cells.Add(new MapCell { x = x, y = y, blockId = selected.id, rot = rotation, flip = flip });
+            int x0=start.x,y0=start.y,x1=end.x,y1=end.y,dx=Mathf.Abs(x1-x0),sx=x0<x1?1:-1,dy=-Mathf.Abs(y1-y0),sy=y0<y1?1:-1,err=dx+dy;
+            while(true){points.Add(new Vector2Int(x0,y0));if(x0==x1&&y0==y1)break;int e2=2*err;if(e2>=dy){err+=dy;x0+=sx;}if(e2<=dx){err+=dx;y0+=sy;}}
         }
+        foreach (var p in points) { int x=p.x,y=p.y; cells.RemoveAll(c => c.x == x && c.y == y); cells.Add(new MapCell { x = x, y = y, blockId = selected.id, rot = rotation, flip = flip }); }
         SetActiveCells(cells.ToArray()); DrawGrid();
     }
 
@@ -285,16 +331,22 @@ public sealed class MapEditor : MonoBehaviour
         DrawGrid();
     }
 
-    Snapshot Capture() => new Snapshot { ground = map.layers.ground.ToArray(), objects = map.layers.objects.ToArray(), overlay = map.layers.overlay.ToArray() };
-    void Restore(Snapshot s) { map.layers.ground = s.ground; map.layers.objects = s.objects; map.layers.overlay = s.overlay; }
-    void PushUndo() { undo.Push(Capture()); if (undo.Count > 50) { var keep = undo.Reverse().Take(50).Reverse().ToArray(); undo.Clear(); foreach (var s in keep) undo.Push(s); } redo.Clear(); }
+    Snapshot Capture() => new Snapshot { ground = map.layers.ground.ToArray(), objects = map.layers.objects.ToArray(), overlay = map.layers.overlay.ToArray(), spawns=map.spawns.ToArray(), chests=map.chests.ToArray(), goal=map.goal == null ? null : new MapGoal { x=map.goal.x,y=map.goal.y } };
+    void Restore(Snapshot s) { map.layers.ground = s.ground; map.layers.objects = s.objects; map.layers.overlay = s.overlay; map.spawns=s.spawns; map.chests=s.chests; map.goal=s.goal; }
+    void PushUndo() { undo.Push(Capture()); if (undo.Count > 50) { var keep = undo.Reverse().Take(50).Reverse().ToArray(); undo.Clear(); foreach (var s in keep) undo.Push(s); } redo.Clear(); dirty = true; }
 
     void Save()
     {
-        map.name = string.IsNullOrWhiteSpace(nameField.text) ? "Mapa" : nameField.text.Trim();
-        if (MapStore.Save(map, map.name, out var error)) status.text = "Guardat: " + map.name;
-        else status.text = error;
+        string target = string.IsNullOrWhiteSpace(nameField.text) ? "Mapa" : nameField.text.Trim();
+        if (MapStore.List().Contains(target) && target != currentSavedName)
+        { ShowPrompt("Ja existeix un mapa amb este nom. Vols sobreescriure'l?", () => SaveAs(target)); return; }
+        SaveAs(target);
     }
+    void SaveAs(string target) { map.name = target; if (MapStore.Save(map, map.name, out var error)) { currentSavedName=map.name; dirty=false; status.text = "Guardat: " + map.name; } else status.text = error; }
+    void ShowPrompt(string message, System.Action action) { pendingConfirm=action; promptText.text=message; promptPanel.gameObject.SetActive(true); }
+    void ConfirmNewMap() { if (dirty) ShowPrompt("Hi ha canvis sense guardar. Vols començar un mapa nou?", () => NewMap(16,16)); else NewMap(16,16); }
+    void RecoverAutosave() { if (MapStore.Load("__autosave",out var recovered,out var error)) { map=recovered; nameField.text=map.name; currentSavedName=null; dirty=true; DrawGrid(); status.text="Còpia automàtica recuperada; guarda-la amb un nom."; } else status.text=error; }
+    void ConfirmExit() { if (dirty) ShowPrompt("Hi ha canvis sense guardar. Vols eixir igualment?", () => SceneManager.LoadScene("MainMenu")); else SceneManager.LoadScene("MainMenu"); }
     void ExportCode()
     {
         if (!MapShare160.Encode(map, out var code, out var error)) { status.text = error; return; }
@@ -303,7 +355,7 @@ public sealed class MapEditor : MonoBehaviour
     void ImportCode()
     {
         if (!MapShare160.Decode(GUIUtility.systemCopyBuffer, out var imported, out var error)) { status.text = error; return; }
-        map = imported; nameField.text = map.name; DrawGrid(); status.text = "Codi importat. Guarda'l per conservar-lo.";
+        map = imported; nameField.text = map.name; currentSavedName=null; dirty=true; undo.Clear(); redo.Clear(); DrawGrid(); status.text = "Codi importat. Guarda'l per conservar-lo.";
     }
     string SharePath()
     {
@@ -320,14 +372,14 @@ public sealed class MapEditor : MonoBehaviour
     void ImportFile()
     {
         if (!MapShare160.ImportFile(SharePath(), out var imported, out var error)) { status.text = error; return; }
-        map = imported; nameField.text = map.name; DrawGrid(); status.text = "Fitxer importat: " + map.name;
+        map = imported; nameField.text = map.name; currentSavedName=null; dirty=true; undo.Clear(); redo.Clear(); DrawGrid(); status.text = "Fitxer importat: " + map.name;
     }
 
     void Load()
     {
         string first = MapStore.List().FirstOrDefault();
         if (first == null) { status.text = "Encara no hi ha mapes guardats."; return; }
-        if (MapStore.Load(first, out map, out var error)) { nameField.text = first; DrawGrid(); status.text = "Obert: " + first; }
+        if (MapStore.Load(first, out map, out var error)) { nameField.text = first; currentSavedName=first; dirty=false; DrawGrid(); status.text = "Obert: " + first; }
         else status.text = error;
     }
 }

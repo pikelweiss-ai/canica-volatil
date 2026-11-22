@@ -27,7 +27,8 @@ Fora de la v1.4.0: tot el que hi ha a sota.
 - **Almanac** fase 1 (llistes d'armes i d'enemics).
 
 
-## v1.5.0 · candidata local · [Traspàs](../TRASPAS_V151.md)
+## v1.5.0 · publicada (2026-11-22) · [Traspàs](../TRASPAS_V151.md)
+Release `v1.5.0-alpha` publicada a GitHub i marcada **Latest** (commit `6675b44`). La decisió D1 de la v1.6 queda resolta; no cal publicar res abans de continuar.
 - **Els vuit bosses nous, tots de colp** (Cor de Cristall, Cavaller Corrupte, Cuc de Sorra, Fènix, Hidra del Llac, Rei de les Clavegueres, Cuiner Boig, Professor Infernal). Disseny a `Docs/Dissenys/v1.4-bosses-enemics-sales.md` §3.
 - **Portes amb clau.** La porta de la sala del boss està tancada amb clau, i **la clau s'ha d'anar a buscar a una sala aleatòria** de la planta (sala de clau; pot estar vigilada). Cal sistema de claus (recollir, gastar, mostrar a la HUD), sincronització online i que el mapa marque on és la porta. Disseny de portes a `v1.4-bosses-enemics-sales.md` §5 i §8.
 - Els deu pendents de [Docs/PENDENTS_APUNTATS.md](PENDENTS_APUNTATS.md) (abans «v1.4.3»): arreglos petits, microbosses des del pis 2 i bugs d'online.
@@ -36,6 +37,6 @@ Fora de la v1.4.0: tot el que hi ha a sota.
 - **Almanac fase 2** (animacions, filtres, amulets i blocs).
 
 
-## v1.6 · [Disseny](Dissenys/v1.6-creador-de-mapes.md) · [Traspàs](../TRASPAS_CODEX_V160.md) · [Missatge](../PROMPT_CODEX_V160.md)
-> Dissenyat el 2026-11-22. Té **10 decisions obertes** (D1–D10) que s'han de preguntar a Ferran abans de començar; les més grans: publicar la v1.5 primer, jugar els mapes online (v1.6 o v1.7) i com es comparteixen.
-- **Mode creador de mapes**: editor (pintar, guardar, carregar), rotació i flip de blocs, autotile de catifes i camins, plantilles de sala, plantes temàtiques, kits (Castell, Casa, Supermercat) i compartir mapes.
+## v1.6 · en desenvolupament · [Disseny](Dissenys/v1.6-creador-de-mapes.md) · [Traspàs](../TRASPAS_CODEX_V160.md)
+Decisions D1–D10 resoltes per Ferran el 2026-11-22 amb les propostes per defecte. Les fases 1–7 tenen increments locals i bots NETBOT PASS, però alguns criteris complets del disseny encara estan pendents; consultar [TRASPAS_V161](../TRASPAS_V161.md). El mode Creador inclou catàleg, editor, magatzem, eines bàsiques, marcadors de joc, kits i compartir per fitxer/codi.
+- **Online de mapes (fase 8)**: es trasllada a la v1.7, tal com permet D2, perquè requereix integrar el mapa personalitzat al flux de sala, transferir-lo en trossos i carregar una partida cooperativa pròpia. No s'ha implementat ni provat.
