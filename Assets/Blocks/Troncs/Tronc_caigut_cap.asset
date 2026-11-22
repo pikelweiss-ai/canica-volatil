@@ -21,7 +21,7 @@ MonoBehaviour:
   passable: 0
   blocksBullets: 1
   breakable: 0
-  fullBlock: 1
+  fullBlock: 0
   hideInside: 0
   multiPart: 0
   emitsLight: 0
@@ -30,6 +30,6 @@ MonoBehaviour:
   hitbox:
     serializedVersion: 2
     x: -0.5
-    y: -0.5
+    y: -0.4375
     width: 1
-    height: 1
+    height: 0.75

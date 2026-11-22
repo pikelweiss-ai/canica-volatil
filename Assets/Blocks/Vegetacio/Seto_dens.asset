@@ -21,7 +21,7 @@ MonoBehaviour:
   passable: 1
   blocksBullets: 0
   breakable: 0
-  fullBlock: 0
+  fullBlock: 1
   hideInside: 1
   multiPart: 0
   emitsLight: 0

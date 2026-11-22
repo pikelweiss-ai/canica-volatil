@@ -23,7 +23,7 @@ MonoBehaviour:
   breakable: 1
   fullBlock: 0
   hideInside: 0
-  multiPart: 0
+  multiPart: 1
   emitsLight: 0
   damage: 0
   layer: 1

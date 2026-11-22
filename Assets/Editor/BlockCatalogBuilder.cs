@@ -101,10 +101,12 @@ public static class BlockCatalogBuilder
         block.breakable = !block.passable && !wall && !trunk;
         block.hideInside = lower.StartsWith("seto");
         block.damage = lower.StartsWith("lava") || lower.StartsWith("acid") ? 1f : 0f;
-        block.multiPart = lower.EndsWith("_esq") || lower.EndsWith("_mig") || lower.EndsWith("_dre");
+        block.multiPart = IsMultiPart(lower);
         block.emitsLight = lower.Contains("lluminos") || lower.Contains("llum_peu") || lower.Contains("ences");
         block.layer = block.passable ? BlockData.DrawLayer.UnderPlayer : BlockData.DrawLayer.OverPlayer;
-        block.fullBlock = wall || trunk || floor;
+        block.fullBlock = wall || floor || trunk && lower is not "tronc_caigut_cap";
+        if (IsSmallObject(lower)) block.fullBlock = false;
+        if (lower.StartsWith("seto")) block.fullBlock = true;
         block.hitbox = block.passable ? default : block.fullBlock ? new Rect(-.5f, -.5f, 1f, 1f) : SpriteBounds(block.sprite);
 
         block.theme = lower.Contains("neu") || lower.StartsWith("gel") ? "Neu" :
@@ -116,6 +118,21 @@ public static class BlockCatalogBuilder
             block.family == "Escola" || block.family == "Laboratori" || block.family == "Cuina" ||
                 block.family == "Oficina" || block.family == "Hospital" || block.family == "Bany" ? block.family :
             lower.StartsWith("castell") ? "Cripta" : "General";
+    }
+
+    static bool IsMultiPart(string name)
+    {
+        return name.EndsWith("_esq") || name.EndsWith("_mig") || name.EndsWith("_dre") ||
+               name.StartsWith("llit_") || name.StartsWith("sofà_") || name.StartsWith("sofa_") ||
+               name.StartsWith("banc_") || name.StartsWith("taula_llarga_") || name.StartsWith("taula_reunions_") ||
+               name.StartsWith("mostrador_") || name.StartsWith("contenidor_") || name.StartsWith("banyera_") ||
+               name.StartsWith("barca_");
+    }
+
+    static bool IsSmallObject(string name)
+    {
+        return name.EndsWith("_centre") || name.EndsWith("_ne") || name.EndsWith("_no") ||
+               name.EndsWith("_se") || name.EndsWith("_so") || name.StartsWith("tronc_caigut_cap");
     }
 
     static Rect SpriteBounds(Sprite sprite)
