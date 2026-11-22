@@ -366,6 +366,7 @@ public sealed class MapEditor : MonoBehaviour
         var layerArrays = new[] { map.layers.ground, map.layers.objects, map.layers.overlay };
         var layerIndexes = new MapAutoTile160.CellIndex[3];
         for (int i = 0; i < 3; i++) layerIndexes[i] = layerVisible[i] ? MapAutoTile160.Index(layerArrays[i]) : null;
+        var markers = GameObjectMarkers();
         for (int y = 0; y < map.height; y++)
         for (int x = 0; x < map.width; x++)
         {
@@ -405,7 +406,35 @@ public sealed class MapEditor : MonoBehaviour
                     UIKit.Text(button.rect, "?", Vector2.zero, new Vector2(cell - 3, cell - 3), Mathf.Max(10, cell * .55f), TextAlignmentOptions.Center, Color.white);
                 }
             }
+            // Marcadors dels objectes de joc (spawn, enemics, cofres, final, mercader): abans es posaven però no es veien enlloc.
+            if (markers.TryGetValue(cellPosition, out var marker))
+            {
+                float size = Mathf.Max(8f, cell * .62f);
+                var tag = UIKit.Box(button.rect, Vector2.zero, new Vector2(size, size), marker.color, "Marcador " + marker.text);
+                tag.GetComponent<Image>().raycastTarget = false;
+                UIKit.Text(tag, marker.text, Vector2.zero, new Vector2(size, size), Mathf.Max(8f, size * .72f), TextAlignmentOptions.Center, Color.white);
+            }
         }
+    }
+
+    // Una lletra per tipus d'objecte de joc; si n'hi ha més d'un a la mateixa cel·la, se sumen les lletres.
+    Dictionary<Vector2Int, (string text, Color color)> GameObjectMarkers()
+    {
+        var markers = new Dictionary<Vector2Int, (string text, Color color)>();
+        void Mark(int mx, int my, string letter, Color color)
+        {
+            var key = new Vector2Int(mx, my);
+            markers[key] = markers.TryGetValue(key, out var old) ? (old.text + letter, color) : (letter, color);
+        }
+        foreach (var s in map.spawns)
+        {
+            if (s.kind == "player") Mark(s.x, s.y, "J", new Color(.16f, .62f, .26f));
+            else if (s.kind == "merchant") Mark(s.x, s.y, "M", new Color(.50f, .30f, .72f));
+            else Mark(s.x, s.y, "E", new Color(.75f, .18f, .16f));
+        }
+        foreach (var c in map.chests) Mark(c.x, c.y, "C", new Color(.78f, .58f, .10f));
+        if (map.goal != null) Mark(map.goal.x, map.goal.y, "F", new Color(.10f, .55f, .70f));
+        return markers;
     }
 
     void ToggleGrid()
@@ -588,6 +617,7 @@ public sealed class MapEditor : MonoBehaviour
         "però dos blocs de la mateixa capa es substitueixen entre ells (p. ex. una flor lleva el terra).\n" +
         "El botó <b>CAPA</b> canvia la capa activa (per a esborrar, copiar...) i <b>V. CAPA</b> amaga o mostra la capa.\n\n" +
         "<b>OBJECTES DE JOC</b>: JUGADOR (punt d'inici), ENEMIC, COFRE, FINAL (portal) i MERCADER. ENEMIC −/+ i COFRE −/+ trien quin. <b>PROVAR</b> juga el mapa i torna a l'editor.\n" +
+        "<b>MARCADORS</b> a la graella: <b>J</b> punt d'inici (només n'hi ha un; en tornar a clicar es mou), <b>E</b> enemic, <b>C</b> cofre, <b>F</b> final, <b>M</b> mercader. Ctrl+Z desfà l'últim que has posat.\n" +
         "<b>MOURE LA VISTA</b>: WASD o botó del mig del ratolí; la roda fa zoom. GRAELLA i HITBOXES ajuden a depurar. La paleta es mou arrossegant la barra de dalt.\n" +
         "<b>KITS</b>: Castell, Casa i Supermercat posen una base feta.\n" +
         "<b>COMPARTIR</b>: COPIAR CODI i IMPORTAR CODI, o el panell de fitxers. Importa només mapes de gent que conegues.";
@@ -675,6 +705,7 @@ public sealed class MapEditor : MonoBehaviour
         if (placeMode == PlaceMode.Player)
         {
             map.spawns = map.spawns.Where(s => s.kind != "player").Concat(new[] { new MapSpawn { x = x, y = y, kind = "player" } }).ToArray();
+            status.text = "Punt d'inici (J) a " + x + "," + y + ". Torna a clicar en una altra cel·la per moure'l.";
         }
         else if (placeMode == PlaceMode.Enemy)
             map.spawns = map.spawns.Concat(new[] { new MapSpawn { x = x, y = y, kind = "enemy", id = SelectedEnemyId() } }).ToArray();
