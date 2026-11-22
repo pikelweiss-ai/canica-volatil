@@ -36,5 +36,6 @@ Fora de la v1.4.0: tot el que hi ha a sota.
 - **Almanac fase 2** (animacions, filtres, amulets i blocs).
 
 
-## v1.6
+## v1.6 · [Disseny](Dissenys/v1.6-creador-de-mapes.md) · [Traspàs](../TRASPAS_CODEX_V160.md) · [Missatge](../PROMPT_CODEX_V160.md)
+> Dissenyat el 2026-11-22. Té **10 decisions obertes** (D1–D10) que s'han de preguntar a Ferran abans de començar; les més grans: publicar la v1.5 primer, jugar els mapes online (v1.6 o v1.7) i com es comparteixen.
 - **Mode creador de mapes**: editor (pintar, guardar, carregar), rotació i flip de blocs, autotile de catifes i camins, plantilles de sala, plantes temàtiques, kits (Castell, Casa, Supermercat) i compartir mapes.

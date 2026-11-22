@@ -9,6 +9,8 @@
 | [TRASPAS_V151.md](../TRASPAS_V151.md) | **Traspàs actual** de la candidata Alpha v1.5.0. |
 | [Docs/PENDENTS_APUNTATS.md](PENDENTS_APUNTATS.md) | **Deu pendents apuntats per Ferran** després de la v1.4.2 i resolts a la fase 0. |
 | [TRASPAS_CODEX_V150.md](../TRASPAS_CODEX_V150.md) · [PROMPT_CODEX_V150.md](../PROMPT_CODEX_V150.md) | **Traspàs i missatge per a fer la v1.5** (ChatGPT/Codex). |
+| [Docs/Dissenys/v1.6-creador-de-mapes.md](Dissenys/v1.6-creador-de-mapes.md) | **Disseny de la v1.6**: editor de mapes, format `.canicamap`, autotile, kits, compartir i online. Té decisions obertes. |
+| [TRASPAS_CODEX_V160.md](../TRASPAS_CODEX_V160.md) · [PROMPT_CODEX_V160.md](../PROMPT_CODEX_V160.md) | **Traspàs i missatge per a fer la v1.6** (ChatGPT/Codex). |
 | [Docs/Dissenys/v1.5-almanac-blocs-i-mode-creador.md](Dissenys/v1.5-almanac-blocs-i-mode-creador.md) | Almanac de blocs i 4t mode «Creador» (pròximament). |
 | [TRASPAS_CLAUDE_V141.md](../TRASPAS_CLAUDE_V141.md) | Traspàs que va obrir la v1.4.1 (històric). |
 | [TRASPAS_CODEX_V140.md](../TRASPAS_CODEX_V140.md) | Traspàs històric de la implementació de la v1.4.0. |
