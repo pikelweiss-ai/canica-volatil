@@ -2,7 +2,7 @@
 
 Joc 2D top-down en píxel art, combat estil Brawl Stars, amb mode masmorra procedural.
 Unity 6000.0.53f1, URP 2D, C#. Guia completa: `C:\Users\Usuario\memoria-claude\Canica Alpha - Guia per a Codex.md`.
-Disseny: `DISSENY.md`. **Traspàs actual: `TRASPAS_V151.md`. L’índex de documents i d’art és `Docs/INDEX.md`.**
+Disseny: `DISSENY.md`. **Traspàs actual (publicar la v1.6.0): `TRASPAS_CODEX_PUBLICAR_V160.md`; abans: `TRASPAS_V151.md`. L’índex de documents i d’art és `Docs/INDEX.md`.**
 
 ## Regles
 - Parla en valencià, informal. L'usuari (Ferran) està aprenent: explica pas a pas les mecàniques noves.
