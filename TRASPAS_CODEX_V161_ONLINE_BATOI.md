@@ -1,5 +1,7 @@
 # Traspàs a Codex · v1.6.1 · Online que funcione a l'institut de Batoi (2026-11-23)
 
+> ⚠️ **ATURA'T: ACTUALITZACIÓ DE FERRAN (23/11/2026).** El joc ha de ser **100% peer-to-peer, SENSE cap servidor propi**. **NO facis els punts 1, 3 i 4 del §3** tal com estan escrits (servidor de sales propi). Els §1 i §2 (el diagnòstic: Batoi bloqueja la IP de `bore.pub`, no un port) **continuen sent vàlids**. Espera que Ferran triï el camí nou abans de tocar res. Camins possibles (a decidir amb ell): (a) **llista de túnels gratuïts de tercers** provats en ordre quan `bore.pub` falla, comprovant des de Batoi quines IP arriben; (b) **connexió directa** amb UPnP/NAT-PMP quan l'amfitrió és a casa (el client de Batoi només fa una connexió d'eixida); (c) **traspàs de NAT amb STUN** (de veritat peer-to-peer, però exigeix transport UDP i no sempre funciona: NAT simètric, CGNAT, xarxes d'institut). En cap cas es crea un servidor ni un compte sense Ferran.
+>
 > Escrit per Claude Code a petició de Ferran. **Només hi ha investigació i pla: no s'ha tocat cap codi.** Valencià informal; Ferran (17 anys) està aprenent: explica pas a pas.
 
 ## 1. El problema
