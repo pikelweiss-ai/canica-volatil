@@ -1,46 +1,47 @@
-# Traspàs a Codex · v1.6.1 · Online que funcione a l'institut de Batoi (2026-11-23)
+# Traspàs a Codex · v1.6.1 · Online que funcione a Batoi, SENSE servidor propi (2026-11-23)
 
-> ⚠️ **ATURA'T: ACTUALITZACIÓ DE FERRAN (23/11/2026).** El joc ha de ser **100% peer-to-peer, SENSE cap servidor propi**. **NO facis els punts 1, 3 i 4 del §3** tal com estan escrits (servidor de sales propi). Els §1 i §2 (el diagnòstic: Batoi bloqueja la IP de `bore.pub`, no un port) **continuen sent vàlids**. Espera que Ferran triï el camí nou abans de tocar res. Camins possibles (a decidir amb ell): (a) **llista de túnels gratuïts de tercers** provats en ordre quan `bore.pub` falla, comprovant des de Batoi quines IP arriben; (b) **connexió directa** amb UPnP/NAT-PMP quan l'amfitrió és a casa (el client de Batoi només fa una connexió d'eixida); (c) **traspàs de NAT amb STUN** (de veritat peer-to-peer, però exigeix transport UDP i no sempre funciona: NAT simètric, CGNAT, xarxes d'institut). En cap cas es crea un servidor ni un compte sense Ferran.
->
-> Escrit per Claude Code a petició de Ferran. **Només hi ha investigació i pla: no s'ha tocat cap codi.** Valencià informal; Ferran (17 anys) està aprenent: explica pas a pas.
+> Escrit per Claude Code. **Només pla i investigació: no s'ha tocat cap codi.** Valencià informal; Ferran (17 anys) està aprenent: explica pas a pas.
+> **Decisió de Ferran:** el joc ha de ser **peer-to-peer, sense cap servidor propi** i sense comptes. Res de crear servidors ni comptes.
 
-## 1. El problema
-Des del PC de classe de Batoi (Linux Mint, `172.16.211.140`, joc v1.5), **SALES ONLINE** diu «No es pot arribar al servei de connexió (bore.pub)». A casa, amb amics, l'online va perfectament.
+## 1. Diagnòstic (ja comprovat; no ho repetisques)
+- A Batoi (Linux Mint, `172.16.211.140`, v1.5) SALES ONLINE diu «No es pot arribar al servei de connexió (bore.pub)». A casa va bé.
+- **No és un port.** Des de Batoi, 22 ports de sortida TCP passen tots (nota «L'online no va a l'institut de Batoi» a `memoria-claude\Canica Volàtil - Bugs pendents.md`). La IP de `bore.pub` (`159.223.110.159`) **no respon a res** des de Batoi, i **des de casa respon en ~103 ms** (comprovat el 23/11): **Batoi bloqueja eixa IP.**
+- El joc **no és P2P pur**: usa `bore.pub` com a **pont** (tot el trànsit hi passa; per això ~300 ms) i `ntfy.sh` per a la llista de sales (`Assets/Scripts/Net/NetCloud.cs`: `TunnelHost` per defecte `bore.pub`, port de control 7835, `Directory` per defecte `https://ntfy.sh`). **Sense provar:** si `ntfy.sh` arriba des de Batoi.
 
-Ferran pensava que era un **port** bloquejat pel tallafocs de Batoi. **No ho és.** Fets (nota «L'online no va a l'institut de Batoi» a `memoria-claude\Canica Volàtil - Bugs pendents.md`):
-- Des de Batoi, **22 ports de sortida TCP** provats contra `portquiz.net` (22, 53, 80, 123, 443, 465, 587, 993, 3478, 5222, 7780, 7835, 8000, 8080, 8443, 8888, 9000, 25565, 27015, 30000, 40000, 50000): **tots passen**.
-- Des de Batoi, **`bore.pub` (IPv4 `159.223.110.159`) no respon a res** (ports 22, 80, 443, 7835, ni ping). No hi ha IPv6.
-- **Des de casa (23/11, comprovat): `bore.pub:7835` respon en ~103 ms.** O siga, `bore.pub` **està viu**: **Batoi bloqueja eixa IP**, no un port.
-- **Conclusió: obrir més ports no arregla res.** Cal una **IP diferent** que Batoi no bloquege.
-- **Sense provar:** si `ntfy.sh` (el directori de sales, HTTPS) arriba des de Batoi. El HTTPS general funciona, però la IP de `ntfy.sh` podria estar bloquejada igual. **Comprova-ho primer.**
+## 2. Pla (en ordre): A) reserva de túnels, B) connexió directa amb UPnP
+Protocol **24, sense pujar**: només es canvia lògica de client i s'afigen camps a l'anunci JSON (`Announce`), que els clients antics ignoren. No pujar el protocol; el tema del directori depén d'ell.
 
-## 2. Com està fet ara (codi llegit, sense tocar)
-- `Assets/Scripts/Net/NetCloud.cs`: `TunnelHost` per defecte `"bore.pub"` (argument `-canicaTunnel`), `TunnelControlPort = 7835` (constant), `Directory` per defecte `https://ntfy.sh` (`-canicaDirectory`). `InUse` és cert quan **no** hi ha servidor propi (`NetSession.ServerAddress` buit).
-- `Assets/Scripts/Net/RelayServer.cs`: el **servidor de sales propi** és el mateix joc sense finestra: `CanicaVolatil.x86_64 -batchmode -nographics -canicaServer <port>` (7780 per defecte). Fa de relay i guarda la llista de sales públiques; **amb ell no calen `bore.pub` ni `ntfy.sh`**.
-- `Assets/Scripts/Net/NetSession.cs`: `ServerOverride` i la clau `Net_Server` a PlayerPrefs. UI: camp «SERVIDOR DE SALES» a `RoomBrowserUI.cs`.
-- Guia: `memoria-claude\Canica Volàtil - Online.md`, `ONLINE.md` al repo.
+### A. Túnels de reserva i missatge clar (el canvi petit)
+1. `TunnelHost` passa de ser un text a una **llista de candidats** configurable sense recompilar (PlayerPrefs o argument `-canicaTunnel a,b,c`). El client els prova **en ordre amb un timeout curt (~4 s)** i usa el primer que responga.
+2. **Investiga quins servidors públics gratuïts són compatibles amb el protocol bore** (obert, JSON acabat en `\0` pel port 7835) **sense compte ni clau**. Ara només es coneix `bore.pub`. **No t'inventes cap servidor**; si no n'hi ha altres compatibles, documenta-ho i deixa la llista preparada amb només `bore.pub`. No cal escriure un client d'un altre protocol sense preguntar a Ferran.
+3. **Missatge d'error clar** si res arriba: «No es pot arribar a cap servei. Prova XARXA LOCAL (LAN) o unir-te per IP.»
+4. Si `ntfy.sh` també falla, que el missatge ho diga i proposi LAN/IP.
 
-## 3. Què cal fer (en ordre)
-1. **Decidir l'allotjament amb Ferran** (només ell pot crear comptes/pagar; **tu no en crees mai**). Opcions: una VPS xicoteta (Oracle Cloud Always Free, Hetzner…), o AWS EC2 de Serveis en Xarxa (compte: la IP canvia cada sessió d'AWS Academy, no és estable). Cal una **IP pública fixa** i un **port**. Recomanat: **443** (el més difícil de bloquejar); alternativa **8443/7780**.
-2. **Provar la IP candidata des de Batoi** abans de gastar res, en un terminal d'un PC de classe:
-   `timeout 5 bash -c 'echo > /dev/tcp/<IP>/<PORT>' && echo OBERT || echo FALLA`
-   Provar també `curl -sS -m 8 https://ntfy.sh` per saber si el directori arriba.
-3. **Posar el servidor en marxa** a la màquina (Linux): copiar el paquet Linux de la release `v1.6.0-alpha`, servei `systemd` amb reinici automàtic, port obert al tallafocs del proveïdor, i `-canicaServer <port>`. Documentar-ho a `ONLINE.md`.
-4. **Client: provar automàticament el servidor propi si `bore.pub` falla.** Ara, si el túnel no arriba, simplement falla. Que el joc, en no poder connectar al túnel (timeout curt), **passe a una llista de servidors per defecte** (el propi de Ferran) i només mostre un error si **cap** funciona. Que la llista es puga canviar sense recompilar (PlayerPrefs / argument), i que accepte **diversos ports** del mateix servidor (p. ex. 443, 8443, 7780) provats en ordre.
-5. **Missatge d'error clar** quan res arriba: «No es pot arribar a cap servidor. Prova la pestanya XARXA LOCAL (LAN) o unir-te per IP.» (Ferran ja ho tenia apuntat.)
-6. **Proves:** ampliar `Tools/Net/test-online.ps1` amb un cas «túnel bloquejat → servidor propi» (p. ex. `-canicaTunnel 127.0.0.1` o una IP morta) i comprovar que es passa al servidor propi. Els 6 casos actuals han de continuar en PASS.
-7. Si **només canvies lògica de client** (fallback, missatges), **no cal pujar el protocol** (continua 24). Si toques missatges de xarxa, puja'l i diu-ho a Ferran. No mesclis això amb els canvis de protocol 25 (mapes en online, Creatiu per a tots, pausa), que són una altra fase.
+### B. Connexió directa amb UPnP/NAT-PMP (peer-to-peer de veres, l'amfitrió a casa)
+1. En crear una sala d'Internet, l'amfitrió intenta **obrir el seu port TCP** al router per **UPnP (IGD)**: descobriment SSDP + `AddPortMapping` + `GetExternalIPAddress`, només amb `System.Net.Sockets`/`UnityWebRequest` (**sense paquets externs**). Lloguer limitat i renovat; **esborrar el mapeig en eixir**.
+2. **Detecta CGNAT i IP privada** (`100.64.0.0/10`, `10/8`, `172.16/12`, `192.168/16`): si l'IP externa del router no és pública, **no ho intenta** i ho diu.
+3. Si va bé, l'anunci porta `direct=true` i `ep` amb `IPpública:port`. El client prova **primer la connexió directa (timeout ~4 s)** i, si falla, el túnel de la reserva (A).
+4. L'amfitrió a Batoi **no pot** fer-ho (no controla el router): el client de Batoi només fa una connexió d'**eixida** cap a un amfitrió a casa. A classe, LAN o IP directa ja funcionen.
+5. Android: el `MulticastLock` i els permisos ja hi són (`AndroidLanSupport`).
+
+## 3. Proves
+- Ampliar `Tools/Net/test-online.ps1` amb: **túnel inabastable → es passa al següent candidat o es mostra el missatge**. Els **6 casos actuals han de continuar en PASS**.
+- Prova unitària (bot) de la **classificació d'IP** (pública / privada / CGNAT).
+- **UPnP no es pot provar amb bots**: cal un router real. **Diu clarament a Ferran què no s'ha provat.**
+- **Validació per part de Ferran:** a Batoi, per a comprovar si una IP candidata arriba:
+  `timeout 5 bash -c 'echo > /dev/tcp/<IP>/<PORT>' && echo OBERT || echo FALLA`
+  i `curl -sS -m 8 https://ntfy.sh`. Després, una partida real: amfitrió a casa (UPnP) i client a Batoi.
 
 ## 4. Riscos que no s'han resolt
-- Un **relay en TCP cru al 443** (no és TLS) podria ser bloquejat per un tallafocs amb inspecció de paquets. Caldria **provar-ho de veritat des de Batoi**; si falla, plantejar-ne una variant (p. ex. WebSocket/TLS) o un altre port.
-- `ntfy.sh` pot estar bloquejat a Batoi igual que `bore.pub`: amb servidor propi no cal, però cal comprovar-ho.
-- No s'ha provat res a Batoi des d'esta sessió; tot el de Batoi ve de la nota de Ferran/Claude Code de Linux.
+- UPnP falla amb **CGNAT** (molts operadors/mòbils) o si el router el té desactivat. És una limitació real, no un error.
+- Pot ser que **no hi haja cap altre túnel gratuït compatible** i que `ntfy.sh` també estiga bloquejat a Batoi: aleshores a Batoi quedaria LAN/IP.
+- **Traspàs de NAT amb STUN (UDP)** seria peer-to-peer pur, però exigeix passar de TCP a UDP i sovint falla en xarxes d'institut: **fora de l'abast** d'esta fase; només si Ferran ho demana.
 
 ## 5. Regles que no es poden saltar
 - Treballa **només** a `C:\Users\Usuario\Documents\Unity\Canica Alpha`, branca `alpha/arsenal`. **Mai** «Canica 1».
-- **Mai** `git reset --hard`, `clean` ni `stash`; `git add` fitxer a fitxer (mai `-A` al repo del joc); soroll de reimportació d'Unity no es commiteja. Commits menuts, en valencià **sense accents**, amb la teua línia de coautoria.
+- **Mai** `git reset --hard`, `clean` ni `stash`; `git add` fitxer a fitxer (mai `-A`); el soroll de reimportació d'Unity no es commiteja. Commits menuts, en valencià **sense accents**, amb la teua línia de coautoria.
 - **No facis push a `main`, ni etiquetes, ni release** sense permís explícit de Ferran. El permís de la v1.6.0 **no val** per a la v1.6.1.
-- **Mai crees comptes, ni demanes ni guardes contrasenyes, claus o tokens.** La IP/domini del servidor propi es pot posar a la configuració, però **cap secret** al repo.
+- **Mai crees comptes, servidors, claus ni tokens.** Cap secret al repo.
 - Contingut generat als builders d'Editor, no als `.asset`. No crees `.meta` a mà.
 - No digues que està provat si no ho has executat; diu què has comprovat i què no.
 - En acabar: actualitza `memoria-claude\Canica Alpha.md` (`git pull --rebase`, canvia, `git add`, commit i push **només allí**).
