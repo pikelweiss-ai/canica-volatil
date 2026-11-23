@@ -33,7 +33,7 @@ Cal fer **push de `alpha/arsenal`** abans d'etiquetar (o junt amb l'etiqueta). E
   - PASS: LAN llista, Internet llista, Internet codi, Sense IP llista.
   - **FAIL: «LAN codi»**: host `esperant: tornada amb el boti del pis anterior`; client `esperant: el client rep el cercle del pols`.
   - **Sense veredicte: «Sense IP codi»** (cap dels dos logs va acabar).
-  - Possiblement intermitents: altres vegades una passada ha fallat un cas i en repetir ha donat 6/6. **S'està repetint** (carpeta `%TEMP%\canica-online-tests-2`). Si tornen a fallar, **investiga abans de publicar**: el codi de la v1.6 no toca l'online, però no ho tinc demostrat.
+  - **Repetit després: 6/6 PASSA** (carpeta `%TEMP%\canica-online-tests-2`), inclosos «LAN codi» i «Sense IP codi». Els fallos de la primera passada van ser **intermitents**; no s'ha trobat cap causa al codi (la v1.6 no toca l'online, però no està demostrat més enllà d'esta repetició).
 - `perf160` **falla en este portàtil** (50-60 FPS, límit de 60 Hz amb V-Sync): no és un error demostrat. No toques el llindar.
 
 ## 4. Per què no hi ha Linux ni Android (i com resoldre-ho)
