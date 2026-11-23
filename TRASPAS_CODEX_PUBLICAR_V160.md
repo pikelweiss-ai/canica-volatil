@@ -36,11 +36,17 @@ Cal fer **push de `alpha/arsenal`** abans d'etiquetar (o junt amb l'etiqueta). E
   - **Repetit després: 6/6 PASSA** (carpeta `%TEMP%\canica-online-tests-2`), inclosos «LAN codi» i «Sense IP codi». Els fallos de la primera passada van ser **intermitents**; no s'ha trobat cap causa al codi (la v1.6 no toca l'online, però no està demostrat més enllà d'esta repetició).
 - `perf160` **falla en este portàtil** (50-60 FPS, límit de 60 Hz amb V-Sync): no és un error demostrat. No toques el llindar.
 
-## 4. Per què no hi ha Linux ni Android (i com resoldre-ho)
-L'editor `6000.0.53f1` només té el mòdul `windowsstandalonesupport`. Falten **Linux Build Support (Mono)**, **Android Build Support**, **Android SDK & NDK Tools** i **OpenJDK**.
-- La línia d'ordres del Hub **ja no instal·la mòduls** («Use the standalone Unity CLI instead: unity editors»).
-- Ferran ha autoritzat instal·lar el **Unity CLI oficial** i els mòduls. Instal·lació: `irm https://unity.com/install.ps1 | iex` (Windows). **Baixa el script a un fitxer, llig-lo i executa'l només si és el que diu ser**, després `unity install-modules` (mira la skill `unity:unity-cli`). Windows pot demanar permís d'administrador: ho ha d'acceptar Ferran.
-- Alternativa: Ferran ho fa a Unity Hub → Installs → ⚙ de la 6000.0.53f1 → Add modules.
+## 4. Linux i Android: mòduls ja instal·lats, però FALTA LA LLICÈNCIA D'UNITY (estat de 23/11, tarda)
+- ✅ **Mòduls instal·lats** a `6000.0.53f1` amb el Unity CLI: Linux Mono, Android, NDK, SDK, OpenJDK. (`Builds\UnityCLI\unity.exe`, v1.0.1, SHA-256 i signatura d'Unity verificats; **no s'ha executat** l'script `install.ps1` perquè tocava el PATH i les skills dels agents.)
+- ❌ **Les compilacions d'Android i Linux CAUEN** en mode batch: `Unity falla (-1073741819)` al pas «prepare», a `BuildPlayerLicenseCheck`. El log (`Builds\Candidats\Alpha-v1.6.0-release\Logs\Android-prepare.log` i `Linux-prepare.log`) diu `Access token is unavailable` i `Found 0 entitlement groups and 0 free entitlements`.
+- **Causa:** el **Unity Hub no té cap sessió iniciada** (no existeix `%APPDATA%\UnityHub\userInfo.json`) i no hi ha cap llicència. Windows compila sense llicència; Android i Linux no.
+- **Què cal (ho ha de fer Ferran, perquè és entrar al seu compte; mai ho facis tu):** Unity Hub → iniciar sessió → ⚙ Settings → **Licenses** → Add → **Get a free personal license**. Deixar el Hub obert. Després repetir:
+  ```powershell
+  ./Tools/Build/build-alpha.ps1 -Target Android -BuildRoot "Builds\Candidats\Alpha-v1.6.0-release"
+  ./Tools/Build/build-alpha.ps1 -Target Linux   -BuildRoot "Builds\Candidats\Alpha-v1.6.0-release"
+  ```
+  (Android primer; Linux deixa el projecte en mode PC.) Si encara cau amb la sessió iniciada, el token del Hub no li arriba al batch: aleshores cal compilar amb l'Editor obert o buscar una altra via. **No toques el codi del joc per això.**
+- **Hash de compatibilitat** (`Assets/Editor/BuildCompatibility.cs`): és el SHA-256 de **tots** els `Assets/Scripts/**/*.cs`. La compilació de Windows ja feta és vàlida mentre **no canvie cap script**. Els canvis a docs, `AGENTS.md` o traspàs no importen. Si canvies un script, torna a compilar Windows.
 
 ## 5. El pegat de seguretat (ja descarregat)
 - Eina: `Builds\SecurityPatch\Tool\UnityApplicationPatcherCLI.exe` (v1.3.3, baixada de `security-patches.unity.com`). **Signatura comprovada: Unity Technologies SF, vàlida.** No executes els altres `.exe` de la carpeta (Google/Eclipse, d'Android i Java).
