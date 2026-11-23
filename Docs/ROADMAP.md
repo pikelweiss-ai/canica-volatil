@@ -37,7 +37,7 @@ Release `v1.5.0-alpha` publicada a GitHub i marcada **Latest** (commit `6675b44`
 - **Almanac fase 2** (animacions, filtres, amulets i blocs).
 
 
-## v1.6 · en desenvolupament · [Disseny](Dissenys/v1.6-creador-de-mapes.md) · [Traspàs](../TRASPAS_CODEX_V160.md)
+## v1.6 · publicada (2026-11-23, Windows; Linux i Android s'hi afegiran) · [Disseny](Dissenys/v1.6-creador-de-mapes.md) · [Traspàs](../TRASPAS_CODEX_V160.md)
 Decisions D1–D10 resoltes per Ferran el 2026-11-22 amb les propostes per defecte. El mode Creador inclou catàleg, editor, magatzem, eines, marcadors de joc, kits i compartir per fitxer/codi; els mapes importats per codi es poden llançar també des del selector mòbil. Els bots `catalog160`, `mapdata160`, `editor160`, `tile160` i `share160` donen `NETBOT PASS`; Linux i Android també s'han recompilat i els manifests coincideixen. Els fitxers `.canicamap` comprimits permeten 64×64 ple, i `perf160` ha mesurat 219,9 FPS de mitjana a 1600×900 en este PC; queden pendents QA visual 4:3, combat manual i proves en dispositius físics. Consulta [TRASPAS_V161](../TRASPAS_V161.md).
 - **Online de mapes (fase 8)**: es trasllada a la v1.7, tal com permet D2, perquè requereix integrar el mapa personalitzat al flux de sala, transferir-lo en trossos i carregar una partida cooperativa pròpia. No s'ha implementat ni provat.
 

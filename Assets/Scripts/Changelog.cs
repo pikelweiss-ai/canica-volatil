@@ -16,10 +16,11 @@ public static class Changelog
             lines = new[]
             {
                 "CREADOR DE MAPES",
-                "Dibuixa mapes amb el catàleg complet de blocs: pinta, esborra, ompli, rota i volteja les peces.",
-                "Guarda i obri mapes, crea habitacions amb els kits Castell, Casa i Supermercat, i copia/enganxa regions.",
-                "Col·loca el punt inicial, enemics, cofres i un portal opcional. Prova el mapa i comparteix-lo com a fitxer o codi CVM1.",
-                "La partida online amb mapes creats queda prevista per a la v1.7."
+                "Dibuixa mapes amb el catàleg complet de blocs: pinta, esborra, ompli, rectangle, línia, rota i volteja les peces, amb tres capes i desfer/refer.",
+                "Kits Castell, Casa i Supermercat, copiar/enganxar i NETEJAR ZONA, que esborra tot el que hi haja dins d'una zona.",
+                "Col·loca punt inicial, enemics, cofres, mercader i portal final; es veuen amb els marcadors J, E, C, F i M. La guia és al botó AJUDA (F1).",
+                "Prova el mapa a la masmorra real i torna a l'editor amb el botó de la porta. El selector té JUGAR MAPA GUARDAT, amb paperera.",
+                "Comparteix-lo com a fitxer (amb selector de carpetes) o codi CVM1. La partida online amb mapes creats queda prevista per a la v1.7."
             }
         },
         new Entry

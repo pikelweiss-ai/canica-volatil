@@ -1,10 +1,17 @@
-# Alpha v1.6.0 · desenvolupament (no publicada)
+# Alpha v1.6.0 · publicada
 
-Editor de mapes disponible en esta branca de treball. Inclou el catàleg de blocs, eines de pintura, kits Castell/Casa/Supermercat, copiar/enganxar regions, marcadors d'objectes de joc, prova local i compartir per `.canicamap`/codi `CVM1:`.
+Protocol online **24**. **Windows disponible**; **Linux i Android s'afegiran a esta mateixa release** quan estiguen compilats.
 
-La fase online de mapes es trasllada a v1.7 segons D2. La prova local encara representa enemics i cofres com a marcadors, no com a entitats de combat. Vegeu [l'estat de desenvolupament](ALPHA_PROGRESS.md) i el [traspàs](TRASPAS_CODEX_V160.md). No hi ha paquet publicat de v1.6.
+- **Mode Creador de mapes** (només a PC). Catàleg de 626 blocs; pintar, esborrar, omplir, rectangle (ple o buit), línia i comptagotes; rotar i voltejar; tres capes (terra, objectes i damunt); desfer i refer; copiar i enganxar; **NETEJAR ZONA**; kits Castell, Casa i Supermercat; i autotile de camins, roques, aigua, panells i baranes.
+- **Objectes de joc.** Punt d'inici, enemics, cofres, mercader i portal final, amb **marcadors J, E, C, F i M** a la graella. **PROVAR** juga el mapa a la masmorra real (amb portal d'arribada) i es torna a l'editor amb el botó de la porta.
+- **Jugar mapes guardats.** El selector té **JUGAR MAPA GUARDAT** (amb paperera de doble clic) i **IMPORTAR CODI I JUGAR**.
+- **Compartir.** Fitxer `.canicamap` amb el selector de carpetes del sistema (Windows i Linux) o codi de text `CVM1:`.
+- **Ajuda.** El botó AJUDA (o F1) obri una guia escrita, i l'etiqueta CAPA diu a quina capa treballes.
+- **Arreglos.** El mapa jugat ja no eixia girat de dalt a baix respecte a l'editor, i la còpia automàtica del Creador ja no pregunta «recuperar-la?» cada vegada.
+- **Pendent.** Mapes creats en **online** (v1.7). Per a la v1.6.1: Tab solapat, cofre que es destrueix en matar el boss, company encallat a la paret i joysticks d'Android.
+- **Límits.** Linux i Android no s'han executat en dispositius reals. El selector de carpetes no s'ha provat en Linux. La prova de rendiment `perf160` no arriba a 60 FPS en un portàtil amb pantalla de 60 Hz i V-Sync. Les proves de combat, cofres i mercader dins d'un mapa propi són amb bots, no amb persones.
 
-# Alpha v1.5.0 · publicada (Latest)
+# Alpha v1.5.0 · publicada
 
 Protocol online **24**. Disponible per a Windows, Linux i Android.
 

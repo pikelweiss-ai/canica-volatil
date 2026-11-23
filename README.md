@@ -1,8 +1,6 @@
 # Canica Volàtil
 
-**En desenvolupament: Alpha v1.6.0** (`alpha/arsenal`), protocol online **24**. La v1.5.0 ja està publicada com a Latest. Esta branca afegeix el mode Creador; els mapes online es reserven per a la v1.7 i la v1.6 encara no està publicada.
-
-**Última publicació:** Alpha v1.5.0, protocol **24** ([release](https://github.com/pikelweiss-ai/canica-volatil/releases/tag/v1.5.0-alpha)). Tots els participants han d'usar una compilació amb el mateix protocol.
+**Última publicació:** Alpha v1.6.0, protocol **24** ([release](https://github.com/pikelweiss-ai/canica-volatil/releases/tag/v1.6.0-alpha)). Afig el **mode Creador de mapes** (només a PC); els mapes en online es reserven per a la v1.7. De moment hi ha el paquet de **Windows**; **Linux i Android s'afegiran a la mateixa release**. Tots els participants han d'usar una compilació amb el mateix protocol. La [v1.5.0](https://github.com/pikelweiss-ai/canica-volatil/releases/tag/v1.5.0-alpha) continua disponible.
 
 Joc 2D de caniques, combat i masmorres fet amb Unity. Explora huit ambients, combina armes i juga en solitari o en cooperatiu **per Internet sense escriure cap IP**.
 
