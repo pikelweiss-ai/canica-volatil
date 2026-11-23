@@ -49,6 +49,55 @@ public static class NetCoop
         if (IsClient) NetSession.Instance.StartCoroutine(SendReadyLater());
     }
 
+    static byte[] MineSpawnFrame(int owner, int id, string weapon, Vector2 position) =>
+        NetProtocol.Frame(Msg.MineSpawnFx, w => { w.Write(Token); w.Write(owner); w.Write(id); w.Write(weapon); w.Write(position.x); w.Write(position.y); });
+
+    static byte[] MineRemoveFrame(int owner, int id, bool exploded, Vector2 position, float radius) =>
+        NetProtocol.Frame(Msg.MineRemoveFx, w => { w.Write(Token); w.Write(owner); w.Write(id); w.Write(exploded); w.Write(position.x); w.Write(position.y); w.Write(radius); });
+
+    public static void MinePlaced(WeaponData weapon, Vector2 position, int id)
+    {
+        if (!Online || weapon == null) return;
+        int owner = S.LocalId;
+        if (IsHost) S.SendAll(MineSpawnFrame(owner, id, weapon.name, position));
+        else S.SendToHost(NetProtocol.Frame(Msg.MineSpawnReq, w =>
+        { w.Write(Token); w.Write(id); w.Write(weapon.name); w.Write(position.x); w.Write(position.y); }));
+    }
+
+    public static void MineRemoved(int owner, int id, bool exploded, Vector2 position, float radius)
+    {
+        if (!Online || owner <= 0 || id <= 0) return;
+        radius = Mathf.Clamp(radius, 0.25f, 8f);
+        if (IsHost) S.SendAll(MineRemoveFrame(owner, id, exploded, position, radius));
+        else if (owner == S.LocalId) S.SendToHost(NetProtocol.Frame(Msg.MineRemoveReq, w =>
+        { w.Write(Token); w.Write(id); w.Write(exploded); w.Write(position.x); w.Write(position.y); w.Write(radius); }));
+    }
+
+    public static void ClearEnemyBullets()
+    {
+        EnemyBullet.ClearAll();
+        if (IsHost) S.SendAll(NetProtocol.Frame(Msg.ClearEnemyBullets, w => w.Write(Token)));
+    }
+
+    static void SpawnMineVisual(int owner, int id, string weaponName, Vector2 position)
+    {
+        if (id <= 0 || (owner == S.LocalId && !IsHost)) return;
+        foreach (var existing in Object.FindObjectsByType<MineUnit>(FindObjectsSortMode.None))
+            if (existing.NetworkOwner == owner && existing.NetworkId == id) return;
+        var weapon = Weapon(weaponName);
+        if (weapon == null || weapon.special != SpecialKind.Mine) return;
+        var go = new GameObject("Mina remota"); go.transform.position = position;
+        var mine = go.AddComponent<MineUnit>(); var avatar = Avatar(owner);
+        mine.Setup(weapon, avatar != null ? avatar.transform : null, weapon.specialValue > 0f ? weapon.specialValue : 1.5f);
+        mine.SetNetworkId(owner, id, true);
+    }
+
+    static void RemoveMineVisual(int owner, int id)
+    {
+        foreach (var mine in Object.FindObjectsByType<MineUnit>(FindObjectsSortMode.None))
+            if (mine.NetworkOwner == owner && mine.NetworkId == id) mine.Expire(false);
+    }
+
     static IEnumerator SendReadyLater()
     {
         yield return null; yield return null;
@@ -528,7 +577,35 @@ public static class NetCoop
         me.aim = (short)Mathf.RoundToInt(Mathf.Atan2(a.y, a.x) * Mathf.Rad2Deg);
         var wd = attack.CurrentWeapon;
         me.weapon = wd != null ? wd.name : "";
+        me.shieldRaised = attack.ShieldIsUp;
         me.down = false;
+    }
+
+    public static bool AllyShieldBlocksLocal(Vector2 bulletPosition, Vector2 bulletVelocity)
+    {
+        if (!Online) return false;
+        var local = S.Local;
+        if (local == null) return false;
+        Vector2 victim = new Vector2(local.x, local.y);
+        double now = Time.realtimeSinceStartupAsDouble;
+        foreach (var carrier in S.Players.Values)
+        {
+            if (carrier.id == S.LocalId || !carrier.shieldRaised || carrier.scene != Token ||
+                now - carrier.lastPos > 0.6 || carrier.down) continue;
+            Vector2 origin = new Vector2(carrier.x, carrier.y);
+            float angle = carrier.aim * Mathf.Deg2Rad;
+            Vector2 forward = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+            Vector2 toVictim = victim - origin;
+            float behind = Vector2.Dot(toVictim, forward);
+            float lateralVictim = Mathf.Abs(forward.x * toVictim.y - forward.y * toVictim.x);
+            if (behind > -0.15f || lateralVictim > 0.9f || toVictim.sqrMagnitude > 2.8f * 2.8f) continue;
+            Vector2 toBullet = bulletPosition - origin;
+            float front = Vector2.Dot(toBullet, forward);
+            float lateralBullet = Mathf.Abs(forward.x * toBullet.y - forward.y * toBullet.x);
+            if (front < 0.05f || front > 1.5f || lateralBullet > 0.8f || Vector2.Dot(bulletVelocity, forward) >= -0.05f) continue;
+            return true;
+        }
+        return false;
     }
 
     // =====================================================================
@@ -540,6 +617,32 @@ public static class NetCoop
         if (from == null) return;
         switch (type)
         {
+            case Msg.MineSpawnReq:
+            {
+                int token = r.ReadInt32(), id = r.ReadInt32(); string weaponName = r.ReadString();
+                Vector2 position = new Vector2(r.ReadSingle(), r.ReadSingle()); var weapon = Weapon(weaponName);
+                if (token != Token || id <= 0 || weapon == null || weapon.special != SpecialKind.Mine ||
+                    float.IsNaN(position.x) || float.IsNaN(position.y) || float.IsInfinity(position.x) || float.IsInfinity(position.y) ||
+                    Vector2.Distance(position, new Vector2(from.x, from.y)) > 2f ||
+                    (TileNav.Ready() && !TileNav.CircleFree(position, 0.12f))) break;
+                SpawnMineVisual(from.id, id, weaponName, position);
+                S.SendAll(MineSpawnFrame(from.id, id, weaponName, position));
+                break;
+            }
+            case Msg.MineRemoveReq:
+            {
+                int token = r.ReadInt32(), id = r.ReadInt32(); bool exploded = r.ReadBoolean();
+                Vector2 requestedPosition = new Vector2(r.ReadSingle(), r.ReadSingle()); float requestedRadius = Mathf.Clamp(r.ReadSingle(), 0.25f, 8f);
+                MineUnit known = null;
+                foreach (var candidate in Object.FindObjectsByType<MineUnit>(FindObjectsSortMode.None))
+                    if (candidate.NetworkOwner == from.id && candidate.NetworkId == id) { known = candidate; break; }
+                if (token != Token || id <= 0 || known == null) break;
+                Vector2 position = known.transform.position;
+                float radius = Mathf.Clamp(known.BlastRadius, 0.25f, 8f);
+                if (float.IsNaN(requestedPosition.x) || float.IsNaN(requestedPosition.y) || float.IsInfinity(requestedPosition.x) || float.IsInfinity(requestedPosition.y) || float.IsNaN(requestedRadius)) break;
+                RemoveMineVisual(from.id, id); S.SendAll(MineRemoveFrame(from.id, id, exploded, position, radius));
+                break;
+            }
             case Msg.EnemyHitReq:
             {
                 int id = r.ReadInt32(); int dmg = r.ReadInt32(); var kb = new Vector2(r.ReadSingle(), r.ReadSingle());
@@ -699,6 +802,26 @@ public static class NetCoop
         var gen = DungeonGenerator.Instance;
         switch (type)
         {
+            case Msg.MineSpawnFx:
+            {
+                int token = r.ReadInt32(), owner = r.ReadInt32(), id = r.ReadInt32(); string weapon = r.ReadString();
+                Vector2 position = new Vector2(r.ReadSingle(), r.ReadSingle());
+                if (token == Token) SpawnMineVisual(owner, id, weapon, position);
+                break;
+            }
+            case Msg.MineRemoveFx:
+            {
+                int token = r.ReadInt32(), owner = r.ReadInt32(), id = r.ReadInt32(); bool exploded = r.ReadBoolean();
+                Vector2 position = new Vector2(r.ReadSingle(), r.ReadSingle()); float radius = Mathf.Clamp(r.ReadSingle(), 0.25f, 8f);
+                if (token == Token) { RemoveMineVisual(owner, id); if (exploded && owner != S.LocalId) Fx.ExplodeVisual(position, radius); }
+                break;
+            }
+            case Msg.ClearEnemyBullets:
+            {
+                int token = r.ReadInt32();
+                if (token == Token) EnemyBullet.ClearAll();
+                break;
+            }
             case Msg.MobSound:
             {
                 int token = r.ReadInt32(); string sound = r.ReadString();

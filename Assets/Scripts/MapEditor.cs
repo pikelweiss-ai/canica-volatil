@@ -159,10 +159,11 @@ public sealed class MapEditor : MonoBehaviour
         UIKit.Button(canvas.transform, "GUARDAR", new Vector2(-90, 360), new Vector2(130, 42), Save, UIKit.Style.Primary, 16);
         UIKit.Button(canvas.transform, "OBRIR", new Vector2(55, 360), new Vector2(110, 42), Load, UIKit.Style.Normal, 16);
         UIKit.Button(canvas.transform, "ROTAR", new Vector2(185, 360), new Vector2(110, 42), () => rotation = (rotation + 1) % 4, UIKit.Style.Normal, 16);
-        UIKit.Button(canvas.transform, "PROVAR", new Vector2(315, 360), new Vector2(115, 42), Playtest, UIKit.Style.Primary, 16);
-        UIKit.Button(canvas.transform, "COPIAR CODI", new Vector2(445, 360), new Vector2(135, 42), ExportCode, UIKit.Style.Normal, 14);
-        UIKit.Button(canvas.transform, "IMPORTAR CODI", new Vector2(585, 360), new Vector2(140, 42), ImportCode, UIKit.Style.Normal, 13);
-        UIKit.Button(canvas.transform, "EIXIR", new Vector2(735, 360), new Vector2(100, 42),
+        UIKit.Button(canvas.transform, "PROVAR SOL", new Vector2(300, 360), new Vector2(100, 42), Playtest, UIKit.Style.Primary, 15);
+        UIKit.Button(canvas.transform, "HOST ONLINE", new Vector2(405, 360), new Vector2(110, 42), HostOnline, UIKit.Style.Success, 14);
+        UIKit.Button(canvas.transform, "COPIAR CODI", new Vector2(520, 360), new Vector2(110, 42), ExportCode, UIKit.Style.Normal, 13);
+        UIKit.Button(canvas.transform, "IMPORTAR CODI", new Vector2(640, 360), new Vector2(120, 42), ImportCode, UIKit.Style.Normal, 12);
+        UIKit.Button(canvas.transform, "EIXIR", new Vector2(760, 360), new Vector2(75, 42),
             ConfirmExit, UIKit.Style.Ghost, 16);
         var filePanel = UIKit.Box(canvas.transform, new Vector2(650, -80), new Vector2(270, 180), UIKit.Panel, "Panell fitxers");
         UIKit.Text(filePanel, "COMPARTIR FITXER", new Vector2(0, 65), new Vector2(240, 28), 16, TextAlignmentOptions.Center, UIKit.Gold);
@@ -786,6 +787,14 @@ public sealed class MapEditor : MonoBehaviour
         if (MapStore.List().Contains(target) && target != currentSavedName)
         { ShowPrompt("Ja existeix un mapa amb este nom. Vols sobreescriure'l abans de provar-lo?", () => { if (SaveAs(target)) BeginPlaytest(); }); return; }
         if (SaveAs(target)) BeginPlaytest();
+    }
+
+    void HostOnline()
+    {
+        if (!MapStore.Validate(map, out var error)) { status.text = error; return; }
+        string label = string.IsNullOrWhiteSpace(nameField.text) ? "Mapa" : nameField.text.Trim();
+        map.name = label;
+        RoomBrowserUI.OpenCreateForMapData(map, label);
     }
 
     void BeginPlaytest()

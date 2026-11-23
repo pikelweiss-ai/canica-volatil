@@ -8,6 +8,11 @@ param(
 $ErrorActionPreference = "Stop"
 $Exe = (Resolve-Path $Exe).Path
 New-Item -ItemType Directory -Force $Out | Out-Null
+$ipLog = Join-Path $Out 'ipclass161.log'
+if (Test-Path $ipLog) { Remove-Item $ipLog }
+$ipProc = Start-Process $Exe -ArgumentList @('-batchmode','-nographics','-canicaBot','ipclass161','-logFile',"`"$ipLog`"") -PassThru -WindowStyle Hidden
+if (-not $ipProc.WaitForExit(30000) -or -not (Select-String -Path $ipLog -Pattern 'NETBOT PASS' -Quiet)) { throw 'NETBOT ipclass161 ha fallat' }
+Write-Host "  [ipclass161] PASS: IP pública/privada/CGNAT" -ForegroundColor Green
 $portProbe = [System.Net.Sockets.UdpClient]::new([System.Net.IPEndPoint]::new([System.Net.IPAddress]::Loopback, 0))
 try { $testDiscoveryPort = $portProbe.Client.LocalEndPoint.Port } finally { $portProbe.Dispose() }
 $common = @("-batchmode", "-nographics", "-canicaLoopback", "-canicaDiscoveryPort", $testDiscoveryPort)
@@ -83,7 +88,7 @@ $srv.Kill()
 
 Write-Host "`n== 5. Internet SENSE IP: tunel + directori, llista + contrasenya + masmorra ==" -ForegroundColor Cyan
 $tag = "prova" + (Get-Random -Minimum 100000 -Maximum 999999)
-$cloud = @("-canicaCloudTag", $tag, "-canicaNoLan")
+$cloud = @("-canicaCloudTag", $tag, "-canicaNoLan", "-canicaTunnel", "203.0.113.1,bore.pub")
 $h = Start-Bot "cloud-host" (@("-canicaBot", "host", "-botNet", "internet", "-botPassword", "nuvol", "-botMode", "dungeon", "-botCoop") + $cloud)
 Start-Sleep 6
 $j = Start-Bot "cloud-join" (@("-canicaBot", "join", "-botJoin", "internet-list", "-botPassword", "nuvol", "-botCoop") + $cloud)

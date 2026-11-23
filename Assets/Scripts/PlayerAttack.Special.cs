@@ -10,6 +10,7 @@ using UnityEngine;
 public partial class PlayerAttack
 {
     float chargeTime;
+    int nextMineId;
     TurretUnit turret;
     readonly List<MineUnit> mines = new List<MineUnit>();
     static readonly Dictionary<int, WeaponData> chargedShots = new Dictionary<int, WeaponData>();
@@ -53,7 +54,7 @@ public partial class PlayerAttack
             chargedShots[damage] = shot;
         }
         Shoot(shot);
-        slotCooldown[selectedSlot] = w.cooldown;
+        slotCooldown[selectedSlot] = sharedAttackCooldown = RunAmulets.Cooldown(w.cooldown);
         if (level >= 0.95f) Fx.Text(transform.position, "Càrrega total", new Color(1f, 0.9f, 0.4f));
     }
 
@@ -99,11 +100,15 @@ public partial class PlayerAttack
     {
         mines.RemoveAll(m => m == null);
         while (mines.Count >= 3) { mines[0].Expire(); mines.RemoveAt(0); }
+        int mineId = ++nextMineId;
+        Vector3 position = SpotInFront(MineDistance);
         var go = new GameObject("Mina");
-        go.transform.position = SpotInFront(MineDistance);
+        go.transform.position = position;
         var mine = go.AddComponent<MineUnit>();
         mine.Setup(w, transform, w.specialValue > 0f ? w.specialValue : 1.5f);
+        mine.SetNetworkId(NetCoop.Online ? NetSession.Instance.LocalId : 0, mineId, false);
         mines.Add(mine);
+        NetCoop.MinePlaced(w, position, mineId);
     }
 
     void FireGrapple(WeaponData w)
@@ -374,6 +379,13 @@ public class MineUnit : MonoBehaviour
     WeaponData weapon; Transform owner;
     float radius, armedAt, life = 25f;
     SpriteRenderer body, lamp;
+    public int NetworkOwner { get; private set; }
+    public int NetworkId { get; private set; }
+    public bool IsCosmetic { get; private set; }
+    public float BlastRadius => radius;
+
+    public void SetNetworkId(int playerId, int mineId, bool cosmetic)
+    { NetworkOwner = playerId; NetworkId = mineId; IsCosmetic = cosmetic; }
 
     public void Setup(WeaponData w, Transform ownerTransform, float blastRadius)
     {
@@ -396,7 +408,13 @@ public class MineUnit : MonoBehaviour
         }
     }
 
-    public void Expire() { if (this != null) Destroy(gameObject); }
+    public void Expire(bool notify = true, bool exploded = false)
+    {
+        if (this == null) return;
+        if (notify && !IsCosmetic && NetworkOwner > 0)
+            NetCoop.MineRemoved(NetworkOwner, NetworkId, exploded, transform.position, radius);
+        Destroy(gameObject);
+    }
 
     void Update()
     {
@@ -406,7 +424,7 @@ public class MineUnit : MonoBehaviour
         bool blink = armed && ((int)(Time.time * 4f) % 2 == 0);
         if (lamp != null) lamp.enabled = blink;
         else if (body != null) body.color = blink ? new Color(1f, 0.2f, 0.2f) : new Color(0.35f, 0.25f, 0.25f);
-        if (!armed) return;
+        if (!armed || IsCosmetic) return;
 
         foreach (var c in Physics2D.OverlapCircleAll(transform.position, 0.9f))
         {
@@ -416,7 +434,7 @@ public class MineUnit : MonoBehaviour
             RunStats.HitBy = weapon.weaponName;
             Fx.Explode(transform.position, radius, 0, Mathf.Max(1, weapon.damage), owner, mine: true);
             RunStats.HitBy = null;
-            Destroy(gameObject);
+            Expire(true, true);
             return;
         }
     }

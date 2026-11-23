@@ -24,6 +24,8 @@ public class NetSession : MonoBehaviour
     {
         public string name = "Sala";
         public RoomMode mode = RoomMode.Dungeon;
+        public string customMapName, customMapCode;
+        public MapData customMapData;
         public int maxPlayers = 4;
         public bool isPublic = true;
         public string password = "";
@@ -59,6 +61,7 @@ public class NetSession : MonoBehaviour
     // Sala d'Internet sense IP (túnel + directori). null si no ho és.
     public bool IsCloudRoom => role == Role.Host ? cloudTunnel != null : role == Role.Client && cloudClient;
     public string CloudStatus { get; private set; }
+    public bool HasCustomMap => !string.IsNullOrEmpty(customMapCode) && customMapData != null;
     public event Action Changed;
     public event Action<ChatLine> ChatReceived;
     public NetPlayer Local => Players.TryGetValue(LocalId, out var p) ? p : null;
@@ -94,6 +97,8 @@ public class NetSession : MonoBehaviour
     TcpLink relay;
     readonly Dictionary<int, RelayPeerLink> relayPeers = new Dictionary<int, RelayPeerLink>();
     string passwordHash = "";
+    string customMapName, customMapCode;
+    MapData customMapData;
     int nextId = 2;
     float countdownEnd, nextPing, nextSnap, nextInfo, nextPos, lastFromHost;
     INetLink hostLink;
@@ -104,6 +109,9 @@ public class NetSession : MonoBehaviour
     string pendingCode, pendingPassword;
     // Internet sense IP
     BoreTunnel cloudTunnel;
+    UPnPMapper upnpMapper;
+    volatile string directPublicEndpoint;
+    string upnpStatus;
     bool cloudClient, cloudPublishing, cloudOk;
     float nextCloud, lastCloud;
     string cloudSig;
@@ -204,7 +212,7 @@ public class NetSession : MonoBehaviour
         int mine = rtt[0];
         rooms = rooms.FindAll(r => r.isPublic);
         foreach (var r in rooms) r.pingMs = mine < 0 ? -1 : r.pingMs >= 0 ? r.pingMs + mine : mine * 2;
-        if (error == null && mine == -1) error = "No es pot arribar al servei de connexió (" + NetCloud.TunnelHost + "). Comprova la connexió a Internet.";
+        if (error == null && mine < 0) error = "No es pot arribar a cap servei de connexió (" + string.Join(", ", NetCloud.TunnelHosts) + "). Prova XARXA LOCAL (LAN) o unir-te per IP. Si falla la llista, comprova també ntfy.sh.";
         done(rooms, error);
     }
 
@@ -244,6 +252,20 @@ public class NetSession : MonoBehaviour
         var self = Ensure();
         if (Active) self.Leave(null);
         s.name = CleanName(string.IsNullOrWhiteSpace(s.name) ? "Sala de " + PlayerName : s.name, 24);
+        if (s.mode == RoomMode.CustomMap)
+        {
+            string mapError;
+            if (s.customMapData == null)
+            {
+                if (string.IsNullOrWhiteSpace(s.customMapName)) { done("Tria un mapa creat abans de crear la sala."); return; }
+                if (!MapStore.Load(s.customMapName, out s.customMapData, out mapError))
+                { done("No s'ha pogut carregar el mapa creat: " + mapError); return; }
+            }
+            if (!MapStore.Validate(s.customMapData, out mapError))
+            { done("El mapa creat no és vàlid: " + mapError); return; }
+            if (!MapShare160.Encode(s.customMapData, out s.customMapCode, out mapError))
+            { done("Este mapa no es pot enviar als companys: " + mapError); return; }
+        }
         s.maxPlayers = Mathf.Clamp(s.maxPlayers, 2, NetProtocol.MaxPlayers);
         var info = new RoomInfo { name = s.name, hostName = PlayerName, mode = s.mode, phase = RoomPhase.Lobby, players = 1, maxPlayers = s.maxPlayers, hasPassword = !string.IsNullOrEmpty(s.password), isPublic = s.isPublic };
 
@@ -269,7 +291,7 @@ public class NetSession : MonoBehaviour
                     {
                         string why = tunnel.Error;
                         tunnel.Stop();
-                        done("No s'ha pogut obrir la sala a Internet" + (string.IsNullOrEmpty(why) ? "" : " (" + why + ")") + ". Comprova que tens connexió i torna-ho a provar. Mentrestant pots jugar en XARXA LOCAL.");
+                        done("No es pot arribar a cap servei de connexió (túnels: " + string.Join(", ", NetCloud.TunnelHosts) + "). Prova XARXA LOCAL (LAN) o unir-te per IP.");
                         return;
                     }
                     self.StartHost(s, info, null, done, tunnel);
@@ -310,6 +332,7 @@ public class NetSession : MonoBehaviour
     void StartHost(HostSettings s, RoomInfo info, TcpLink relayLink, Action<string> done, BoreTunnel tunnel = null)
     {
         ResetState();
+        customMapName = s.customMapName; customMapCode = s.customMapCode; customMapData = s.customMapData;
         cloudTunnel = tunnel; cloudSig = null; cloudOk = false; cloudPublishing = false; nextCloud = 0; lastCloud = -99;
         // Port TCP per a la LAN / IP directa
         for (int p = NetProtocol.GamePort; p <= NetProtocol.GamePort + 10 && listener == null; p++)
@@ -323,6 +346,23 @@ public class NetSession : MonoBehaviour
             listening = true;
             acceptThread = new Thread(AcceptLoop) { IsBackground = true, Name = "Host accept" };
             acceptThread.Start();
+            if (tunnel != null && !NetCloud.IsBot)
+            {
+                new Thread(() =>
+                {
+                    string why;
+                    var mapping = UPnPMapper.TryOpen(gamePort, out why);
+                    RunOnMain(() =>
+                    {
+                        if (role != Role.Host || listener == null) { mapping?.Close(); return; }
+                        upnpMapper = mapping;
+                        directPublicEndpoint = mapping?.Endpoint;
+                        upnpStatus = mapping == null ? "Connexió directa no disponible: " + why : "Connexió directa preparada";
+                        cloudSig = null;
+                        nextCloud = 0;
+                    });
+                }) { IsBackground = true, Name = "Canica UPnP" }.Start();
+            }
         }
         relay = relayLink;
         role = Role.Host;
@@ -337,7 +377,7 @@ public class NetSession : MonoBehaviour
         NetworkLabel = cloudTunnel != null ? "INTERNET · sala pública, sense IP" : relay != null ? "INTERNET · servidor " + ServerAddress : "XARXA LOCAL · " + NetProtocol.LocalIPv4() + ":" + gamePort;
         CloudStatus = cloudTunnel != null ? "Publicant la sala a Internet..." : null;
         AddSystem(cloudTunnel != null
-            ? "Sala oberta a Internet. Els teus amics la veuran a INTERNET · PÚBLIQUES o hi entraran amb el codi " + info.code + ". No cal cap IP ni obrir ports."
+            ? "Sala oberta a Internet. Els teus amics la veuran a INTERNET · PÚBLIQUES o hi entraran amb el codi " + info.code + ". Si UPnP funciona, primer provaran connexió directa; si no, usaran el túnel."
             : "Has creat la sala. Comparteix el codi " + info.code + " amb els teus amics.");
         done(null);
         SceneManager.LoadScene("Lobby");
@@ -392,7 +432,16 @@ public class NetSession : MonoBehaviour
                     else if (type != Msg.RelayJoinOk) { error = "Resposta inesperada del servidor."; tcp.Close(); }
                     else link = tcp;
                 }
-                else link = TcpLink.Connect(target.address, target.port, 4000);
+                else if (!string.IsNullOrEmpty(target.directAddress))
+                {
+                    try { link = TcpLink.Connect(target.directAddress, target.directPort, 4000); }
+                    catch
+                    {
+                        if (target.viaCloud && !string.IsNullOrEmpty(target.address)) link = TcpLink.Connect(target.address, target.port, 4000);
+                        else throw;
+                    }
+                }
+                else link = TcpLink.Connect(target.address, target.port, target.viaCloud ? 4000 : 4000);
             }
             catch (Exception e) { error = "No s'ha pogut connectar amb la sala (" + e.Message + ")."; }
             RunOnMain(() =>
@@ -497,6 +546,7 @@ public class NetSession : MonoBehaviour
     public void SetMode(RoomMode mode)
     {
         if (role != Role.Host || Room.phase != RoomPhase.Lobby || Room.mode == mode) return;
+        if (mode == RoomMode.CustomMap && !HasCustomMap) return;
         Room.mode = mode;
         AddSystem("Mode de joc: " + RoomModes.Short(mode) + ".", true);
         roomDirty = true;
@@ -558,6 +608,10 @@ public class NetSession : MonoBehaviour
 
     void ResetState()
     {
+        MapPlaytest.ClearNetworkMap();
+        customMapName = customMapCode = null; customMapData = null;
+        RunStats.DontSave = false;
+        upnpMapper?.Close(); upnpMapper = null; directPublicEndpoint = null; upnpStatus = null;
         if (cloudTunnel != null)
         {
             // Avisa el directori que la sala tanca (així desapareix de la llista al moment)
@@ -728,13 +782,13 @@ public class NetSession : MonoBehaviour
             CloudStatus = "Reconnectant amb Internet...";
             return;
         }
-        string sig = port + "|" + Room.players + "|" + (int)Room.phase + "|" + Room.maxPlayers + "|" + Room.isPublic + "|" + Room.name;
+        string sig = port + "|" + Room.players + "|" + (int)Room.mode + "|" + (int)Room.phase + "|" + Room.maxPlayers + "|" + Room.isPublic + "|" + Room.name;
         bool changed = sig != cloudSig;
         if (!cloudPublishing && (now >= nextCloud || (changed && now - lastCloud >= 4f)))
         {
             cloudSig = sig; lastCloud = now; nextCloud = now + 20f; cloudPublishing = true;
             int gen = ++cloudGen;
-            var a = NetCloud.FromRoom(Clone(Room), port, cloudTunnel.Rtt, false);
+            var a = NetCloud.FromRoom(Clone(Room), port, cloudTunnel.Rtt, false, cloudTunnel.Host, directPublicEndpoint);
             string topic = Room.isPublic ? NetCloud.PublicTopic : NetCloud.CodeTopic(Room.code);
             StartCoroutine(NetCloud.Publish(topic, a, ok =>
             {
@@ -892,7 +946,11 @@ public class NetSession : MonoBehaviour
     {
         Seed = rng.Next(1, int.MaxValue);
         Room.phase = RoomPhase.InGame;
-        var start = NetProtocol.Frame(Msg.Start, w => { w.Write((byte)Room.mode); w.Write(Seed); });
+        var start = NetProtocol.Frame(Msg.Start, w =>
+        {
+            w.Write((byte)Room.mode); w.Write(Seed);
+            if (Room.mode == RoomMode.CustomMap) w.Write(customMapCode);
+        });
         SendAll(start);
         roomDirty = true;
         HostUpdateRoomNow();
@@ -904,6 +962,8 @@ public class NetSession : MonoBehaviour
     void EnterGame()
     {
         RunState.Reset();
+        RunStats.DontSave = Room.mode == RoomMode.CustomMap;
+        if (Room.mode == RoomMode.CustomMap) MapPlaytest.SetNetworkMap(customMapData);
         foreach (var pl in Players.Values) pl.scene = -1;
         SceneManager.LoadScene(RoomModes.Scene(Room.mode));
     }
@@ -912,6 +972,8 @@ public class NetSession : MonoBehaviour
     public void BackToLobby()
     {
         if (role != Role.Host) return;
+        RunStats.DontSave = false;
+        MapPlaytest.ClearNetworkMap();
         Room.phase = RoomPhase.Lobby;
         foreach (var pl in Players.Values) if (!pl.isHost) pl.ready = false;
         SendAll(NetProtocol.Frame(Msg.Start, w => { w.Write((byte)255); w.Write(0); }));
@@ -981,7 +1043,7 @@ public class NetSession : MonoBehaviour
                 for (int i = 0; i < n; i++)
                 {
                     var pl = NetPlayer.Read(r); seen.Add(pl.id);
-                    if (Players.TryGetValue(pl.id, out var old)) { pl.scene = old.scene; pl.x = old.x; pl.y = old.y; pl.aim = old.aim; pl.weapon = old.weapon; pl.down = old.down; pl.health = old.health; pl.maxHealth = old.maxHealth; pl.lastPos = old.lastPos; }
+                    if (Players.TryGetValue(pl.id, out var old)) { pl.scene = old.scene; pl.x = old.x; pl.y = old.y; pl.aim = old.aim; pl.weapon = old.weapon; pl.shieldRaised = old.shieldRaised; pl.down = old.down; pl.health = old.health; pl.maxHealth = old.maxHealth; pl.lastPos = old.lastPos; }
                     Players[pl.id] = pl;
                 }
                 var gone = new List<int>(); foreach (var id in Players.Keys) if (!seen.Contains(id)) gone.Add(id);
@@ -1017,8 +1079,21 @@ public class NetSession : MonoBehaviour
             case Msg.Start:
             {
                 int mode = r.ReadByte(); int seed = r.ReadInt32();
-                if (mode == 255) { RunState.Reset(); SceneManager.LoadScene("Lobby"); break; }
+                if (mode == 255)
+                {
+                    RunStats.DontSave = false; MapPlaytest.ClearNetworkMap();
+                    customMapName = customMapCode = null; customMapData = null;
+                    RunState.Reset(); SceneManager.LoadScene("Lobby"); break;
+                }
                 Room.mode = (RoomMode)mode; Seed = seed; Room.phase = RoomPhase.InGame;
+                customMapData = null; customMapCode = null;
+                if (Room.mode == RoomMode.CustomMap)
+                {
+                    string mapCode = r.ReadString();
+                    if (!MapShare160.Decode(mapCode, out customMapData, out var mapError))
+                    { Disconnected("No s'ha pogut rebre el mapa de l'amfitrió: " + mapError); break; }
+                    customMapCode = mapCode;
+                }
                 var me = Local; if (me != null) me.ready = false;
                 EnterGame();
                 break;

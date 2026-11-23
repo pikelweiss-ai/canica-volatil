@@ -55,7 +55,7 @@ public partial class NetBot : MonoBehaviour
 
     void Start()
     {
-        StartCoroutine(role == "share160" ? Share160() : role == "tile160" ? Tile160() : role == "editor160" ? Editor160() : role == "perf160" ? Perf160() : role == "mapdata160" ? MapData160() : role == "catalog160" ? Catalog160() : role == "almanac150" ? Almanac150() : role == "store150" ? Store150() : role == "amulets150" ? Amulets150() : role == "keys150" ? Keys150() : role == "bosses150" ? Bosses150() : role == "phase0" ? Phase0() : role == "audio140" ? Audio140() : role == "scenery" ? Scenery141() : role == "v141" ? V141() : role == "dungeon140" ? Dungeon140() : role == "solo" ? SoloCombat() : role == "menushot" ? MenuShots() : role == "weaponshots" ? WeaponShots() : role == "trails" ? TrailGallery() : role == "host" ? Host() : Join());
+        StartCoroutine(role == "ipclass161" ? IpClass161() : role == "share160" ? Share160() : role == "tile160" ? Tile160() : role == "editor160" ? Editor160() : role == "perf160" ? Perf160() : role == "mapdata160" ? MapData160() : role == "catalog160" ? Catalog160() : role == "almanac150" ? Almanac150() : role == "store150" ? Store150() : role == "amulets150" ? Amulets150() : role == "keys150" ? Keys150() : role == "bosses150" ? Bosses150() : role == "phase0" ? Phase0() : role == "audio140" ? Audio140() : role == "scenery" ? Scenery141() : role == "v141" ? V141() : role == "dungeon140" ? Dungeon140() : role == "solo" ? SoloCombat() : role == "menushot" ? MenuShots() : role == "weaponshots" ? WeaponShots() : role == "trails" ? TrailGallery() : role == "host" ? Host() : Join());
         StartCoroutine(Watchdog());
     }
 
@@ -79,6 +79,19 @@ public partial class NetBot : MonoBehaviour
 
     static string Scene => SceneManager.GetActiveScene().name;
     static int Avatars => FindObjectsByType<RemoteAvatar>(FindObjectsSortMode.None).Length;
+
+    // ------------------------------------------------------------------
+    IEnumerator IpClass161()
+    {
+        foreach (var ip in new[] { "8.8.8.8", "172.16.211.140", "100.64.0.1", "192.168.1.1", "127.0.0.1", "224.0.0.1", "203.0.113.5" })
+        {
+            bool expected = ip == "8.8.8.8";
+            if (PublicIPv4.IsPublic(ip) != expected) { Fail("classificació IPv4 incorrecta: " + ip); yield break; }
+        }
+        Ok("IPv4 pública, privada, CGNAT i rang reservat classificats");
+        Pass();
+        yield break;
+    }
 
     // ------------------------------------------------------------------
     IEnumerator Host()

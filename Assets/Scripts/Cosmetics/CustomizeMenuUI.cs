@@ -219,11 +219,18 @@ public class CustomizeMenuUI : MonoBehaviour
         UIKit.Clear(grid); foreach (var s in cropped) if (s != null) Destroy(s); cropped.Clear();
 
         int count = Count, owned = 0;
+        var visible = new List<int>();
         for (int i = 0; i < count; i++)
         {
             if (CosmeticStore.Owned(category, i)) owned++;
-            if (!qualityFilter.HasValue || CosmeticStore.Quality(category, i) == qualityFilter && !CosmeticStore.IsExclusive(category, i)) BuildCard(i);
+            if (!qualityFilter.HasValue || CosmeticStore.Quality(category, i) == qualityFilter && !CosmeticStore.IsExclusive(category, i)) visible.Add(i);
         }
+        visible.Sort((a, b) =>
+        {
+            int order = CosmeticStore.Quality(category, a).CompareTo(CosmeticStore.Quality(category, b));
+            return order != 0 ? order : a.CompareTo(b);
+        });
+        foreach (int i in visible) BuildCard(i);
         gridCount.text = (store ? "Tenda" : "Col·lecció") + "   " + owned + "/" + count;
         storeButton.SetLabel(store ? "ARMARI" : "TENDA");
         bool skins = category == Category.Skins;
@@ -232,9 +239,9 @@ public class CustomizeMenuUI : MonoBehaviour
         int position = 0;
         for (int i = 0; i < filters.Length; i++)
         {
-            bool visible = skins || filterQualities[i] != ChestRarity.PocComu;
-            filters[i].rect.gameObject.SetActive(visible);
-            if (!visible) continue;
+            bool filterVisible = skins || filterQualities[i] != ChestRarity.PocComu;
+            filters[i].rect.gameObject.SetActive(filterVisible);
+            if (!filterVisible) continue;
             filters[i].rect.sizeDelta = new Vector2(filterWidth - 2, 35);
             filters[i].rect.anchoredPosition = new Vector2(filterStart + filterWidth * (position++ + .5f), 291);
             filters[i].label.rectTransform.sizeDelta = new Vector2(filterWidth - 18, 29);

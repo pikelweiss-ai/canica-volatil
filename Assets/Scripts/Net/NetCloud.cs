@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -28,6 +29,7 @@ using UnityEngine.Networking;
 // Si algú configura un servidor de sales propi (camp avançat), es fa servir eixe com abans.
 public static class NetCloud
 {
+    static string[] configuredTunnelHosts;
     static string Arg(string key, string def)
     {
         var a = Environment.GetCommandLineArgs();
@@ -35,13 +37,29 @@ public static class NetCloud
         return i >= 0 && i + 1 < a.Length ? a[i + 1] : def;
     }
 
-    public static readonly string TunnelHost = Arg("-canicaTunnel", "bore.pub");
+    // Candidate hosts may be overridden for testing or advanced troubleshooting.
+    // Keep bore.pub as the only built-in public instance: the official project documents no others.
+    static string[] LoadTunnelHosts()
+    {
+        string configured = Arg("-canicaTunnel", PlayerPrefs.GetString("Net_Tunnels", "bore.pub"));
+        var hosts = new List<string>();
+        foreach (var raw in (configured ?? "").Split(','))
+        {
+            string host = raw.Trim();
+            if (host.Length > 0 && !hosts.Contains(host)) hosts.Add(host);
+        }
+        if (hosts.Count == 0) hosts.Add("bore.pub");
+        return hosts.ToArray();
+    }
+    public static string[] TunnelHosts => configuredTunnelHosts ?? (configuredTunnelHosts = LoadTunnelHosts());
+    public static string TunnelHost => TunnelHosts[0];
     public const int TunnelControlPort = 7835;
     public static readonly string Directory = Arg("-canicaDirectory", "https://ntfy.sh").TrimEnd('/');
     // Les proves automàtiques usen un tema propi perquè les sales dels bots no surten a ningú
     static readonly string Tag = Arg("-canicaCloudTag", "");
     // Sense LAN (proves): obliga a passar pel túnel encara que amfitrió i client estiguen al mateix PC
     public static readonly bool NoLan = Array.IndexOf(Environment.GetCommandLineArgs(), "-canicaNoLan") >= 0;
+    public static readonly bool IsBot = Array.IndexOf(Environment.GetCommandLineArgs(), "-canicaBot") >= 0;
 
     // Es fa servir quan no hi ha cap servidor de sales propi configurat
     public static bool InUse => string.IsNullOrEmpty(NetSession.ServerAddress);
@@ -63,17 +81,17 @@ public static class NetCloud
     {
         public int v;           // protocol
         public string ver;      // versió del joc
-        public string code, name, host, ep;
+        public string code, name, host, ep, directEp;
         public int mode, phase, players, max, rtt;
-        public bool pw, pub, closed;
+        public bool pw, pub, closed, direct;
     }
 
     [Serializable] class NtfyLine { public string @event; public long time; public string message; }
 
-    public static Announce FromRoom(RoomInfo r, int tunnelPort, int rtt, bool closed) => new Announce
+    public static Announce FromRoom(RoomInfo r, int tunnelPort, int rtt, bool closed, string tunnelHost = null, string directEp = null) => new Announce
     {
         v = NetProtocol.Version, ver = GameVersion.Package, code = r.code, name = r.name, host = r.hostName,
-        ep = TunnelHost + ":" + tunnelPort, mode = (int)r.mode, phase = (int)r.phase, players = r.players, max = r.maxPlayers,
+        ep = (tunnelHost ?? TunnelHost) + ":" + tunnelPort, directEp = directEp, direct = !string.IsNullOrEmpty(directEp), mode = (int)r.mode, phase = (int)r.phase, players = r.players, max = r.maxPlayers,
         rtt = rtt, pw = r.hasPassword, pub = r.isPublic, closed = closed
     };
 
@@ -134,13 +152,17 @@ public static class NetCloud
         return rooms;
     }
 
-    // Només s'accepten sales que apunten al túnel conegut: un anunci fals no pot fer-nos connectar a qualsevol lloc
+    // Només s'accepten endpoints d'un candidat configurat o una IP directa vàlida.
     static RoomInfo ToRoom(Announce a)
     {
         if (string.IsNullOrEmpty(a.ep)) return null;
+        string host = null; int port = 0;
         int colon = a.ep.LastIndexOf(':');
-        if (colon <= 0 || a.ep.Substring(0, colon) != TunnelHost) return null;
-        if (!int.TryParse(a.ep.Substring(colon + 1), out int port) || port < 1024 || port > 65535) return null;
+        if (colon > 0 && Array.IndexOf(TunnelHosts, a.ep.Substring(0, colon)) >= 0 && int.TryParse(a.ep.Substring(colon + 1), out port) && port >= 1024 && port <= 65535) host = a.ep.Substring(0, colon);
+        string directHost = null; int directPort = 0;
+        if (a.direct && NetProtocol.TryParseEndpoint(a.directEp, NetProtocol.GamePort, out directHost, out directPort) && directPort >= NetProtocol.GamePort && directPort <= NetProtocol.GamePort + 10 && PublicIPv4.IsPublic(directHost)) { }
+        else { directHost = null; directPort = 0; }
+        if (host == null && directHost == null) return null;
         string code = NetProtocol.NormalizeCode(a.code);
         if (code.Length != 6) return null;
         return new RoomInfo
@@ -149,7 +171,7 @@ public static class NetCloud
             mode = a.mode == 1 ? RoomMode.FreeMap : RoomMode.Dungeon, phase = (RoomPhase)Mathf.Clamp(a.phase, 0, 2),
             players = Mathf.Clamp(a.players, 1, NetProtocol.MaxPlayers), maxPlayers = Mathf.Clamp(a.max, 2, NetProtocol.MaxPlayers),
             hasPassword = a.pw, isPublic = a.pub, version = a.v,
-            address = TunnelHost, port = port, viaCloud = true, pingMs = a.rtt
+            address = host ?? directHost, port = host != null ? port : directPort, directAddress = directHost, directPort = directPort, viaCloud = true, pingMs = a.rtt
         };
     }
 
@@ -159,13 +181,17 @@ public static class NetCloud
         try
         {
             var sw = System.Diagnostics.Stopwatch.StartNew();
-            using (var c = new TcpClient())
+            foreach (var host in TunnelHosts)
             {
-                var ar = c.BeginConnect(TunnelHost, TunnelControlPort, null, null);
-                if (!ar.AsyncWaitHandle.WaitOne(3000)) return -1;
-                c.EndConnect(ar);
+                using (var c = new TcpClient())
+                {
+                    var ar = c.BeginConnect(host, TunnelControlPort, null, null);
+                    if (!ar.AsyncWaitHandle.WaitOne(4000)) continue;
+                    c.EndConnect(ar);
+                    return (int)sw.ElapsedMilliseconds;
+                }
             }
-            return (int)sw.ElapsedMilliseconds;
+            return -1;
         }
         catch { return -1; }
     }
@@ -184,6 +210,7 @@ public class BoreTunnel
     public volatile int PublicPort;     // 0 mentre no està connectat
     public volatile int Rtt = -1;
     public volatile string Error;
+    public string Host { get; private set; }
     public int Generation;              // puja cada vegada que canvia el port (cal tornar a anunciar)
     readonly Action<TcpClient> onClient;
     readonly Thread thread;
@@ -224,7 +251,13 @@ public class BoreTunnel
             try
             {
                 var sw = System.Diagnostics.Stopwatch.StartNew();
-                control = Connect(NetCloud.TunnelHost, NetCloud.TunnelControlPort, 5000);
+                Exception last = null;
+                foreach (var candidate in NetCloud.TunnelHosts)
+                {
+                    try { control = Connect(candidate, NetCloud.TunnelControlPort, 4000); Host = candidate; break; }
+                    catch (Exception e) { last = e; }
+                }
+                if (control == null) throw last ?? new IOException("cap servei de túnel disponible");
                 Rtt = (int)sw.ElapsedMilliseconds;
                 control.ReceiveTimeout = 8000; // el servidor envia batecs cada 0,5 s
                 var stream = control.GetStream();
@@ -259,7 +292,7 @@ public class BoreTunnel
     {
         try
         {
-            var c = Connect(NetCloud.TunnelHost, NetCloud.TunnelControlPort, 5000);
+            var c = Connect(Host ?? NetCloud.TunnelHost, NetCloud.TunnelControlPort, 4000);
             Send(c.GetStream(), "{\"Accept\":\"" + id + "\"}");
             if (stopped) { c.Close(); return; }
             onClient(c);

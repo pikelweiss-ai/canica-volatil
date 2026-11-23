@@ -11,7 +11,7 @@ using System.Text;
 // El mateix format serveix per a parlar amb l'amfitrio (LAN/IP) i amb el servidor de sales (Internet).
 public static class NetProtocol
 {
-    public const int Version = 24; // Manté els dos camps reservats de l’aparença dels avatars.
+    public const int Version = 27; // v1.6.1: mapes creats, mines sincronitzades i tria d'amulet opcional.
     public const int GamePort = 7777;      // TCP: l'amfitrio escolta ací (prova 7777..7787)
     public const int DiscoveryPort = 7778; // UDP: descobriment de sales en LAN
     public const int RelayPort = 7780;     // TCP: servidor de sales d'Internet
@@ -202,16 +202,17 @@ public enum Msg : byte
     ZoneFx = 101,     // v1.4.1: zona de perill (foc, acid, bomba): estil + posicio; cada equip fa mal al seu jugador
     BossKeyState = 104, AmuletState = 105, AmuletAction = 106,
     ShopReq = 102, ShopSold = 103, // v1.4.1: mercader i maquina: peticio de compra (client -> amfitrio) i article venut (amfitrio -> tots)
+    MineSpawnReq = 107, MineRemoveReq = 108, MineSpawnFx = 109, MineRemoveFx = 110, ClearEnemyBullets = 111,
 }
 
-public enum RoomMode : byte { Dungeon = 0, FreeMap = 1 }
+public enum RoomMode : byte { Dungeon = 0, FreeMap = 1, CustomMap = 2 }
 public enum RoomPhase : byte { Lobby = 0, Countdown = 1, InGame = 2 }
 
 public static class RoomModes
 {
-    public static string Scene(RoomMode m) => m == RoomMode.Dungeon ? "Dungeon" : "GameScene";
-    public static string Label(RoomMode m) => m == RoomMode.Dungeon ? "MASMORRA" : "MAPA LLIURE";
-    public static string Short(RoomMode m) => m == RoomMode.Dungeon ? "Masmorra" : "Mapa lliure";
+    public static string Scene(RoomMode m) => m == RoomMode.FreeMap ? "GameScene" : "Dungeon";
+    public static string Label(RoomMode m) => m == RoomMode.Dungeon ? "MASMORRA" : m == RoomMode.CustomMap ? "MAPA CREAT" : "MAPA LLIURE";
+    public static string Short(RoomMode m) => m == RoomMode.Dungeon ? "Masmorra" : m == RoomMode.CustomMap ? "Mapa creat" : "Mapa lliure";
 }
 
 // El que es veu d'una sala al navegador (LAN o Internet).
@@ -233,6 +234,8 @@ public class RoomInfo
     [NonSerialized] public int port;
     [NonSerialized] public bool viaRelay;
     [NonSerialized] public bool viaCloud; // Internet sense IP: address/port són el túnel públic
+    [NonSerialized] public string directAddress;
+    [NonSerialized] public int directPort;
     [NonSerialized] public int pingMs = -1;
 
     public void Write(BinaryWriter w)
@@ -266,20 +269,21 @@ public class NetPlayer
     public float x, y;
     public short aim;       // graus d'apuntat
     public string weapon;   // nom de l'arma a la ma ("" = puny)
+    public bool shieldRaised;
     public bool down;       // caigut a la masmorra
     public int health, maxHealth, coins;
     public double lastPos;
 
     public void WritePosition(BinaryWriter w)
     {
-        w.Write(scene); w.Write(x); w.Write(y); w.Write(aim); w.Write(weapon ?? "");
+        w.Write(scene); w.Write(x); w.Write(y); w.Write(aim); w.Write(weapon ?? ""); w.Write(shieldRaised);
         w.Write(down); w.Write(health); w.Write(maxHealth); w.Write(coins);
     }
 
     public void ReadPosition(BinaryReader r, double receivedAt)
     {
         scene = r.ReadInt32(); x = r.ReadSingle(); y = r.ReadSingle();
-        aim = r.ReadInt16(); weapon = r.ReadString(); down = r.ReadBoolean();
+        aim = r.ReadInt16(); weapon = r.ReadString(); shieldRaised = r.ReadBoolean(); down = r.ReadBoolean();
         health = r.ReadInt32(); maxHealth = r.ReadInt32(); coins = r.ReadInt32();
         lastPos = receivedAt;
     }

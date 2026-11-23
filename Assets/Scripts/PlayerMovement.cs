@@ -19,6 +19,7 @@ public class PlayerMovement : MonoBehaviour
     private Rigidbody2D rb;
     private Vector2 movement;
     private Vector2 iceVelocity;
+    float trappedTime;
 
     void Awake()
     {
@@ -58,6 +59,19 @@ public class PlayerMovement : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (TileNav.Ready() && TileNav.IsBlocked(TileNav.Cell(rb.position)))
+        {
+            trappedTime += Time.fixedDeltaTime;
+            if (trappedTime >= 0.2f)
+            {
+                Vector3Int safeCell = TileNav.NearestFree(TileNav.Cell(rb.position), 12);
+                rb.position = TileNav.Center(safeCell);
+                rb.linearVelocity = Vector2.zero;
+                iceVelocity = Vector2.zero; dashLeft = 0f; trappedTime = 0f;
+            }
+        }
+        else trappedTime = 0f;
+
         bool ice = DungeonGenerator.Instance != null && DungeonGenerator.Instance.IsIceAt(transform.position);
         iceVelocity = ice ? Vector2.MoveTowards(iceVelocity, movement * currentSpeed, 7f * Time.fixedDeltaTime) : movement * currentSpeed;
         if(dashLeft>0f)

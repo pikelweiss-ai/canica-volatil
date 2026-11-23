@@ -31,7 +31,7 @@ public sealed class AmuletInfo
 public static class RunAmulets
 {
     public const int Slots = 3;
-    public enum Action : byte { Choose, Discard, Swap, Glass, Phoenix }
+    public enum Action : byte { Choose, Discard, Swap, Glass, Phoenix, PassOffer }
     const ChestRarity Common = ChestRarity.Comu, Rare = ChestRarity.Rar, Epic = ChestRarity.Epic, Legendary = ChestRarity.Llegendari;
 
     public static readonly AmuletInfo[] Catalog =
@@ -135,6 +135,8 @@ public static class RunAmulets
     public static void OfferFloor()
     {
         if (!Enabled || NetCoop.IsClient) return;
+        // En acabar el boss, lleva els tirs que encara estiguen volant abans d'obrir la tria.
+        NetCoop.ClearEnemyBullets();
         foreach (int id in PlayerIds())
         {
             var kit = Get(id);
@@ -182,6 +184,10 @@ public static class RunAmulets
                 if (first < 0 || first >= kit.Offer.Length || second < 0 || second >= Slots ||
                     kit.Has(kit.Offer[first])) return false;
                 Equip(kit, second, kit.Offer[first]);
+                kit.Offer = Array.Empty<Amulet>();
+                break;
+            case Action.PassOffer:
+                if (kit.Offer == null || kit.Offer.Length == 0) return false;
                 kit.Offer = Array.Empty<Amulet>();
                 break;
             case Action.Discard:

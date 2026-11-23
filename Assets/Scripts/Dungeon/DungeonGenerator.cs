@@ -181,6 +181,23 @@ public partial class DungeonGenerator : MonoBehaviour
         FindFirstObjectByType<BlockShadow>()?.Rebuild();
         var spawn = data.spawns.FirstOrDefault(s => s.kind == "player");
         Vector2Int start = data.spawns.Any(s => s.kind == "player") ? new Vector2Int(spawn.x, spawn.y) : Vector2Int.zero;
+        if (NetSession.Active && NetSession.Instance.LocalId > 1)
+        {
+            var starts = new List<Vector2Int>();
+            for (int y = 0; y < data.height; y++)
+                for (int x = 0; x < data.width; x++)
+                    if (MapPlaytest.CellIsPassable(data, x, y)) starts.Add(new Vector2Int(x, y));
+            starts.Sort((a, b) =>
+            {
+                int da = Mathf.Abs(a.x - start.x) + Mathf.Abs(a.y - start.y);
+                int db = Mathf.Abs(b.x - start.x) + Mathf.Abs(b.y - start.y);
+                int order = da.CompareTo(db);
+                if (order != 0) return order;
+                order = a.y.CompareTo(b.y);
+                return order != 0 ? order : a.x.CompareTo(b.x);
+            });
+            if (starts.Count > 1) start = starts[Mathf.Min(NetSession.Instance.LocalId - 1, starts.Count - 1)];
+        }
         Vector3 startPos = ground.GetCellCenterWorld(new Vector3Int(start.x, start.y, 0));
         if (player != null) player.position = new Vector3(startPos.x, startPos.y, player.position.z);
         if (spawnPoint != null) spawnPoint.position = startPos;

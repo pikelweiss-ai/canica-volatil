@@ -17,10 +17,14 @@ public static class MobileInputChecks
             var a = Point(events.GetComponent<EventSystem>(),left,11,new Vector2(82,0));
             var b = Point(events.GetComponent<EventSystem>(),right,22,new Vector2(0,82));
             left.OnPointerDown(a); right.OnPointerDown(b);
-            Require(MobileInput.Movement.x > .99f && MobileInput.Firing && MobileInput.Aim.y > .99f,"Dos dits simultanis");
+            Require(MobileInput.Movement.x > .99f && !MobileInput.Firing && MobileInput.Aim.y > .99f,"Dos dits simultanis: moure i apuntar sense disparar");
+            var attack = new GameObject("Botó d'atac",typeof(RectTransform)).AddComponent<MobileAction>(); attack.action = 4;
+            var attackPointer = new PointerEventData(events.GetComponent<EventSystem>()) { pointerId = 33 };
+            attack.OnPointerDown(attackPointer); Require(MobileInput.Firing,"El botó d'atac inicia el foc");
             left.OnPointerUp(b); Require(MobileInput.Movement.x > .99f,"Un altre dit no pot soltar el joystick");
             left.OnPointerUp(a); Require(MobileInput.Movement == Vector2.zero && MobileInput.Firing,"Soltar moviment conserva atac");
-            right.OnPointerUp(b); Require(!MobileInput.Firing,"Soltar atac para el foc");
+            right.OnPointerUp(b); Require(MobileInput.Firing,"Soltar l'aim no para el foc");
+            attack.OnPointerUp(attackPointer); Require(!MobileInput.Firing,"Soltar atac para el foc");
             a.position = Position(left,new Vector2(41,0)); left.OnPointerDown(a);
             Require(MobileInput.Movement.magnitude > .35f && MobileInput.Movement.magnitude < .5f,"Velocitat analogica");
             a.position = Position(left,Vector2.one * 200); left.OnDrag(a); Require(Mathf.Abs(MobileInput.Movement.magnitude - 1) < .001f,"Diagonal limitada");

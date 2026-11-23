@@ -8,6 +8,16 @@ public sealed class MapPlaytest : MonoBehaviour
 {
     public static void GoBackToEditor()
     {
+        if (NetSession.Active)
+        {
+            if (NetSession.IsHost) NetSession.Instance.BackToLobby();
+            else
+            {
+                NetSession.Instance.Leave(null);
+                SceneManager.LoadScene("MainMenu");
+            }
+            return;
+        }
         ReturnToEditor = true;
         RunStats.DontSave = false;
         SceneManager.LoadScene("Creador");
@@ -17,7 +27,8 @@ public sealed class MapPlaytest : MonoBehaviour
     // Abans era un botó gran dalt a l'esquerra que tapava les vides.
     public static void CreateReturnButton(Transform parent)
     {
-        var button = UIKit.Box(parent, Vector2.zero, new Vector2(54, 48), new Color(0.04f, 0.09f, 0.14f, 0.8f), "Boto TORNAR A L'EDITOR");
+        string action = NetSession.Active ? (NetSession.IsHost ? "TORNAR AL LOBBY" : "EIXIR DE LA PARTIDA") : "TORNAR A L'EDITOR";
+        var button = UIKit.Box(parent, Vector2.zero, new Vector2(54, 48), new Color(0.04f, 0.09f, 0.14f, 0.8f), "Boto " + action);
         button.anchorMin = button.anchorMax = button.pivot = Vector2.one;
         button.anchoredPosition = new Vector2(-20, -74);
         button.gameObject.AddComponent<Button>().onClick.AddListener(GoBackToEditor);
@@ -52,9 +63,22 @@ public sealed class MapPlaytest : MonoBehaviour
     public static bool ReturnToEditor;
     public static bool StartInDungeon;
     public static bool DeleteMapAfterConsume;
+    static MapData networkMap;
+
+    public static void SetNetworkMap(MapData data) => networkMap = data;
+    public static void ClearNetworkMap() => networkMap = null;
+
     public static bool TryConsumeDungeonMap(out MapData map)
     {
         map = null;
+        if (networkMap != null)
+        {
+            map = networkMap;
+            networkMap = null;
+            StartInDungeon = false;
+            DeleteMapAfterConsume = false;
+            return true;
+        }
         if (!StartInDungeon) return false;
         StartInDungeon = false;
         bool loaded = MapStore.Load(MapName, out map, out _);
@@ -151,9 +175,9 @@ public sealed class MapPlaytestRuntime : MonoBehaviour
         player = generator.player;
         var canvas = UIKit.Canvas("Prova mapa real", 80);
         // El botó de tornar a l'editor ara el posa DungeonUI (amb porta i fletxa, baix de les 3 barres) perquè no tape les vides.
-        status = UIKit.Text(canvas.transform, map.goal == null ? "MAPA LLIURE" : "Arriba al portal per completar el mapa", new Vector2(0, 405), new Vector2(700, 42), 20, TextAlignmentOptions.Center, UIKit.Gold);
+        status = UIKit.Text(canvas.transform, NetSession.Active ? (map.goal == null ? "MAPA ONLINE" : "MAPA ONLINE · Arriba al portal") : (map.goal == null ? "MAPA LLIURE" : "Arriba al portal per completar el mapa"), new Vector2(0, 405), new Vector2(700, 42), 20, TextAlignmentOptions.Center, UIKit.Gold);
         // Portal d'arribada: apareix on comença el jugador i es desfà quan s'allunya. Només de decorat.
-        DungeonPortal.Create(dungeon.ground.GetCellCenterWorld(dungeon.ground.WorldToCell(player.position)), returning: true, decorative: true);
+        DungeonPortal.Create(dungeon.ground.GetCellCenterWorld(dungeon.ground.WorldToCell(player.position)), returning: true, decorative: true, distanceTarget: player);
         if (map.goal != null)
         {
             Vector3 pos = dungeon.ground.GetCellCenterWorld(new Vector3Int(map.goal.x, map.goal.y, 0));

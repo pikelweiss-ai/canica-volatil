@@ -61,10 +61,12 @@ public class RemoteAvatar : MonoBehaviour
     public int playerId;
     public bool Down { get; private set; }
     SpriteRenderer body, hand;
+    SpriteRenderer shield;
     TMP_Text nameText;
     Vector3 target;
     float aim;
     string weaponName;
+    bool shieldRaised;
     string lastName;
     bool lastReady, lastShowReady;
 
@@ -132,6 +134,7 @@ public class RemoteAvatar : MonoBehaviour
         target = new Vector3(pl.x, pl.y, transform.position.z);
         aim = pl.aim;
         weaponName = pl.weapon;
+        shieldRaised = pl.shieldRaised;
         Down = pl.down || Time.realtimeSinceStartupAsDouble - pl.lastPos > 0.6;
         if (nameText != null && (pl.name != lastName || pl.ready != lastReady || showReady != lastShowReady))
         {
@@ -157,8 +160,24 @@ public class RemoteAvatar : MonoBehaviour
     {
         if (hand == null) return;
         var weapon = NetCoop.Weapon(weaponName);
-        if (weapon == null || weapon.icon == null) { hand.enabled = false; return; }
+        if (weapon == null || weapon.icon == null) { hand.enabled = false; if (shield != null) shield.enabled = false; return; }
         Vector2 dir = new Vector2(Mathf.Cos(aim * Mathf.Deg2Rad), Mathf.Sin(aim * Mathf.Deg2Rad));
+        if (weapon.special == SpecialKind.Shield && shieldRaised)
+        {
+            hand.enabled = false;
+            if (shield == null)
+            {
+                var go = new GameObject("Escut del company");
+                shield = go.AddComponent<SpriteRenderer>(); go.transform.SetParent(transform, true);
+                shield.transform.localScale = Vector3.one * 1.1f;
+            }
+            shield.enabled = body.enabled; shield.sprite = weapon.icon; shield.sortingLayerID = body.sortingLayerID;
+            shield.sortingOrder = dir.y > 0.35f ? body.sortingOrder - 1 : body.sortingOrder + 1;
+            shield.flipY = dir.x < 0f; shield.transform.position = transform.position + (Vector3)(dir * 0.85f);
+            shield.transform.rotation = Quaternion.Euler(0f, 0f, aim);
+            return;
+        }
+        if (shield != null) shield.enabled = false;
         hand.enabled = body.enabled;
         hand.sprite = weapon.icon;
         hand.flipY = dir.x < 0f;

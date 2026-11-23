@@ -12,7 +12,7 @@ public class LobbyRoomUI : MonoBehaviour
     TextMeshProUGUI roomTitle, roomSub, codeText, playersTitle, countdown, hint;
     RectTransform playerList, hostBox, addressRow;
     TextMeshProUGUI addressText;
-    UIKit.UIButton mainButton, modeDungeon, modeFree, copyAddressButton;
+    UIKit.UIButton mainButton, modeDungeon, modeFree, modeCustom, copyAddressButton;
     float nextRefresh;
     int lastCountdown = -1;
 
@@ -67,6 +67,9 @@ public class LobbyRoomUI : MonoBehaviour
         UIKit.Text(hostBox, "MODE DE JOC", new Vector2(0, -158), new Vector2(340, 28), 17, TextAlignmentOptions.MidlineLeft, UIKit.Muted);
         modeDungeon = UIKit.Button(hostBox, "MASMORRA", new Vector2(-88, -192), new Vector2(166, 42), () => s.SetMode(RoomMode.Dungeon), UIKit.Style.Normal, 19);
         modeFree = UIKit.Button(hostBox, "MAPA LLIURE", new Vector2(88, -192), new Vector2(166, 42), () => s.SetMode(RoomMode.FreeMap), UIKit.Style.Normal, 19);
+        modeCustom = UIKit.Button(hostBox, "MAPA CREAT", Vector2.zero, new Vector2(108, 42), () => s.SetMode(RoomMode.CustomMap), UIKit.Style.Normal, 15);
+        modeCustom.rect.anchoredPosition = new Vector2(0, -192);
+        modeCustom.rect.gameObject.SetActive(false);
 
         mainButton = UIKit.Button(panel, "", new Vector2(0, -250), new Vector2(340, 60), MainAction, UIKit.Style.Primary, 23);
         UIKit.Button(panel, "EIXIR DE LA SALA", new Vector2(0, -308), new Vector2(340, 40), LeaveRoom, UIKit.Style.Danger, 17);
@@ -183,10 +186,26 @@ public class LobbyRoomUI : MonoBehaviour
         hostBox.gameObject.SetActive(host);
         if (host)
         {
+            bool customAvailable = s.HasCustomMap;
+            modeCustom.rect.gameObject.SetActive(customAvailable);
+            if (customAvailable)
+            {
+                modeDungeon.rect.anchoredPosition = new Vector2(-116, -192); modeDungeon.rect.sizeDelta = new Vector2(108, 42);
+                modeFree.rect.anchoredPosition = new Vector2(0, -192); modeFree.rect.sizeDelta = new Vector2(108, 42);
+                modeCustom.rect.anchoredPosition = new Vector2(116, -192);
+                modeDungeon.SetLabel("MASMORRA"); modeFree.SetLabel("MAPA LLIURE");
+            }
+            else
+            {
+                modeDungeon.rect.anchoredPosition = new Vector2(-88, -192); modeDungeon.rect.sizeDelta = new Vector2(166, 42);
+                modeFree.rect.anchoredPosition = new Vector2(88, -192); modeFree.rect.sizeDelta = new Vector2(166, 42);
+                modeDungeon.SetLabel("MASMORRA"); modeFree.SetLabel("MAPA LLIURE");
+            }
             modeDungeon.SetStyle(room.mode == RoomMode.Dungeon ? UIKit.Style.Primary : UIKit.Style.Normal);
             modeFree.SetStyle(room.mode == RoomMode.FreeMap ? UIKit.Style.Primary : UIKit.Style.Normal);
+            modeCustom.SetStyle(room.mode == RoomMode.CustomMap ? UIKit.Style.Primary : UIKit.Style.Normal);
             bool lobby = room.phase == RoomPhase.Lobby;
-            modeDungeon.SetInteractable(lobby); modeFree.SetInteractable(lobby);
+            modeDungeon.SetInteractable(lobby); modeFree.SetInteractable(lobby); modeCustom.SetInteractable(lobby && customAvailable);
             if (room.phase == RoomPhase.Countdown) { mainButton.SetStyle(UIKit.Style.Normal); mainButton.SetLabel("ATURAR"); mainButton.SetInteractable(true); }
             else if (s.EveryoneReady) { mainButton.SetStyle(UIKit.Style.Primary); mainButton.SetLabel(s.Players.Count == 1 ? "COMENÇAR (SOLO)" : "COMENÇAR PARTIDA"); mainButton.SetInteractable(true); }
             else { mainButton.SetStyle(UIKit.Style.Normal); mainButton.SetLabel("ESPERANT " + s.ReadyCount + "/" + s.Players.Count + " LLESTOS"); mainButton.SetInteractable(false); }
@@ -319,7 +338,7 @@ public class InGameNetUI : MonoBehaviour
 {
     NetSession s;
     TextMeshProUGUI list;
-    RectTransform panelRect, backButton;
+    RectTransform panelRect, backButton, confirmation;
     float next;
 
     public static void Create()
@@ -339,8 +358,8 @@ public class InGameNetUI : MonoBehaviour
         UIKit.Stretch(list.rectTransform, 14, 10, 14, 10);
         if (NetSession.IsHost)
         {
-            var b = UIKit.Button(transform, "TORNAR TOTS AL LOBBY", Vector2.zero, new Vector2(260, 40), () => s.BackToLobby(), UIKit.Style.Normal, 16, false);
-            b.rect.anchorMin = b.rect.anchorMax = new Vector2(1, .5f); b.rect.pivot = new Vector2(1, 1); backButton = b.rect;
+            var b = UIKit.Button(transform, "TORNAR AL LOBBY", Vector2.zero, new Vector2(150, 34), ShowBackConfirmation, UIKit.Style.Ghost, 13, false);
+            b.rect.anchorMin = b.rect.anchorMax = new Vector2(1, 1); b.rect.pivot = new Vector2(1, 1); b.rect.anchoredPosition = new Vector2(-14, -14); backButton = b.rect;
         }
         var chat = ChatBox.Create(transform, Vector2.zero, new Vector2(440, 220), true);
         var cr = (RectTransform)chat.transform; cr.anchorMin = cr.anchorMax = cr.pivot = new Vector2(0, 0); cr.anchoredPosition = new Vector2(14, MobileInput.Active?340:150);
@@ -372,6 +391,29 @@ public class InGameNetUI : MonoBehaviour
         list.text = sb.ToString();
         float h = 34 + 23 * (s.Players.Count + 1);
         panelRect.sizeDelta = new Vector2(260, h);
-        if (backButton != null) backButton.anchoredPosition = new Vector2(-14, 70 - h - 10);
+    }
+
+    void ShowBackConfirmation()
+    {
+        if (confirmation != null) return;
+        var dim = UIKit.Box(transform, Vector2.zero, Vector2.zero, new Color(0, .01f, .02f, .78f), "Confirmar tornada al lobby");
+        UIKit.Stretch(dim);
+        confirmation = UIKit.Box(dim, Vector2.zero, new Vector2(560, 250), new Color(.06f, .115f, .15f), "Confirmació");
+        UIKit.Box(confirmation, new Vector2(0, 122), new Vector2(560, 6), UIKit.Gold);
+        UIKit.Text(confirmation, "TORNAR TOTS AL LOBBY?", new Vector2(0, 65), new Vector2(520, 55), 27, TextAlignmentOptions.Center, UIKit.Gold);
+        UIKit.Text(confirmation, "Tots eixiran de la partida actual.", new Vector2(0, 15), new Vector2(500, 35), 19, TextAlignmentOptions.Center, UIKit.TextColor);
+        UIKit.Button(confirmation, "CANCEL·LAR", new Vector2(-135, -65), new Vector2(220, 56), CloseBackConfirmation, UIKit.Style.Normal, 20);
+        UIKit.Button(confirmation, "TORNAR", new Vector2(135, -65), new Vector2(220, 56), () =>
+        {
+            CloseBackConfirmation();
+            if (s != null && NetSession.Active && NetSession.IsHost) s.BackToLobby();
+        }, UIKit.Style.Danger, 20);
+    }
+
+    void CloseBackConfirmation()
+    {
+        if (confirmation == null) return;
+        Destroy(confirmation.parent.gameObject);
+        confirmation = null;
     }
 }

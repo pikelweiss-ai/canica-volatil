@@ -12,6 +12,21 @@ public static class Changelog
     {
         new Entry
         {
+            version = "Alpha v1.6.1", title = "Online i mapes creats",
+            lines = new[]
+            {
+                "ONLINE",
+                "La connexió pot provar primer una ruta directa amb UPnP i usar el túnel com a alternativa.",
+                "MAPES PROPIS",
+                "L'amfitrió pot obrir una sala amb un mapa guardat i compartir-lo amb els altres jugadors.",
+                "AMULETS",
+                "Prem X en la tria per a conservar els amulets que ja portes.",
+                "COMBAT I CONTROLS",
+                "Millores de sincronització de mines, escut, controls Android i altres correccions de joc."
+            }
+        },
+        new Entry
+        {
             version = "Alpha v1.6.0", title = "Creador de mapes",
             lines = new[]
             {

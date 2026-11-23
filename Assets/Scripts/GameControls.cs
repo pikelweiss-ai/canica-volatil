@@ -3,10 +3,11 @@ using UnityEngine;
 // Input antic, dues tecles per accio i persistencia local.
 public static class GameControls
 {
-    public static readonly string[] Actions = { "Amunt", "Avall", "Esquerra", "Dreta", "Atacar", "Cofre", "Deixar arma", "Apuntat", "Pausa", "Mapa", "Usar cura", "Arma 1", "Arma 2", "Arma 3", "Arma 4", "Cura 1", "Cura 2", "Cura 3", "Cura 4", "Obrir el xat" };
-    static readonly KeyCode[] Primary = { KeyCode.W, KeyCode.S, KeyCode.A, KeyCode.D, KeyCode.Mouse0, KeyCode.E, KeyCode.Z, KeyCode.Tab, KeyCode.Escape, KeyCode.M, KeyCode.Mouse1, KeyCode.Alpha1, KeyCode.Alpha2, KeyCode.Alpha3, KeyCode.Alpha4, KeyCode.Alpha5, KeyCode.Alpha6, KeyCode.Alpha7, KeyCode.Alpha8, KeyCode.Return };
-    static readonly KeyCode[] Secondary = { KeyCode.UpArrow, KeyCode.DownArrow, KeyCode.LeftArrow, KeyCode.RightArrow, KeyCode.Space, KeyCode.None, KeyCode.None, KeyCode.None, KeyCode.None, KeyCode.None, KeyCode.None, KeyCode.Keypad1, KeyCode.Keypad2, KeyCode.Keypad3, KeyCode.Keypad4, KeyCode.Keypad5, KeyCode.Keypad6, KeyCode.Keypad7, KeyCode.Keypad8, KeyCode.KeypadEnter };
+    public static readonly string[] Actions = { "Amunt", "Avall", "Esquerra", "Dreta", "Atacar", "Cofre", "Deixar arma", "Apuntat", "Pausa", "Mapa", "Usar cura", "Arma 1", "Arma 2", "Arma 3", "Arma 4", "Cura 1", "Cura 2", "Cura 3", "Cura 4", "Obrir el xat", "Amulets de l'equip" };
+    static readonly KeyCode[] Primary = { KeyCode.W, KeyCode.S, KeyCode.A, KeyCode.D, KeyCode.Mouse0, KeyCode.E, KeyCode.Z, KeyCode.Tab, KeyCode.Escape, KeyCode.M, KeyCode.Mouse1, KeyCode.Alpha1, KeyCode.Alpha2, KeyCode.Alpha3, KeyCode.Alpha4, KeyCode.Alpha5, KeyCode.Alpha6, KeyCode.Alpha7, KeyCode.Alpha8, KeyCode.Return, KeyCode.LeftAlt };
+    static readonly KeyCode[] Secondary = { KeyCode.UpArrow, KeyCode.DownArrow, KeyCode.LeftArrow, KeyCode.RightArrow, KeyCode.Space, KeyCode.None, KeyCode.None, KeyCode.None, KeyCode.None, KeyCode.None, KeyCode.None, KeyCode.Keypad1, KeyCode.Keypad2, KeyCode.Keypad3, KeyCode.Keypad4, KeyCode.Keypad5, KeyCode.Keypad6, KeyCode.Keypad7, KeyCode.Keypad8, KeyCode.KeypadEnter, KeyCode.None };
     public const int OpenChat = 19;
+    public const int ShowPartyAmulets = 20;
     public static bool Editing;
     public static bool Blocked => Editing || TypingGuard.CapturedInput;
     public static bool ChatMouse

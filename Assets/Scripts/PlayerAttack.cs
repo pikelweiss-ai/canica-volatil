@@ -42,6 +42,7 @@ public partial class PlayerAttack : MonoBehaviour
     private bool reverseSwing;
     private int selectedSlot = 0;
     private bool mouseBlocked;          // El clic ha començat damunt de la UI
+    private float sharedAttackCooldown; // Evita saltar-se la cadència alternant caselles
     private readonly float[] slotCooldown = new float[4];
     private readonly bool[] overheated = new bool[4]; // Minigun: bloquejada fins que l'escalfament torna a 0
     private readonly WeaponCondition[] conditions = new WeaponCondition[4];
@@ -104,7 +105,7 @@ public partial class PlayerAttack : MonoBehaviour
     {
         if (Time.timeScale == 0f) return;
         // Tab: mostra / amaga la línia d'apuntat
-        if (GameControls.Down(7) && !(RunAmulets.Enabled && NetCoop.Online))
+        if (GameControls.Down(7))
             showAimLine = !showAimLine;
 
         HandleSlotSelection();
@@ -121,6 +122,7 @@ public partial class PlayerAttack : MonoBehaviour
             if (hotbarSlots[s] != null && hotbarSlots[s].special == SpecialKind.Mine)
                 conditions[s].Heat = Mathf.Max(0f, conditions[s].Heat - Time.deltaTime * (s == selectedSlot ? 1f : StowedTurretRate) / MineRecharge);
         }
+        sharedAttackCooldown = Mathf.Max(0f, sharedAttackCooldown - Time.deltaTime);
         UpdateAim();
         UpdateHand();
 
@@ -131,7 +133,7 @@ public partial class PlayerAttack : MonoBehaviour
             ? !GameControls.Blocked && MobileInput.Firing
             : ReadDesktopAttack(Input.GetMouseButtonDown(0), Input.GetMouseButton(0), Input.mousePosition,
                 GameControls.Key(4) == KeyCode.Mouse0 || GameControls.Key(4, 1) == KeyCode.Mouse0, GameControls.AttackHeld(true));
-        TickAttack(attackPressed);
+        TickAttack(attackPressed && sharedAttackCooldown <= 0f);
         TickShieldEnergy(); // v1.4.1: recàrrega de l escut
         for (int i = 0; i < hotbarSlots.Length; i++)
         {
@@ -213,7 +215,7 @@ public partial class PlayerAttack : MonoBehaviour
             if (weapon == null)
             {
                 Punch();
-                slotCooldown[selectedSlot] = RunAmulets.Cooldown(fistCooldown);
+                slotCooldown[selectedSlot] = sharedAttackCooldown = RunAmulets.Cooldown(fistCooldown);
             }
             else if (weapon.maxShots > 0 && RunState.Active && conditions[selectedSlot].ShotsUsed >= weapon.maxShots)
             {
@@ -226,7 +228,7 @@ public partial class PlayerAttack : MonoBehaviour
             else
             {
                 Shoot(weapon);
-                slotCooldown[selectedSlot] = RunAmulets.Cooldown(weapon.cooldown);
+                slotCooldown[selectedSlot] = sharedAttackCooldown = RunAmulets.Cooldown(weapon.cooldown);
                 ref WeaponCondition condition = ref conditions[selectedSlot];
                 if (weapon.special == SpecialKind.Mine) condition.Heat = Mathf.Min(MineCharges, condition.Heat + 1f); // gasta una càrrega
                 if (weapon.heatLimit > 0 && ++condition.Heat >= weapon.heatLimit)
@@ -358,22 +360,24 @@ public partial class PlayerAttack : MonoBehaviour
         if (aimBounce == null) aimBounce = CreateLine("AimBounce", aimLine.sharedMaterial, -2);
         var points = new System.Collections.Generic.List<Vector2> { start };
         Vector2 pos = start, dir = aimDirection;
-        float remaining = w.range;
+        float remaining = w.range * RunAmulets.RangeMultiplier;
+        float projectileRadius = Mathf.Max(0f, w.projectileSize * 0.5f);
         for (int segment = 0; segment <= w.wallBounces && remaining > 0.01f; segment++)
         {
             RaycastHit2D wall = default; bool found = false;
-            foreach (var hit in Physics2D.RaycastAll(pos, dir, remaining))
+            foreach (var hit in Physics2D.CircleCastAll(pos, projectileRadius, dir, remaining))
             {
                 var c = hit.collider;
                 if (c == null || c.isTrigger || c.transform.IsChildOf(transform) || c.GetComponentInParent<EnemyHealth>() != null) continue;
                 wall = hit; found = true; break;
             }
             if (!found) { points.Add(pos + dir * remaining); break; }
-            points.Add(wall.point);
+            Vector2 hitCenter = pos + dir * wall.distance;
+            points.Add(hitCenter);
             if (segment == w.wallBounces) break;
             remaining = remaining - wall.distance + w.range * w.bounceRangeBonus;
             dir = Vector2.Reflect(dir, wall.normal);
-            pos = wall.point + wall.normal * 0.02f;
+            pos = hitCenter + wall.normal * 0.02f;
         }
         aimBounce.enabled = showAimLine;
         aimBounce.positionCount = points.Count;
@@ -604,7 +608,8 @@ public partial class PlayerAttack : MonoBehaviour
                     Vector2 toBox = to - origin; float len = toBox.magnitude;
                     to = len > 0.7f ? origin + toBox * ((len - 0.7f) / len) : origin;
                 }
-                if (!TileNav.LineOfSight(origin, to)) continue;
+                // L'aigua no ha de tallar el colp cos a cos; els murs sí que el tallen.
+                if (!TileNav.LineOfSight(origin, to, ignoreWater: true)) continue;
             }
             EnemyHealth enemy = hit.GetComponentInParent<EnemyHealth>();
             if (enemy != null && enemies.Add(enemy)) targets.Add((((Vector2)enemy.transform.position - origin).sqrMagnitude, enemy));

@@ -18,6 +18,7 @@ public class MobileHUD : MonoBehaviour
         if(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "Lobby")
         {
             Stick(true, new Vector2(-170, 170));
+            Action("ATACAR", 4, new Vector2(-170, 350), true);
             Action("OBRIR\n(mantín)", 5, new Vector2(-350, 350), true);
             Action("TIRAR\nARMA", 6, new Vector2(350, 90), false);
             Action("MAPA", 9, new Vector2(-350, 90), true);
@@ -59,12 +60,12 @@ public class MobileHUD : MonoBehaviour
     }
     void Stick(bool aim, Vector2 pos)
     {
-        var r = Box(aim ? "Apuntar i atacar" : "Moure", pos, Vector2.one * 230, aim, new Color(.08f,.16f,.22f,.38f));
+        var r = Box(aim ? "Apuntar" : "Moure", pos, Vector2.one * 230, aim, new Color(.08f,.16f,.22f,.38f));
         var image = r.GetComponent<Image>(); image.sprite = Disc();
         var knob = new GameObject("Palanca", typeof(RectTransform), typeof(Image)).GetComponent<RectTransform>(); knob.SetParent(r, false); knob.sizeDelta = Vector2.one * 82;
         knob.GetComponent<Image>().sprite = image.sprite; knob.GetComponent<Image>().color = new Color(.55f,.85f,1,.65f); knob.GetComponent<Image>().raycastTarget = false;
         var stick = r.gameObject.AddComponent<MobileStick>(); stick.aim = aim; stick.knob = knob;
-        Label(r, aim ? "APUNTAR\nATACAR" : "MOURE", 19);
+        Label(r, aim ? "APUNTAR" : "MOURE", 19);
     }
     void Action(string label, int action, Vector2 pos, bool right)
     {
@@ -93,10 +94,10 @@ public class MobileStick : MonoBehaviour, IPointerDownHandler, IDragHandler, IPo
         RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)transform,e.position,e.pressEventCamera,out var p);
         Vector2 v = Vector2.ClampMagnitude(p / 82,1); knob.anchoredPosition = v * 82;
         float magnitude = v.magnitude; v = magnitude < .16f ? Vector2.zero : v.normalized * Mathf.InverseLerp(.16f,1,magnitude);
-        if(aim) { MobileInput.Firing = v.sqrMagnitude > 0; if(MobileInput.Firing) MobileInput.Aim = v.normalized; } else MobileInput.Movement = v;
+        if(aim) { if(v.sqrMagnitude > 0) MobileInput.Aim = v.normalized; } else MobileInput.Movement = v;
     }
     public void OnPointerUp(PointerEventData e) { if(e.pointerId == pointer) Cancel(); }
-    public void Cancel() { pointer = int.MinValue; if(knob != null) knob.anchoredPosition = Vector2.zero; if(aim) MobileInput.Firing = false; else MobileInput.Movement = Vector2.zero; }
+    public void Cancel() { pointer = int.MinValue; if(knob != null) knob.anchoredPosition = Vector2.zero; if(!aim) MobileInput.Movement = Vector2.zero; }
     void OnDisable() { Cancel(); }
 }
 

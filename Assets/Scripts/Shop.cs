@@ -226,6 +226,12 @@ public class Shop : MonoBehaviour
         var s = slots[index];
         if (s.amulet != Amulet.None && !RunAmulets.CanBuy(RunAmulets.LocalId, s.amulet)) { Say("Ja el portes o necessites una ranura lliure."); return; }
         if (s.sold) { Say("Això ja ho han comprat."); return; }
+        if (s.weapon != null)
+        {
+            GameObject localPlayer = GameObject.FindWithTag("Player");
+            PlayerAttack attack = localPlayer != null ? localPlayer.GetComponent<PlayerAttack>() : null;
+            if (attack == null || !attack.HasFreeSlot) { Say("No tens cap ranura lliure per a una altra arma."); return; }
+        }
         int price = PriceOf(s);
         if (s.repair && price <= 0) { Fx.Text(transform.position + Vector3.up, "Cap arma per recarregar", UIKit.Muted); return; }
         if (RunState.Coins < price) { Say("Sense monedes, sense tracte. Torna quan la butxaca pese."); return; }
@@ -270,7 +276,17 @@ public class Shop : MonoBehaviour
         int price = PriceOf(s);
         if (!CoinCounter.Spend(price)) { slots[index].sold = false; return; }
         Vector3 at = player.transform.position;
-        Vector3 to = at + (Vector3)(Random.insideUnitCircle.normalized * 1.1f);
+        Vector2 offset = Random.insideUnitCircle;
+        if (offset.sqrMagnitude < 0.01f) offset = Vector2.up;
+        Vector3 to = at + (Vector3)(offset.normalized * 0.22f);
+        Vector2 awayFromShop = ((Vector2)player.transform.position - (Vector2)transform.position).normalized;
+        if (awayFromShop.sqrMagnitude < 0.01f) awayFromShop = Vector2.up;
+        Vector3 from = to - (Vector3)(awayFromShop * 0.32f);
+        if (TileNav.Ready())
+        {
+            if (!TileNav.CircleFree(to, 0.12f)) to = TileNav.Center(TileNav.NearestFree(TileNav.Cell(at), 8));
+            if (!TileNav.CircleFree(from, 0.12f) || !TileNav.LineOfSight(from, to)) from = to;
+        }
         if (!IsMerchant && Random.value < .03f)
         {   // 3 % de probabilitat d'embussar-se i quedar-se la moneda
             jammed = true; Fx.Text(transform.position + Vector3.up, "MÀQUINA EMBUSSADA", UIKit.Red);
@@ -278,8 +294,8 @@ public class Shop : MonoBehaviour
         else if (s.repair) { var attack = player.GetComponent<PlayerAttack>(); if (attack != null) attack.RefuelAll(); Say("Això es pot arreglar. Per un preu, clar.", true); }
         else
         {
-            if (s.weapon != null) ItemPickup.Spawn(s.weapon, transform.position, to);
-            else if (s.heal != null) HealPickup.Spawn(s.heal, transform.position, to);
+            if (s.weapon != null) ItemPickup.Spawn(s.weapon, from, to);
+            else if (s.heal != null) HealPickup.Spawn(s.heal, from, to);
             MobSounds.PlayLocal("sala_monedes", transform.position, .6f);
             Say(Random.value < .5f ? "Un plaer fer negocis!" : "Això donarà vida a la teua aventura... o a la meua butxaca.", true);
         }

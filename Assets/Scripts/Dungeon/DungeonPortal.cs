@@ -15,13 +15,14 @@ public class DungeonPortal : MonoBehaviour
     const float LeaveDistance = 1.3f;
 
     // decorative: portal d'arribada només de decorat (no fa res): apareix i, quan el jugador s'allunya, es desfà.
-    public static DungeonPortal Create(Vector3 pos, bool returning = false, bool mapGoal = false, bool decorative = false)
+    public static DungeonPortal Create(Vector3 pos, bool returning = false, bool mapGoal = false, bool decorative = false, Transform distanceTarget = null)
     {
         GameObject go = new GameObject(decorative ? "Portal d'arribada" : returning ? "Portal de tornada" : "Portal");
         go.transform.position = pos;
         DungeonPortal p = go.AddComponent<DungeonPortal>();
         p.mapGoalPortal = mapGoal;
         p.decorative = decorative;
+        p.player = distanceTarget;
         Color outerColor = returning ? new Color(0.25f, 0.78f, 0.9f, 0.9f) : new Color(0.64f, 0.35f, 0.88f, 0.9f);
         Color innerColor = returning ? new Color(0.04f, 0.16f, 0.24f) : new Color(0.15f, 0.05f, 0.25f);
         p.Direction = returning ? -1 : 1;
@@ -41,15 +42,21 @@ public class DungeonPortal : MonoBehaviour
 
     void Start()
     {
-        GameObject p = GameObject.FindWithTag("Player");
-        if (p != null) player = p.transform;
+        if (player == null)
+        {
+            GameObject p = GameObject.FindWithTag("Player");
+            if (p != null) player = p.transform;
+        }
         armed = player == null || Vector2.Distance(player.position, transform.position) >= TriggerRadius;
         transform.localScale = Vector3.zero;
     }
 
     void Update()
     {
-        if (decorative && !leaving && player != null && player.gameObject.activeInHierarchy && Vector2.Distance(player.position, transform.position) > LeaveDistance) leaving = true;
+        if (decorative && !leaving)
+        {
+            if (player == null || !player.gameObject.activeInHierarchy || Vector2.Distance(player.position, transform.position) > LeaveDistance) leaving = true;
+        }
         appear = Mathf.MoveTowards(appear, leaving ? 0f : 1f, Time.deltaTime * (leaving ? 3f : 2f));
         if (leaving && appear <= 0f) { Destroy(gameObject); return; }
         float pulse = 1f + Mathf.Sin(Time.time * 4f) * 0.06f;

@@ -96,7 +96,7 @@ public class AmuletUI : MonoBehaviour
             rings[i].enabled = remaining > 0f;
             rings[i].fillAmount = remaining / (id == Amulet.GlassShield ? 15f : 10f);
         }
-        if (NetCoop.Online && GameControls.Down(7))
+        if (NetCoop.Online && GameControls.Down(GameControls.ShowPartyAmulets))
         {
             if (party != null) { Destroy(party); party = null; }
             else ShowParty();
@@ -181,6 +181,10 @@ public class AmuletUI : MonoBehaviour
     {
         ShopUI.CloseNow();
         StartModal(replaceOffer < 0 ? "Tria un amulet" : "Quin amulet vols substituir?", new Vector2(1080, 445));
+        UIKit.Button(modalBody, "X", new Vector2(504, 179), new Vector2(48, 48), () =>
+        { RunAmulets.Request(RunAmulets.Action.PassOffer, 0); }, UIKit.Style.Ghost, 24);
+        UIKit.Text(modalBody, "PASSAR conserva els amulets que ja portes.", new Vector2(0, -199), new Vector2(600, 28), 16,
+            TextAlignmentOptions.Center, UIKit.Dim);
         for (int i = 0; i < RunAmulets.Slots; i++)
         {
             int choice = i;

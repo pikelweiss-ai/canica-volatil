@@ -22,7 +22,8 @@ public class ControlsUI : MonoBehaviour
         var bg=new GameObject("Panell",typeof(RectTransform),typeof(Image)); bg.transform.SetParent(transform,false); panel=bg.transform;
         var rect=(RectTransform)panel; rect.anchorMin=Vector2.zero;rect.anchorMax=Vector2.one;rect.offsetMin=rect.offsetMax=Vector2.zero;
         bg.GetComponent<Image>().color=new Color(0.025f,0.04f,0.075f,1f);
-        Text("CONTROLS · "+(page+1)+"/2",0,380,40,1100);
+        int pageCount=(GameControls.Actions.Length+9)/10;
+        Text("CONTROLS · "+(page+1)+"/"+pageCount,0,380,40,1100);
         Text(capture>=0 ? "Prem una tecla · Esc cancel·la · Retrocés lleva l'assignació" : "Clica una assignació. Els duplicats s'intercanvien. Dues tecles per acció.",0,320,22,1500);
         for(int row=0;row<10;row++)
         {
@@ -34,7 +35,7 @@ public class ControlsUI : MonoBehaviour
         string[] modes={"Roda: armes","Roda: cures","Roda: armes / Maj + roda: cures","Roda desactivada"};
         Button(modes[GameControls.Wheel],-330,-265,640,()=>{GameControls.Wheel=(GameControls.Wheel+1)%4;Build();});
         Button(GameControls.ChatMouse ? "Obrir el xat amb clic: sí" : "Obrir el xat amb clic: no",330,-265,640,()=>{GameControls.ChatMouse=!GameControls.ChatMouse;Build();});
-        Button("Anterior / següent",-470,-355,420,()=>{page=1-page;capture=-1;Build();});
+        Button("Anterior / següent",-470,-355,420,()=>{page=(page+1)%pageCount;capture=-1;Build();});
         Button("Restablir",0,-355,380,()=>{GameControls.Reset();capture=-1;Build();});
         Button("Fet",470,-355,380,Close);
     }

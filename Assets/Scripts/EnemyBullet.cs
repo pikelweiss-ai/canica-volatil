@@ -6,6 +6,12 @@ public class EnemyBullet : MonoBehaviour
     public enum Appearance : byte { Default, Rat, Pan }
     public static Sprite sprite; // L'assigna la masmorra (BalaEnemiga.png); si no, cercle roig
 
+    public static void ClearAll()
+    {
+        foreach (var bullet in FindObjectsByType<EnemyBullet>(FindObjectsSortMode.None))
+            if (bullet != null) Destroy(bullet.gameObject);
+    }
+
     private Vector2 velocity;
     private int damage;
     bool slows; // v1.4.1: boles de gel (color blau pàl·lid): en tocar-te et ralentixen ~2 s
@@ -74,6 +80,8 @@ public class EnemyBullet : MonoBehaviour
         if (life <= 0f) { Destroy(gameObject); return; }
 
         if (TileNav.Ground != null && TileNav.IsBlocked(TileNav.Cell(transform.position), ignoreWater: true, overHazardousLiquid: overHazardousLiquid)) { Pop(); return; }
+
+        if (NetCoop.AllyShieldBlocksLocal(transform.position, velocity)) { Pop(); return; }
 
         foreach (Collider2D hit in Physics2D.OverlapCircleAll(transform.position, 0.12f * transform.localScale.x))
         {

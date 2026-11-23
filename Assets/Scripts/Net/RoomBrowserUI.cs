@@ -34,6 +34,24 @@ public class RoomBrowserUI : MonoBehaviour
         open.Build();
     }
 
+    public static void OpenCreateForMap(string mapName)
+    {
+        if (!MapStore.Load(mapName, out _, out var error))
+        { NetToast.Show("No s'ha pogut obrir el mapa: " + error, 4f); return; }
+        Open();
+        open.SetTab(Tab.Internet);
+        open.OpenCreate(mapName);
+    }
+
+    public static void OpenCreateForMapData(MapData mapData, string displayName)
+    {
+        if (!MapShare160.Encode(mapData, out _, out var error))
+        { NetToast.Show("No es pot hostejar este mapa: " + error, 4f); return; }
+        Open();
+        open.SetTab(Tab.Internet);
+        open.OpenCreate(null, mapData, displayName);
+    }
+
     public static bool IsOpen => open != null && open.gameObject.activeSelf;
 
     // Nomes per al bot de captures (NetBot -botShots)
@@ -117,7 +135,7 @@ public class RoomBrowserUI : MonoBehaviour
         UIKit.Button(root, "ENTRAR", new Vector2(580, 172), new Vector2(380, 54), JoinCode, UIKit.Style.Normal, 24);
         UIKit.Text(root, "Codi de 6 lletres · Internet o xarxa local", new Vector2(580, 132), new Vector2(380, 26), 15, TextAlignmentOptions.MidlineLeft, UIKit.Dim);
 
-        UIKit.Button(root, "CREAR SALA", new Vector2(580, 62), new Vector2(380, 78), OpenCreate, UIKit.Style.Primary, 30);
+        UIKit.Button(root, "CREAR SALA", new Vector2(580, 62), new Vector2(380, 78), () => OpenCreate(), UIKit.Style.Primary, 30);
 
         UIKit.Box(root, new Vector2(580, -165), new Vector2(380, 300), UIKit.Panel, "Detall");
         detailTitle = UIKit.Text(root, "", new Vector2(580, -45), new Vector2(350, 44), 25, TextAlignmentOptions.MidlineLeft, UIKit.Gold);
@@ -236,7 +254,7 @@ public class RoomBrowserUI : MonoBehaviour
             var row = UIKit.ListRow(listContent, 200, new Color(0, 0, 0, 0));
             string msg;
             if (tab == Tab.Internet && netError != null)
-                msg = "<color=#D9544D>" + NetSession.Safe(netError) + "</color>\n" + (NetCloud.InUse ? "Comprova la connexió a Internet. Mentrestant pots jugar en XARXA LOCAL." : "Comprova l'adreça del servidor i que estiga arrancat.");
+                msg = "<color=#D9544D>" + NetSession.Safe(netError) + "</color>\n" + (NetCloud.InUse ? "Si falla la llista, comprova ntfy.sh. Prova XARXA LOCAL (LAN) o uneix-te per IP." : "Comprova l'adreça del servidor i que estiga arrancat.");
             else if ((tab == Tab.Lan ? loadingLan && lastLanTime < 0 : loadingNet && lastNetTime < 0)) msg = "Buscant sales...";
             else if ((tab == Tab.Lan ? lanRooms.Count : netRooms.Count) > 0) msg = "Cap sala coincideix amb la cerca o els filtres.";
             else msg = tab == Tab.Lan ? "No hi ha cap sala a la teua xarxa local.\nCrea'n una amb <color=#EBB347>CREAR SALA</color> o demana el codi a qui la tinga." : "No hi ha cap sala pública ara mateix.\nSigues el primer: <color=#EBB347>CREAR SALA</color> i els teus amics la veuran ací.\n<size=80%><color=#5C7478>La llista s'actualitza sola cada pocs segons.</color></size>";
@@ -368,10 +386,35 @@ public class RoomBrowserUI : MonoBehaviour
     // =====================================================================
     //  CREAR SALA
     // =====================================================================
-    void OpenCreate()
+    void OpenCreate(string customMapName = null, MapData currentMap = null, string currentMapName = null)
     {
         CommitName();
         var s = new NetSession.HostSettings { name = "Sala de " + NetSession.PlayerName, internet = tab == Tab.Internet };
+        var mapChoices = new List<(string label, RoomMode mode, string savedName, MapData data)>
+        {
+            ("Masmorra procedural", RoomMode.Dungeon, null, null),
+            ("Mapa de proves", RoomMode.FreeMap, null, null)
+        };
+        if (currentMap != null)
+            mapChoices.Add(("Mapa actual: " + NetSession.CleanName(currentMapName, 24), RoomMode.CustomMap, null, currentMap));
+        foreach (var savedName in MapStore.List())
+            if (MapStore.Load(savedName, out var savedData, out _))
+                mapChoices.Add((savedName, RoomMode.CustomMap, savedName, savedData));
+        int selectedMap = currentMap != null ? 2 : 0;
+        if (currentMap == null && !string.IsNullOrEmpty(customMapName))
+        {
+            int found = mapChoices.FindIndex(m => m.mode == RoomMode.CustomMap && m.savedName == customMapName);
+            if (found >= 0) selectedMap = found;
+        }
+        TextMeshProUGUI mapChoiceLabel = null, modeHelp = null;
+        void ApplyMapChoice()
+        {
+            var choice = mapChoices[selectedMap];
+            s.mode = choice.mode; s.customMapName = choice.savedName; s.customMapData = choice.data; s.customMapCode = null;
+            mapChoiceLabel.text = choice.label;
+            modeHelp.text = choice.mode == RoomMode.Dungeon ? "Masmorra procedural amb una llavor compartida." :
+                choice.mode == RoomMode.FreeMap ? "Escena de proves inclosa en el joc." : "El mapa seleccionat s'envia als companys en començar.";
+        }
         var panel = Modal(820, 770);
         UIKit.Text(panel, "CREAR SALA", new Vector2(0, 335), new Vector2(700, 56), 38, TextAlignmentOptions.Center, UIKit.Gold);
 
@@ -382,17 +425,15 @@ public class RoomBrowserUI : MonoBehaviour
         var nameField = UIKit.Input(panel, new Vector2(110, y), new Vector2(480, 52), "Nom de la sala", 24, false, 23);
         nameField.text = NetSession.CleanName(s.name, 24);
 
-        y -= 80; Label("MODE DE JOC", y);
-        UIKit.UIButton modeA = null, modeB = null; TextMeshProUGUI modeHelp = null;
-        System.Action paintMode = () =>
-        {
-            modeA.SetStyle(s.mode == RoomMode.Dungeon ? UIKit.Style.Primary : UIKit.Style.Normal);
-            modeB.SetStyle(s.mode == RoomMode.FreeMap ? UIKit.Style.Primary : UIKit.Style.Normal);
-            modeHelp.text = s.mode == RoomMode.Dungeon ? "Masmorra procedural: la mateixa per a tots (mateixa llavor)." : "Mapa obert per a fer el cabra, provar armes i quedar.";
-        };
-        modeA = UIKit.Button(panel, "MASMORRA", new Vector2(-10, y), new Vector2(235, 52), () => { s.mode = RoomMode.Dungeon; paintMode(); }, UIKit.Style.Normal, 21);
-        modeB = UIKit.Button(panel, "MAPA LLIURE", new Vector2(235, y), new Vector2(235, 52), () => { s.mode = RoomMode.FreeMap; paintMode(); }, UIKit.Style.Normal, 21);
-        modeHelp = UIKit.Text(panel, "", new Vector2(110, y - 42), new Vector2(480, 28), 15, TextAlignmentOptions.MidlineLeft, UIKit.Dim);
+        y -= 80; Label("MAPA DE PARTIDA", y);
+        mapChoiceLabel = UIKit.Text(panel, "", new Vector2(150, y), new Vector2(400, 46), 19, TextAlignmentOptions.Center, UIKit.TextColor);
+        mapChoiceLabel.textWrappingMode = TextWrappingModes.NoWrap;
+        UIKit.Button(panel, "◀", new Vector2(-80, y), new Vector2(52, 46), () =>
+        { selectedMap = (selectedMap + mapChoices.Count - 1) % mapChoices.Count; ApplyMapChoice(); }, UIKit.Style.Normal, 20);
+        UIKit.Button(panel, "▶", new Vector2(380, y), new Vector2(52, 46), () =>
+        { selectedMap = (selectedMap + 1) % mapChoices.Count; ApplyMapChoice(); }, UIKit.Style.Normal, 20);
+        modeHelp = UIKit.Text(panel, "", new Vector2(110, y - 42), new Vector2(620, 28), 15, TextAlignmentOptions.MidlineLeft, UIKit.Dim);
+        ApplyMapChoice();
 
         y -= 110; Label("JUGADORS MÀXIMS", y);
         TextMeshProUGUI countText = null;
@@ -435,7 +476,7 @@ public class RoomBrowserUI : MonoBehaviour
         }, UIKit.Style.Normal, 21);
         netHelp = UIKit.Text(panel, "", new Vector2(110, y - 42), new Vector2(480, 28), 15, TextAlignmentOptions.MidlineLeft, UIKit.Dim);
 
-        paintMode(); paintVis(); paintNet();
+        paintVis(); paintNet();
 
         UIKit.Button(panel, "CANCEL·LAR", new Vector2(-160, -335), new Vector2(260, 64), CloseModal, UIKit.Style.Ghost, 23);
         UIKit.Button(panel, "CREAR SALA", new Vector2(160, -335), new Vector2(260, 64), () =>

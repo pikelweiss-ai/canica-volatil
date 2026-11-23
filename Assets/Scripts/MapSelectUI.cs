@@ -230,10 +230,11 @@ public class MapSelectUI : MonoBehaviour
                 var modified = MapStore.LastModifiedUtc(captured);
                 string date = modified == System.DateTime.MinValue ? "data desconeguda" : modified.ToLocalTime().ToString("dd/MM/yyyy HH:mm");
                 var label = UIKit.Text(row, captured + "  ·  " + savedMap.width + "×" + savedMap.height + "  ·  " + date,
-                    new Vector2(-30, 0), new Vector2(560, 46), 16, TextAlignmentOptions.MidlineLeft, UIKit.TextColor);
+                    new Vector2(-60, 0), new Vector2(450, 46), 15, TextAlignmentOptions.MidlineLeft, UIKit.TextColor);
                 label.textWrappingMode = TextWrappingModes.NoWrap;
+                UIKit.Button(row, "ONLINE", new Vector2(218, 0), new Vector2(94, 38), () => RoomBrowserUI.OpenCreateForMap(captured), UIKit.Style.Success, 14);
                 bool armed = pendingDelete == captured && Time.unscaledTime < pendingDeleteUntil;
-                var trash = UIKit.Box(row, new Vector2(307, 0), new Vector2(46, 38), armed ? new Color(.95f, .12f, .12f) : new Color(.50f, .12f, .12f), "Paperera " + captured);
+                var trash = UIKit.Box(row, new Vector2(307, 0), new Vector2(40, 38), armed ? new Color(.95f, .12f, .12f) : new Color(.50f, .12f, .12f), "Paperera " + captured);
                 trash.gameObject.AddComponent<Button>().onClick.AddListener(() => TrashClicked(captured));
                 UIKit.Picture(trash, TrashIcon(), Vector2.zero, new Vector2(28, 28)).raycastTarget = false;
             }
