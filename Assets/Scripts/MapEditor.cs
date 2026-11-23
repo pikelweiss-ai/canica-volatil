@@ -363,6 +363,7 @@ public sealed class MapEditor : MonoBehaviour
         float cell = Mathf.Min(650f / map.width, 540f / map.height);
         var cells = VisibleCells();
         var cellsByPosition = MapAutoTile160.Index(cells);
+        // Eix Y: la fila 0 va a BAIX i la Y puja cap amunt, igual que al món del joc. Abans la fila 0 anava dalt i el mapa jugat eixia girat de dalt a baix.
         // Un índex per capa: la graella ensenya la capa de dalt de tot, però ara també dibuixa les de sota (p. ex. el terra sota d'un carro).
         var layerArrays = new[] { map.layers.ground, map.layers.objects, map.layers.overlay };
         var layerIndexes = new MapAutoTile160.CellIndex[3];
@@ -372,7 +373,7 @@ public sealed class MapEditor : MonoBehaviour
         for (int x = 0; x < map.width; x++)
         {
             int cx = x, cy = y;
-            var button = UIKit.Button(grid, "", new Vector2(-150 + x * cell, 130 - y * cell), new Vector2(cell - 2, cell - 2),
+            var button = UIKit.Button(grid, "", new Vector2(-150 + x * cell, 130 - (map.height - 1 - y) * cell), new Vector2(cell - 2, cell - 2),
                 () => { if (suppressGridClick == new Vector2Int(cx, cy)) { suppressGridClick = null; return; } suppressGridClick = null; Paint(cx, cy); }, UIKit.Style.Normal, 10);
             button.rect.name = "Cel·la " + cx + "," + cy;
             button.image.color = gridVisible ? UIKit.ButtonColor : new Color(0f, 0f, 0f, 0f);
